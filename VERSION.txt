@@ -8,4 +8,5 @@ Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 P0A v00.00.07 runtime observation: bootstrap/rendering works in Play Mode
 Combat cadence: weapon profile base reload + bounded experience modifier
 Volley feedback: salves may resolve to 0 direct hits; positive hits show temporary 'Ramte N'
+Casualty visual: first strength loss creates one representative prone casualty visual per regiment; no killed/wounded distinction yet
 QA state: v00.00.08 pending compile and full Play regression test in Unity 6000.6.0f1
