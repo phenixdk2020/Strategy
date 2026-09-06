@@ -1,3 +1,4 @@
 PROJECT 1864 - Unity Battle Prototype
-Version: v00.00.01
-Prototype: P0A - 2 regiments vs 2 regiments
+Prototype version: v00.00.02
+Design manual baseline: v00.02.02
+Unity editor baseline: 6000.3.17f1 (Unity 6.3 LTS)
