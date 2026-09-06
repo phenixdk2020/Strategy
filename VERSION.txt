@@ -1,5 +1,6 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.03
-Design manual baseline: v00.02.03
-Unity editor baseline: 6000.3.17f1 (Unity 6.3 LTS)
+Prototype version: v00.00.04
+Design manual baseline: v00.02.04
+Unity editor baseline: 6000.6.0f1 (Unity 6.6)
+Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
