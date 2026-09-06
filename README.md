@@ -11,11 +11,22 @@ Unity projektstruktur:
 - `Assets/` — scripts, scenes, prefabs og senere assets.
 - `Packages/` — Unity package manifest.
 - `ProjectSettings/` — Unity project metadata og editor-version.
-- `docs/` — designmanual og teknisk dokumentation.
+- `docs/` — designmanual, backlog, release notes og teknisk dokumentation.
 
 Aktuel prototype: **P0A v00.00.08 TEST**.  
 Aktuel designbaseline: **v00.02.08**.  
 Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
+
+## v00.00.08 release-dokumentation
+
+Den fulde ændrings- og testbeskrivelse ligger i:
+
+- **`docs/releases/P0A-v00.00.08-RELEASE-NOTES.md`** — komplet delta fra v00.00.07, faktisk implementeret funktionalitet, nye designbeslutninger, scopegrænser og trin-for-trin acceptance test.
+- `docs/prototypes/P0A-TECHNICAL-NOTES.md` — teknisk implementeringsbeskrivelse.
+- `docs/parts/part-08-38-P0A-v08.md` — designmanualens implementeringsafsnit for v00.00.08.
+- `docs/PROJECT-BACKLOG.md` — aktive, besluttede, planlagte, idé- og researchpunkter.
+
+Det er bevidst dokumenteret separat, hvad der **er implementeret i v00.00.08**, og hvad der kun er **besluttet i designbaseline v00.02.08**.
 
 ### Aktiverede built-in Unity-moduler
 
@@ -48,6 +59,7 @@ De fire prototype-regimenters experience-værdier er bevidst forskellige testdat
 - `docs/PROJECT-BACKLOG.md` — beslutninger, planlagte funktioner, research og idéer som ikke nødvendigvis er aktive endnu.
 - `docs/parts/` — versionsvenlige designmanual-dele.
 - `docs/prototypes/` — tekniske noter for implementerede prototyper.
+- `docs/releases/` — detaljerede release notes og acceptance gates.
 
 Designmanualen er projektets designmæssige source of truth og opdateres samtidig med den layoutede Word-master ved design-, arkitektur- og implementeringsændringer.
 
