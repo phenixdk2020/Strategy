@@ -1,100 +1,99 @@
 # PROJECT 1864 — B-180–B-189: AI difficulty og v00.00.09 prioritering
 
-**Status: BESLUTTET / NÆSTE IMPLEMENTERING**  
+**Status: BESLUTTET / AKTIV IMPLEMENTERING**  
 **Designbaseline: v00.02.08**  
 **Target prototype: P0A v00.00.09 TEST**
 
 ## Prioritetsbeslutning
 
-Officer-AI/delegeret kommando rykkes frem til **første gameplay-implementation efter v00.00.08-gaten**.
-
-Der må ikke indsættes ammunition, cover, skirmishers, artillery expansion eller andre større gameplay-systemer mellem v00.00.08 og den første testbare AI-delegation.
-
-Begrundelse: AI/delegation er en arkitektonisk kernefunktion for både spillerens egen command model og fjendens adfærd. Jo tidligere den testes, desto mindre risiko for at senere combat-, formation- og logistics-systemer bliver bygget omkring en for simpel eller asymmetrisk AI-model.
+Officer-AI/delegeret kommando er første gameplay-implementation efter v00.00.08-baselinen. Der indsættes ikke ammunition, cover, skirmishers, artillery expansion eller andre større gameplay-systemer foran den første testbare AI-delegation.
 
 ## B-180 — Symmetrisk officer-AI
 
-**BESLUTTET.** Fjenden og spillerens delegerede formationer skal bruge samme grundlæggende officer-AI-model.
+**BESLUTTET / AKTIV.** Fjenden og spillerens delegerede formationer bruger samme `OfficerAIController` og samme officerprofil-model.
 
 - Samme officer stats/personality inputs.
-- Samme mission/autonomy model.
-- Samme knowledge-state/fog-of-war constraints.
-- Samme morale, cohesion, fatigue, ammunition og terrain constraints, når disse systemer findes.
-- Ingen skjulte fjende-only tactical capabilities.
+- Samme mission model.
+- Samme morale/cohesion constraints.
+- Samme senere knowledge-state/fog-of-war constraints.
+- Ingen skjulte enemy-only tactical capabilities.
 
-En dårlig fjendtlig officer forbliver dårlig på høj sværhedsgrad; difficulty må ikke omskrive officerens historiske stats.
+En dårlig fjendtlig officer forbliver dårlig på høj sværhedsgrad; difficulty omskriver ikke officerprofilen.
 
 ## B-181 — Difficulty er separat fra officer quality
 
-**BESLUTTET.** Spillets sværhedsgrad må primært ændre computerens overordnede beslutningskvalitet, koordinering og fejlmargin — ikke give skjulte combat-stat bonuses.
+**BESLUTTET.** Difficulty ændrer computerens ekstra decision efficiency/noise, ikke officerens faktiske stats og ikke combat-systemets tal.
 
-Difficulty må fx påvirke:
+I v00.00.09 er laget bevidst smalt:
 
-- hvor godt theatre/battle AI prioriterer objectives,
-- hvor effektivt den fordeler reserves,
-- hvor ofte den foretager unødvendige planændringer,
-- hvor godt den koordinerer nabofomationer,
-- hvor aggressivt den udnytter kendte muligheder,
-- hvor stor ekstra beslutningsstøj/fejlmargin der lægges oven på officerens egne stats,
-- hvor konsekvent den bruger de informationer, den faktisk har.
+- enemy reaction multiplier,
+- enemy bounded decision noise.
 
-Difficulty må ikke give AI'en omniscience, gratis ammunition, skjult accuracy, ekstra morale eller andre uigennemsigtige buffs som standardmodel.
+Senere kan difficulty også påvirke theatre-level planning/coordination, men stadig uden omniscience eller skjulte combat buffs.
 
 ## B-182 — Første difficulty levels
 
-**PLANLAGT til v00.00.09 MVP.** Første prototype bruger mindst tre niveauer:
+**AKTIV v00.00.09.** Første prototype bruger:
 
-- **Easy** — større decision delay/støj, mindre effektiv koordinering og dårligere target/position prioritering.
-- **Normal** — referenceadfærd; officer stats/personality udnyttes uden ekstra fordel.
-- **Hard** — bedre overordnet koordinering og lavere ekstra AI-fejlmargin, men fortsat bundet til officer stats og samme knowledge state.
+- **Easy** — længere ekstra reaction delay og højere ekstra decision noise.
+- **Normal** — referenceadfærd.
+- **Hard** — kortere ekstra reaction delay og lavere ekstra decision noise.
 
-En senere udgave kan tilføje `Very Hard`/`Historical`/custom sliders, men det er ikke nødvendigt for første AI-test.
+Controls:
+
+- `F6` Easy
+- `F7` Normal
+- `F8` Hard
+
+Difficulty påvirker kun computerens preussiske side i denne Danmark-player P0A. Player-delegerede danske officerer bruger deres faktiske profil på referenceværdier uanset valgt enemy difficulty.
 
 ## B-183 — P0A v00.00.09 MVP scope
 
-v00.00.09 skal implementere den mindst mulige komplette vertikale AI-delegationsslice:
+v00.00.09 implementerer den mindst mulige komplette AI-delegationsslice:
 
-1. `AI UNIT: OFF/ON` på spillerstyrede regimenter.
-2. Prototype officer profile pr. regiment med mindst Tactical Skill, Initiative og Aggressiveness/Caution.
-3. `AI ON` kan udføre en begrænset mission: `Hold`, `Advance/Attack` eller `Defend current area`.
-4. Officerens profile skal mærkbart påvirke reaction delay og lokale valg.
-5. Fjendens regimenter skal bruge samme decision-kode i stedet for særskilt hardcoded opponent logic, hvor praktisk muligt.
-6. Difficulty selector: Easy / Normal / Hard.
-7. Difficulty ændrer AI decision quality/coordination/error margin, ikke combat stats.
-8. UI viser `AI ON/OFF`, officer summary, current local task og en kort reason code.
-9. Manuelt player override skal virke uden at ødelægge selection/movement/attack-regression.
-10. Eksisterende v00.00.08 combat/reload/hit-feedback/casualty-visual skal fortsat fungere.
+1. `AI UNIT: OFF/ON` på spillerstyrede danske regimenter.
+2. Officerprofil pr. regiment med otte kerne-stats: Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution og Composure/Nerve.
+3. Separat Officer Experience som stability/decision-noise input.
+4. Missions: DefendArea, Hold, MoveToPoint, AttackTarget og AttackNearest.
+5. Officerprofilen påvirker reaction delay, preferred engagement behaviour, mission adherence, stabilisation og decision noise.
+6. Fjendens regimenter bruger samme shared controller.
+7. Easy / Normal / Hard.
+8. Difficulty ændrer decision layer, ikke combat stats.
+9. HUD viser AI state, officer summary, current local task og reason code.
+10. `AI-DIAG` telemetry logger state/mission/task/reason.
+11. Manuelt player override skal virke uden at ødelægge selection/movement/attack.
+12. Eksisterende v00.00.08 combat/reload/hit-feedback/casualty-visual skal regressionsbevares.
 
-## B-184 — v00.00.09 bevidste begrænsninger
+## B-184 — Bevidste begrænsninger
 
-Følgende holdes ude af første AI-test for at bevare en lille testflade:
+Følgende er ikke del af første AI-test:
 
 - fuld courier/order-delay simulation,
 - brigade/battalion hierarchy,
+- autonomy Strict/Normal/Independent selector i runtime,
 - skirmisher deployment,
 - prone/cover/fieldworks,
 - ammunition logistics,
 - advanced artillery fire-control,
 - full fog-of-war sensor network,
-- strategic campaign AI.
-
-API/state skal dog designes, så disse kan tilføjes uden at erstatte officer-AI-kernen.
+- strategic campaign AI,
+- historiske officer ratings.
 
 ## B-185 — Officer prototype-data
 
-**PLANLAGT.** v00.00.09 får midlertidige QA officer-profiler, ikke historiske vurderinger. Profilerne skal bevidst være forskellige, så man kan se forskel på adfærd.
+**AKTIV QA-data.** De fire regimenter har bevidst forskellige fiktive QA-profiler. De må ikke fortolkes som historiske vurderinger. Endelige officer stats skal komme fra historisk officer/OOB-data med provenance.
 
-Endelige officer stats skal senere komme fra historisk officer/OOB-data med provenance.
+Detaljer: `B-190-OFFICER-STATS-MODEL.md` og v00.00.09 release notes.
 
 ## B-186 — Enemy AI validation
 
 Acceptance-test skal verificere, at fjendens tropper ikke bare bruger en global perfekt AI.
 
-Mindst to fjendtlige regimenter med forskellige prototype-officerprofiler skal ved samme eller sammenlignelige situationer kunne reagere forskelligt på en forklarlig måde.
+8th Regiment og 18th Regiment har forskellige QA-profiler og skal over flere sammenlignelige beslutninger kunne vise forskellige reaction/task patterns på en forklarlig måde.
 
 ## B-187 — No-cheat difficulty rule
 
-**BESLUTTET.** Easy/Normal/Hard må i standardopsætningen ikke ændre:
+**BESLUTTET.** Easy/Normal/Hard må ikke ændre:
 
 - weapon accuracy,
 - reload speed,
@@ -104,32 +103,37 @@ Mindst to fjendtlige regimenter med forskellige prototype-officerprofiler skal v
 - casualty resistance,
 - movement speed,
 - ammunition quantity,
+- regiment strength,
 - hidden map knowledge.
 
 Hvis der senere tilbydes separate handicap-bonuses, skal de være eksplicit synlige custom settings og ikke blandes sammen med AI difficulty.
 
 ## B-188 — AI telemetry
 
-**PLANLAGT.** Til QA skal hver AI-beslutning kunne logges kompakt med mindst:
+**AKTIV v00.00.09.** AI-statusændringer logges kompakt som `AI-DIAG` med mindst:
 
-- unit/officer,
+- unit,
+- team,
+- officer,
+- AI state,
+- difficulty,
 - mission,
-- AI/difficulty state,
-- perceived target/threat,
-- chosen action,
-- reason code,
-- decision score/delay hvis relevant.
+- task,
+- reason.
 
-Dette er vigtigt for at kunne afgøre, om en dårlig beslutning skyldes bug, dårlig officer, mangelfuld information eller bevidst difficulty noise.
+Senere udvides dette med perceived threat, score-breakdown og knowledge timestamp/confidence.
 
-## B-189 — Release order
+## B-189 — Release gate
 
-1. Frys og runtime-test v00.00.08.
-2. Klassificer nødvendige Unity metadata uden destruktive git-operationer.
-3. Opret v00.00.09 AI work branch fra den validerede baseline.
-4. Implementer AI Unit ON/OFF + shared officer decision core.
-5. Flyt eksisterende simple enemy behavior over på shared core.
-6. Implementer Easy/Normal/Hard difficulty layer.
-7. Tilføj UI/reason codes/telemetry.
-8. Kør compile + full v00.00.08 regression + særskilt AI acceptance-test.
-9. Først derefter fortsættes ammunition/casualty pipeline og øvrige combat systems.
+v00.00.09 må først promoveres efter:
+
+1. Ren Unity compile.
+2. Shared officer controller installeret på alle regimenter.
+3. AI UNIT ON/OFF fungerer på danske regimenter.
+4. Enemy AI bruger shared core og ikke legacy decision loop.
+5. Easy/Normal/Hard fungerer uden combat cheats.
+6. Composure påvirker stress reaction/noise.
+7. Reason codes/telemetry er brugbare.
+8. Fuld v00.00.08 regression er ren.
+
+Den fulde trin-for-trin test ligger i `docs/releases/P0A-v00.00.09-RELEASE-NOTES.md`.
