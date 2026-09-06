@@ -35,15 +35,17 @@ P0A v00.00.08 bygger videre med en afgrænset combat-QA-udvidelse:
 - Experience 50 er neutral,
 - salver kan resolve til 0 direkte hits,
 - positive hits viser kort `Ramte N` over målet,
-- unit labels viser weapon, Experience og beregnet reload til direkte QA.
+- unit labels viser weapon, Experience og beregnet reload til direkte QA,
+- første strength loss for et regiment opretter én enkel repræsentativ liggende casualty-figur ved tabsstedet; den er kun visualisering og skelner endnu ikke mellem dræbt/såret.
 
 De fire prototype-regimenters experience-værdier er bevidst forskellige testdata og er **ikke historiske vurderinger**. Senere skal experience og weapon assignment komme fra OOB/unit/weapon-databaser.
 
-**v00.00.08 er endnu ikke runtime-valideret.** Næste release-gate er compile uden nye fejl og fuld Play regressionstest af combat, kamera, controls, pause/speed, rout og battle outcome.
+**v00.00.08 er endnu ikke runtime-valideret.** Næste release-gate er compile uden nye fejl og fuld Play regressionstest af combat, casualty-visual, kamera, controls, pause/speed, rout og battle outcome.
 
 ## Designmanual
 
 - `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual.
+- `docs/PROJECT-BACKLOG.md` — beslutninger, planlagte funktioner, research og idéer som ikke nødvendigvis er aktive endnu.
 - `docs/parts/` — versionsvenlige designmanual-dele.
 - `docs/prototypes/` — tekniske noter for implementerede prototyper.
 
@@ -51,7 +53,7 @@ Designmanualen er projektets designmæssige source of truth og opdateres samtidi
 
 ## P0A battle prototype
 
-P0A indeholder 2 danske regimenter mod 2 preussiske regimenter, ca. 1:10 visuel styrkerepræsentation, RTS-kamera, movement/attack orders, line/column formation, range, volleyild, sortkrudtsrøg, weapon/experience-afledt reload, combat feedback, casualties, morale/cohesion, rout og simpel preussisk AI.
+P0A indeholder 2 danske regimenter mod 2 preussiske regimenter, ca. 1:10 visuel styrkerepræsentation, RTS-kamera, movement/attack orders, line/column formation, range, volleyild, sortkrudtsrøg, weapon/experience-afledt reload, combat feedback, en enkel casualty-visual, casualties, morale/cohesion, rout og simpel preussisk AI.
 
 Prototypekoden er bevidst asset-light: battlefield og simple soldater genereres ved runtime, så systemarkitekturen kan testes før historiske 3D-assets og animationer produceres.
 
