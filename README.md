@@ -13,14 +13,23 @@ Unity projektstruktur:
 - `ProjectSettings/` — Unity project metadata og editor-version.
 - `docs/` — designmanual og teknisk dokumentation.
 
-Aktuel prototype: **P0A v00.00.04**.
+Aktuel prototype: **P0A v00.00.05**.
 Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
 
 Baseline er valgt, fordi projektets aktuelle testmaskine allerede har 6000.6.0f1 installeret. Det reducerer unødvendige Unity Hub-versionadvarsler og gør clone -> open-workflowet direkte.
 
+### Aktiverede built-in Unity-moduler
+
+P0A bruger Unity-funktionalitet, som i Unity 6.6 skal være eksplicit aktiveret i `Packages/manifest.json`:
+
+- `com.unity.modules.imgui` — prototype-HUD og `GUIStyle`.
+- `com.unity.modules.particlesystem` — sortkrudtsrøg.
+- `com.unity.modules.physics` — raycasts og colliders til selection/orders.
+- `com.unity.modules.audio` — `AudioListener` på kameraet.
+
 ## Designmanual
 
-Aktuel designbaseline: **v00.02.04**
+Aktuel designbaseline: **v00.02.05**
 
 - `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual med links til alle dele.
 - `docs/parts/` — manualen opdelt i versionsvenlige Markdown-dele.
