@@ -13,78 +13,119 @@ Unity projektstruktur:
 - `ProjectSettings/` — Unity project metadata og editor-version.
 - `docs/` — designmanual, backlog, release notes og teknisk dokumentation.
 
-Aktuel prototype: **P0A v00.00.08 TEST**.  
+Aktuel work-branch prototype: **P0A v00.00.09 OFFICER AI TEST**.  
+Seneste main-baseline: **P0A v00.00.08 TEST**.  
 Aktuel designbaseline: **v00.02.08**.  
 Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
 
-## v00.00.08 release-dokumentation
+## v00.00.09 Officer AI
 
-Den fulde ændrings- og testbeskrivelse ligger i:
+Den komplette implementation-, scope- og acceptance-dokumentation ligger i:
 
-- **`docs/releases/P0A-v00.00.08-RELEASE-NOTES.md`** — komplet delta fra v00.00.07, faktisk implementeret funktionalitet, nye designbeslutninger, scopegrænser og trin-for-trin acceptance test.
-- `docs/prototypes/P0A-TECHNICAL-NOTES.md` — teknisk implementeringsbeskrivelse.
-- `docs/parts/part-08-38-P0A-v08.md` — designmanualens implementeringsafsnit for v00.00.08.
-- `docs/PROJECT-BACKLOG.md` — aktive, besluttede, planlagte, idé- og researchpunkter.
+- **`docs/releases/P0A-v00.00.09-RELEASE-NOTES.md`** — fuld beskrivelse af Officer AI, stats, difficulty, controls, telemetry, begrænsninger og Unity-test.
+- `docs/backlog/B-170-OFFICER-AI-DELEGATION.md` — delegation, AI UNIT ON/OFF, missions og transparency.
+- `docs/backlog/B-180-AI-DIFFICULTY-AND-V009.md` — shared enemy/player AI, Easy/Normal/Hard og no-cheat-regler.
+- `docs/backlog/B-190-OFFICER-STATS-MODEL.md` — otte officerstats, Composure/Nerve og første decision model.
 
-Det er bevidst dokumenteret separat, hvad der **er implementeret i v00.00.08**, og hvad der kun er **besluttet i designbaseline v00.02.08**.
+### Nye runtime-systemer
 
-### Aktiverede built-in Unity-moduler
+- `OfficerProfile.cs` — QA-officerprofil.
+- `OfficerAIController.cs` — fælles officerbaseret decision core.
+- `OfficerAIPrototypeManager.cs` — runtime-installation, AI UNIT toggle, difficulty, input og QA HUD.
+
+### Officerprofil
+
+Første v00.00.09-profil bruger otte 0–100 dimensioner:
+
+1. Leadership
+2. Inspiration
+3. Tactical Skill
+4. Initiative
+5. Staff / Command Skill
+6. Discipline / Obedience
+7. Aggressiveness ↔ Caution
+8. Composure / Nerve
+
+Officer Experience gemmes separat og bruges primært som stabilitets-/decision-noise-input.
+
+**Composure/Nerve er aktiv i første build.** Lav Composure giver større stress-relateret reaction delay og mere decision noise, når morale/cohesion falder. Den er bevidst adskilt fra Leadership, Inspiration og regimentets egen morale.
+
+### AI UNIT ON/OFF
+
+- Danske regimenter starter `AI OFF`.
+- Preussiske regimenter starter `AI ON`.
+- `A` toggler AI UNIT for valgte danske regimenter.
+- Højreklik med AI ON bliver en officer-mission til move/attack.
+- `H` bliver Hold mission for delegerede regimenter.
+
+Spillerens delegerede regimenter og fjendens regimenter bruger samme `OfficerAIController`.
+
+### AI difficulty
+
+- `F6` = Easy
+- `F7` = Normal
+- `F8` = Hard
+
+Difficulty påvirker i P0A kun computerens preussiske decision layer: reaction multiplier og bounded decision noise. Den ændrer **ikke** accuracy, reload, range, movement speed, morale, cohesion, casualties, strength eller skjult map knowledge.
+
+Player-delegerede danske officerer bliver derfor ikke kunstigt dårligere på Easy eller bedre på Hard.
+
+### AI transparency
+
+Test-HUD viser bl.a.:
+
+- AI ON/OFF,
+- QA officer,
+- Tactical Skill,
+- Initiative,
+- Composure,
+- current task,
+- reason code.
+
+Console logger kompakte `AI-DIAG` entries med unit, team, officer, difficulty, mission, task og reason.
+
+Alle officerprofiler i v00.00.09 er bevidste QA-data og **ikke historiske ratings**.
+
+## v00.00.08 baseline der skal regressionsbevares
+
+v00.00.09 bygger oven på v00.00.08 og må ikke regressere:
+
+- weapon profile-baseret reload,
+- regiment Experience modifier,
+- 0-hit volleys,
+- `Ramte N`,
+- enkel repræsentativ casualty-visual,
+- selection/movement/attack,
+- line/column/hold/range,
+- pause + 1x/2x/3x,
+- kamera,
+- morale/cohesion/rout,
+- battle result og R restart.
+
+## Aktiverede built-in Unity-moduler
 
 - `com.unity.modules.imgui` — prototype-HUD og `GUIStyle`.
 - `com.unity.modules.particlesystem` — sortkrudtsrøg.
 - `com.unity.modules.physics` — raycasts og colliders til selection/orders.
 - `com.unity.modules.audio` — `AudioListener` på kameraet.
 
-## Aktuel QA-status
-
-P0A v00.00.07 blev åbnet i Unity 6000.6.0f1, og runtime-bootstrap/renderingen blev observeret fungerende i Play Mode. Kameraet og den procedurale battle-scene oprettes korrekt.
-
-P0A v00.00.08 bygger videre med en afgrænset combat-QA-udvidelse:
-
-- infantry weapon profile styrer basis-reload,
-- regimentets Experience 0-100 modificerer reload-tiden bounded fra +20 % til -20 %,
-- Experience 50 er neutral,
-- salver kan resolve til 0 direkte hits,
-- positive hits viser kort `Ramte N` over målet,
-- unit labels viser weapon, Experience og beregnet reload til direkte QA,
-- første strength loss for et regiment opretter én enkel repræsentativ liggende casualty-figur ved tabsstedet; den er kun visualisering og skelner endnu ikke mellem dræbt/såret.
-
-De fire prototype-regimenters experience-værdier er bevidst forskellige testdata og er **ikke historiske vurderinger**. Senere skal experience og weapon assignment komme fra OOB/unit/weapon-databaser.
-
-**v00.00.08 er en testbuild og er endnu ikke runtime-valideret.** Release-gaten er compile uden nye fejl og fuld Play regressionstest af combat, casualty-visual, kamera, controls, pause/speed, rout og battle outcome.
-
-## Næste gameplay-build — P0A v00.00.09 Officer AI
-
-Officer-AI/delegeret kommando er **højeste gameplay-prioritet umiddelbart efter v00.00.08-gaten**. Der må ikke indsættes en anden større gameplay-feature først.
-
-Første AI-test skal mindst implementere:
-
-- `AI UNIT ON/OFF` på egne regimenter,
-- midlertidige QA-officerprofiler med mærkbar forskel i reaktion/adfærd,
-- én fælles officer decision core for spillerens delegerede regimenter og fjendens regimenter,
-- Easy / Normal / Hard AI difficulty,
-- ingen skjulte combat-stat buffs eller omniscience som difficulty-model,
-- synlig current task/reason code og AI telemetry,
-- fuld regression af v00.00.08.
-
-Detaljer ligger i `docs/backlog/B-170-OFFICER-AI-DELEGATION.md`, `docs/backlog/B-180-AI-DIFFICULTY-AND-V009.md` og roadmapets §29.1.
-
 ## Designmanual
 
 - `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual.
-- `docs/PROJECT-BACKLOG.md` — beslutninger, planlagte funktioner, research og idéer som ikke nødvendigvis er aktive endnu.
+- `docs/PROJECT-BACKLOG.md` — beslutninger, planlagte funktioner, research og idéer.
+- `docs/backlog/` — detaljerede backlog-supplementer.
 - `docs/parts/` — versionsvenlige designmanual-dele.
-- `docs/prototypes/` — tekniske noter for implementerede prototyper.
+- `docs/prototypes/` — tekniske noter.
 - `docs/releases/` — detaljerede release notes og acceptance gates.
 
 Designmanualen er projektets designmæssige source of truth og opdateres samtidig med den layoutede Word-master ved design-, arkitektur- og implementeringsændringer.
 
 ## P0A battle prototype
 
-P0A indeholder 2 danske regimenter mod 2 preussiske regimenter, ca. 1:10 visuel styrkerepræsentation, RTS-kamera, movement/attack orders, line/column formation, range, volleyild, sortkrudtsrøg, weapon/experience-afledt reload, combat feedback, en enkel casualty-visual, casualties, morale/cohesion, rout og simpel preussisk AI.
+P0A indeholder 2 danske regimenter mod 2 preussiske regimenter, ca. 1:10 visuel styrkerepræsentation, RTS-kamera, movement/attack orders, line/column formation, range, volleyild, sortkrudtsrøg, weapon/experience-afledt reload, combat feedback, enkel casualty-visual, morale/cohesion, rout samt v00.00.09's shared officer-AI prototype.
 
 Prototypekoden er bevidst asset-light: battlefield og simple soldater genereres ved runtime, så systemarkitekturen kan testes før historiske 3D-assets og animationer produceres.
 
 ### Repository-metadata
 
-Repositoryet har fortsat en minimal Unity-metadata-baseline. Den lokale Unity-test har genereret `.meta`, scene-, `packages-lock.json`- og `ProjectSettings`-filer, som bevares og gennemgås efter v00.00.08-testen. De må ikke slettes blindt. Målet er derefter en reproducerbar fresh-clone baseline før v00.00.09.
+Repositoryet har fortsat en minimal Unity-metadata-baseline. Lokale Unity-genererede `.meta`, scene-, `packages-lock.json`- og `ProjectSettings`-filer bevares sikkert af updater-workflowet og skal klassificeres særskilt til den reproducerbare repository-baseline. De må ikke slettes blindt.
