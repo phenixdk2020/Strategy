@@ -5,7 +5,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoBootstrap()
     {
-        if (Object.FindFirstObjectByType<BattleManager>() != null)
+        if (Object.FindAnyObjectByType<BattleManager>() != null)
             return;
 
         GameObject bootstrapObject = new GameObject("PROJECT1864_PrototypeBootstrap");
