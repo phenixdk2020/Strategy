@@ -201,8 +201,6 @@ public sealed class OfficerAIController : MonoBehaviour
                 return;
             }
 
-            // A highly aggressive, less obedient officer may interrupt movement to
-            // engage an immediate threat. This is visible through the reason code.
             EngageEnemy(nearestEnemy, stress, "Aggressive local reaction during movement");
             return;
         }
@@ -377,9 +375,7 @@ public sealed class OfficerAIController : MonoBehaviour
             return;
 
         lastTelemetryKey = telemetryKey;
-        string difficulty = BattleManager.Instance != null
-            ? BattleManager.Instance.Difficulty.ToString()
-            : "Unknown";
+        string difficulty = OfficerAIPrototypeManager.CurrentDifficulty.ToString();
         Debug.Log(string.Format(
             "AI-DIAG|Unit={0}|Team={1}|Officer={2}|AI={3}|Difficulty={4}|Mission={5}|Task={6}|Reason={7}",
             regiment.RegimentName,
