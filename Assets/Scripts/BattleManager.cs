@@ -13,6 +13,7 @@ public sealed class BattleManager : MonoBehaviour
     private bool paused;
     private string resultMessage = string.Empty;
     private GUIStyle unitStyle;
+    private GUIStyle hitStyle;
     private GUIStyle topStyle;
     private GUIStyle helpStyle;
 
@@ -136,6 +137,12 @@ public sealed class BattleManager : MonoBehaviour
         unitStyle.alignment = TextAnchor.MiddleCenter;
         unitStyle.normal.textColor = Color.white;
 
+        hitStyle = new GUIStyle(GUI.skin.box);
+        hitStyle.fontSize = 16;
+        hitStyle.fontStyle = FontStyle.Bold;
+        hitStyle.alignment = TextAnchor.MiddleCenter;
+        hitStyle.normal.textColor = new Color(1f, 0.88f, 0.30f);
+
         topStyle = new GUIStyle(GUI.skin.box);
         topStyle.fontSize = 14;
         topStyle.fontStyle = FontStyle.Bold;
@@ -157,7 +164,7 @@ public sealed class BattleManager : MonoBehaviour
         int minutes = Mathf.FloorToInt(battleMinutes) % 60;
         string clock = $"1 February 1864  {hours:00}:{minutes:00}";
         string state = paused ? "PAUSE" : speed + "x";
-        GUI.Box(new Rect(10, 10, Screen.width - 20, 34), $"PROJECT 1864 - P0A Battle Prototype     {clock}     [{state}]", topStyle);
+        GUI.Box(new Rect(10, 10, Screen.width - 20, 34), $"PROJECT 1864 - P0A Battle Prototype v00.00.08     {clock}     [{state}]", topStyle);
 
         GUI.Box(new Rect(10, 52, 285, 84),
             "DANMARK\nHold højderyggen og gården\nSlå de to preussiske regimenter tilbage", helpStyle);
@@ -169,16 +176,24 @@ public sealed class BattleManager : MonoBehaviour
         {
             if (regiment == null || mainCamera == null)
                 continue;
+
             Vector3 screen = mainCamera.WorldToScreenPoint(regiment.transform.position + Vector3.up * 3f);
             if (screen.z <= 0f)
                 continue;
 
-            float x = screen.x - 80f;
-            float y = Screen.height - screen.y - 22f;
+            float x = screen.x - 100f;
+            float y = Screen.height - screen.y - 31f;
             string team = regiment.Team == BattleTeam.Denmark ? "DK" : "PR";
             string routed = regiment.IsRouted ? "  ROUTED" : string.Empty;
-            string label = $"{regiment.RegimentName} ({team})  {regiment.CurrentStrength}\nMorale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}";
-            GUI.Box(new Rect(x, y, 160f, 42f), label, unitStyle);
+            string label =
+                $"{regiment.RegimentName} ({team})  {regiment.CurrentStrength}\n" +
+                $"{regiment.WeaponShortName} | Exp {regiment.Experience:0} | Reload {regiment.CurrentReloadSeconds:0.0}s\n" +
+                $"Morale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}";
+
+            GUI.Box(new Rect(x, y, 200f, 62f), label, unitStyle);
+
+            if (regiment.HasHitFeedback)
+                GUI.Box(new Rect(screen.x - 62f, y - 30f, 124f, 26f), $"Ramte {regiment.LastVolleyHits}", hitStyle);
         }
 
         GUI.Box(new Rect(10, Screen.height - 116, 390, 106),
