@@ -1,5 +1,5 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.08
+Prototype version: v00.00.08 TEST
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
@@ -9,4 +9,4 @@ P0A v00.00.07 runtime observation: bootstrap/rendering works in Play Mode
 Combat cadence: weapon profile base reload + bounded experience modifier
 Volley feedback: salves may resolve to 0 direct hits; positive hits show temporary 'Ramte N'
 Casualty visual: first strength loss creates one representative prone casualty visual per regiment; no killed/wounded distinction yet
-QA state: v00.00.08 pending compile and full Play regression test in Unity 6000.6.0f1
+QA state: v00.00.08 TEST pending compile and full Play regression test in Unity 6000.6.0f1
