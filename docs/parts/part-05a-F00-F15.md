@@ -1,4 +1,4 @@
-# PROJECT 1864 — Designmanual v00.02.00 — Feature Architecture
+# PROJECT 1864 — Designmanual v00.02.08 — Feature Architecture
 
 ## 28. Feature-arkitektur – udviklingsklumper
 
@@ -67,7 +67,9 @@ Indhold.
 
 - CommandNode med valgfrie niveauer.
 - Parent, attached-to, subunits og commander assignments.
-- Strength, morale, cohesion, fatigue, weapons og supply fields.
+- Strength, current effective men, killed, wounded, missing/captured, morale, cohesion og fatigue.
+- Weapon profiles, compatible ammunition, ammunition carried og supply fields.
+- Equipment ownership/state for guns, wagons, horses og øvrigt materiel.
 - OOB browser/editor for debug.
 
 Afhængigheder. F00, F02
@@ -76,6 +78,7 @@ Exit-kriterier.
 
 - Dansk og preussisk eksempel-OOB kan eksistere med forskellige hierarkier.
 - En unit kan detach/reattach uden at miste identitet eller historik.
+- En unit kan rapportere fx aktuelt mandskab, dræbte/sårede og ammunition uden at disse værdier udledes af visuelle modeller.
 
 ### F04 – Officer-system og autonomi
 
@@ -140,6 +143,8 @@ Indhold.
 - Depots, supply nodes og throughput.
 - Food, ammunition, forage og transport capacity.
 - Consumption og resupply priority.
+- Supply wagons/convoys som konkrete inventory-holdere med crew, trækdyr og ownership-state.
+- Capture, abandonment og destruction af supply-elementer med delvist tab af lasten.
 - Supply overlay og alerts.
 
 Afhængigheder. F02, F03, F06
@@ -148,6 +153,7 @@ Exit-kriterier.
 
 - En formation afskåret fra depot mister supply over tid og får gameplay-effekter.
 - En alternativ vej/depot kan reetablere supply.
+- En supply-vogn kan bringe ammunition frem, mistes eller erobres, og beholdningen følger den faktiske ownership/state.
 
 ### F08 – Fog of war og reconnaissance
 
@@ -203,23 +209,26 @@ Exit-kriterier.
 - 1.000 simulerede mænd kan vises som ca. 100 modeller og skifte formation stabilt.
 - Render ratio kan ændres uden at combat state ændres.
 
-### F11 – Infanteri-ild, range og smoke
+### F11 – Infanteri-ild, range, ammunition og smoke
 
 Formål. Skabe den centrale synlige black-powder ildkamp.
 
 Indhold.
 
-- Weapon profiles og range curves.
-- Volley/independent fire.
-- Casualty/morale resolution.
+- Weapon profiles, loading method, reload cadence og range curves.
+- Experience/training som bounded modifier på reload og fire discipline.
+- Volley/independent fire og konkret ammunition consumption.
+- Casualty resolution med killed/wounded/missing hooks.
 - Muzzle effects, representative projectiles og smoke field.
-- Range overlay.
+- Range overlay og combat feedback.
 
-Afhængigheder. F10, F03
+Afhængigheder. F10, F03, F07
 
 Exit-kriterier.
 
 - Effekten af 100 m og 400 m ild er forskellig efter weapon curve.
+- To enheder med samme våben men forskellig experience har dokumenterbart forskellig reload uden at teknologiforskellen udviskes.
+- Enheden kan løbe tør for ammunition og genforsynes fra kompatibel supply.
 - Smoke reducerer faktisk LOS/accuracy, ikke kun grafik.
 
 ### F12 – Morale, cohesion, fatigue og rout
@@ -248,30 +257,34 @@ Indhold.
 
 - Gun/battery data, limber/unlimber, ammunition.
 - Targeting, LOS, trajectory visuals, counter-battery.
-- Crew/horses og capture/loss.
+- Crew/horses og explicit equipment state: operational, abandoned, disabled/destroyed, captured.
+- Capture kræver fysisk kontrol; genbrug kræver egnet crew, ammunition og klargøringstid.
 
 Afhængigheder. F09, F11, F12
 
 Exit-kriterier.
 
-- Et batteri kan deploye, skyde, bruge ammunition, flytte og blive erobret.
-- Piece count returneres korrekt til kampagnen.
+- Et batteri kan deploye, skyde, bruge ammunition, flytte, blive forladt og blive erobret.
+- Piece count, condition og ownership returneres korrekt til kampagnen.
 
-### F14 – Kavaleri og reconnaissance
+### F14 – Kavaleri, dragoner og reconnaissance
 
 Formål. Forbinde operationel information med taktisk mobility.
 
 Indhold.
 
 - Screening, reconnaissance og courier modifiers på strategic layer.
-- Tactical charge, pursuit, dismounted/hold options efter type.
+- Tactical charge, pursuit og dismounted options efter type.
+- Dragoner har mounted/dismounted state og kan føre ildkamp til fods.
+- Horse-holder/remount state: heste står separat under afsiddet kamp, kan lide tab og remount tager tid.
 - Horse fatigue/casualties/forage.
 
-Afhængigheder. F06, F08, F10, F12
+Afhængigheder. F06, F08, F10, F11, F12
 
 Exit-kriterier.
 
 - Kavaleri kan forbedre contact information og påvirke retreat/pursuit.
+- Dragoner kan sidde af, skyde og senere remount uden at miste enhedsidentitet/state.
 - Horse losses påvirker efterfølgende mobility.
 
 ### F15 – Ingeniører, broer og befæstning
