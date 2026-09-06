@@ -4,7 +4,7 @@ Historisk grand-strategy-projekt i Unity med real-time strategisk simulation og 
 
 ## Unity-projekt
 
-Repositoryets **rod er nu selve Unity-projektet**. Det betyder, at Unity Hub kan clone `phenixdk2020/Strategy` og åbne repository-roden direkte.
+Repositoryets **rod er selve Unity-projektet**. Unity Hub kan derfor clone `phenixdk2020/Strategy` og åbne repository-roden direkte.
 
 Unity projektstruktur:
 
@@ -13,14 +13,14 @@ Unity projektstruktur:
 - `ProjectSettings/` — Unity project metadata og editor-version.
 - `docs/` — designmanual og teknisk dokumentation.
 
-Aktuel prototype: **P0A v00.00.03**.
-Unity baseline: **6000.3.17f1 (Unity 6.3 LTS)**.
+Aktuel prototype: **P0A v00.00.04**.
+Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
 
-Hvis Unity Hub ikke har præcis 6000.3.17f1 installeret, kan projektet åbnes med en anden installeret Unity 6.3 LTS patch; Unity kan i så fald bede om at opgradere projektmetadata.
+Baseline er valgt, fordi projektets aktuelle testmaskine allerede har 6000.6.0f1 installeret. Det reducerer unødvendige Unity Hub-versionadvarsler og gør clone -> open-workflowet direkte.
 
 ## Designmanual
 
-Aktuel designbaseline: **v00.02.03**
+Aktuel designbaseline: **v00.02.04**
 
 - `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual med links til alle dele.
 - `docs/parts/` — manualen opdelt i versionsvenlige Markdown-dele.
