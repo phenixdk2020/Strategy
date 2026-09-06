@@ -1,6 +1,10 @@
-# PROJECT 1864 - Unity Battle Prototype v00.00.01
+# PROJECT 1864 - Unity Battle Prototype v00.00.02
 
 Første spilbare taktiske 3D vertical slice til PROJECT 1864.
+
+## Unity-version
+
+Projektet er låst til **Unity 6000.3.17f1 (Unity 6.3 LTS)**. Unity Hub skal derfor kunne identificere Editor-versionen korrekt. Hvis præcis denne patch ikke er installeret, kan Unity Hub installere den, eller projektet kan åbnes i en nyere Unity 6.3 LTS-patch og opgraderes.
 
 ## Indhold
 
@@ -17,10 +21,12 @@ Første spilbare taktiske 3D vertical slice til PROJECT 1864.
 
 ## Start
 
-1. Installer Unity Hub og en Unity 6 editor.
+1. Installer Unity Hub og **Unity 6.3 LTS**. P0A v00.00.02 er markeret som `6000.3.17f1`.
 2. Åbn `prototype/P0A-Unity-Battle` som Unity-projekt.
 3. Første åbning opretter automatisk `Assets/Scenes/PrototypeBattle.unity`.
 4. Tryk **Play**.
+
+Hvis Unity Hub viser **Unknown / Missing Editor version**, er der brugt den gamle P0A v00.00.01. Hent v00.00.02 eller opdater `ProjectSettings/ProjectVersion.txt` fra GitHub.
 
 ## Styring
 
