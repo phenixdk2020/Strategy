@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel baseline: v00.02.04**
+**Aktuel baseline: v00.02.05**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -19,6 +19,7 @@ Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i del
 
 ## Versionshistorik
 
+- **v00.02.05** — P0A v00.00.05: Unity 6.6 compile-fix ved at aktivere built-in modulerne IMGUI, Particle System, Physics og Audio i `Packages/manifest.json`. Fejlene CS1069 for `GUIStyle` og `ParticleSystem` er dermed adresseret ved projektkonfiguration frem for kode-workarounds.
 - **v00.02.04** — Unity-baseline flyttet til den installerede `6000.6.0f1` (Unity 6.6), changeset `f7f8ed4d1e24`. P0A hævet til v00.00.04, så Unity Hub kan åbne den friske GitHub-clone uden missing-editor warning på testmaskinen.
 - **v00.02.03** — Repository-layout fastlåst: `Strategy`-roden er selve Unity-projektet (`Assets`, `Packages`, `ProjectSettings`). Den tidligere `prototype/P0A-Unity-Battle/`-undermappe er fjernet. P0A hævet til v00.00.03.
 - **v00.02.02** — P0A v00.00.02: Unity Editor metadata rettet og låst til Unity 6000.3.17f1, så Unity Hub kan identificere projektet korrekt.
