@@ -23,6 +23,24 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 | B-005 | PLANLAGT | Reproducerbar Unity repository-baseline | Efter Play-test klassificeres scene, `.meta`, `packages-lock.json` og relevante `ProjectSettings` til permanent versionsstyring. |
 | B-006 | AKTIV | Enkel casualty-visual | Første strength loss pr. regiment opretter én repræsentativ liggende casualty ved tabsstedet; maksimalt én figur pr. regiment i v00.00.08. |
 
+## Næste aktive gameplay-build — P0A v00.00.09 Officer AI
+
+**HØJESTE PRIORITET EFTER v00.00.08-GATEN.** Ingen anden større gameplay-feature må implementeres mellem v00.00.08 og den første testbare officer-AI/delegationsbuild.
+
+Detaljeret scope ligger i:
+
+- `docs/backlog/B-170-OFFICER-AI-DELEGATION.md`
+- `docs/backlog/B-180-AI-DIFFICULTY-AND-V009.md`
+
+v00.00.09 skal mindst bevise:
+
+- `AI UNIT ON/OFF` på egne regimenter,
+- prototype officer stats, der mærkbart påvirker reaction/valg,
+- samme officer decision core for delegerede spillerformationer og fjenden,
+- Easy/Normal/Hard som AI-beslutningsniveauer uden skjulte combat buffs eller omniscience,
+- current AI task + reason code/telemetry,
+- fuld regression af v00.00.08.
+
 ## Tactical combat — besluttet
 
 | ID | Status | Emne | Beslutning / note |
