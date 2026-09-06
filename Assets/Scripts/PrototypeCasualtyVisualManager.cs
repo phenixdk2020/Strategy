@@ -28,10 +28,7 @@ public sealed class PrototypeCasualtyVisualManager : MonoBehaviour
                 continue;
 
             if (!lastObservedStrength.TryGetValue(regiment, out int previousStrength))
-            {
-                lastObservedStrength[regiment] = regiment.CurrentStrength;
-                continue;
-            }
+                previousStrength = regiment.InitialStrength;
 
             if (regiment.CurrentStrength < previousStrength && !casualtyVisualCreated.Contains(regiment))
             {
