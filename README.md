@@ -6,8 +6,8 @@ Historisk grand-strategy-projekt i Unity med real-time strategisk simulation og 
 
 Aktuel designbaseline: **v00.02.00**
 
-- `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual
-- `docs/versions/PROJECT-1864-Designmanual-v00.02.00.md` — versionsarkiv
-- `docs/versions/PROJECT-1864-Game-Design-og-Feature-Arkitektur-v00.02.00.docx` — layoutet Word-master
+- `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual med links til alle dele.
+- `docs/parts/` — den aktuelle manual opdelt i versionsvenlige Markdown-dele.
+- `docs/versions/PROJECT-1864-Game-Design-og-Feature-Arkitektur-v00.02.00.docx` — QA-godkendt, layoutet Word-master.
 
-Designmanualen skal holdes synkron med projektets designbeslutninger og versionsstyres sammen med kildekoden.
+Designmanualen er projektets designmæssige source of truth og skal opdateres på GitHub, når designbeslutninger ændres. Word-masteren versionsarkiveres, mens den GitHub-læsbare Markdown-udgave holdes på den aktuelle baseline.
