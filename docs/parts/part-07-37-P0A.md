@@ -1,10 +1,10 @@
-# PROJECT 1864 — Designmanual v00.02.05
+# PROJECT 1864 — Designmanual v00.02.06
 
 ## 37. Implementeringsstatus – P0A Unity 3D Battle Prototype
 
 P0A er den første spilbare tekniske vertical slice. Formålet er ikke endelig grafik eller historisk balance, men at bevise at den valgte regimentsmodel kan styres i realtid i 3D og at authoritative mandskab, formation, range, combat, morale og rout kan holdes adskilt fra den grafiske 1:10-repræsentation.
 
-### 37.1 Spilbar scope v00.00.05
+### 37.1 Spilbar scope v00.00.06
 
 | System | P0A implementering |
 | --- | --- |
@@ -92,7 +92,17 @@ Modulerne understøtter følgende prototypefunktioner:
 
 Dette er en projektkonfigurationsrettelse, ikke en ændring af battle-design eller simulation.
 
-### 37.7 Release-QA-regel for Unity-prototyper
+### 37.7 C# compile cleanup i Unity 6.6
+
+Den efterfølgende compile-test fandt én blokkerende C#-fejl og to warnings i prototypekoden. Fra P0A **v00.00.06** er de ryddet op:
+
+- **CS0136 i `Regiment.cs`** — `column` blev deklareret både i line- og column-grenen af `GetFormationPosition()`. Column-formationens lokale variabel hedder nu `columnIndex`.
+- **CS0618 i `PrototypeBootstrap.cs`** — obsolete `Object.FindFirstObjectByType<BattleManager>()` er erstattet af `Object.FindAnyObjectByType<BattleManager>()`, da rækkefølge ikke er relevant for bootstrap-checket.
+- **CS0414 i `Regiment.cs`** — den private `holdPosition`-state var kun skrevet til og aldrig læst. Feltet og de overflødige assignments er fjernet; hold-ordren repræsenteres fortsat korrekt ved `hasDestination = false` og `forcedTarget = null`.
+
+Rettelserne ændrer ikke den tilsigtede battle-adfærd. De fjerner compile-blockeren og teknisk gæld, som blev synlig ved den første faktiske Unity 6.6-kompilering.
+
+### 37.8 Release-QA-regel for Unity-prototyper
 
 Før en Unity-prototype markeres som spilbar skal følgende kontrolleres:
 
@@ -101,7 +111,8 @@ Før en Unity-prototype markeres som spilbar skal følgende kontrolleres:
 3. Repository-roden kan identificeres af Unity Hub som et Unity-projekt.
 4. Den valgte Unity-version er installeret på den aktive testmaskine, eller installationen er dokumenteret som et eksplicit krav.
 5. Alle Unity built-in moduler, som scripts refererer til, er eksplicit til stede i `Packages/manifest.json`.
-6. Projektet compile-testes i den valgte Unity-version, når Editor-runtime er tilgængelig.
-7. Eventuelle editor-, package- eller module-ændringer dokumenteres i `VERSION.txt` og designmanualens implementeringsstatus.
+6. Projektet compile-testes i den valgte Unity-version, og blokkerende compiler-fejl rettes før Play-test.
+7. Obsolete API-warnings og kendte kodewarnings ryddes, når de opdages i den aktive baseline, så warnings ikke skjuler senere regressions.
+8. Eventuelle editor-, package-, module- eller compile-ændringer dokumenteres i `VERSION.txt` og designmanualens implementeringsstatus.
 
 P0A er en systems-prototype og ikke den endelige P3 Tactical Vertical Slice fra roadmapet. Den reducerede prototype bruges til at opdage arkitektur- og kontrolproblemer tidligt, før order-delay, bataljoner, historiske assets og persistent campaign state kobles på.
