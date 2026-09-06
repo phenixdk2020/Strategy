@@ -1,17 +1,17 @@
-# PROJECT 1864 — Designmanual v00.02.06
+# PROJECT 1864 — Designmanual v00.02.07
 
 ## 37. Implementeringsstatus – P0A Unity 3D Battle Prototype
 
 P0A er den første spilbare tekniske vertical slice. Formålet er ikke endelig grafik eller historisk balance, men at bevise at den valgte regimentsmodel kan styres i realtid i 3D og at authoritative mandskab, formation, range, combat, morale og rout kan holdes adskilt fra den grafiske 1:10-repræsentation.
 
-### 37.1 Spilbar scope v00.00.06
+### 37.1 Spilbar scope v00.00.07
 
 | System | P0A implementering |
 | --- | --- |
 | Battle setup | 2 danske regimenter mod 2 preussiske regimenter på et kompakt proceduralt 3D-kort. |
 | Authoritative strength | Danmark: 1. Regiment 620 og 5. Regiment 585. Preussen: 8th Regiment 610 og 18th Regiment 560. |
 | 3D representation | Ca. 1 grafisk soldat pr. 10 faktiske soldater; ca. 240 simple 3D-soldatmodeller samlet. |
-| Camera | RTS-kamera med WASD/piletaster, Q/E rotation og musehjulszoom. |
+| Camera | RTS-kamera med WASD/piletaster, Q/E rotation og musehjulszoom; kamera-input er uafhængigt af battle timeScale. |
 | Selection & orders | Klik/Shift+klik på danske regimenter, højreklik for movement eller attack order. |
 | Formation | Line og column kan skiftes under slaget. |
 | Range | Valgte regimenter kan vise effektiv skudafstand som ring på terrænet. |
@@ -19,7 +19,7 @@ P0A er den første spilbare tekniske vertical slice. Formålet er ikke endelig g
 | Unit state | Strength, morale, cohesion og rout er simulerede regimentsværdier. |
 | Enemy AI | Simpel preussisk AI; ét regiment angriber direkte, ét andet bruger en indledende flankerende waypoint. |
 | Time | Pause samt 1x/2x/3x og en løbende battle clock. |
-| Outcome | Battle manager afgør dansk sejr/nederlag, når modstanderens kampaktive regimenter er routed/ødelagt. |
+| Outcome | Battle manager afgør dansk sejr/nederlag, låser slaget i pause-state efter resultat og tillader restart med R. |
 
 ### 37.2 Arkitektur der nu er praktisk bevist
 
@@ -39,6 +39,8 @@ P0A er den første spilbare tekniske vertical slice. Formålet er ikke endelig g
 - Våbenparametre er prototype-tuning og må ikke betragtes som endeligt historisk balancegrundlag.
 
 ### 37.4 Foreslået næste build – P0B
+
+P0B må først påbegyndes, når P0A v00.00.07 er compile-clean og runtime-valideret i Unity 6000.6.0f1.
 
 1. Indfør bataljoner som underformationer i regimentet.
 2. Implementér order delay, acknowledgement og brigadechefens selvstændige reaktioner ud fra skills/personality.
@@ -114,5 +116,25 @@ Før en Unity-prototype markeres som spilbar skal følgende kontrolleres:
 6. Projektet compile-testes i den valgte Unity-version, og blokkerende compiler-fejl rettes før Play-test.
 7. Obsolete API-warnings og kendte kodewarnings ryddes, når de opdages i den aktive baseline, så warnings ikke skjuler senere regressions.
 8. Eventuelle editor-, package-, module- eller compile-ændringer dokumenteres i `VERSION.txt` og designmanualens implementeringsstatus.
+9. Pause, 1x/2x/3x, kamera, selection/orders, formationer, combat/rout, victory/defeat og restart gennemføres som en fast P0A smoke-test.
 
 P0A er en systems-prototype og ikke den endelige P3 Tactical Vertical Slice fra roadmapet. Den reducerede prototype bruges til at opdage arkitektur- og kontrolproblemer tidligt, før order-delay, bataljoner, historiske assets og persistent campaign state kobles på.
+
+### 37.9 Statisk QA-hardening – P0A v00.00.07
+
+Inden P0B er hele den aktuelle P0A-runtimekode samt editor-bootstrap blevet gennemgået statisk med Unity `6000.6.0f1` som target. Følgende klare runtime-/input-risici er rettet:
+
+- **Battle-end state** — efter victory/defeat er slaget nu terminalt pauset. Space og 1/2/3 ignoreres, så en afsluttet kamp ikke kan sættes i gang igen uden state-reset. `R` er fortsat den eksplicitte restart.
+- **RTS camera og timeScale** — pan og rotation bruger `Time.unscaledDeltaTime`, så kameraet bevæger sig med samme real-time hastighed under pause, 1x, 2x og 3x.
+- **Kamera-input** — WASD og piletaster læses direkte med `Input.GetKey` i stedet for via navngivne `Horizontal`/`Vertical` Input Manager-akser. Det reducerer afhængigheden af ikke-versionerede Input Manager-defaults i den nuværende minimale repository-baseline.
+- **Mousewheel zoom** — zoom anvender et fast step pr. scroll-input i stedet for at gange scroll-delta med frame delta; zoomoplevelsen er dermed ikke frame-rate-afhængig.
+- **MainCamera null guard** — `PlayerCommander` forsøger at reacquire `Camera.main` og springer input-frame over, hvis kameraet ikke findes, frem for at dereferere `null`.
+- **BattleManager singleton guard** — en dublet-manager kan ikke længere overskrive den aktive `Instance`; `Instance` ryddes desuden ved destruction af den aktive manager.
+- **HUD camera lookup** — `Camera.main` caches én gang pr. `OnGUI`-pass og genbruges for alle regimentslabels.
+- **Register guard** — `BattleManager.Register` ignorerer `null` og dubletter.
+
+Den bredere statiske gennemgang fandt ingen yderligere klare compiler errors eller obsolete API-kald i de fem runtime-scripts og editor-startup-scriptet. Den tidligere `FindAnyObjectByType`-ændring er i tråd med Unity 6 API'et, og de aktiverede built-in moduler matcher de namespaces/types, som P0A faktisk anvender.
+
+Dette er **statisk QA**, ikke en påstand om runtime-validering. P0A v00.00.07 må først betegnes compile-clean/spilbar baseline, når den efterfølgende test i Unity 6000.6.0f1 er gennemført uden blokkerende Console-fejl og det fulde 2-mod-2 smoke-test-loop fungerer.
+
+Repositoryet har fortsat en minimal Unity-generated metadata-baseline: `ProjectSettings/` indeholder på GitHub aktuelt kun `ProjectVersion.txt`, mens scene, `.meta`-filer, `Packages/packages-lock.json` og flere editor-genererede settings kan opstå lokalt ved åbning. De må ikke slettes blindt. Efter næste Unity-test inspiceres lokal `git status`, før der træffes en separat beslutning om hvilke generated metadata der skal versionsstyres for en mere reproducerbar baseline.

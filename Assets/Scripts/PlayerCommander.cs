@@ -14,7 +14,11 @@ public sealed class PlayerCommander : MonoBehaviour
     private void Update()
     {
         if (cam == null)
+        {
             cam = Camera.main;
+            if (cam == null)
+                return;
+        }
 
         if (Input.GetMouseButtonDown(0))
             HandleSelection();

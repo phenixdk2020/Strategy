@@ -18,11 +18,38 @@ public sealed class BattleManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("Duplicate BattleManager detected; the duplicate component has been disabled.");
+            enabled = false;
+            return;
+        }
+
         Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            RestartBattle();
+            return;
+        }
+
+        // A concluded battle is a terminal paused state. Only restart is accepted.
+        if (!string.IsNullOrEmpty(resultMessage))
+        {
+            if (!paused)
+                SetPaused(true);
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.Space))
             SetPaused(!paused);
         if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -31,10 +58,8 @@ public sealed class BattleManager : MonoBehaviour
             SetSpeed(2);
         if (Input.GetKeyDown(KeyCode.Alpha3))
             SetSpeed(3);
-        if (Input.GetKeyDown(KeyCode.R))
-            RestartBattle();
 
-        if (!paused && string.IsNullOrEmpty(resultMessage))
+        if (!paused)
             battleMinutes += Time.deltaTime * 2.2f;
 
         EvaluateBattleResult();
@@ -42,7 +67,7 @@ public sealed class BattleManager : MonoBehaviour
 
     public void Register(Regiment regiment)
     {
-        if (!regiments.Contains(regiment))
+        if (regiment != null && !regiments.Contains(regiment))
             regiments.Add(regiment);
     }
 
@@ -139,11 +164,12 @@ public sealed class BattleManager : MonoBehaviour
         GUI.Box(new Rect(Screen.width - 295, 52, 285, 84),
             "PREUSSEN\nTag højderyggen\nBryd den danske stilling / flankér vejen", helpStyle);
 
+        Camera mainCamera = Camera.main;
         foreach (Regiment regiment in regiments)
         {
-            if (regiment == null || Camera.main == null)
+            if (regiment == null || mainCamera == null)
                 continue;
-            Vector3 screen = Camera.main.WorldToScreenPoint(regiment.transform.position + Vector3.up * 3f);
+            Vector3 screen = mainCamera.WorldToScreenPoint(regiment.transform.position + Vector3.up * 3f);
             if (screen.z <= 0f)
                 continue;
 

@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel baseline: v00.02.06**
+**Aktuel baseline: v00.02.07**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -19,6 +19,7 @@ Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i del
 
 ## Versionshistorik
 
+- **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er gjort terminalt pauset indtil restart, RTS-kameraet er gjort uafhængigt af `Time.timeScale`, WASD/piletaster læses direkte uden navngivne Input Manager-akser, musehjulszoom er frame-rate-uafhængig, og defensive guards er tilføjet for manglende `MainCamera` samt dublet `BattleManager`. Ingen P0B-features er introduceret; Unity compile/Play-test er fortsat release-gaten.
 - **v00.02.06** — P0A v00.00.06: første C#-compile-gate i Unity 6.6 ryddet op. `CS0136` i regimentets formationskode er rettet, obsolete `FindFirstObjectByType` er erstattet af `FindAnyObjectByType`, og den ubrugte `holdPosition`-state er fjernet.
 - **v00.02.05** — P0A v00.00.05: Unity 6.6 compile-fix ved at aktivere built-in modulerne IMGUI, Particle System, Physics og Audio i `Packages/manifest.json`. Fejlene CS1069 for `GUIStyle` og `ParticleSystem` er dermed adresseret ved projektkonfiguration frem for kode-workarounds.
 - **v00.02.04** — Unity-baseline flyttet til den installerede `6000.6.0f1` (Unity 6.6), changeset `f7f8ed4d1e24`. P0A hævet til v00.00.04, så Unity Hub kan åbne den friske GitHub-clone uden missing-editor warning på testmaskinen.
