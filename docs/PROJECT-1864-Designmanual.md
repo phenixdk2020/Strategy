@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel baseline: v00.02.03**
+**Aktuel baseline: v00.02.04**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -19,8 +19,9 @@ Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i del
 
 ## Versionshistorik
 
-- **v00.02.03** — Repository-layout fastlåst: `Strategy`-roden er nu selve Unity-projektet (`Assets`, `Packages`, `ProjectSettings`). Den tidligere `prototype/P0A-Unity-Battle/`-undermappe er fjernet. P0A hævet til v00.00.03.
-- **v00.02.02** — P0A v00.00.02: Unity Editor metadata rettet og låst til Unity 6000.3.17f1 (Unity 6.3 LTS), så Unity Hub kan identificere projektet korrekt.
+- **v00.02.04** — Unity-baseline flyttet til den installerede `6000.6.0f1` (Unity 6.6), changeset `f7f8ed4d1e24`. P0A hævet til v00.00.04, så Unity Hub kan åbne den friske GitHub-clone uden missing-editor warning på testmaskinen.
+- **v00.02.03** — Repository-layout fastlåst: `Strategy`-roden er selve Unity-projektet (`Assets`, `Packages`, `ProjectSettings`). Den tidligere `prototype/P0A-Unity-Battle/`-undermappe er fjernet. P0A hævet til v00.00.03.
+- **v00.02.02** — P0A v00.00.02: Unity Editor metadata rettet og låst til Unity 6000.3.17f1, så Unity Hub kan identificere projektet korrekt.
 - **v00.02.01** — Første konkrete implementeringsbaseline: P0A Unity 3D battle prototype dokumenteret og koblet til roadmap/vertical slice.
 - **v00.02.00** — Expanded systems baseline: økonomi, udvikling, handel, forskning, rekruttering, træning, sanitet/fanger, regimentshistorik, faner samt unit traits og formation specialisations.
 - **v00.01.00** — Første samlede designbaseline.
