@@ -32,7 +32,6 @@ public sealed class Regiment : MonoBehaviour
     private readonly List<Transform> soldierModels = new List<Transform>();
     private Vector3 destination;
     private bool hasDestination;
-    private bool holdPosition;
     private float moveSpeed;
     private float fireInterval;
     private float baseAccuracy;
@@ -200,12 +199,10 @@ public sealed class Regiment : MonoBehaviour
             {
                 destination = forcedTarget.transform.position;
                 hasDestination = true;
-                holdPosition = false;
             }
             else
             {
                 hasDestination = false;
-                holdPosition = true;
             }
         }
 
@@ -249,7 +246,6 @@ public sealed class Regiment : MonoBehaviour
         else
         {
             hasDestination = false;
-            holdPosition = true;
             forcedTarget = aiTarget;
         }
     }
@@ -318,8 +314,8 @@ public sealed class Regiment : MonoBehaviour
 
         int columnCount = 4;
         int columnRank = index / columnCount;
-        int column = index % columnCount;
-        return new Vector3((column - 1.5f) * 0.78f, 0f, -columnRank * 0.78f);
+        int columnIndex = index % columnCount;
+        return new Vector3((columnIndex - 1.5f) * 0.78f, 0f, -columnRank * 0.78f);
     }
 
     private Regiment FindNearestEnemy(float maxDistance)
@@ -387,7 +383,6 @@ public sealed class Regiment : MonoBehaviour
         IsRouted = true;
         Morale = Mathf.Min(Morale, 15f);
         forcedTarget = null;
-        holdPosition = false;
         Vector3 retreat = transform.position + (Team == BattleTeam.Denmark ? Vector3.left : Vector3.right) * 90f;
         retreat.z += Random.Range(-15f, 15f);
         destination = retreat;
@@ -425,7 +420,6 @@ public sealed class Regiment : MonoBehaviour
         destination = worldPoint;
         destination.y = PrototypeBootstrap.SampleGroundHeight(destination.x, destination.z) + 0.10f;
         hasDestination = true;
-        holdPosition = false;
     }
 
     public void OrderAttack(Regiment target)
@@ -433,7 +427,6 @@ public sealed class Regiment : MonoBehaviour
         if (IsRouted || target == null || target.Team == Team)
             return;
         forcedTarget = target;
-        holdPosition = false;
         float d = Vector3.Distance(transform.position, target.transform.position);
         if (d > EffectiveRange * 0.92f)
         {
@@ -448,7 +441,6 @@ public sealed class Regiment : MonoBehaviour
             return;
         hasDestination = false;
         forcedTarget = null;
-        holdPosition = true;
     }
 
     public void SetFormation(RegimentFormation formation)
