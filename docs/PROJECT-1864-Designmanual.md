@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel baseline: v00.02.00**
+**Aktuel baseline: v00.02.01**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -15,10 +15,14 @@ Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i del
 - [Del 5B: Feature-arkitektur F16–F31](parts/part-05b-F16-F31.md)
 - [Del 5C: Feature-arkitektur F32–F47](parts/part-05c-F32-F47.md)
 - [Del 6: 29–36 — Milepæle, vertical slice, risici, datarelationer, historisk grounding og designbeslutninger](parts/part-06-29-36.md)
+- [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 
 ## Versionshistorik
 
+- **v00.02.01** — Første konkrete implementeringsbaseline: P0A Unity 3D battle prototype dokumenteret og koblet til roadmap/vertical slice.
 - **v00.02.00** — Expanded systems baseline: økonomi, udvikling, handel, forskning, rekruttering, træning, sanitet/fanger, regimentshistorik, faner samt unit traits og formation specialisations.
 - **v00.01.00** — Første samlede designbaseline.
 
-Git-historikken bevarer tidligere udgaver af alle Markdown-dele.
+## Projektregel
+
+Designmanualen skal opdateres både som layoutet Word-master og her i GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere udgaver af Markdown-delene.
