@@ -43,7 +43,6 @@ public sealed class BattleManager : MonoBehaviour
             return;
         }
 
-        // A concluded battle is a terminal paused state. Only restart is accepted.
         if (!string.IsNullOrEmpty(resultMessage))
         {
             if (!paused)
@@ -133,7 +132,7 @@ public sealed class BattleManager : MonoBehaviour
             return;
 
         unitStyle = new GUIStyle(GUI.skin.box);
-        unitStyle.fontSize = 12;
+        unitStyle.fontSize = 11;
         unitStyle.alignment = TextAnchor.MiddleCenter;
         unitStyle.normal.textColor = Color.white;
 
@@ -164,11 +163,11 @@ public sealed class BattleManager : MonoBehaviour
         int minutes = Mathf.FloorToInt(battleMinutes) % 60;
         string clock = $"1 February 1864  {hours:00}:{minutes:00}";
         string state = paused ? "PAUSE" : speed + "x";
-        GUI.Box(new Rect(10, 10, Screen.width - 20, 34), $"PROJECT 1864 - P0A Battle Prototype v00.00.08     {clock}     [{state}]", topStyle);
+        GUI.Box(new Rect(10, 10, Screen.width - 20, 34), $"PROJECT 1864 - P0A v00.00.09 OFFICER AI TEST     {clock}     [{state}]", topStyle);
 
-        GUI.Box(new Rect(10, 52, 285, 84),
+        GUI.Box(new Rect(10, 80, 285, 84),
             "DANMARK\nHold højderyggen og gården\nSlå de to preussiske regimenter tilbage", helpStyle);
-        GUI.Box(new Rect(Screen.width - 295, 52, 285, 84),
+        GUI.Box(new Rect(Screen.width - 295, 80, 285, 84),
             "PREUSSEN\nTag højderyggen\nBryd den danske stilling / flankér vejen", helpStyle);
 
         Camera mainCamera = Camera.main;
@@ -181,23 +180,40 @@ public sealed class BattleManager : MonoBehaviour
             if (screen.z <= 0f)
                 continue;
 
-            float x = screen.x - 100f;
-            float y = Screen.height - screen.y - 31f;
+            float x = screen.x - 125f;
+            float y = Screen.height - screen.y - 45f;
             string team = regiment.Team == BattleTeam.Denmark ? "DK" : "PR";
             string routed = regiment.IsRouted ? "  ROUTED" : string.Empty;
+
+            OfficerAIController ai = regiment.GetComponent<OfficerAIController>();
+            string aiLine = "AI controller installing";
+            string taskLine = string.Empty;
+            if (ai != null && ai.Officer != null)
+            {
+                aiLine = string.Format(
+                    "{0} | {1} | T{2:0} Init{3:0} Comp{4:0}",
+                    ai.AIEnabled ? "AI ON" : "AI OFF",
+                    ai.Officer.OfficerName,
+                    ai.Officer.TacticalSkill,
+                    ai.Officer.Initiative,
+                    ai.Officer.Composure);
+                taskLine = ai.CurrentTask + " | " + ai.ReasonCode;
+            }
+
             string label =
                 $"{regiment.RegimentName} ({team})  {regiment.CurrentStrength}\n" +
                 $"{regiment.WeaponShortName} | Exp {regiment.Experience:0} | Reload {regiment.CurrentReloadSeconds:0.0}s\n" +
-                $"Morale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}";
+                $"Morale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}\n" +
+                aiLine + "\n" + taskLine;
 
-            GUI.Box(new Rect(x, y, 200f, 62f), label, unitStyle);
+            GUI.Box(new Rect(x, y, 250f, 94f), label, unitStyle);
 
             if (regiment.HasHitFeedback)
                 GUI.Box(new Rect(screen.x - 62f, y - 30f, 124f, 26f), $"Ramte {regiment.LastVolleyHits}", hitStyle);
         }
 
         GUI.Box(new Rect(10, Screen.height - 116, 390, 106),
-            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\nF = line | C = column | H = hold | T = range\nWASD = kamera | Q/E = roter | hjul = zoom | Space = pause | 1/2/3 = speed | R = restart", helpStyle);
+            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\nF = line | C = column | H = hold | T = range | A = AI UNIT ON/OFF\nWASD = kamera | Q/E = roter | hjul = zoom | Space = pause | 1/2/3 = speed | R = restart", helpStyle);
 
         if (!string.IsNullOrEmpty(resultMessage))
         {
