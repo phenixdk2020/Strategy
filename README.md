@@ -13,7 +13,7 @@ Unity projektstruktur:
 - `ProjectSettings/` — Unity project metadata og editor-version.
 - `docs/` — designmanual og teknisk dokumentation.
 
-Aktuel prototype: **P0A v00.00.05**.
+Aktuel prototype: **P0A v00.00.06**.
 Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
 
 Baseline er valgt, fordi projektets aktuelle testmaskine allerede har 6000.6.0f1 installeret. Det reducerer unødvendige Unity Hub-versionadvarsler og gør clone -> open-workflowet direkte.
@@ -27,9 +27,17 @@ P0A bruger Unity-funktionalitet, som i Unity 6.6 skal være eksplicit aktiveret 
 - `com.unity.modules.physics` — raycasts og colliders til selection/orders.
 - `com.unity.modules.audio` — `AudioListener` på kameraet.
 
+### Aktuel compile-status
+
+P0A v00.00.06 retter den første C#-compile-gate efter package-konfigurationen:
+
+- `CS0136` i `Regiment.GetFormationPosition()` er rettet ved at undgå navnekollisionen på `column`.
+- Obsolete `FindFirstObjectByType` er erstattet med `FindAnyObjectByType` for Unity 6.6.
+- Den ubrugte `holdPosition`-state er fjernet, så `CS0414`-warningen ikke længere genereres.
+
 ## Designmanual
 
-Aktuel designbaseline: **v00.02.05**
+Aktuel designbaseline: **v00.02.06**
 
 - `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual med links til alle dele.
 - `docs/parts/` — manualen opdelt i versionsvenlige Markdown-dele.
