@@ -1,6 +1,7 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.04
-Design manual baseline: v00.02.04
+Prototype version: v00.00.05
+Design manual baseline: v00.02.05
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
+Built-in modules enabled: IMGUI, Particle System, Physics, Audio
