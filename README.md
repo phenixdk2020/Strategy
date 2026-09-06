@@ -8,6 +8,5 @@ Aktuel designbaseline: **v00.02.00**
 
 - `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual med links til alle dele.
 - `docs/parts/` — den aktuelle manual opdelt i versionsvenlige Markdown-dele.
-- `docs/versions/PROJECT-1864-Game-Design-og-Feature-Arkitektur-v00.02.00.docx` — QA-godkendt, layoutet Word-master.
 
-Designmanualen er projektets designmæssige source of truth og skal opdateres på GitHub, når designbeslutninger ændres. Word-masteren versionsarkiveres, mens den GitHub-læsbare Markdown-udgave holdes på den aktuelle baseline.
+Designmanualen er projektets designmæssige source of truth og skal opdateres på GitHub, når designbeslutninger ændres. Git-historikken bevarer alle tidligere versioner. Den layoutede Word-master opdateres samtidig som projektartefakt og QA-kontrolleres før levering.
