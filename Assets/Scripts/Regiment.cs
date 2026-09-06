@@ -13,6 +13,12 @@ public enum RegimentFormation
     Column
 }
 
+public enum InfantryWeaponType
+{
+    RifledMuzzleLoader,
+    DreyseNeedleRifle
+}
+
 public sealed class Regiment : MonoBehaviour
 {
     public string RegimentName { get; private set; }
@@ -21,11 +27,19 @@ public sealed class Regiment : MonoBehaviour
     public int CurrentStrength { get; private set; }
     public float Morale { get; private set; } = 100f;
     public float Cohesion { get; private set; } = 100f;
+    public float Experience { get; private set; } = 50f;
     public bool IsRouted { get; private set; }
     public bool IsSelected { get; private set; }
     public RegimentFormation Formation { get; private set; } = RegimentFormation.Line;
+    public InfantryWeaponType WeaponType { get; private set; }
+    public string WeaponName { get; private set; }
+    public string WeaponShortName { get; private set; }
+    public float BaseReloadSeconds { get; private set; }
+    public float CurrentReloadSeconds => BaseReloadSeconds * GetExperienceReloadMultiplier();
     public float EffectiveRange { get; private set; }
     public float MaximumRange { get; private set; }
+    public int LastVolleyHits { get; private set; }
+    public bool HasHitFeedback => LastVolleyHits > 0 && Time.unscaledTime < hitFeedbackUntil;
     public bool ShowRange { get; set; } = true;
     public bool IsAI { get; private set; }
 
@@ -33,11 +47,11 @@ public sealed class Regiment : MonoBehaviour
     private Vector3 destination;
     private bool hasDestination;
     private float moveSpeed;
-    private float fireInterval;
     private float baseAccuracy;
     private float nextFireTime;
     private float underFireTimer;
     private float aiThinkTimer;
+    private float hitFeedbackUntil;
     private Regiment forcedTarget;
     private Regiment aiTarget;
     private bool hasAiWaypoint;
@@ -48,29 +62,24 @@ public sealed class Regiment : MonoBehaviour
     private Material uniformMaterial;
     private Material darkMaterial;
 
-    public void Initialize(string regimentName, BattleTeam team, int strength, bool isAI, Vector3 startPosition, Vector3? initialAiWaypoint = null)
+    public void Initialize(string regimentName, BattleTeam team, int strength, bool isAI, Vector3 startPosition, Vector3? initialAiWaypoint = null, float? experience = null)
     {
         RegimentName = regimentName;
         Team = team;
         InitialStrength = strength;
         CurrentStrength = strength;
         IsAI = isAI;
+        Experience = Mathf.Clamp(experience ?? GetPrototypeExperience(regimentName), 0f, 100f);
         transform.position = startPosition;
 
         if (team == BattleTeam.Denmark)
         {
-            EffectiveRange = 43f;
-            MaximumRange = 55f;
-            fireInterval = 5.0f;
-            baseAccuracy = 0.014f;
+            ApplyWeaponProfile(InfantryWeaponType.RifledMuzzleLoader);
             moveSpeed = 3.2f;
         }
         else
         {
-            EffectiveRange = 37f;
-            MaximumRange = 49f;
-            fireInterval = 3.6f;
-            baseAccuracy = 0.013f;
+            ApplyWeaponProfile(InfantryWeaponType.DreyseNeedleRifle);
             moveSpeed = 3.35f;
         }
 
@@ -87,6 +96,58 @@ public sealed class Regiment : MonoBehaviour
 
         CreateVisuals();
         BattleManager.Instance.Register(this);
+    }
+
+    private void ApplyWeaponProfile(InfantryWeaponType weaponType)
+    {
+        WeaponType = weaponType;
+
+        switch (weaponType)
+        {
+            case InfantryWeaponType.DreyseNeedleRifle:
+                WeaponName = "Dreyse needle rifle";
+                WeaponShortName = "Dreyse";
+                EffectiveRange = 37f;
+                MaximumRange = 49f;
+                BaseReloadSeconds = 3.6f;
+                baseAccuracy = 0.013f;
+                break;
+
+            default:
+                WeaponName = "Rifled muzzle-loader";
+                WeaponShortName = "Rifled ML";
+                EffectiveRange = 43f;
+                MaximumRange = 55f;
+                BaseReloadSeconds = 5.0f;
+                baseAccuracy = 0.014f;
+                break;
+        }
+    }
+
+    private static float GetPrototypeExperience(string regimentName)
+    {
+        // Prototype QA values only. These are deliberately varied so reload scaling
+        // can be verified before experience is moved to historical/OOB data.
+        switch (regimentName)
+        {
+            case "1. Regiment":
+                return 55f;
+            case "5. Regiment":
+                return 42f;
+            case "8th Regiment":
+                return 65f;
+            case "18th Regiment":
+                return 50f;
+            default:
+                return 50f;
+        }
+    }
+
+    private float GetExperienceReloadMultiplier()
+    {
+        // Experience 50 is neutral. The full 0-100 range is bounded to +20%/-20%
+        // reload time so weapon technology remains the dominant cadence factor.
+        return Mathf.Lerp(1.20f, 0.80f, Experience / 100f);
     }
 
     private void CreateVisuals()
@@ -355,21 +416,26 @@ public sealed class Regiment : MonoBehaviour
         float quality = (Morale / 100f) * (Cohesion / 100f);
         int firingMen = Mathf.RoundToInt(CurrentStrength * 0.58f);
         float expected = firingMen * baseAccuracy * (0.35f + 0.95f * rangeQuality) * effectiveBonus * quality;
-        int casualties = Mathf.Clamp(Mathf.RoundToInt(expected * Random.Range(0.72f, 1.28f)), 1, 16);
+        int hits = Mathf.Clamp(Mathf.RoundToInt(expected * Random.Range(0.72f, 1.28f)), 0, 16);
         float shock = Mathf.Lerp(1.5f, 5.0f, rangeQuality);
 
-        target.ReceiveVolley(casualties, shock, this);
+        target.ReceiveVolley(hits, shock, this);
         smoke.Emit(Random.Range(18, 34));
-        nextFireTime = Time.time + fireInterval * Random.Range(0.90f, 1.12f);
+        nextFireTime = Time.time + CurrentReloadSeconds * Random.Range(0.90f, 1.12f);
         Cohesion = Mathf.Max(30f, Cohesion - Random.Range(0.4f, 1.2f));
     }
 
-    public void ReceiveVolley(int casualties, float shock, Regiment attacker)
+    public void ReceiveVolley(int hits, float shock, Regiment attacker)
     {
-        CurrentStrength = Mathf.Max(0, CurrentStrength - casualties);
-        Morale = Mathf.Max(0f, Morale - casualties * 0.32f - shock);
-        Cohesion = Mathf.Max(0f, Cohesion - casualties * 0.25f - shock * 0.7f);
+        int resolvedHits = Mathf.Clamp(hits, 0, CurrentStrength);
+        CurrentStrength -= resolvedHits;
+        Morale = Mathf.Max(0f, Morale - resolvedHits * 0.32f - shock);
+        Cohesion = Mathf.Max(0f, Cohesion - resolvedHits * 0.25f - shock * 0.7f);
         underFireTimer = 7f;
+
+        LastVolleyHits = resolvedHits;
+        hitFeedbackUntil = resolvedHits > 0 ? Time.unscaledTime + 1.45f : 0f;
+
         RefreshVisualStrength();
 
         if (CurrentStrength <= 0 || Morale <= 17f || CurrentStrength <= InitialStrength * 0.24f)
