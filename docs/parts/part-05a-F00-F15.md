@@ -191,7 +191,7 @@ Exit-kriterier.
 - Et encounter kan starte et 3D-slag og returnere ændrede styrker uden duplikation af units.
 - Campaign clock fremrykkes med battle duration.
 
-### F10 – Formation rendering 1:10 og tactical movement
+### F10 – Formation rendering 1:10, stance og tactical movement
 
 Formål. Vise regimenter/bataljoner som store levende formationer uden individual-agent overhead.
 
@@ -201,6 +201,8 @@ Indhold.
 - GPU/animation instancing baseline.
 - Line/column/skirmish formations.
 - Formation-level pathfinding + local avoidance.
+- Stance-state mindst standing og prone; senere kneeling/skirmish variationer.
+- Occupy-cover behavior, hvor formationen kobles til fysisk cover geometry og retning i stedet for en abstrakt buff.
 
 Afhængigheder. F09
 
@@ -208,8 +210,10 @@ Exit-kriterier.
 
 - 1.000 simulerede mænd kan vises som ca. 100 modeller og skifte formation stabilt.
 - Render ratio kan ændres uden at combat state ændres.
+- En formation kan gå fra standing til prone og tilbage med tids-/movement-/cohesion-konsekvens.
+- En enhed kan besætte et hegn, en grøft eller et brystværn og bevare korrekt facing mod coveret.
 
-### F11 – Infanteri-ild, range, ammunition og smoke
+### F11 – Infanteri-ild, range, ammunition, cover og smoke
 
 Formål. Skabe den centrale synlige black-powder ildkamp.
 
@@ -217,8 +221,11 @@ Indhold.
 
 - Weapon profiles, loading method, reload cadence og range curves.
 - Experience/training som bounded modifier på reload og fire discipline.
+- Stance-afhængig reload; muzzle-loaders får større penalty i prone end breech-loaders.
 - Volley/independent fire og konkret ammunition consumption.
 - Casualty resolution med killed/wounded/missing hooks.
+- Directional cover og concealment fra hegn, mure, grøfter, bygninger, vegetation og terrain folds.
+- Prone reducerer target profile; effekt beregnes separat for small arms og forskellige artillery/ammunitionstyper.
 - Muzzle effects, representative projectiles og smoke field.
 - Range overlay og combat feedback.
 
@@ -229,6 +236,8 @@ Exit-kriterier.
 - Effekten af 100 m og 400 m ild er forskellig efter weapon curve.
 - To enheder med samme våben men forskellig experience har dokumenterbart forskellig reload uden at teknologiforskellen udviskes.
 - Enheden kan løbe tør for ammunition og genforsynes fra kompatibel supply.
+- En prone formation er målbar sværere at ramme end en tilsvarende stående formation, uden at være immun mod artilleri.
+- Cover virker kun fra relevante retninger og ophører, når enheden forlader positionen.
 - Smoke reducerer faktisk LOS/accuracy, ikke kun grafik.
 
 ### F12 – Morale, cohesion, fatigue og rout
@@ -257,6 +266,7 @@ Indhold.
 
 - Gun/battery data, limber/unlimber, ammunition.
 - Targeting, LOS, trajectory visuals, counter-battery.
+- Ammunitionstyper får forskellige effektmodeller mod standing/prone, open ground og cover/fieldworks.
 - Crew/horses og explicit equipment state: operational, abandoned, disabled/destroyed, captured.
 - Capture kræver fysisk kontrol; genbrug kræver egnet crew, ammunition og klargøringstid.
 
@@ -266,6 +276,7 @@ Exit-kriterier.
 
 - Et batteri kan deploye, skyde, bruge ammunition, flytte, blive forladt og blive erobret.
 - Piece count, condition og ownership returneres korrekt til kampagnen.
+- Prone/cover påvirker artilleriets casualty probability efter ammunitionstype uden at gøre beskyttelsen absolut.
 
 ### F14 – Kavaleri, dragoner og reconnaissance
 
@@ -287,19 +298,25 @@ Exit-kriterier.
 - Dragoner kan sidde af, skyde og senere remount uden at miste enhedsidentitet/state.
 - Horse losses påvirker efterfølgende mobility.
 
-### F15 – Ingeniører, broer og befæstning
+### F15 – Ingeniører, hasty fieldworks, broer og befæstning
 
 Formål. Gøre terrænændringer og fortifikationer til vedvarende state.
 
 Indhold.
 
 - Field works, bridge tasks, demolition, repair.
+- Almindeligt infanteri kan bygge hasty cover: skyttehuller, lave jordvolde/brystværn og improviserede barrikader, når tid, terræn og værktøj tillader det.
+- Ingeniører giver højere build-rate og kan konstruere/forbedre mere avancerede stillinger.
+- Field works har position, orientation, construction progress, condition og cover class/value.
+- Artilleri kan beskadige fieldworks; eksisterende stillinger kan forbedres eller repareres.
 - Task progress og material/tool requirements.
 - Transfer mellem strategic improvements og tactical objects.
 
-Afhængigheder. F06, F07, F09
+Afhængigheder. F06, F07, F09, F10, F11
 
 Exit-kriterier.
 
 - En bygget/ødelagt bro påvirker både strategic pathing og battle map.
+- Infanteri kan etablere en simpel hasty position over tid og få directional cover, når den fysisk besætter stillingen.
+- Ingeniører bygger samme type stilling hurtigere eller stærkere end almindeligt infanteri.
 - Entrenchment kan forbedres over tid og følge unit/position data.
