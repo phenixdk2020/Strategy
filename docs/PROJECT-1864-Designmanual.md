@@ -6,6 +6,8 @@ Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i del
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md).
 
+Den komplette dokumentation af **hvad der faktisk er implementeret i P0A v00.00.08 TEST**, hvad der kun er besluttet i designbaseline v00.02.08, kendte begrænsninger og den fulde Unity acceptance-test ligger i [P0A v00.00.08 Release Notes](releases/P0A-v00.00.08-RELEASE-NOTES.md).
+
 ## Indhold
 
 - [Del 1: 1–6 — Executive summary, slutvision, strategisk realtid, kort, nationer og OOB](parts/part-01-01-06.md)
@@ -19,11 +21,12 @@ Projektets centrale intake-log for besluttede men endnu ikke implementerede funk
 - [Del 6: 29–36 — Milepæle, vertical slice, risici, datarelationer, historisk grounding og designbeslutninger](parts/part-06-29-36.md)
 - [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
+- [Release Notes — P0A v00.00.08 TEST, komplet delta og acceptance-test](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
 
 ## Versionshistorik
 
-- **v00.02.08** — P0A v00.00.08 TEST: våbenprofilen styrer basis-reload, regimentets experience modificerer reload-tiden inden for et begrænset interval, positive salver viser kort combat feedback som `Ramte N`, og salver kan give 0 direkte hits. Første personeltab pr. regiment skaber desuden én enkel repræsentativ liggende casualty-figur ved tabsstedet; den er kun visualisering og skelner endnu ikke mellem dræbt/såret. Samme designbaseline fastlægger de efterfølgende krav om konkret ammunition og casualty-split i unit UI, skirmishers, erobringsbare/hestetrukne/manhandled kanoner, manuel artillerimåludpegning som standard med valgfri Auto Target, supply-vogne, battlefield salvage, dragoner der kan sidde af og føre ildkamp, directional cover, prone/liggende stilling og hasty fieldworks. P0A v00.00.07 er observeret fungerende i Play Mode med korrekt runtime-bootstrap/rendering; v00.00.08 afventer Unity compile/Play-validering.
+- **v00.02.08** — P0A v00.00.08 TEST: våbenprofilen styrer basis-reload, regimentets experience modificerer reload-tiden inden for et begrænset interval, positive salver viser kort combat feedback som `Ramte N`, og salver kan give 0 direkte hits. Første personeltab pr. regiment skaber desuden én enkel repræsentativ liggende casualty-figur ved tabsstedet; den er kun visualisering og skelner endnu ikke mellem dræbt/såret. Samme designbaseline fastlægger de efterfølgende krav om konkret ammunition og casualty-split i unit UI, skirmishers, forskellige artilleriklasser som feltkanon og haubits, erobringsbare/hestetrukne/manhandled kanoner, manuel artillerimåludpegning som standard med valgfri Auto Target/Hold Fire, supply-vogne, battlefield salvage, dragoner der kan sidde af og føre ildkamp, directional cover, prone/liggende stilling, hasty fieldworks samt en kontekstuel unit-command bar nederst på skærmen. En central backlog og separate release notes er samtidig indført som projektregel, så implementerede funktioner, besluttede senere funktioner og åbne idéer ikke blandes sammen. P0A v00.00.07 er observeret fungerende i Play Mode med korrekt runtime-bootstrap/rendering; v00.00.08 afventer Unity compile/Play-validering.
 - **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er gjort terminalt pauset indtil restart, RTS-kameraet er gjort uafhængigt af `Time.timeScale`, WASD/piletaster læses direkte uden navngivne Input Manager-akser, musehjulszoom er frame-rate-uafhængig, og defensive guards er tilføjet for manglende `MainCamera` samt dublet `BattleManager`.
 - **v00.02.06** — P0A v00.00.06: første C#-compile-gate i Unity 6.6 ryddet op. `CS0136` i regimentets formationskode er rettet, obsolete `FindFirstObjectByType` er erstattet af `FindAnyObjectByType`, og den ubrugte `holdPosition`-state er fjernet.
 - **v00.02.05** — P0A v00.00.05: Unity 6.6 compile-fix ved at aktivere built-in modulerne IMGUI, Particle System, Physics og Audio i `Packages/manifest.json`. Fejlene CS1069 for `GUIStyle` og `ParticleSystem` er dermed adresseret ved projektkonfiguration frem for kode-workarounds.
@@ -36,4 +39,4 @@ Projektets centrale intake-log for besluttede men endnu ikke implementerede funk
 
 ## Projektregel
 
-Designmanualen skal opdateres både som layoutet Word-master og her i GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere udgaver af Markdown-delene. Nye beslutninger og idéer skal desuden registreres i backloggen, så de ikke kun eksisterer i chatsamtaler.
+Designmanualen skal opdateres både som layoutet Word-master og her i GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere udgaver af Markdown-delene. Nye beslutninger og idéer skal desuden registreres i backloggen, så de ikke kun eksisterer i chatsamtaler. Hver testbuild skal have tydelig release-dokumentation, der adskiller **implementeret nu** fra **besluttet senere**.
