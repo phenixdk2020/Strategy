@@ -1,10 +1,10 @@
-# PROJECT 1864 — Designmanual v00.02.02
+# PROJECT 1864 — Designmanual v00.02.03
 
 ## 37. Implementeringsstatus – P0A Unity 3D Battle Prototype
 
 P0A er den første spilbare tekniske vertical slice. Formålet er ikke endelig grafik eller historisk balance, men at bevise at den valgte regimentsmodel kan styres i realtid i 3D og at authoritative mandskab, formation, range, combat, morale og rout kan holdes adskilt fra den grafiske 1:10-repræsentation.
 
-### 37.1 Spilbar scope v00.00.02
+### 37.1 Spilbar scope v00.00.03
 
 | System | P0A implementering |
 | --- | --- |
@@ -48,16 +48,32 @@ P0A er den første spilbare tekniske vertical slice. Formålet er ikke endelig g
 6. Tilføj historiske uniformer, faner og animationssystem.
 7. Tilføj mindst ét artilleribatteri og et simpelt casualty evacuation-/ambulance-hook som første support-system.
 
-### 37.5 Prototypeplacering
+### 37.5 Repository- og Unity-layout
 
-Den spilbare Unity-kode ligger i repositoryet under:
+Fra P0A **v00.00.03** er GitHub-repositoryet `phenixdk2020/Strategy` selv det aktive Unity-projekt. Unity Hub skal derfor clone og åbne repository-roden direkte.
 
-`prototype/P0A-Unity-Battle/`
+```text
+Strategy/
+├── Assets/
+├── Packages/
+├── ProjectSettings/
+├── docs/
+├── README.md
+└── VERSION.txt
+```
+
+Den tidligere placering `prototype/P0A-Unity-Battle/` er fjernet for at undgå, at Unity Hub kloner repositoryet men ikke finder `ProjectSettings/ProjectVersion.txt` i projektroden. Tekniske P0A-noter ligger fremover under `docs/prototypes/`.
+
+Unity editor-baseline er fortsat `6000.3.17f1` (Unity 6.3 LTS). Hvis den præcise patch ikke findes lokalt, kan en anden Unity 6.3 LTS-patch vælges, hvorefter Unity kan opdatere projektmetadata.
+
+### 37.6 Release-QA-regel for Unity-prototyper
+
+Før en Unity-prototype markeres som spilbar skal følgende kontrolleres:
+
+1. `Assets/`, `Packages/` og `ProjectSettings/` findes i den mappe Unity Hub åbner.
+2. `ProjectSettings/ProjectVersion.txt` indeholder en syntaktisk gyldig Unity-version og revision.
+3. Repository-roden kan identificeres af Unity Hub som et Unity-projekt.
+4. Projektet compile-testes i den valgte Unity-version, når en Editor-runtime er tilgængelig.
+5. Eventuelle patch-opgraderinger dokumenteres i `VERSION.txt` og designmanualens implementeringsstatus.
 
 P0A er en systems-prototype og ikke den endelige P3 Tactical Vertical Slice fra roadmapet. Den reducerede prototype bruges til at opdage arkitektur- og kontrolproblemer tidligt, før order-delay, bataljoner, historiske assets og persistent campaign state kobles på.
-
-### 37.6 Unity Editor baseline og kompatibilitet
-
-P0A v00.00.02 fastlåser projektmetadata til **Unity 6000.3.17f1 (Unity 6.3 LTS)** med den officielle changeset `cf0352b38e81`. Den tidligere P0A v00.00.01 indeholdt en placeholder i `ProjectSettings/ProjectVersion.txt` (`6000.0.0f1` med ugyldig revision), hvilket fik Unity Hub til at vise **Unknown / Missing Editor version**. Denne metadatafejl er rettet i v00.00.02.
-
-Designregel fremover: alle distribuerede Unity-prototyper skal indeholde en verificeret `ProjectSettings/ProjectVersion.txt` med en faktisk udgivet Unity-version og korrekt changeset, og versionsmetadata skal valideres som del af release-QA før ZIP eller GitHub baseline markeres som spilbar.
