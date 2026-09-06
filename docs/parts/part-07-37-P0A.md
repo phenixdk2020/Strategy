@@ -1,10 +1,10 @@
-# PROJECT 1864 — Designmanual v00.02.04
+# PROJECT 1864 — Designmanual v00.02.05
 
 ## 37. Implementeringsstatus – P0A Unity 3D Battle Prototype
 
 P0A er den første spilbare tekniske vertical slice. Formålet er ikke endelig grafik eller historisk balance, men at bevise at den valgte regimentsmodel kan styres i realtid i 3D og at authoritative mandskab, formation, range, combat, morale og rout kan holdes adskilt fra den grafiske 1:10-repræsentation.
 
-### 37.1 Spilbar scope v00.00.04
+### 37.1 Spilbar scope v00.00.05
 
 | System | P0A implementering |
 | --- | --- |
@@ -66,7 +66,33 @@ Den tidligere placering `prototype/P0A-Unity-Battle/` er fjernet for at undgå, 
 
 Fra P0A **v00.00.04** er Unity editor-baseline `6000.6.0f1` (Unity 6.6) med changeset `f7f8ed4d1e24`. Baseline er valgt efter faktisk testmiljø: Unity Hub på testmaskinen har 6000.6.0f1 installeret, mens den tidligere 6000.3.17f1 ikke var installeret og derfor udløste `Missing Editor Version`. Projektet skal som udgangspunkt følge den editor-version, der bruges til aktiv udvikling og compile-test, medmindre en senere releasebeslutning fastlåser en anden supporteret Unity-linje.
 
-### 37.6 Release-QA-regel for Unity-prototyper
+### 37.6 Unity 6.6 built-in module dependencies
+
+Ved første compile-test i Unity 6000.6.0f1 viste projektet CS1069-fejl for `UnityEngine.GUIStyle` og `UnityEngine.ParticleSystem`. Årsagen var, at prototypeprojektets `Packages/manifest.json` oprindeligt var tomt, mens Unity 6.6 kræver, at relevante built-in moduler er aktiveret eksplicit.
+
+Fra P0A **v00.00.05** indeholder `Packages/manifest.json` derfor:
+
+```json
+{
+  "dependencies": {
+    "com.unity.modules.audio": "1.0.0",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.particlesystem": "1.0.0",
+    "com.unity.modules.physics": "1.0.0"
+  }
+}
+```
+
+Modulerne understøtter følgende prototypefunktioner:
+
+- **IMGUI** — `GUIStyle`, `GUI.Box` og det midlertidige battle-HUD.
+- **Particle System** — sortkrudtsrøg ved volleyild.
+- **Physics** — raycasts, colliders, selection og ordreinput.
+- **Audio** — `AudioListener` på RTS-kameraet og senere lydeffekter.
+
+Dette er en projektkonfigurationsrettelse, ikke en ændring af battle-design eller simulation.
+
+### 37.7 Release-QA-regel for Unity-prototyper
 
 Før en Unity-prototype markeres som spilbar skal følgende kontrolleres:
 
@@ -74,7 +100,8 @@ Før en Unity-prototype markeres som spilbar skal følgende kontrolleres:
 2. `ProjectSettings/ProjectVersion.txt` indeholder en syntaktisk gyldig Unity-version og revision.
 3. Repository-roden kan identificeres af Unity Hub som et Unity-projekt.
 4. Den valgte Unity-version er installeret på den aktive testmaskine, eller installationen er dokumenteret som et eksplicit krav.
-5. Projektet compile-testes i den valgte Unity-version, når Editor-runtime er tilgængelig.
-6. Eventuelle editor-opgraderinger dokumenteres i `VERSION.txt` og designmanualens implementeringsstatus.
+5. Alle Unity built-in moduler, som scripts refererer til, er eksplicit til stede i `Packages/manifest.json`.
+6. Projektet compile-testes i den valgte Unity-version, når Editor-runtime er tilgængelig.
+7. Eventuelle editor-, package- eller module-ændringer dokumenteres i `VERSION.txt` og designmanualens implementeringsstatus.
 
 P0A er en systems-prototype og ikke den endelige P3 Tactical Vertical Slice fra roadmapet. Den reducerede prototype bruges til at opdage arkitektur- og kontrolproblemer tidligt, før order-delay, bataljoner, historiske assets og persistent campaign state kobles på.
