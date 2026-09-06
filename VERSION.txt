@@ -1,14 +1,17 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.08
+Prototype version: v00.00.09
 Build status: TEST
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
-P0A v00.00.07 runtime observation: bootstrap/rendering works in Play Mode
-Combat cadence: weapon profile base reload + bounded experience modifier
-Volley feedback: salves may resolve to 0 direct hits; positive hits show temporary 'Ramte N'
-Casualty visual: first strength loss creates one representative prone casualty visual per regiment; no killed/wounded distinction yet
-QA state: v00.00.08 TEST pending compile and full Play regression test in Unity 6000.6.0f1
-NEXT GAMEPLAY BUILD: v00.00.09 Officer AI - AI UNIT ON/OFF, shared player/enemy officer decision core, Easy/Normal/Hard AI difficulty, reason codes/telemetry. Highest priority after v00.00.08 gate.
+Previous gate: v00.00.08 reload/experience, 0-hit volley, 'Ramte N' and simple casualty visual retained
+Officer AI: shared OfficerAIController for delegated Danish and enemy Prussian regiments
+Player delegation: A toggles AI UNIT ON/OFF for selected Danish regiment(s)
+Officer core stats: Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution, Composure/Nerve
+Officer background: Experience is separate and primarily reduces decision noise
+Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision noise only, not combat stats or hidden knowledge
+AI telemetry: AI-DIAG console entries expose unit, officer, mission, task and reason code
+HUD QA: unit labels expose AI state, officer, Tactical Skill, Initiative, Composure, current task and reason
+QA state: v00.00.09 TEST requires Unity compile and full Play acceptance test before promotion to main
