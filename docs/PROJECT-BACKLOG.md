@@ -21,6 +21,7 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 | B-003 | AKTIV | `Ramte N` combat feedback | Positive resolved hits vises kort over målet. |
 | B-004 | AKTIV | P0A regressionstest | Kamera, selection/orders, formationer, range, pause/1x/2x/3x, rout, victory/defeat og restart må ikke regressere. |
 | B-005 | PLANLAGT | Reproducerbar Unity repository-baseline | Efter Play-test klassificeres scene, `.meta`, `packages-lock.json` og relevante `ProjectSettings` til permanent versionsstyring. |
+| B-006 | AKTIV | Enkel casualty-visual | Første strength loss pr. regiment opretter én repræsentativ liggende casualty ved tabsstedet; maksimalt én figur pr. regiment i v00.00.08. |
 
 ## Tactical combat — besluttet
 
@@ -35,6 +36,7 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 | B-016 | BESLUTTET | Hasty fieldworks | Almindeligt infanteri kan etablere simple skyttehuller/jordvolde/barrikader; ingeniører gør det hurtigere og bedre. |
 | B-017 | BESLUTTET | LOS og sortkrudtsrøg | Røg er simulation og skal påvirke LOS/accuracy; terræn/objekter må blokere ild. |
 | B-018 | BESLUTTET | Formation-level pathfinding | Regimenter/bataljoner skal gå rundt om obstacles og bevare en brugbar formation uden individuel NavMesh-agent pr. soldat. |
+| B-019 | BESLUTTET | Avanceret casualty visual senere | Den simple v00.00.08-figur udvides senere til flere repræsentative casualties og killed/wounded/medical collection, men authoritative casualty-state forbliver separat fra grafikken. |
 
 ## Skirmishers, marksmen og let infanteri
 
