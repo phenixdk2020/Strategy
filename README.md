@@ -13,7 +13,7 @@ Unity projektstruktur:
 - `ProjectSettings/` — Unity project metadata og editor-version.
 - `docs/` — designmanual og teknisk dokumentation.
 
-Aktuel prototype: **P0A v00.00.08**.  
+Aktuel prototype: **P0A v00.00.08 TEST**.  
 Aktuel designbaseline: **v00.02.08**.  
 Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
 
@@ -40,7 +40,7 @@ P0A v00.00.08 bygger videre med en afgrænset combat-QA-udvidelse:
 
 De fire prototype-regimenters experience-værdier er bevidst forskellige testdata og er **ikke historiske vurderinger**. Senere skal experience og weapon assignment komme fra OOB/unit/weapon-databaser.
 
-**v00.00.08 er endnu ikke runtime-valideret.** Næste release-gate er compile uden nye fejl og fuld Play regressionstest af combat, casualty-visual, kamera, controls, pause/speed, rout og battle outcome.
+**v00.00.08 er en testbuild og er endnu ikke runtime-valideret.** Release-gaten er compile uden nye fejl og fuld Play regressionstest af combat, casualty-visual, kamera, controls, pause/speed, rout og battle outcome.
 
 ## Designmanual
 
