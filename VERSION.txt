@@ -1,5 +1,6 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.08 TEST
+Prototype version: v00.00.08
+Build status: TEST
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
