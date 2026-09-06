@@ -1,4 +1,4 @@
-# PROJECT 1864 — Designmanual v00.02.00 — Feature Architecture
+# PROJECT 1864 — Designmanual v00.02.08 — Feature Architecture
 
 ### F16 – Battle terrain pipeline
 
@@ -18,23 +18,28 @@ Exit-kriterier.
 - Samme encounter coordinate genererer samme basis-slagmark.
 - Roads/woods/streams matcher strategiske source data inden for defineret tolerance.
 
-### F17 – After Action, retreat og persistence
+### F17 – After Action, retreat, salvage og persistence
 
 Formål. Gøre taktiske resultater operationelt meningsfulde.
 
 Indhold.
 
-- Casualty categories, captured equipment og officer results.
+- Casualty categories: killed, wounded, missing, captured og return-to-duty hooks.
+- Captured/abandoned equipment med type, condition, ownership og compatible ammunition.
+- Battlefield salvage fra overgivne, dræbte/sårede, forladte guns/limbers og supply-vogne.
+- Recoverable percentage, så en del våben/materiel er ødelagt, tabt eller ubrugeligt.
 - Retreat corridor resolution.
 - Fatigue/cohesion aftermath og recovery.
-- After Action Report.
+- After Action Report med mandskab, tab, ammunition, captured materiel og remaining supply.
 
-Afhængigheder. F09, F12, F13, F14
+Afhængigheder. F03, F07, F09, F11, F12, F13, F14
 
 Exit-kriterier.
 
-- Tab kan spores helt ned til relevante subunits.
+- Tab kan spores helt ned til relevante subunits og vises separat som dræbte/sårede/missing/captured.
 - Blocked retreat kan skabe prisoners/captured guns i stedet for generisk attrition.
+- Våben fra overgivne/faldne og forladt materiel kan bjærges med en dokumenteret ikke-genvindelig skadeandel.
+- Erobrede våben eller ammunition kan ikke automatisk anvendes, hvis type/ammunition/træning ikke er kompatibel.
 
 ### F18 – Strategisk AI
 
@@ -133,8 +138,10 @@ Formål. Gøre den komplekse simulation læsbar og håndterbar.
 Indhold.
 
 - OOB tree, order composer, overlays, message center.
-- Battle cards, range overlays og command status.
-- After Action reports og tooltips med forklaringer.
+- Battle cards med aktuelt mandskab, tab, killed/wounded split, ammunition, weapon/reload, morale/cohesion og command status.
+- Range overlays og kort combat feedback som resolved hits.
+- After Action reports med captured/salvaged materiel og supply.
+- Tooltips med forklaringer.
 - Scalable UI, keybinds og accessibility options.
 
 Afhængigheder. Alle kernesystemer leverer data til UI; kan udvikles iterativt fra F01.
@@ -143,6 +150,7 @@ Exit-kriterier.
 
 - Alle kritiske simulationstilstande kan aflæses uden debug tools.
 - Spilleren kan finde årsagen til supply-, order- eller moraleproblemer via UI.
+- Mandskab, casualty split og ammunition kan aflæses uden at åbne Inspector/debug-menu.
 
 ### F24 – Save/load, replay og modding
 
@@ -268,10 +276,11 @@ Indhold.
 
 - Rifles, artillery, ammunition, uniforms og transport equipment.
 - Weapon models, compatible ammunition og stockpiles.
+- Captured/salvaged materiel som en legitim lagerkilde, men med condition, compatibility og repair requirements.
 - Arsenal/depot distribution og repair.
 
-Afhængigheder. F30, F07
+Afhængigheder. F30, F07, F17
 
 Exit-kriterier.
 
-- En ny enhed kan kun udrustes med materiel, der faktisk findes, produceres eller importeres.
+- En ny enhed kan kun udrustes med materiel, der faktisk findes, produceres, importeres eller er bjærget/erobret og gjort brugbart.
