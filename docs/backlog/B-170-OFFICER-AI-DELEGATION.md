@@ -1,9 +1,12 @@
 # PROJECT 1864 — Backlog B-170–B-179: Officer AI og delegeret kommando
 
-**Status: BESLUTTET / PLANLAGT**  
-**Designbaseline: v00.02.08**
+**Status: BESLUTTET / NÆSTE IMPLEMENTERING**  
+**Designbaseline: v00.02.08**  
+**Target prototype: P0A v00.00.09 TEST — højeste gameplay-prioritet efter v00.00.08-gaten**
 
 Dette supplement fastlægger spillerens mulighed for at delegere styringen af egne formationer til deres officerer. Systemet bygger oven på de allerede besluttede commander stats, personality, autonomy, order delay, fog of war og hierarchical AI.
+
+Fjendens formationer skal bruge samme officerbaserede decision core. Difficulty ligger som et separat lag ovenpå og må ikke omskrive officerens stats eller give skjulte combat-bonusser/omniscience. Den detaljerede difficulty- og v00.00.09-plan ligger i `B-180-AI-DIFFICULTY-AND-V009.md`.
 
 ## B-170 — AI Unit ON/OFF
 
@@ -151,6 +154,10 @@ Ved multi-select kan spilleren slå AI ON/OFF for flere kompatible formationer, 
 - Officerens kvalitet skal påvirke beslutningskvaliteten, men ikke på en måde der gør udfald fuldstændigt deterministisk.
 - Dårlige officerer må kunne misforstå, reagere sent eller vælge en suboptimal løsning; dette skal dog være forklarligt gennem stats, information og reason codes.
 - En spiller skal kunne føre hele hæren selv, delegere dele af den eller i princippet delegere næsten hele slaget og primært fungere som øverstkommanderende.
+
+## Implementeringsprioritet
+
+P0A v00.00.09 implementerer først en lille vertikal slice: AI UNIT ON/OFF, tre QA-officerstats, fælles decision core, fjendtlig brug af samme core, Easy/Normal/Hard, UI-state/reason code og telemetry. Fuld brigadehierarki, courier-system og avancerede combat-actions kommer efter den første AI-gate.
 
 ## Ikke del af P0A v00.00.08
 
