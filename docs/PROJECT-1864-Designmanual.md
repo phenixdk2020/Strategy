@@ -2,7 +2,7 @@
 
 **Aktuel baseline: v00.02.00**
 
-Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Word-masteren er den layoutede udgave.
+Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 ## Indhold
 
@@ -16,11 +16,9 @@ Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i del
 - [Del 5C: Feature-arkitektur F32–F47](parts/part-05c-F32-F47.md)
 - [Del 6: 29–36 — Milepæle, vertical slice, risici, datarelationer, historisk grounding og designbeslutninger](parts/part-06-29-36.md)
 
-## Word-master
-
-- `versions/PROJECT-1864-Game-Design-og-Feature-Arkitektur-v00.02.00.docx`
-
 ## Versionshistorik
 
 - **v00.02.00** — Expanded systems baseline: økonomi, udvikling, handel, forskning, rekruttering, træning, sanitet/fanger, regimentshistorik, faner samt unit traits og formation specialisations.
 - **v00.01.00** — Første samlede designbaseline.
+
+Git-historikken bevarer tidligere udgaver af alle Markdown-dele.
