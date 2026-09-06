@@ -53,6 +53,22 @@ De fire prototype-regimenters experience-værdier er bevidst forskellige testdat
 
 **v00.00.08 er en testbuild og er endnu ikke runtime-valideret.** Release-gaten er compile uden nye fejl og fuld Play regressionstest af combat, casualty-visual, kamera, controls, pause/speed, rout og battle outcome.
 
+## Næste gameplay-build — P0A v00.00.09 Officer AI
+
+Officer-AI/delegeret kommando er **højeste gameplay-prioritet umiddelbart efter v00.00.08-gaten**. Der må ikke indsættes en anden større gameplay-feature først.
+
+Første AI-test skal mindst implementere:
+
+- `AI UNIT ON/OFF` på egne regimenter,
+- midlertidige QA-officerprofiler med mærkbar forskel i reaktion/adfærd,
+- én fælles officer decision core for spillerens delegerede regimenter og fjendens regimenter,
+- Easy / Normal / Hard AI difficulty,
+- ingen skjulte combat-stat buffs eller omniscience som difficulty-model,
+- synlig current task/reason code og AI telemetry,
+- fuld regression af v00.00.08.
+
+Detaljer ligger i `docs/backlog/B-170-OFFICER-AI-DELEGATION.md`, `docs/backlog/B-180-AI-DIFFICULTY-AND-V009.md` og roadmapets §29.1.
+
 ## Designmanual
 
 - `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual.
@@ -71,4 +87,4 @@ Prototypekoden er bevidst asset-light: battlefield og simple soldater genereres 
 
 ### Repository-metadata
 
-Repositoryet har fortsat en minimal Unity-metadata-baseline. Den lokale Unity-test har genereret `.meta`, scene-, `packages-lock.json`- og `ProjectSettings`-filer, som bevares og gennemgås efter v00.00.08-testen. De må ikke slettes blindt. Målet er derefter en reproducerbar fresh-clone baseline før P0B.
+Repositoryet har fortsat en minimal Unity-metadata-baseline. Den lokale Unity-test har genereret `.meta`, scene-, `packages-lock.json`- og `ProjectSettings`-filer, som bevares og gennemgås efter v00.00.08-testen. De må ikke slettes blindt. Målet er derefter en reproducerbar fresh-clone baseline før v00.00.09.
