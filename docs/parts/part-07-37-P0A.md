@@ -1,10 +1,10 @@
-# PROJECT 1864 — Designmanual v00.02.01
+# PROJECT 1864 — Designmanual v00.02.02
 
 ## 37. Implementeringsstatus – P0A Unity 3D Battle Prototype
 
 P0A er den første spilbare tekniske vertical slice. Formålet er ikke endelig grafik eller historisk balance, men at bevise at den valgte regimentsmodel kan styres i realtid i 3D og at authoritative mandskab, formation, range, combat, morale og rout kan holdes adskilt fra den grafiske 1:10-repræsentation.
 
-### 37.1 Spilbar scope v00.00.01
+### 37.1 Spilbar scope v00.00.02
 
 | System | P0A implementering |
 | --- | --- |
@@ -55,3 +55,9 @@ Den spilbare Unity-kode ligger i repositoryet under:
 `prototype/P0A-Unity-Battle/`
 
 P0A er en systems-prototype og ikke den endelige P3 Tactical Vertical Slice fra roadmapet. Den reducerede prototype bruges til at opdage arkitektur- og kontrolproblemer tidligt, før order-delay, bataljoner, historiske assets og persistent campaign state kobles på.
+
+### 37.6 Unity Editor baseline og kompatibilitet
+
+P0A v00.00.02 fastlåser projektmetadata til **Unity 6000.3.17f1 (Unity 6.3 LTS)** med den officielle changeset `cf0352b38e81`. Den tidligere P0A v00.00.01 indeholdt en placeholder i `ProjectSettings/ProjectVersion.txt` (`6000.0.0f1` med ugyldig revision), hvilket fik Unity Hub til at vise **Unknown / Missing Editor version**. Denne metadatafejl er rettet i v00.00.02.
+
+Designregel fremover: alle distribuerede Unity-prototyper skal indeholde en verificeret `ProjectSettings/ProjectVersion.txt` med en faktisk udgivet Unity-version og korrekt changeset, og versionsmetadata skal valideres som del af release-QA før ZIP eller GitHub baseline markeres som spilbar.
