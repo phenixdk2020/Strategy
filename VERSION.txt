@@ -10,3 +10,4 @@ Combat cadence: weapon profile base reload + bounded experience modifier
 Volley feedback: salves may resolve to 0 direct hits; positive hits show temporary 'Ramte N'
 Casualty visual: first strength loss creates one representative prone casualty visual per regiment; no killed/wounded distinction yet
 QA state: v00.00.08 TEST pending compile and full Play regression test in Unity 6000.6.0f1
+NEXT GAMEPLAY BUILD: v00.00.09 Officer AI - AI UNIT ON/OFF, shared player/enemy officer decision core, Easy/Normal/Hard AI difficulty, reason codes/telemetry. Highest priority after v00.00.08 gate.
