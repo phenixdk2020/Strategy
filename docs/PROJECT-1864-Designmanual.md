@@ -1,12 +1,13 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel baseline: v00.02.08**
+**Aktuel designbaseline: v00.02.08**  
+**Aktuel prototype-workbranch: P0A v00.00.09 OFFICER AI TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
 
-Den komplette dokumentation af **hvad der faktisk er implementeret i P0A v00.00.08 TEST**, hvad der kun er besluttet i designbaseline v00.02.08, kendte begrænsninger og den fulde Unity acceptance-test ligger i [P0A v00.00.08 Release Notes](releases/P0A-v00.00.08-RELEASE-NOTES.md).
+Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00.00.09**, officerstats, AI difficulty, kendte begrænsninger og den fulde Unity acceptance-test ligger i [P0A v00.00.09 Release Notes](releases/P0A-v00.00.09-RELEASE-NOTES.md).
 
 ## Indhold
 
@@ -22,25 +23,38 @@ Den komplette dokumentation af **hvad der faktisk er implementeret i P0A v00.00.
 - [Del 6: 29–36 — Milepæle, immediate prototype sequence, vertical slice, risici, datarelationer, historisk grounding og designbeslutninger](parts/part-06-29-36.md)
 - [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
-- [Release Notes — P0A v00.00.08 TEST, komplet delta og acceptance-test](releases/P0A-v00.00.08-RELEASE-NOTES.md)
+- [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
+- [Release Notes — P0A v00.00.09 OFFICER AI TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
 - [Backlog B-160–B-169 — strategisk landudvikling](backlog/B-160-STRATEGIC-DEVELOPMENT.md)
 - [Backlog B-170–B-179 — Officer AI, delegeret kommando og AI Unit ON/OFF](backlog/B-170-OFFICER-AI-DELEGATION.md)
 - [Backlog B-180–B-189 — symmetrisk fjende-AI, sværhedsgrad og v00.00.09-prioritet](backlog/B-180-AI-DIFFICULTY-AND-V009.md)
+- [Backlog B-190–B-199 — officerstats, Composure/Nerve og AI decision model](backlog/B-190-OFFICER-STATS-MODEL.md)
+
+## v00.00.09 Officer AI — implementeringsstatus
+
+P0A v00.00.09 på arbejdsbranchen implementerer den første shared officer-AI-kernel. Danske regimenter kan delegeres med `AI UNIT ON/OFF`, mens preussiske regimenter bruger samme `OfficerAIController` som standard. Officerprofilen består af Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution og Composure/Nerve samt separat Officer Experience.
+
+Composure/Nerve er et aktivt AI-input: under stigende battle stress påvirker den både reaction delay og decision noise. Dermed holdes officerens egen evne til at bevare overblik adskilt fra hans Leadership, Inspiration og regimentets morale.
+
+Easy/Normal/Hard påvirker i første prototype kun den computerstyrede preussiske sides ekstra reaction/noise layer. Difficulty må ikke ændre weapon accuracy, reload, range, movement, morale, cohesion, casualties eller skjult viden. Player-delegerede danske officerer bruger deres faktiske QA-profil på referenceindstillinger uanset enemy difficulty.
+
+Alle officerprofiler i v00.00.09 er QA-data og er ikke historiske ratings. Historiske officerdata skal senere komme fra kildebelagt OOB/officer-database.
 
 ## Versionshistorik
 
-- **v00.02.08** — P0A v00.00.08 TEST: våbenprofilen styrer basis-reload, regimentets experience modificerer reload-tiden inden for et begrænset interval, positive salver viser kort combat feedback som `Ramte N`, og salver kan give 0 direkte hits. Første personeltab pr. regiment skaber desuden én enkel repræsentativ liggende casualty-figur ved tabsstedet; den er kun visualisering og skelner endnu ikke mellem dræbt/såret. Samme designbaseline fastlægger de efterfølgende krav om konkret ammunition og casualty-split i unit UI, skirmishers, forskellige artilleriklasser som feltkanon og haubits, erobringsbare/hestetrukne/manhandled kanoner, manuel artillerimåludpegning som standard med valgfri Auto Target/Hold Fire, supply-vogne, battlefield salvage, dragoner der kan sidde af og føre ildkamp, directional cover, prone/liggende stilling, hasty fieldworks samt en kontekstuel unit-command bar nederst på skærmen. Strategilaget er samtidig konkretiseret med regionale udviklingsprojekter for veje, broer, jernbane, telegraf, gårde, heste/remount-depoter/stutterier, specialiseret våbenindustri, tooling/produktionsomstilling, depoter og synlige ændringer på strategikortet. Delegeret kommando er fastlagt med `AI UNIT ON/OFF`, hvor egne officerer kan føre formationer inden for mission og commander intent ud fra egne stats, personality, autonomy og faktisk fog-of-war-information; spilleren kan blande direkte og AI-styrede formationer. Fjendens formationer skal bruge samme officer-AI-kernel, og første AI difficulty model bliver Easy/Normal/Hard, hvor højere sværhedsgrad forbedrer koordinering og reducerer ekstra beslutningsfejl uden skjulte combat-stat buffs eller omniscience. Officer-AI er rykket frem som **P0A v00.00.09 TEST og højeste gameplay-prioritet umiddelbart efter v00.00.08-gaten**. En central backlog, detaljerede backlog-supplementer og separate release notes er indført som projektregel, så implementerede funktioner, besluttede senere funktioner og åbne idéer ikke blandes sammen. P0A v00.00.07 er observeret fungerende i Play Mode med korrekt runtime-bootstrap/rendering; v00.00.08 afventer Unity compile/Play-validering.
-- **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er gjort terminalt pauset indtil restart, RTS-kameraet er gjort uafhængigt af `Time.timeScale`, WASD/piletaster læses direkte uden navngivne Input Manager-akser, musehjulszoom er frame-rate-uafhængig, og defensive guards er tilføjet for manglende `MainCamera` samt dublet `BattleManager`.
-- **v00.02.06** — P0A v00.00.06: første C#-compile-gate i Unity 6.6 ryddet op. `CS0136` i regimentets formationskode er rettet, obsolete `FindFirstObjectByType` er erstattet af `FindAnyObjectByType`, og den ubrugte `holdPosition`-state er fjernet.
-- **v00.02.05** — P0A v00.00.05: Unity 6.6 compile-fix ved at aktivere built-in modulerne IMGUI, Particle System, Physics og Audio i `Packages/manifest.json`. Fejlene CS1069 for `GUIStyle` og `ParticleSystem` er dermed adresseret ved projektkonfiguration frem for kode-workarounds.
-- **v00.02.04** — Unity-baseline flyttet til den installerede `6000.6.0f1` (Unity 6.6), changeset `f7f8ed4d1e24`. P0A hævet til v00.00.04, så Unity Hub kan åbne den friske GitHub-clone uden missing-editor warning på testmaskinen.
-- **v00.02.03** — Repository-layout fastlåst: `Strategy`-roden er selve Unity-projektet (`Assets`, `Packages`, `ProjectSettings`). Den tidligere placering `prototype/P0A-Unity-Battle/` er fjernet. P0A hævet til v00.00.03.
-- **v00.02.02** — Unity Editor metadata rettet og låst til Unity 6000.3.17f1, så Unity Hub kan identificere projektet korrekt.
-- **v00.02.01** — Første konkrete implementeringsbaseline: P0A Unity 3D battle prototype dokumenteret og koblet til roadmap/vertical slice.
-- **v00.02.00** — Expanded systems baseline: økonomi, udvikling, handel, forskning, rekruttering, træning, sanitet/fanger, regimentshistorik, faner samt unit traits og formation specialisations.
+- **v00.02.08 / P0A v00.00.09 work branch** — Officer AI er rykket frem som næste gameplay-gate. Første implementation har shared `OfficerAIController`, `AI UNIT ON/OFF`, missions for defend/hold/move/attack, otte kerne-officerstats + separat Experience, Composure-baseret stressreaktion, Easy/Normal/Hard uden combat cheats, reason codes og `AI-DIAG` telemetry. Den eksisterende v00.00.08 combat/reload/feedback/casualty-visual skal fortsat bestå regressionstesten. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
+- **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
+- **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er terminalt pauset indtil restart, RTS-kamera timeScale-uafhængigt og defensive guards forbedret.
+- **v00.02.06** — Unity compile-gate: `CS0136` rettet, obsolete object lookup erstattet og unused state fjernet.
+- **v00.02.05** — Built-in IMGUI, Particle System, Physics og Audio moduler aktiveret.
+- **v00.02.04** — Unity baseline flyttet til 6000.6.0f1.
+- **v00.02.03** — Repository-roden fastlåst som Unity project root.
+- **v00.02.02** — Unity Editor metadata/version rettet.
+- **v00.02.01** — Første konkrete P0A implementation koblet til roadmap.
+- **v00.02.00** — Expanded systems baseline: økonomi, udvikling, handel, forskning, rekruttering, træning, sanitet/fanger, regimentshistorik, faner og traits.
 - **v00.01.00** — Første samlede designbaseline.
 
 ## Projektregel
 
-Designmanualen skal opdateres både som layoutet Word-master og her i GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere udgaver af Markdown-delene. Nye beslutninger og idéer skal desuden registreres i backloggen, så de ikke kun eksisterer i chatsamtaler. Hver testbuild skal have tydelig release-dokumentation, der adskiller **implementeret nu** fra **besluttet senere**.
+Designmanualen skal opdateres både som layoutet Word-master og her i GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere udgaver af Markdown-delene. Nye beslutninger og idéer registreres desuden i backloggen. Hver testbuild skal have tydelig release-dokumentation, der adskiller **implementeret nu** fra **besluttet senere**.
