@@ -58,6 +58,9 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 | B-034 | BESLUTTET | Erobring af kanoner | Guns kan være operational, abandoned, disabled/destroyed eller captured; capture kræver fysisk kontrol. |
 | B-035 | BESLUTTET | Genbrug af erobret artilleri | In-battle reuse kræver egnet crew, ammunition, træning og klargøringstid; ellers bjærges stykket efter slaget. |
 | B-036 | PLANLAGT | Ammunitionstyper | Round shot/shell/shrapnel/canister m.m. får forskellige effekter mod open, prone, cover og fieldworks. |
+| B-037 | BESLUTTET | Artilleri fire control | **Manuel måludpegning er standard for spillerstyret artilleri.** Spilleren vælger mål/område, hvorefter batteriet fortsætter efter ordren, indtil mål/ordre ændres eller ikke længere kan udføres. Automatisk målvalg er en separat mode, som spilleren aktivt slår til. AI-kontrollerede batterier kan bruge automatisk målvalg gennem commander AI. |
+| B-038 | PLANLAGT | Auto-target prioritering | Automatisk artilleriild skal vælge mål efter synlighed/LOS, range, trussel, formation density, target type, ammunitionstype, commander/fire-control doctrine og evt. ammunition conservation — ikke blot nærmeste fjende. |
+| B-039 | BESLUTTET | Hold Fire for artilleri | Et batteri skal kunne være deployed og klar uden at skyde. Hold Fire overstyrer både manuelt og automatisk målvalg. |
 
 ## Kavaleri og dragoner
 
@@ -87,6 +90,9 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 | B-062 | BESLUTTET | Commander AI | Officer skill, personality, initiative og commander intent påvirker lokal udførelse. |
 | B-063 | BESLUTTET | Persistent officers | Officerer har historik, performance, casualties, succession og reputation. |
 | B-064 | BESLUTTET | Training/readiness/experience adskilt | Experience, training, morale, cohesion, fatigue og readiness må ikke være én samlet magisk stat. |
+| B-065 | BESLUTTET | Commander autonomy | Strict/Normal/Independent autonomy påvirker, hvor meget en underordnet officer må ændre lokal udførelse inden for intent. |
+| B-066 | BESLUTTET | Order lifecycle | Drafted → Sent → In transit → Delivered → Acknowledged → Executing → Superseded/Failed er eksplicit state. |
+| B-067 | BESLUTTET | HQ-perspektiv | Spilleren ser i høj realisme det, eget HQ ved; “ordre sendt” er ikke det samme som “ordre forstået”. Assistanceindstillinger kan reducere friktion. |
 
 ## Battle UI/UX
 
@@ -96,16 +102,101 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 | B-071 | BESLUTTET | Unit-type-specific actions | Menuens knapper afhænger af enhedstype og state: infanteri, skirmishers, artilleri, dragoner, supply, ingeniører osv. |
 | B-072 | BESLUTTET | Status i bundmenu | Samme panel viser nøgledata som mandskab, casualties, ammo, weapon/reload, morale/cohesion/fatigue/experience og aktiv ordre. |
 | B-073 | PLANLAGT | Infanteriknapper | Formation, Hold/Move/Attack, Hold Fire/Fire at Will, Deploy/Reform Skirmishers, Standing/Prone, Use Cover, Dig In, Range overlay. |
-| B-074 | PLANLAGT | Artilleriknapper | Limber/Unlimber, Move, Manhandle, ammunitionstype, target/fire control og evt. abandon/capture context. |
+| B-074 | PLANLAGT | Artilleriknapper | Limber/Unlimber, Move, Manhandle, **Select Target (standard/manual)**, Auto Target on/off, Hold Fire, ammunitionstype og evt. abandon/capture context. |
 | B-075 | PLANLAGT | Dragon-knapper | Mounted/Dismounted, remount, screen/recon, charge/pursuit og fire control efter type. |
 | B-076 | PLANLAGT | Multi-select UI | Fælles kompatible ordrer vises ved flere valgte enheder; blandede typer må ikke få ugyldige fælles commands. |
 | B-077 | IDÉ | Layout/iconografi | Endelig grupperingsrækkefølge, ikoner, tooltips, hotkeys og om advanced actions ligger i submenus skal prototypetestes. |
+| B-078 | BESLUTTET | Aktiv fire-control-state synlig | Bundmenu/formation card skal tydeligt vise fx `MANUELT MÅL`, `AUTO TARGET` eller `HOLD FIRE`, så artilleriets adfærd aldrig er skjult for spilleren. |
 
-## Strategisk/økonomisk slutvision — allerede besluttet i designmanualen
+## Operationel bevægelse, kontakt og fog of war
 
-Følgende er fortsat bindende langsigtet scope og skal ikke genopfindes som isolerede backlog-idéer: real-time grand strategy, nation-/periodeafhængig OOB, economy/resources/industry/agriculture/cities/trade/rail/logistics/research, recruitment/reserves/replacements, casualty/medical/POW chain, regimental lineage/battle honours/medals, earned traits/specialisation, fog of war, persistent campaign aftermath, data-driven/modding og performance via formation-level simulation.
+| ID | Status | Emne | Beslutning / note |
+| --- | --- | --- | --- |
+| B-080 | BESLUTTET | Road-aware march | Strategisk marchhastighed afhænger af vej, terræn, formationstype, fatigue, weather, transport og congestion. |
+| B-081 | BESLUTTET | Forced march | Hurtigere march købes med fatigue, stragglers, hestetab og dårligere battle readiness. |
+| B-082 | BESLUTTET | March columns og congestion | Store formationer fylder fysisk på veje; smalle broer/chokepoints kan skabe kø og forsinkelser. |
+| B-083 | BESLUTTET | Encounter/contact model | Contact kan udvikle sig til spotting, skirmish, withdrawal, deployment eller tactical battle afhængigt af orders, information og AI. |
+| B-084 | BESLUTTET | Knowledge-state fog of war | Fjendtlige observationer har timestamp, confidence, last known position og strength/type estimates. AI må kun bruge sin egen knowledge state. |
+| B-085 | BESLUTTET | Recon sources | Cavalry, scouts/skirmishers, observationspunkter, civilians, telegraph reports og naval spotting bidrager forskelligt til intel. |
+| B-086 | IDÉ | Deception/demonstrations | Informationsmodellen skal kunne understøtte vildledning og demonstrations senere; konkrete mechanics fastlægges senere. |
 
-## Åbne idéer / skal afklares senere
+## Strategisk logistik og forsyning
+
+| ID | Status | Emne | Beslutning / note |
+| --- | --- | --- | --- |
+| B-090 | BESLUTTET | Supply chain | Depot → rail/ship/road → field depot/train → unit er den grundlæggende forsyningskæde. |
+| B-091 | BESLUTTET | Throughput og interdiction | Hver node/rute har kapacitet og risiko; fjenden kan afskære supply uden at erobre en hel provins. |
+| B-092 | BESLUTTET | Food/forage/ammo/medical/transport | Disse er adskilte logistiske behov og påvirker forskellige dele af kampkraften. |
+| B-093 | BESLUTTET | Local forage | Enheder kan delvist leve af lokal forage afhængigt af region, årstid, politisk kontrol og tidligere forbrug. |
+| B-094 | BESLUTTET | Infrastruktur som objectives | Broer, stationer, havne, depoter og vejknudepunkter bliver reelle operationelle mål pga. supply/throughput. |
+
+## Persistence, sanitet, POW og regimentshistorik
+
+| ID | Status | Emne | Beslutning / note |
+| --- | --- | --- | --- |
+| B-100 | BESLUTTET | Persistent wounded | Wounded har severity/recovery og kan returnere, blive invalid eller dø senere; battle end må ikke konvertere dem direkte til permanent manpower loss. |
+| B-101 | BESLUTTET | Medical service | Battlefield collection, ambulance/transport, casualty stations, field hospitals, doctors, supplies og capacity påvirker outcomes. |
+| B-102 | BESLUTTET | POW/missing | Missing kan senere resolve til POW, hospitalised, returned eller killed. POW er persistent personelstate. |
+| B-103 | BESLUTTET | Regimental lineage | Navngivne enheder bevarer lineage, commanders, battles, casualties, reorganizations og campaign chronicle. |
+| B-104 | BESLUTTET | Colours/standards | Faner er data + fysisk 3D-object med colour guard, capture/loss, damage og battle honours. |
+| B-105 | BESLUTTET | Officer service records | Promotions, wounds, captivity, commands, battles, decorations, retirement/death gemmes persistent. |
+| B-106 | BESLUTTET | Earned traits | Unit traits optjenes gennem training/experience/historik og kan fortyndes ved massive replacements. |
+| B-107 | BESLUTTET | Formation specialisations | Brigader/divisioner/korps kan få organisatoriske capabilities som ambulance service, pontoon train, sappers, recon/logistics/artillery specialisations, forankret i faktiske assets/personel. |
+
+## National udvikling, økonomi, mobilisering og træning
+
+| ID | Status | Emne | Beslutning / note |
+| --- | --- | --- | --- |
+| B-110 | BESLUTTET | Population/labour | Mobilisering og krig trækker på samme regionale befolknings-/arbejdskraftbase som civil økonomi. |
+| B-111 | BESLUTTET | Agriculture/food/horses | Gårde, food/grain, livestock/horses og forage er den primære førindustrielle forsyningsbase. |
+| B-112 | BESLUTTET | Resources/extraction | Kul, jern, træ og building materials er geografiske ressourcer med workforce/infrastructure constraints. |
+| B-113 | BESLUTTET | Cities/regional development | Byer er økonomiske, administrative og logistiske knudepunkter med ports, arsenals, hospitals, education og transport. |
+| B-114 | BESLUTTET | Industry/production chains | Workshops/factories omsætter konkrete inputs til varer; mangel på inputs skal kunne stoppe produktion. |
+| B-115 | BESLUTTET | Military production/stockpiles | Rifles, artillery, ammunition, uniforms og transportmateriel produceres/importeres/bjærges og eksisterer i lagre. |
+| B-116 | BESLUTTET | Trade/foreign procurement | Import/eksport, contracts, tariffs og blockade påvirker priser, lagre og adgang til våben/råvarer. |
+| B-117 | BESLUTTET | Research vs adoption | En teknologi kan være kendt uden at være masseproduceret; tooling, doctrine, training og unit-level adoption er separate trin. |
+| B-118 | BESLUTTET | Budget/debt | Taxes, tariffs, loans, interest, war finance og military/civil priorities giver langsigtede trade-offs. |
+| B-119 | BESLUTTET | Recruitment/mobilisation | Nation-specifik volunteer/conscription/reserve/cadre-proces; ingen universel instant draft-knap. |
+| B-120 | BESLUTTET | Training/readiness/experience | Drill, marksmanship, fire discipline, fieldcraft m.m. er træningsdimensioner; readiness og combat experience er separate states. |
+| B-121 | BESLUTTET | Leader development | Academies, staff courses, assignments, mentorship, manoeuvres og promotion påvirker officerskorpsets kvalitet over tid. |
+
+## Teknisk arkitektur og persistence-regler
+
+| ID | Status | Emne | Beslutning / note |
+| --- | --- | --- | --- |
+| B-130 | BESLUTTET | Én authoritative simulation state | Tactical og strategic lag bruger samme unit-identiteter/state; visuelle GameObjects er ikke authoritative data. |
+| B-131 | BESLUTTET | Stable IDs | Nationer, officers, formations, locations og equipment bruger stabile IDs, så save/load og tactical transfer ikke duplikerer entities. |
+| B-132 | BESLUTTET | Save/version migration | Savegames skal versionsstyres og kunne migreres robust mellem compatible builds. |
+| B-133 | BESLUTTET | Replay/debug event log | Deterministic seed/event log skal understøtte regression, replay/debug af større hændelser. |
+| B-134 | BESLUTTET | Scalable rendering | Standard ca. 1:10, men render ratio 1:5/1:10/1:20/1:50 kan skaleres efter hardware uden at ændre simulationen. |
+| B-135 | BESLUTTET | Formation-level performance | Visual soldiers er primært slots/animation/local avoidance; combat og movement ligger på formationsniveau. |
+| B-136 | BESLUTTET | Data-driven/modding | OOB, officers, units, weapons, events, localisation og scenarios externaliseres så langt som praktisk uden core recompilation. |
+| B-137 | BESLUTTET | Automated/headless tests | Simulation state transitions, serialization og centrale regressions skal kunne testes uden fuld 3D-scene. |
+
+## Flåde, diplomati og politisk krig
+
+| ID | Status | Emne | Beslutning / note |
+| --- | --- | --- | --- |
+| B-140 | BESLUTTET | Naval operations | Blockade, escort, transport, patrol, interception, bombardment og amphibious support er strategisk/operationelt scope. |
+| B-141 | BESLUTTET | Troop transport | Skibe, embark/disembark time, weather, port/destination capacity og enemy naval presence påvirker transport. |
+| B-142 | PLANLAGT | Detailed naval combat | Arkitekturen reserverer hook til mere detaljeret/3D naval combat; det er ikke nødvendigt for den første landkrigs-vertical slice. |
+| B-150 | BESLUTTET | War goals/peace | Kampagnen skal kunne slutte gennem krigsmål/forhandling og internationalt pres, ikke kun total conquest. |
+| B-151 | BESLUTTET | Historical event engine | Events trigges af faktisk simulation state og dato/conditions og skal understøtte alternative outcomes. |
+| B-152 | BESLUTTET | Sverige-Norge/intervention framework | International intervention skal være systemisk mulig og ikke kun en scripted cutscene. |
+
+## Åbne designspørgsmål fra tidligere baseline
+
+| ID | Status | Emne | Spørgsmål / nuværende retning |
+| --- | --- | --- | --- |
+| I-010 | IDÉ | Kampagnestart | Januar 1864, 1863-opbygning eller længere 1848–1871 grand campaign som slutmål? |
+| I-011 | IDÉ | Laveste direkte command level | Nuværende retning: bataljon som laveste normale direkte niveau; kompagnier simuleres mest automatisk. |
+| I-012 | BESLUTTET | Tactical pause | Singleplayer tactical battles kan pauses; det matcher command/grand-strategy-stilen. |
+| I-013 | IDÉ | HQ realism | Assistanceindstillinger kan reducere order/information delay; højere realisme bruger HQ-perspektivet fuldt. |
+| I-014 | IDÉ | Economic granularity | War-support economy frem for fuld Victoria-lignende markedssimulation; konkret varegranularitet skal tunes. |
+| I-015 | BESLUTTET | Hybrid battle maps | Historiske nøgleslag håndverificeres; øvrige encounters kan data-/proceduralt genereres. |
+| I-016 | IDÉ | Multiplayer | Ikke arkitekturdriver i første fase; core state bør dog undgå unødigt singleplayer-hardcode. |
+
+## Øvrige åbne idéer / research
 
 | ID | Status | Emne | Spørgsmål |
 | --- | --- | --- | --- |
@@ -114,6 +205,9 @@ Følgende er fortsat bindende langsigtet scope og skal ikke genopfindes som isol
 | I-003 | IDÉ | In-battle salvage | Skal små mængder ammunition/våben kunne samles under selve slaget, eller primært i aftermath? |
 | I-004 | IDÉ | Captured gun immediate use | Hvor ofte bør et erobret stykke realistisk kunne vendes mod fjenden under samme slag? |
 | I-005 | IDÉ | Command bar density | Hvor mange primære actions kan vises uden at gøre bundmenuen til et cockpit? Testes med prototype-UI. |
+| I-006 | IDÉ | Auto-artillery doctrine | Skal Auto Target have spillerdefinerede priorities som `Counter-battery`, `Infantry`, `Closest threat`, `Conserve ammo`, eller primært styres af battery commander/ordre? |
+| I-007 | RESEARCH | Historiske artillery drills | Endelige limber/unlimber-, movement-, crew- og rate-of-fire-værdier fastlægges pr. nation, gun type og periode via research. |
+| I-008 | RESEARCH | Historiske weapon/OOB-data | Endelige weapon models, regiment equipment, strengths og organisation er date-valid data med provenance, ikke hardcodede prototypeantagelser. |
 
 ## Arbejdsregel
 
@@ -123,3 +217,4 @@ Når en ny idé opstår:
 2. Hvis den endnu ikke er afgjort, registreres den som **IDÉ** eller **RESEARCH**.
 3. Når implementeringen starter, skifter den til **AKTIV** med konkrete exit-/testkriterier.
 4. Når funktionen er implementeret og QA-valideret, flyttes den til versionshistorik/implementeringsstatus og backlogpunktet markeres afsluttet i en senere backlog-revision.
+5. Nye chatsamtaler om PROJECT 1864 skal konsolideres her og i relevante designafsnit, så beslutninger ikke kun eksisterer i samtalehistorikken.
