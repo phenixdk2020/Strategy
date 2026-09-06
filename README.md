@@ -13,56 +13,48 @@ Unity projektstruktur:
 - `ProjectSettings/` — Unity project metadata og editor-version.
 - `docs/` — designmanual og teknisk dokumentation.
 
-Aktuel prototype: **P0A v00.00.07**.
+Aktuel prototype: **P0A v00.00.08**.  
+Aktuel designbaseline: **v00.02.08**.  
 Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
 
-Baseline er valgt, fordi projektets aktuelle testmaskine allerede har 6000.6.0f1 installeret. Det reducerer unødvendige Unity Hub-versionadvarsler og gør clone -> open-workflowet direkte.
-
 ### Aktiverede built-in Unity-moduler
-
-P0A bruger Unity-funktionalitet, som i Unity 6.6 skal være eksplicit aktiveret i `Packages/manifest.json`:
 
 - `com.unity.modules.imgui` — prototype-HUD og `GUIStyle`.
 - `com.unity.modules.particlesystem` — sortkrudtsrøg.
 - `com.unity.modules.physics` — raycasts og colliders til selection/orders.
 - `com.unity.modules.audio` — `AudioListener` på kameraet.
 
-### Aktuel compile- og QA-status
+## Aktuel QA-status
 
-P0A v00.00.06 ryddede den første C#-compile-gate efter package-konfigurationen:
+P0A v00.00.07 blev åbnet i Unity 6000.6.0f1, og runtime-bootstrap/renderingen blev observeret fungerende i Play Mode. Kameraet og den procedurale battle-scene oprettes korrekt.
 
-- `CS0136` i `Regiment.GetFormationPosition()` er rettet ved at undgå navnekollisionen på `column`.
-- Obsolete `FindFirstObjectByType` er erstattet med `FindAnyObjectByType` for Unity 6.6.
-- Den ubrugte `holdPosition`-state er fjernet, så `CS0414`-warningen ikke længere genereres.
+P0A v00.00.08 bygger videre med en afgrænset combat-QA-udvidelse:
 
-P0A v00.00.07 er en statisk QA-hardening før næste Unity Play-test:
+- infantry weapon profile styrer basis-reload,
+- regimentets Experience 0-100 modificerer reload-tiden bounded fra +20 % til -20 %,
+- Experience 50 er neutral,
+- salver kan resolve til 0 direkte hits,
+- positive hits viser kort `Ramte N` over målet,
+- unit labels viser weapon, Experience og beregnet reload til direkte QA.
 
-- Et afsluttet slag forbliver pauset; Space og 1/2/3 kan ikke genstarte simulationen efter victory/defeat. `R` genstarter fortsat slaget.
-- RTS-kameraet bruger `Time.unscaledDeltaTime`, så pan og rotation ikke bliver 2x/3x hurtigere sammen med simulationen.
-- WASD/piletaster læses direkte i kamera-controlleren i stedet for via navngivne legacy Input Manager-akser.
-- Musehjulszoom er frame-rate-uafhængig.
-- `PlayerCommander` springer inputbehandling over, hvis en `MainCamera` midlertidigt ikke findes, i stedet for at risikere en null reference.
-- `BattleManager` beskytter sin singleton mod en dublet og rydder `Instance`, når den aktive manager destrueres.
-- HUD'et cacher `Camera.main` pr. GUI-pass frem for at slå kameraet op gentagne gange pr. regiment.
+De fire prototype-regimenters experience-værdier er bevidst forskellige testdata og er **ikke historiske vurderinger**. Senere skal experience og weapon assignment komme fra OOB/unit/weapon-databaser.
 
-Den statiske gennemgang fandt ingen yderligere klare C#-compile-blockere i den nuværende P0A-kode. **Unity 6000.6.0f1 compile- og Play-test er fortsat release-gaten**, før P0A markeres runtime-valideret.
+**v00.00.08 er endnu ikke runtime-valideret.** Næste release-gate er compile uden nye fejl og fuld Play regressionstest af combat, kamera, controls, pause/speed, rout og battle outcome.
 
 ## Designmanual
 
-Aktuel designbaseline: **v00.02.07**
-
-- `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual med links til alle dele.
-- `docs/parts/` — manualen opdelt i versionsvenlige Markdown-dele.
+- `docs/PROJECT-1864-Designmanual.md` — aktuel GitHub-læsbar designmanual.
+- `docs/parts/` — versionsvenlige designmanual-dele.
 - `docs/prototypes/` — tekniske noter for implementerede prototyper.
 
-Designmanualen er projektets designmæssige source of truth og skal opdateres på GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere versioner. Den layoutede Word-master opdateres samtidig som projektartefakt og QA-kontrolleres før levering.
+Designmanualen er projektets designmæssige source of truth og opdateres samtidig med den layoutede Word-master ved design-, arkitektur- og implementeringsændringer.
 
 ## P0A battle prototype
 
-P0A indeholder 2 danske regimenter mod 2 preussiske regimenter, ca. 1:10 visuel styrkerepræsentation, RTS-kamera, movement/attack orders, line/column formation, range, volleyild, sortkrudtsrøg, casualties, morale/cohesion, rout og simpel preussisk AI.
+P0A indeholder 2 danske regimenter mod 2 preussiske regimenter, ca. 1:10 visuel styrkerepræsentation, RTS-kamera, movement/attack orders, line/column formation, range, volleyild, sortkrudtsrøg, weapon/experience-afledt reload, combat feedback, casualties, morale/cohesion, rout og simpel preussisk AI.
 
 Prototypekoden er bevidst asset-light: battlefield og simple soldater genereres ved runtime, så systemarkitekturen kan testes før historiske 3D-assets og animationer produceres.
 
 ### Repository-metadata
 
-Repositoryet har fortsat en bevidst minimal Unity-metadata-baseline: den aktuelle GitHub-version indeholder kun `ProjectSettings/ProjectVersion.txt` under `ProjectSettings/`, mens scene, `.meta`-filer, `packages-lock.json` og øvrige Unity-genererede metadata kan blive oprettet eller ændret lokalt ved første åbning. De må ikke slettes blindt. Efter næste runtime-test skal lokal `git status` gennemgås, før projektets permanente metadata/versioneringspolitik udvides.
+Repositoryet har fortsat en minimal Unity-metadata-baseline. Den lokale Unity-test har genereret `.meta`, scene-, `packages-lock.json`- og `ProjectSettings`-filer, som bevares og gennemgås efter v00.00.08-testen. De må ikke slettes blindt. Målet er derefter en reproducerbar fresh-clone baseline før P0B.
