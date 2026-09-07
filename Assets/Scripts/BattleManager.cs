@@ -69,9 +69,8 @@ public sealed class BattleManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha4))
             SetSpeed(20f);
 
-        // Time.deltaTime is scaled by Time.timeScale. Therefore the battle clock
-        // advances in lockstep with the selected simulation speed and stops
-        // completely while paused.
+        // Time.deltaTime is scaled by Time.timeScale, so the battle clock advances
+        // in lockstep with simulation speed and stops completely while paused.
         if (!paused)
             battleMinutes += Time.deltaTime * GameMinutesPerSimulationSecond;
 
@@ -92,7 +91,12 @@ public sealed class BattleManager : MonoBehaviour
     public bool IsPointerOverSimulationControls(Vector3 mousePosition)
     {
         Vector2 guiPoint = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
-        return GetTimeControlRect().Contains(guiPoint);
+
+        if (GetTimeControlRect().Contains(guiPoint))
+            return true;
+
+        OfficerAIPrototypeManager aiManager = OfficerAIPrototypeManager.Instance;
+        return aiManager != null && aiManager.IsPointerOverControls(mousePosition);
     }
 
     private void EvaluateBattleResult()
@@ -102,10 +106,12 @@ public sealed class BattleManager : MonoBehaviour
 
         bool danesActive = false;
         bool prussiansActive = false;
+
         foreach (Regiment r in regiments)
         {
             if (r == null || r.IsRouted || r.CurrentStrength <= 0)
                 continue;
+
             if (r.Team == BattleTeam.Denmark)
                 danesActive = true;
             else
@@ -114,12 +120,12 @@ public sealed class BattleManager : MonoBehaviour
 
         if (!prussiansActive)
         {
-            resultMessage = "DANSK SEJR - de preussiske regimenter er slået tilbage";
+            resultMessage = "DANSK SEJR - forsvarerne har slået det preussiske angreb tilbage";
             SetPaused(true);
         }
         else if (!danesActive)
         {
-            resultMessage = "DANSK NEDERLAG - de danske regimenter har forladt slagmarken";
+            resultMessage = "DANSK NEDERLAG - den danske forsvarsstilling er brudt";
             SetPaused(true);
         }
     }
@@ -132,8 +138,6 @@ public sealed class BattleManager : MonoBehaviour
 
     private void SetSpeed(float newSpeed)
     {
-        // A battle result is terminal. Mouse-based time controls must not be able to
-        // resume the simulation even for a single frame after victory/defeat.
         if (!string.IsNullOrEmpty(resultMessage))
         {
             SetPaused(true);
@@ -156,6 +160,7 @@ public sealed class BattleManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         Scene scene = SceneManager.GetActiveScene();
+
         if (!string.IsNullOrEmpty(scene.name))
             SceneManager.LoadScene(scene.name);
     }
@@ -234,7 +239,10 @@ public sealed class BattleManager : MonoBehaviour
             SetSpeed(20f);
         x += 52f;
 
-        string state = paused ? "PAUSED" : (Mathf.Approximately(speed, 0.5f) ? "x0.5" : "x" + speed.ToString("0"));
+        string state = paused
+            ? "PAUSED"
+            : (Mathf.Approximately(speed, 0.5f) ? "x0.5" : "x" + speed.ToString("0"));
+
         GUI.Box(new Rect(x, y, panel.xMax - x - 4f, h), clock + "  [" + state + "]", timeStyle);
     }
 
@@ -248,15 +256,26 @@ public sealed class BattleManager : MonoBehaviour
 
         Rect timePanel = GetTimeControlRect();
         float titleWidth = Mathf.Max(200f, timePanel.x - 20f);
-        GUI.Box(new Rect(10, 10, titleWidth, 34), "PROJECT 1864 - P0A v00.00.09 OFFICER AI TEST", topStyle);
+
+        GUI.Box(
+            new Rect(10, 10, titleWidth, 34),
+            "PROJECT 1864 - P0A v00.00.09 TACTICAL COMMAND TEST",
+            topStyle);
+
         DrawTimeControls(clock);
 
-        GUI.Box(new Rect(10, 80, 285, 84),
-            "DANMARK\nHold højderyggen og gården\nSlå de to preussiske regimenter tilbage", helpStyle);
-        GUI.Box(new Rect(Screen.width - 295, 80, 285, 84),
-            "PREUSSEN\nTag højderyggen\nBryd den danske stilling / flankér vejen", helpStyle);
+        GUI.Box(
+            new Rect(10, 80, 300, 92),
+            "DANMARK - FORSVARERE\nHold højderyggen og gården\nBrug fire discipline, manøvre og lokal Officer AI\nFjenden skal bryde stillingen",
+            helpStyle);
+
+        GUI.Box(
+            new Rect(Screen.width - 310, 80, 300, 92),
+            "PREUSSEN - ANGRIBERE\nOfficer AI skal manøvrere og angribe\n18th søger flank/approach før engagement\nIngen skjulte combat-bonusser",
+            helpStyle);
 
         Camera mainCamera = Camera.main;
+
         foreach (Regiment regiment in regiments)
         {
             if (regiment == null || mainCamera == null)
@@ -266,44 +285,62 @@ public sealed class BattleManager : MonoBehaviour
             if (screen.z <= 0f)
                 continue;
 
-            float x = screen.x - 125f;
-            float y = Screen.height - screen.y - 45f;
+            float x = screen.x - 132f;
+            float y = Screen.height - screen.y - 49f;
             string team = regiment.Team == BattleTeam.Denmark ? "DK" : "PR";
             string routed = regiment.IsRouted ? "  ROUTED" : string.Empty;
 
             OfficerAIController ai = regiment.GetComponent<OfficerAIController>();
             string aiLine = "AI controller installing";
             string taskLine = string.Empty;
+
             if (ai != null && ai.Officer != null)
             {
                 aiLine = string.Format(
-                    "{0} | {1} | T{2:0} Init{3:0} Comp{4:0}",
+                    "{0} | {1} | {2} | OrdAgg {3:0}",
                     ai.AIEnabled ? "AI ON" : "AI OFF",
                     ai.Officer.OfficerName,
-                    ai.Officer.TacticalSkill,
-                    ai.Officer.Initiative,
-                    ai.Officer.Composure);
+                    ai.Doctrine,
+                    ai.OrderAggressiveness);
+
                 taskLine = ai.CurrentTask + " | " + ai.ReasonCode;
             }
 
             string label =
                 $"{regiment.RegimentName} ({team})  {regiment.CurrentStrength}\n" +
                 $"{regiment.WeaponShortName} | Exp {regiment.Experience:0} | Reload {regiment.CurrentReloadSeconds:0.0}s\n" +
+                $"Fire {regiment.GetFirePolicyLabel()} | Arc {regiment.FireArcHalfAngle * 2f:0}° | M {regiment.EffectiveRange:0} / L {regiment.MaximumRange:0}\n" +
                 $"Morale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}\n" +
                 aiLine + "\n" + taskLine;
 
-            GUI.Box(new Rect(x, y, 250f, 94f), label, unitStyle);
+            GUI.Box(new Rect(x, y, 264f, 112f), label, unitStyle);
 
             if (regiment.HasHitFeedback)
-                GUI.Box(new Rect(screen.x - 62f, y - 30f, 124f, 26f), $"Ramte {regiment.LastVolleyHits}", hitStyle);
+            {
+                GUI.Box(
+                    new Rect(screen.x - 62f, y - 30f, 124f, 26f),
+                    $"Ramte {regiment.LastVolleyHits}",
+                    hitStyle);
+            }
         }
 
-        GUI.Box(new Rect(10, Screen.height - 116, 455, 106),
-            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\nF = line | C = column | H = hold | T = range | A = AI UNIT ON/OFF\nWASD = kamera | Q/E = roter | hjul = zoom | Space = pause/resume\n0 = x0.5 | 1 = Play | 2 = x2 | 3 = x5 | 4 = x20 | R = restart", helpStyle);
+        GUI.Box(
+            new Rect(10, Screen.height - 132, 520, 122),
+            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\n" +
+            "F = line | C = column | H = hold | T = range fan | I = AI UNIT ON/OFF\n" +
+            "WASD = kamera | Q/E = roter | hjul = zoom | Space = pause/resume\n" +
+            "0 = x0.5 | 1 = Play | 2 = x2 | 3 = x5 | 4 = x20 | R = restart\n" +
+            "Valgt regiment: menu til højre = AI doctrine, ordre-aggression og fire policy",
+            helpStyle);
 
         if (!string.IsNullOrEmpty(resultMessage))
         {
-            Rect resultRect = new Rect(Screen.width * 0.5f - 270f, Screen.height * 0.5f - 45f, 540f, 90f);
+            Rect resultRect = new Rect(
+                Screen.width * 0.5f - 270f,
+                Screen.height * 0.5f - 45f,
+                540f,
+                90f);
+
             GUI.Box(resultRect, resultMessage + "\nTryk R for at spille igen", topStyle);
         }
     }
