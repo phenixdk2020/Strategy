@@ -161,20 +161,37 @@ Console telemetry bruger `AI-DIAG|...` med:
 
 ## B-179 — Battle UI
 
-**IMPLEMENTERET v00.00.09 TEST.** Ved valg af danske regimenter vises en command-menu med:
+**IMPLEMENTERET v00.00.09 TEST.** Battle UI bruger nu en mere læsbar todelt model:
+
+### Contextual regiment-info
+
+Den store regiment-info må ikke ligge permanent oven på formationen.
+
+- Fuld regiment-info vises kun, når enheden er **valgt** eller når musen er **over enheden**.
+- Info-panelet placeres med en tydelig offset til siden/over formationen, så soldaterne fortsat er synlige.
+- `Ramte N` kan fortsat vises som kort combat-feedback uden at kræve selection/hover.
+- Pointer over UI-paneler skal ikke samtidig aktivere battlefield hover/order input.
+
+### Fast command-bar nederst
+
+Ved valg af danske regimenter vises command-menuen som en **fast fuldbredde bundbar** i stedet for et flydende højre-sidepanel.
+
+Bundbaren indeholder:
 
 `AI UNIT | DOCTRINE | ORDER AGGRESSION | FIRE POLICY`
 
-Menuen indeholder konkret:
+Konkret vises:
 
+- valgt regiment / antal valgte regimenter,
+- officer og compact profile,
+- current task,
 - AI ON/OFF,
 - Defensive/Balanced/Offensive,
 - 0–100 aggression-intent slider,
 - HOLD/CLOSE/MEDIUM/LONG fire policy,
-- officer compact profile,
-- current task.
+- Close/Medium/Long range-værdier og fire arc.
 
-Klik på menuen isoleres fra battlefield input, så UI-click ikke samtidig bliver selection/move/attack.
+Klik på bundbaren isoleres fra battlefield input, så UI-click ikke samtidig bliver selection/move/attack. Layoutet er skærmbreddebaseret, så alle fire fire-policy-knapper og doctrine-valg forbliver synlige i normale Game View-opløsninger.
 
 Den fremtidige hierarkiske menu udvides senere med bl.a. `AUTONOMY | MISSION | ORDRESTATUS | COURIER STATUS`.
 
@@ -201,6 +218,9 @@ P0A v00.00.09 har nu:
 - fire-policy constraint,
 - preferred-range close movement,
 - attacker/defender testscenario,
+- contextual hover/selection regiment-info,
+- fast fuldbredde command-bar nederst,
+- UI pointer isolation,
 - Easy/Normal/Hard,
 - UI-state/reason codes og telemetry.
 
