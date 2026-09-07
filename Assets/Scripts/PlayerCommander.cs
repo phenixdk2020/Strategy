@@ -3,6 +3,15 @@ using UnityEngine;
 
 public sealed class PlayerCommander : MonoBehaviour
 {
+    private sealed class OrderGhostVisual
+    {
+        public Vector3 Destination;
+        public Vector3 Facing;
+        public RegimentFormation Formation;
+        public LineRenderer Path;
+        public LineRenderer Footprint;
+    }
+
     private struct PendingFacingOrder
     {
         public Vector3 Position;
@@ -10,8 +19,11 @@ public sealed class PlayerCommander : MonoBehaviour
         public float ExpiresAt;
     }
 
+    public static PlayerCommander Instance { get; private set; }
+
     private readonly List<Regiment> selected = new List<Regiment>();
     private readonly Dictionary<Regiment, PendingFacingOrder> pendingFacingOrders = new Dictionary<Regiment, PendingFacingOrder>();
+    private readonly Dictionary<Regiment, OrderGhostVisual> orderGhosts = new Dictionary<Regiment, OrderGhostVisual>();
 
     private Camera cam;
     private bool formationDragActive;
@@ -21,6 +33,24 @@ public sealed class PlayerCommander : MonoBehaviour
 
     private const float FormationDragThreshold = 4f;
     private const float RegimentLineSpacing = 22f;
+    private const float FacingStepDegrees = 15f;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            enabled = false;
+            return;
+        }
+
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
 
     private void Start()
     {
@@ -38,6 +68,7 @@ public sealed class PlayerCommander : MonoBehaviour
         }
 
         UpdatePendingFacingOrders();
+        UpdateOrderGhosts();
 
         bool pointerOverSimulationControls = BattleManager.Instance != null &&
                                              BattleManager.Instance.IsPointerOverSimulationControls(Input.mousePosition);
@@ -58,6 +89,9 @@ public sealed class PlayerCommander : MonoBehaviour
         {
             ForEachSelected(regiment =>
             {
+                ClearOrderGhost(regiment);
+                pendingFacingOrders.Remove(regiment);
+
                 OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
                 if (controller != null && controller.AIEnabled)
                     controller.SetHoldMission();
@@ -80,6 +114,49 @@ public sealed class PlayerCommander : MonoBehaviour
                 r.RefreshRangeVisibility();
             });
         }
+
+        if (Input.GetKeyDown(KeyCode.Z))
+            RotateSelectedFacing(-FacingStepDegrees);
+
+        if (Input.GetKeyDown(KeyCode.X))
+            RotateSelectedFacing(FacingStepDegrees);
+    }
+
+    public void RotateSelectedFacing(float degrees)
+    {
+        ForEachSelected(regiment => RotateRegimentFacing(regiment, degrees));
+    }
+
+    private void RotateRegimentFacing(Regiment regiment, float degrees)
+    {
+        if (regiment == null || regiment.IsRouted)
+            return;
+
+        if (orderGhosts.TryGetValue(regiment, out OrderGhostVisual ghost))
+        {
+            ghost.Facing = Quaternion.Euler(0f, degrees, 0f) * ghost.Facing;
+            ghost.Facing.y = 0f;
+            if (ghost.Facing.sqrMagnitude < 0.01f)
+                ghost.Facing = regiment.transform.forward;
+            ghost.Facing.Normalize();
+
+            if (pendingFacingOrders.TryGetValue(regiment, out PendingFacingOrder pending))
+            {
+                pending.Facing = ghost.Facing;
+                pendingFacingOrders[regiment] = pending;
+            }
+
+            UpdateGhostFootprint(regiment, ghost);
+            return;
+        }
+
+        OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
+        if (controller != null && controller.AIEnabled)
+            controller.SetHoldMission();
+        else
+            regiment.OrderHold();
+
+        regiment.transform.rotation = Quaternion.Euler(0f, degrees, 0f) * regiment.transform.rotation;
     }
 
     private void HandleSelection()
@@ -104,7 +181,6 @@ public sealed class PlayerCommander : MonoBehaviour
                 {
                     selected.Remove(regiment);
                     regiment.SetSelected(false);
-                    pendingFacingOrders.Remove(regiment);
                 }
                 else if (!selected.Contains(regiment))
                 {
@@ -163,7 +239,6 @@ public sealed class PlayerCommander : MonoBehaviour
             return;
         }
 
-        // A normal quick right-click keeps the classic move behaviour.
         IssueSimpleMoveOrder(formationDragEnd);
     }
 
@@ -175,6 +250,7 @@ public sealed class PlayerCommander : MonoBehaviour
         ForEachSelected(regiment =>
         {
             pendingFacingOrders.Remove(regiment);
+            ClearOrderGhost(regiment);
 
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
             if (controller != null && controller.AIEnabled)
@@ -202,7 +278,20 @@ public sealed class PlayerCommander : MonoBehaviour
             Vector3 point = basePoint + right * offset;
             point.y = PrototypeBootstrap.SampleGroundHeight(point.x, point.z) + 0.10f;
 
-            pendingFacingOrders.Remove(regiment);
+            Vector3 facing = point - regiment.transform.position;
+            facing.y = 0f;
+            if (facing.sqrMagnitude < 0.01f)
+                facing = regiment.transform.forward;
+            facing.Normalize();
+
+            pendingFacingOrders[regiment] = new PendingFacingOrder
+            {
+                Position = point,
+                Facing = facing,
+                ExpiresAt = Time.unscaledTime + 120f
+            };
+
+            CreateOrUpdateOrderGhost(regiment, point, facing, regiment.Formation);
 
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
             if (controller != null && controller.AIEnabled)
@@ -231,8 +320,6 @@ public sealed class PlayerCommander : MonoBehaviour
         Vector3 start = midpoint - lineDirection * requiredLength * 0.5f;
         Vector3 end = midpoint + lineDirection * requiredLength * 0.5f;
 
-        // Reversing the drag direction flips the formation's facing. This makes
-        // the right-drag line itself the orientation control without another key.
         Vector3 facing = Vector3.Cross(Vector3.up, lineDirection).normalized;
         if (facing.sqrMagnitude < 0.01f)
             facing = Vector3.forward;
@@ -258,6 +345,8 @@ public sealed class PlayerCommander : MonoBehaviour
                 Facing = facing,
                 ExpiresAt = Time.unscaledTime + 120f
             };
+
+            CreateOrUpdateOrderGhost(regiment, point, facing, RegimentFormation.Line);
         }
     }
 
@@ -308,7 +397,7 @@ public sealed class PlayerCommander : MonoBehaviour
 
                 if (delta.sqrMagnitude <= 1.8f * 1.8f)
                 {
-                    regiment.SetFormation(RegimentFormation.Line);
+                    regiment.SetFormation(regiment.Formation);
 
                     if (order.Facing.sqrMagnitude > 0.01f)
                         regiment.transform.rotation = Quaternion.LookRotation(order.Facing, Vector3.up);
@@ -329,7 +418,157 @@ public sealed class PlayerCommander : MonoBehaviour
             return;
 
         foreach (Regiment regiment in completed)
+        {
             pendingFacingOrders.Remove(regiment);
+            ClearOrderGhost(regiment);
+        }
+    }
+
+    private void CreateOrUpdateOrderGhost(Regiment regiment, Vector3 destination, Vector3 facing, RegimentFormation formation)
+    {
+        if (regiment == null)
+            return;
+
+        if (!orderGhosts.TryGetValue(regiment, out OrderGhostVisual ghost))
+        {
+            GameObject root = new GameObject(regiment.RegimentName + "_OrderGhost");
+            root.transform.SetParent(transform, true);
+
+            ghost = new OrderGhostVisual
+            {
+                Path = CreateGhostLine(root.transform, "Path", 0.12f, new Color(0.72f, 0.88f, 1f)),
+                Footprint = CreateGhostLine(root.transform, "Destination", 0.22f, new Color(0.98f, 0.88f, 0.18f))
+            };
+            orderGhosts[regiment] = ghost;
+        }
+
+        ghost.Destination = destination;
+        ghost.Facing = facing.sqrMagnitude > 0.01f ? facing.normalized : regiment.transform.forward;
+        ghost.Formation = formation;
+
+        UpdateGhostPath(regiment, ghost);
+        UpdateGhostFootprint(regiment, ghost);
+    }
+
+    private LineRenderer CreateGhostLine(Transform parent, string name, float width, Color color)
+    {
+        GameObject lineObject = new GameObject(name);
+        lineObject.transform.SetParent(parent, false);
+
+        LineRenderer line = lineObject.AddComponent<LineRenderer>();
+        line.useWorldSpace = true;
+        line.loop = false;
+        line.widthMultiplier = width;
+        line.numCapVertices = 2;
+        line.numCornerVertices = 2;
+
+        Shader shader = Shader.Find("Unlit/Color");
+        if (shader == null)
+            shader = Shader.Find("Sprites/Default");
+        if (shader == null)
+            shader = Shader.Find("Standard");
+
+        Material material = new Material(shader)
+        {
+            name = "OrderGhost_" + name,
+            color = color
+        };
+        line.sharedMaterial = material;
+        return line;
+    }
+
+    private void UpdateOrderGhosts()
+    {
+        if (orderGhosts.Count == 0)
+            return;
+
+        List<Regiment> stale = null;
+
+        foreach (KeyValuePair<Regiment, OrderGhostVisual> pair in orderGhosts)
+        {
+            if (pair.Key == null)
+            {
+                if (stale == null)
+                    stale = new List<Regiment>();
+                stale.Add(pair.Key);
+                continue;
+            }
+
+            UpdateGhostPath(pair.Key, pair.Value);
+            UpdateGhostFootprint(pair.Key, pair.Value);
+        }
+
+        if (stale != null)
+        {
+            foreach (Regiment regiment in stale)
+                ClearOrderGhost(regiment);
+        }
+    }
+
+    private void UpdateGhostPath(Regiment regiment, OrderGhostVisual ghost)
+    {
+        if (regiment == null || ghost == null || ghost.Path == null)
+            return;
+
+        Vector3 start = regiment.transform.position;
+        Vector3 end = ghost.Destination;
+        const int segments = 18;
+        ghost.Path.positionCount = segments + 1;
+
+        for (int i = 0; i <= segments; i++)
+        {
+            float t = i / (float)segments;
+            Vector3 p = Vector3.Lerp(start, end, t);
+            p.y = PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 0.38f;
+            ghost.Path.SetPosition(i, p);
+        }
+    }
+
+    private void UpdateGhostFootprint(Regiment regiment, OrderGhostVisual ghost)
+    {
+        if (regiment == null || ghost == null || ghost.Footprint == null)
+            return;
+
+        Vector3 forward = ghost.Facing;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+        float halfWidth = ghost.Formation == RegimentFormation.Line ? 9.5f : 3.0f;
+        float halfDepth = ghost.Formation == RegimentFormation.Line ? 2.6f : 7.5f;
+
+        Vector3 center = ghost.Destination;
+        Vector3[] corners =
+        {
+            center - right * halfWidth - forward * halfDepth,
+            center + right * halfWidth - forward * halfDepth,
+            center + right * halfWidth + forward * halfDepth,
+            center - right * halfWidth + forward * halfDepth,
+            center - right * halfWidth - forward * halfDepth
+        };
+
+        ghost.Footprint.positionCount = corners.Length;
+        for (int i = 0; i < corners.Length; i++)
+        {
+            Vector3 p = corners[i];
+            p.y = PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 0.42f;
+            ghost.Footprint.SetPosition(i, p);
+        }
+    }
+
+    private void ClearOrderGhost(Regiment regiment)
+    {
+        if (!orderGhosts.TryGetValue(regiment, out OrderGhostVisual ghost))
+            return;
+
+        if (ghost.Path != null)
+            Destroy(ghost.Path.gameObject);
+        if (ghost.Footprint != null)
+            Destroy(ghost.Footprint.gameObject);
+
+        orderGhosts.Remove(regiment);
     }
 
     private Regiment GetEnemyUnderMouse()
@@ -457,6 +696,5 @@ public sealed class PlayerCommander : MonoBehaviour
         }
 
         selected.Clear();
-        pendingFacingOrders.Clear();
     }
 }
