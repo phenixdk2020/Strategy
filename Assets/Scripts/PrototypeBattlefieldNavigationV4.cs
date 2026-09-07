@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 // v00.00.09 TEST navigation replacement.
 // V4 replaces the tangent/one-obstacle steering with a persistent A* route over
@@ -171,7 +172,7 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
     {
         obstacles.Clear();
 
-        Transform[] all = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        Transform[] all = Object.FindObjectsByType<Transform>();
         foreach (Transform item in all)
         {
             if (item == null)
