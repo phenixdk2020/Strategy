@@ -200,6 +200,16 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
 
     private static bool AreInContact(Regiment a, Regiment b)
     {
+        // Do not allow melee to resolve through water, houses, trees or other
+        // blocked tactical space merely because the broad unit bounds overlap.
+        if (PrototypeNavigationRecoveryManager.HasObstacleBetween(
+            a.transform.position,
+            b.transform.position,
+            RegimentFormation.Line))
+        {
+            return false;
+        }
+
         BoxCollider boxA = a.GetComponent<BoxCollider>();
         BoxCollider boxB = b.GetComponent<BoxCollider>();
 
