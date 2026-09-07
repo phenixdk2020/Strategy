@@ -1,8 +1,8 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10c
+Prototype version: v00.00.10d
 Build status: CAMPAIGN TEST
-Build name: GRAND CAMPAIGN ZONE TEST 10C
-Visible build marker: PROJECT 1864 | v00.00.10c CAMPAIGN TEST is shown permanently in the upper-left corner during Play mode
+Build name: GRAND CAMPAIGN ZONE TEST 10D
+Visible build marker: PROJECT 1864 | v00.00.10d CAMPAIGN TEST is shown permanently in the upper-left corner during Play mode
 Track rule: campaign work proceeds independently on branch campaign while tactical fixes continue on branch test
 Inherited tactical baseline: campaign branch was forked from v00.00.09b TEST and keeps the tactical battle code compiled as the future battle layer
 Design manual baseline: v00.02.08
@@ -20,14 +20,18 @@ Zone interaction: left-click selects zones/formations; selected player formation
 Strategic movement: campaign army tokens move between adjacent zones with travel progress and arrival logging
 Campaign clock: Space pauses; 1/2/3/4 set x1/x5/x20/x100; top bar also exposes pause/speed controls
 Contact hook: enemy formations arriving in the same zone pause the campaign and emit CAMPAIGN-CONTACT as the first battle-prompt hook
+Formation standards v00.00.10d: current campaign army tokens receive a visible national/formation standard as a close-zoom identity aid
+Regimental standards shared rule: individual regimental colours belong to stable regiment identity and must also be visible in Battle mode; campaign army/corps tokens must not display dozens of standards unless the formation is unfolded/inspected
+Standards historical rule: current standard graphics are QA placeholders only; final patterns, insignia, issue dates and number of colours per formation require source-backed historical data
+Standards future state: captured/lost standards become battle result and campaign state later; precise enemy standard identity remains subject to fog-of-war/intelligence
 Semantic zoom rule: semantic zoom/NATO-APP-6-like symbol abstraction is a shared requirement for BOTH Battle mode and Campaign mode; simulation IDs/state remain unchanged across visual zoom levels
-Battle semantic zoom: close = full 3D soldiers/guns/horses/HQ/casualties; medium = simplified formations; long = NATO/APP-6-like unit symbols; very long = optional higher-echelon aggregation without changing simulation
-Campaign semantic zoom: close = terrain/zones/roads/towns/formations; medium = zone labels + formation symbols; long = division/corps/army symbols; very long = national/army overview aggregation
+Battle semantic zoom: close = full 3D soldiers/guns/horses/HQ/casualties/standards; medium = simplified formations/banners; long = NATO/APP-6-like unit symbols; very long = optional higher-echelon aggregation without changing simulation
+Campaign semantic zoom: close = terrain/zones/roads/towns/formations/standards; medium = zone labels + formation symbols; long = division/corps/army symbols; very long = national/army overview aggregation
 Campaign target loop: Grand Campaign -> movement/contact -> tactical battle -> battle result -> Grand Campaign
 Campaign state continuity target: regiment/formation IDs, strength, ammunition, morale/cohesion, officer profile, attacker/defender role, zone/location and campaign date/time must survive tactical handoff and return
 Campaign architecture rule: new campaign code is isolated under Assets/Scripts/Campaign where practical to reduce merge conflicts with tactical development
 Tactical synchronization rule: only accepted tactical fixes are later merged/cherry-picked into campaign; campaign development must not wait on minor tactical polish
 Unity 6.6 compatibility fix v00.00.10c: ambiguous System.Object/UnityEngine.Object references in GrandCampaignBootstrap and PrototypeBattlefieldNavigationV4 are resolved explicitly to UnityEngine.Object
 Unity 6.6 compatibility fix v00.00.10c: PrototypeBattlefieldNavigationV4 uses the current parameterless FindObjectsByType<T>() overload instead of the deprecated FindObjectsSortMode overload
-Backlogs: docs/backlog/B-270-CAMPAIGN-MAP-V010.md and docs/backlog/B-280-GRAND-CAMPAIGN-COUNTRIES-ZONES.md
-QA state: v00.00.10c CAMPAIGN TEST is not runtime validated until Unity 6000.6.0f1 compile + Play acceptance is reported
+Backlogs: docs/backlog/B-270-CAMPAIGN-MAP-V010.md, docs/backlog/B-280-GRAND-CAMPAIGN-COUNTRIES-ZONES.md, docs/backlog/B-290-GRAND-CAMPAIGN-SETTLEMENTS-CONSTRUCTION-TRADE.md and docs/backlog/B-310-REGIMENTAL-STANDARDS.md
+QA state: v00.00.10d CAMPAIGN TEST is not runtime validated until Unity 6000.6.0f1 compile + Play acceptance is reported
