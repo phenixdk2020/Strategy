@@ -38,8 +38,9 @@ Multi-selection: Ctrl+left-click or Shift+left-click adds/removes Danish regimen
 Formation control: manual F/C selects line/column; Officer AI may use column for longer approach marches and returns to line near engagement based on Tactical Skill and distance
 Single-unit move/facing: right-click location is the destination; while RMB is held the yellow destination footprint itself rotates live with the mouse drag, with a short facing guide showing the final direction before release
 Destination formation rule: movement may be executed in column, but the destination ghost footprint and final deployed state are LINE by default
-Multi-unit formation-line order: with several units selected, hold right mouse and drag a line; selected regiments are assigned evenly along the line and drag direction determines facing
-Waypoint routes: Alt+right-click appends a waypoint; repeat for multiple waypoints; Alt+right-drag on a waypoint sets an explicit final facing for the route
+Multi-unit move/facing revision: with several units selected, RMB-down location is the CENTER of the final group frontage; dragging points the common facing direction; regiment centres are distributed on a line perpendicular to that facing, so dragging right makes every selected regiment face right
+Multi-unit preview: a visible center marker anchors the RMB-down point; the yellow frontage preview is centred on it and a facing guide points in the common drag direction
+Waypoint routes: Alt+right-click appends a waypoint; for multiple selected regiments the waypoint point is the group centre and units retain a common frontage/facing relationship; Alt+right-drag sets explicit final facing
 Waypoint obedience revision: PlayerCommander executes after Officer AI and reasserts the active player route every frame; route arrival tolerance is synchronized so Officer AI can no longer stop just outside a waypoint and strand the route
 Order ghosts: route ghost follows all remaining waypoints and the final destination footprint shows final LINE formation and facing; Z/X can rotate final ghost facing without cancelling movement
 Facing order: Z rotates selected regiment(s) 15 degrees left; X rotates 15 degrees right; matching compact buttons remain in the bottom command bar
