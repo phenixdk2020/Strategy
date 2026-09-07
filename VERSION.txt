@@ -1,7 +1,9 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09
+Prototype version: v00.00.09a
 Build status: TEST
-Build name: TACTICAL COMMAND TEST
+Build name: TACTICAL COMMAND TEST 09A
+Visible build marker: PROJECT 1864 | v00.00.09a TEST is shown permanently in the upper-left corner during Play mode
+TEST versioning rule: every delivered TEST revision receives a visible suffix bump (v00.00.09a, v00.00.09b, v00.00.09c...) so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
@@ -19,6 +21,11 @@ Navigation V4: local tangent steering is replaced by a persistent A* route over 
 Navigation V4 obstacle rule: route planning uses a compact marching clearance and automatically changes a regiment to COLUMN when an intermediate A* route is required; the final destination is validated with LINE clearance so a deployed formation cannot finish on top of an obstacle
 Navigation V4 recovery: if a regiment starts or becomes trapped inside blocked tactical space, it is moved to the nearest legal escape point and the original route is replanned instead of remaining stalled against a tree
 Navigation V4 stuck recovery: a regiment that makes effectively no progress for roughly 0.85 simulation seconds automatically replans its route and performs an emergency escape if no legal A* route can initially be generated
+Navigation v00.00.09a footprint hotfix: an additional post-path steering layer checks the actual broad LINE/COLUMN formation footprint rather than only the regiment centre point; a LINE that would touch a tree/building narrows to COLUMN before contact
+Navigation v00.00.09a initial-overlap rule: if a QA regiment initially overlaps a tree/building footprint it is moved to the nearest legal formation position at startup instead of beginning trapped inside the obstacle
+Navigation v00.00.09a anti-snag rule: if the compact marching footprint still approaches/touches an obstacle, deterministic lateral/outward avoidance is applied without replacing the original player/AI destination
+Navigation v00.00.09a stuck rule: lack of progress near an obstacle triggers a safe emergency relocation around that obstacle while preserving the active route; the unit then continues toward the original target
+Navigation v00.00.09a telemetry: NAV-09A reports startup adjustment, forced COLUMN, push-out avoidance, emergency relocation and formation restore events
 Navigation V4 telemetry: NAV-V4 reports direct/A* route creation, route point counts, stuck replans, emergency unstick/escape and no-route failures
 Navigation compatibility: V3 and the previous active navigation/recovery steering layers remain in the TEST repository for reference/static queries but are disabled once Navigation V4 takes control
 River crossing rule: the stream is non-traversable terrain for infantry; A* movement can cross it only through the fixed bridge zone
@@ -69,4 +76,4 @@ Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision nois
 AI telemetry: AI-DIAG exposes unit, officer, doctrine, order aggression, effective aggression, fire policy, mission, task and reason
 Pause semantics: AI, movement, waypoint movement, reload, combat and battle clock stop together; camera/UI remain usable
 Slow tactical mode: x0.5 gives twice the real-world reaction time per unit of simulation time without changing combat stats
-QA state: v00.00.09 TEST requires Unity 6000.6.0f1 compile + Play acceptance before it can be called runtime validated
+QA state: v00.00.09a TEST requires Unity 6000.6.0f1 compile + Play acceptance before it can be called runtime validated
