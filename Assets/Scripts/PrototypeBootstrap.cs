@@ -23,7 +23,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         RenderSettings.ambientLight = new Color(0.55f, 0.57f, 0.53f);
         RenderSettings.fog = true;
         RenderSettings.fogColor = new Color(0.66f, 0.70f, 0.72f);
-        RenderSettings.fogDensity = 0.0035f;
+        RenderSettings.fogDensity = 0.0022f;
 
         CreateLighting();
         CreateCamera();
@@ -38,10 +38,41 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         systems.AddComponent<BattleManager>();
         systems.AddComponent<PlayerCommander>();
 
-        CreateRegiment("1. Regiment", BattleTeam.Denmark, 620, false, new Vector3(-47f, 0f, -19f), Quaternion.Euler(0f, 88f, 0f));
-        CreateRegiment("5. Regiment", BattleTeam.Denmark, 585, false, new Vector3(-52f, 0f, 20f), Quaternion.Euler(0f, 75f, 0f));
-        CreateRegiment("8th Regiment", BattleTeam.Prussia, 610, true, new Vector3(52f, 0f, -15f), Quaternion.Euler(0f, -92f, 0f));
-        CreateRegiment("18th Regiment", BattleTeam.Prussia, 560, true, new Vector3(58f, 0f, 28f), Quaternion.Euler(0f, -105f, 0f), new Vector3(20f, 0f, 32f));
+        // v00.00.09 test scenario: Denmark defends west; Prussia attacks from east.
+        // The battlefield and starting separation are doubled so there is real time
+        // to pause, inspect, set fire discipline and manoeuvre before contact.
+        CreateRegiment(
+            "1. Regiment",
+            BattleTeam.Denmark,
+            620,
+            false,
+            new Vector3(-104f, 0f, -34f),
+            Quaternion.Euler(0f, 88f, 0f));
+
+        CreateRegiment(
+            "5. Regiment",
+            BattleTeam.Denmark,
+            585,
+            false,
+            new Vector3(-100f, 0f, 36f),
+            Quaternion.Euler(0f, 78f, 0f));
+
+        CreateRegiment(
+            "8th Regiment",
+            BattleTeam.Prussia,
+            610,
+            true,
+            new Vector3(104f, 0f, -28f),
+            Quaternion.Euler(0f, -92f, 0f));
+
+        CreateRegiment(
+            "18th Regiment",
+            BattleTeam.Prussia,
+            560,
+            true,
+            new Vector3(112f, 0f, 50f),
+            Quaternion.Euler(0f, -105f, 0f),
+            new Vector3(18f, 0f, 72f));
     }
 
     private void CreateLighting()
@@ -61,19 +92,19 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         camera.tag = "MainCamera";
         camera.fieldOfView = 48f;
         camera.nearClipPlane = 0.3f;
-        camera.farClipPlane = 600f;
-        cameraObject.transform.position = new Vector3(-2f, 48f, -62f);
-        cameraObject.transform.rotation = Quaternion.Euler(38f, 0f, 0f);
+        camera.farClipPlane = 1000f;
+        cameraObject.transform.position = new Vector3(-18f, 86f, -122f);
+        cameraObject.transform.rotation = Quaternion.Euler(39f, 4f, 0f);
         cameraObject.AddComponent<AudioListener>();
         cameraObject.AddComponent<RTSCameraController>();
     }
 
     private void CreateGround()
     {
-        const int xSegments = 72;
-        const int zSegments = 48;
-        const float width = 180f;
-        const float depth = 120f;
+        const int xSegments = 144;
+        const int zSegments = 96;
+        const float width = 360f;
+        const float depth = 240f;
 
         Vector3[] vertices = new Vector3[(xSegments + 1) * (zSegments + 1)];
         Vector2[] uvs = new Vector2[vertices.Length];
@@ -83,6 +114,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         for (int z = 0; z <= zSegments; z++)
         {
             float pz = -depth * 0.5f + depth * z / zSegments;
+
             for (int x = 0; x <= xSegments; x++)
             {
                 float px = -width * 0.5f + width * x / xSegments;
@@ -109,29 +141,39 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         Mesh mesh = new Mesh
         {
-            name = "PrototypeBattlefieldMesh",
+            name = "PrototypeBattlefieldMesh_v009_360x240",
             vertices = vertices,
             triangles = triangles,
             uv = uvs
         };
+
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
 
         GameObject ground = new GameObject("Battlefield Ground");
         MeshFilter mf = ground.AddComponent<MeshFilter>();
         mf.sharedMesh = mesh;
+
         MeshRenderer mr = ground.AddComponent<MeshRenderer>();
         mr.sharedMaterial = CreateSharedMaterial(new Color(0.32f, 0.42f, 0.20f), "Grass");
+
         MeshCollider mc = ground.AddComponent<MeshCollider>();
         mc.sharedMesh = mesh;
     }
 
     public static float SampleGroundHeight(float x, float z)
     {
-        float ridge = 4.6f * Mathf.Exp(-((x + 34f) * (x + 34f) / 900f + (z + 17f) * (z + 17f) / 330f));
-        float northHill = 2.8f * Mathf.Exp(-((x - 28f) * (x - 28f) / 1100f + (z - 25f) * (z - 25f) / 520f));
-        float rolls = 0.8f * Mathf.Sin(x * 0.055f) * Mathf.Cos(z * 0.075f);
-        float streamDip = -1.1f * Mathf.Exp(-(x * x) / 120f);
+        float ridge = 5.2f * Mathf.Exp(
+            -((x + 82f) * (x + 82f) / 2600f +
+              (z + 28f) * (z + 28f) / 1050f));
+
+        float northHill = 3.2f * Mathf.Exp(
+            -((x - 56f) * (x - 56f) / 4300f +
+              (z - 54f) * (z - 54f) / 1900f));
+
+        float rolls = 0.9f * Mathf.Sin(x * 0.032f) * Mathf.Cos(z * 0.046f);
+        float streamDip = -1.2f * Mathf.Exp(-(x * x) / 180f);
+
         return ridge + northHill + rolls + streamDip;
     }
 
@@ -139,13 +181,16 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     {
         Material water = CreateSharedMaterial(new Color(0.18f, 0.40f, 0.52f), "Water");
         Vector3 previous = Vector3.zero;
-        for (int i = 0; i < 31; i++)
+
+        for (int i = 0; i < 61; i++)
         {
-            float z = -58f + i * 3.9f;
-            float x = Mathf.Sin(z * 0.10f) * 3.4f;
+            float z = -118f + i * 3.93f;
+            float x = Mathf.Sin(z * 0.065f) * 4.8f;
             Vector3 p = new Vector3(x, SampleGroundHeight(x, z) + 0.07f, z);
+
             if (i > 0)
-                CreateSegment("Stream", previous, p, 2.4f, 0.06f, water);
+                CreateSegment("Stream", previous, p, 2.8f, 0.06f, water);
+
             previous = p;
         }
     }
@@ -154,13 +199,16 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     {
         Material road = CreateSharedMaterial(new Color(0.55f, 0.43f, 0.28f), "Road");
         Vector3 previous = Vector3.zero;
-        for (int i = 0; i < 31; i++)
+
+        for (int i = 0; i < 61; i++)
         {
-            float x = -86f + i * 5.7f;
-            float z = 13f + Mathf.Sin(x * 0.045f) * 3.2f;
+            float x = -172f + i * 5.73f;
+            float z = 22f + Mathf.Sin(x * 0.028f) * 5.2f;
             Vector3 p = new Vector3(x, SampleGroundHeight(x, z) + 0.10f, z);
+
             if (i > 0)
-                CreateSegment("Road", previous, p, 4.6f, 0.05f, road);
+                CreateSegment("Road", previous, p, 4.8f, 0.05f, road);
+
             previous = p;
         }
     }
@@ -170,6 +218,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         Vector3 center = (a + b) * 0.5f;
         Vector3 delta = b - a;
         float length = delta.magnitude;
+
         GameObject segment = GameObject.CreatePrimitive(PrimitiveType.Cube);
         segment.name = name;
         segment.transform.position = center;
@@ -183,7 +232,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     {
         Material wall = CreateSharedMaterial(new Color(0.78f, 0.74f, 0.64f), "FarmWall");
         Material roof = CreateSharedMaterial(new Color(0.28f, 0.20f, 0.14f), "FarmRoof");
-        Vector3 basePos = new Vector3(-31f, SampleGroundHeight(-31f, -27f), -27f);
+        Vector3 basePos = new Vector3(-82f, SampleGroundHeight(-82f, -54f), -54f);
 
         GameObject house = GameObject.CreatePrimitive(PrimitiveType.Cube);
         house.name = "Farmhouse";
@@ -201,7 +250,10 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         GameObject barn = GameObject.CreatePrimitive(PrimitiveType.Cube);
         barn.name = "Barn";
-        barn.transform.position = new Vector3(-22f, SampleGroundHeight(-22f, -29f) + 1.1f, -29f);
+        barn.transform.position = new Vector3(
+            -70f,
+            SampleGroundHeight(-70f, -58f) + 1.1f,
+            -58f);
         barn.transform.localScale = new Vector3(5f, 2.2f, 4f);
         barn.GetComponent<Renderer>().sharedMaterial = wall;
     }
@@ -209,13 +261,25 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     private void CreateVegetation()
     {
         Random.InitState(1864);
-        for (int i = 0; i < 42; i++)
+
+        for (int i = 0; i < 86; i++)
         {
-            float x = Random.Range(-84f, 84f);
-            float z = Random.Range(-55f, 55f);
-            if (Mathf.Abs(x) < 8f || (x < -18f && x > -42f && z < -18f && z > -38f))
+            float x = Random.Range(-170f, 170f);
+            float z = Random.Range(-112f, 112f);
+
+            bool nearStream = Mathf.Abs(x) < 9f;
+            bool nearFarm =
+                x < -62f &&
+                x > -98f &&
+                z < -42f &&
+                z > -72f;
+
+            if (nearStream || nearFarm)
                 continue;
-            CreateTree(new Vector3(x, SampleGroundHeight(x, z), z), Random.Range(0.8f, 1.35f));
+
+            CreateTree(
+                new Vector3(x, SampleGroundHeight(x, z), z),
+                Random.Range(0.8f, 1.35f));
         }
     }
 
@@ -245,20 +309,34 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     private void CreateFences()
     {
         Material wood = CreateSharedMaterial(new Color(0.30f, 0.22f, 0.13f), "Fence");
-        CreateFenceLine(new Vector3(-63f, 0f, -7f), new Vector3(-18f, 0f, -7f), wood);
-        CreateFenceLine(new Vector3(18f, 0f, 7f), new Vector3(72f, 0f, 7f), wood);
-        CreateFenceLine(new Vector3(-43f, 0f, -34f), new Vector3(-17f, 0f, -34f), wood);
+
+        CreateFenceLine(
+            new Vector3(-126f, 0f, -14f),
+            new Vector3(-50f, 0f, -14f),
+            wood);
+
+        CreateFenceLine(
+            new Vector3(42f, 0f, 14f),
+            new Vector3(142f, 0f, 14f),
+            wood);
+
+        CreateFenceLine(
+            new Vector3(-96f, 0f, -70f),
+            new Vector3(-48f, 0f, -70f),
+            wood);
     }
 
     private void CreateFenceLine(Vector3 start, Vector3 end, Material material)
     {
         Vector3 delta = end - start;
         int posts = Mathf.Max(2, Mathf.CeilToInt(delta.magnitude / 4f));
+
         for (int i = 0; i < posts; i++)
         {
             float t = i / (float)(posts - 1);
             Vector3 p = Vector3.Lerp(start, end, t);
             p.y = SampleGroundHeight(p.x, p.z);
+
             GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cube);
             post.name = "FencePost";
             post.transform.position = p + Vector3.up * 0.65f;
@@ -268,20 +346,37 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         }
     }
 
-    private void CreateRegiment(string unitName, BattleTeam team, int strength, bool isAI, Vector3 p, Quaternion rotation, Vector3? aiWaypoint = null)
+    private void CreateRegiment(
+        string unitName,
+        BattleTeam team,
+        int strength,
+        bool isAI,
+        Vector3 position,
+        Quaternion rotation,
+        Vector3? aiWaypoint = null)
     {
-        p.y = SampleGroundHeight(p.x, p.z) + 0.10f;
+        position.y = SampleGroundHeight(position.x, position.z) + 0.10f;
+
         GameObject unit = new GameObject(unitName);
         unit.transform.rotation = rotation;
+
         Regiment regiment = unit.AddComponent<Regiment>();
-        regiment.Initialize(unitName, team, strength, isAI, p, aiWaypoint);
+        regiment.Initialize(
+            unitName,
+            team,
+            strength,
+            isAI,
+            position,
+            aiWaypoint);
     }
 
     public static Material CreateSharedMaterial(Color color, string materialName)
     {
         Shader shader = Shader.Find("Standard");
+
         if (shader == null)
             shader = Shader.Find("Universal Render Pipeline/Lit");
+
         if (shader == null)
             shader = Shader.Find("Unlit/Color");
 
@@ -290,6 +385,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             name = materialName,
             color = color
         };
+
         return material;
     }
 }
