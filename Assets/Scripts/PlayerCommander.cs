@@ -30,11 +30,23 @@ public sealed class PlayerCommander : MonoBehaviour
             HandleOrder();
 
         if (Input.GetKeyDown(KeyCode.H))
-            ForEachSelected(r => r.OrderHold());
+        {
+            ForEachSelected(regiment =>
+            {
+                OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
+                if (controller != null && controller.AIEnabled)
+                    controller.SetHoldMission();
+                else
+                    regiment.OrderHold();
+            });
+        }
+
         if (Input.GetKeyDown(KeyCode.F))
             ForEachSelected(r => r.SetFormation(RegimentFormation.Line));
+
         if (Input.GetKeyDown(KeyCode.C))
             ForEachSelected(r => r.SetFormation(RegimentFormation.Column));
+
         if (Input.GetKeyDown(KeyCode.T))
         {
             ForEachSelected(r =>
@@ -50,7 +62,7 @@ public sealed class PlayerCommander : MonoBehaviour
         bool additive = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 500f))
+        if (Physics.Raycast(ray, out RaycastHit hit, 700f))
         {
             Regiment regiment = hit.collider.GetComponentInParent<Regiment>();
             if (regiment != null && regiment.Team == BattleTeam.Denmark)
@@ -68,6 +80,7 @@ public sealed class PlayerCommander : MonoBehaviour
                     selected.Add(regiment);
                     regiment.SetSelected(true);
                 }
+
                 return;
             }
         }
@@ -82,7 +95,7 @@ public sealed class PlayerCommander : MonoBehaviour
             return;
 
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-        RaycastHit[] hits = Physics.RaycastAll(ray, 500f);
+        RaycastHit[] hits = Physics.RaycastAll(ray, 700f);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         foreach (RaycastHit hit in hits)
@@ -90,7 +103,15 @@ public sealed class PlayerCommander : MonoBehaviour
             Regiment target = hit.collider.GetComponentInParent<Regiment>();
             if (target != null && target.Team == BattleTeam.Prussia)
             {
-                ForEachSelected(r => r.OrderAttack(target));
+                ForEachSelected(regiment =>
+                {
+                    OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
+                    if (controller != null && controller.AIEnabled)
+                        controller.SetAttackMission(target);
+                    else
+                        regiment.OrderAttack(target);
+                });
+
                 return;
             }
         }
@@ -104,11 +125,23 @@ public sealed class PlayerCommander : MonoBehaviour
             Vector3 right = cam.transform.right;
             right.y = 0f;
             right.Normalize();
+
             for (int i = 0; i < selected.Count; i++)
             {
+                Regiment regiment = selected[i];
+                if (regiment == null)
+                    continue;
+
                 float offset = (i - (selected.Count - 1) * 0.5f) * 8f;
-                selected[i].OrderMove(basePoint + right * offset);
+                Vector3 point = basePoint + right * offset;
+
+                OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
+                if (controller != null && controller.AIEnabled)
+                    controller.SetMoveMission(point);
+                else
+                    regiment.OrderMove(point);
             }
+
             return;
         }
     }
@@ -122,6 +155,7 @@ public sealed class PlayerCommander : MonoBehaviour
                 selected.RemoveAt(i);
                 continue;
             }
+
             action(selected[i]);
         }
     }
@@ -129,8 +163,11 @@ public sealed class PlayerCommander : MonoBehaviour
     private void ClearSelection()
     {
         foreach (Regiment regiment in selected)
+        {
             if (regiment != null)
                 regiment.SetSelected(false);
+        }
+
         selected.Clear();
     }
 }
