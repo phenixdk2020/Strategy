@@ -1,8 +1,8 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10b
+Prototype version: v00.00.10c
 Build status: CAMPAIGN TEST
-Build name: GRAND CAMPAIGN ZONE TEST 10B
-Visible build marker: PROJECT 1864 | v00.00.10b CAMPAIGN TEST is shown permanently in the upper-left corner during Play mode
+Build name: GRAND CAMPAIGN ZONE TEST 10C
+Visible build marker: PROJECT 1864 | v00.00.10c CAMPAIGN TEST is shown permanently in the upper-left corner during Play mode
 Track rule: campaign work proceeds independently on branch campaign while tactical fixes continue on branch test
 Inherited tactical baseline: campaign branch was forked from v00.00.09b TEST and keeps the tactical battle code compiled as the future battle layer
 Design manual baseline: v00.02.08
@@ -13,7 +13,7 @@ Grand Campaign rule: player can select a playable state; architecture must not a
 Playable state scaffold: Denmark, Sweden-Norway, Prussia, Austria, France, United Kingdom, Russia, Netherlands, Kingdom of Hanover, Mecklenburg and an interim aggregate for remaining German Confederation states until full historical state research is completed
 Historical state rule: no unified Germany exists in the 1864 campaign model; German territory is represented by Prussia, Austria and contemporary German states/confederation members
 Zone model: all countries are divided into named strategic zones with stable ZoneId, owner, neighbours and hooks for terrain, roads, rail, rivers, ports, depots, fortifications, economy, recruitment and tactical battlefield extraction
-Scale target: zone architecture is designed to grow to roughly 100-200+ zones; v00.00.10b uses a smaller QA geographic scaffold only to prove interaction/state/routing
+Scale target: zone architecture is designed to grow to roughly 100-200+ zones; current build uses a smaller QA geographic scaffold only to prove interaction/state/routing
 Geographic map rule: final Grand Campaign terrain must be based on real geography plus DEM/elevation; historical 1864 roads, rail, towns, woods, crossings and infrastructure are separate historical data layers
 Nation selection: campaign starts with a choose-country panel
 Zone interaction: left-click selects zones/formations; selected player formation can receive a right-click march order to an adjacent zone
@@ -27,5 +27,7 @@ Campaign target loop: Grand Campaign -> movement/contact -> tactical battle -> b
 Campaign state continuity target: regiment/formation IDs, strength, ammunition, morale/cohesion, officer profile, attacker/defender role, zone/location and campaign date/time must survive tactical handoff and return
 Campaign architecture rule: new campaign code is isolated under Assets/Scripts/Campaign where practical to reduce merge conflicts with tactical development
 Tactical synchronization rule: only accepted tactical fixes are later merged/cherry-picked into campaign; campaign development must not wait on minor tactical polish
+Unity 6.6 compatibility fix v00.00.10c: ambiguous System.Object/UnityEngine.Object references in GrandCampaignBootstrap and PrototypeBattlefieldNavigationV4 are resolved explicitly to UnityEngine.Object
+Unity 6.6 compatibility fix v00.00.10c: PrototypeBattlefieldNavigationV4 uses the current parameterless FindObjectsByType<T>() overload instead of the deprecated FindObjectsSortMode overload
 Backlogs: docs/backlog/B-270-CAMPAIGN-MAP-V010.md and docs/backlog/B-280-GRAND-CAMPAIGN-COUNTRIES-ZONES.md
-QA state: v00.00.10b CAMPAIGN TEST is not runtime validated until Unity 6000.6.0f1 compile + Play acceptance is reported
+QA state: v00.00.10c CAMPAIGN TEST is not runtime validated until Unity 6000.6.0f1 compile + Play acceptance is reported
