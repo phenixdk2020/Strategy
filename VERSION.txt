@@ -14,15 +14,16 @@ Attack frontage deconfliction: when several AI-controlled regiments converge on 
 Attack frontage V2: secondary frontage slots are scored against travel distance, blocked destinations, houses/trees/fences, river crossings, line-to-target obstruction and friendly separation so later arrivals prefer a genuinely usable side of the engagement instead of parking behind a building or another regiment
 Attack frontage hold rule: a secondary regiment that reaches its assigned frontage slot holds that local position and faces the target instead of receiving a new centre-seeking OrderAttack that would recreate overlap
 Attack spacing telemetry: AI-SPACING-V2 logs unit, target, slot and final obstacle-aware slot position when frontage allocation activates
-Battlefield navigation TEST layer: farmhouse, barn, trees and fence posts are treated as blocked tactical space for regiment movement and destination placement; blocked route waypoints are moved to the nearest valid position
-Navigation V3: obstacle avoidance now keeps the original destination and a persistent detour until the obstacle is actually cleared, preventing the previous frame-to-frame tangent flip/stall when a formation touched a tree
-Formation obstacle passage: LINE formations proactively narrow to COLUMN before passing a tree/building/fence obstruction and restore their previous formation after a full-width path becomes clear; conservative frontage clearance is used so edge soldiers do not clip visual obstacles
-Navigation V3 telemetry: NAV-V3 reports installation, detours, emergency unstick, blocked-goal adjustments, bridge routes and route-waypoint corrections
-Navigation recovery layer: the previous recovery/navigation steering layers remain in the TEST repository for reference/static queries but their active steering is disabled once Navigation V3 takes control
-River crossing rule: the stream is non-traversable terrain for infantry; movement crossing the stream is automatically routed through the fixed bridge near the road crossing
-Bridge march rule: regiments crossing the fixed bridge temporarily use COLUMN and restore their previous formation after crossing
+Battlefield navigation TEST layer: farmhouse, barn, trees and fence posts are treated as blocked tactical space for regiment movement and destination placement
+Navigation V4: local tangent steering is replaced by a persistent A* route over a 4-unit tactical grid; the original player/AI destination is preserved while V4 owns short-term steering points around trees, buildings, fences and the river
+Navigation V4 obstacle rule: route planning uses a compact marching clearance and automatically changes a regiment to COLUMN when an intermediate A* route is required; the final destination is validated with LINE clearance so a deployed formation cannot finish on top of an obstacle
+Navigation V4 recovery: if a regiment starts or becomes trapped inside blocked tactical space, it is moved to the nearest legal escape point and the original route is replanned instead of remaining stalled against a tree
+Navigation V4 stuck recovery: a regiment that makes effectively no progress for roughly 0.85 simulation seconds automatically replans its route and performs an emergency escape if no legal A* route can initially be generated
+Navigation V4 telemetry: NAV-V4 reports direct/A* route creation, route point counts, stuck replans, emergency unstick/escape and no-route failures
+Navigation compatibility: V3 and the previous active navigation/recovery steering layers remain in the TEST repository for reference/static queries but are disabled once Navigation V4 takes control
+River crossing rule: the stream is non-traversable terrain for infantry; A* movement can cross it only through the fixed bridge zone
+Bridge march rule: bridge/obstacle routes use COLUMN-sized movement clearance; pontoon construction remains reserved for later engineer capability
 Pontoon rule: no regiment may cross open water merely by moving through it; pontoon construction is reserved for a later engineer-attachment capability and is not available without engineer support
-Navigation telemetry: NAV-DIAG reports legacy blocked destination adjustments, bridge routing and route-waypoint corrections during initial install; NAV-V3 is authoritative after takeover
 Melee TEST layer: opposing infantry formations that physically contact each other and are not separated by water/solid obstacles enter bayonet/melee contact instead of walking through each other or continuing point-blank volley fire
 Melee resolution: contact holds both formations, faces them toward each other, applies repeated strength/morale/cohesion losses, preserves normal rout thresholds and feeds casualty visuals through strength loss
 Melee telemetry: MELEE-DIAG announces contact and MELEE-LOG records both units, distance, losses, remaining strength, morale and cohesion per melee pulse
@@ -58,8 +59,8 @@ Destination formation rule: movement may be executed in column, but the destinat
 Multi-unit move/facing revision: with several units selected, RMB-down location is the CENTER of the final group frontage; dragging points the common facing direction; regiment centres are distributed on a line perpendicular to that facing, so dragging right makes every selected regiment face right
 Multi-unit preview: a visible center marker anchors the RMB-down point; the yellow frontage preview is centred on it and a facing guide points in the common drag direction
 Waypoint routes: Alt+right-click appends a waypoint; for multiple selected regiments the waypoint point is the group centre and units retain a common frontage/facing relationship; Alt+right-drag sets explicit final facing
-Waypoint obedience revision: PlayerCommander executes after Officer AI and reasserts the active player route every frame; route arrival tolerance is synchronized so Officer AI can no longer stop just outside a waypoint and strand the route
-Order ghosts: route ghost follows all remaining waypoints and the final destination footprint shows final LINE formation and facing; Z/X can rotate final ghost facing without cancelling movement
+Waypoint obedience revision: PlayerCommander executes after Officer AI and reasserts the active player route every frame; Navigation V4 preserves that original route goal while independently steering around tactical obstacles
+Order ghosts: route ghost follows the player-issued waypoints and the final destination footprint shows final LINE formation and facing; Z/X can rotate final ghost facing without cancelling movement
 Facing order: Z rotates selected regiment(s) 15 degrees left; X rotates 15 degrees right; matching compact buttons remain in the bottom command bar
 Casualty visuals: bodies accumulate at the actual formation position as losses occur even while units remain stationary and exchange fire; density is runtime-configurable, default one visible body per eight losses
 Enemy AI: Prussian officers start Offensive with order aggression 65 and Medium fire policy; 18th uses a flank/approach waypoint before reassessing attack
