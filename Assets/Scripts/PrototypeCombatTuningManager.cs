@@ -14,7 +14,13 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
     public static int StartingAmmoRoundsPerMan { get; private set; } = 60;
     public static int CasualtiesPerBody { get; private set; } = 8;
 
+    // Morale/cohesion still matter, but no longer collapse accuracy all the way toward
+    // zero while hundreds of men remain formed and are still exchanging volleys.
+    public static float MoraleAccuracyFloor { get; private set; } = 0.72f;
+    public static float CohesionAccuracyFloor { get; private set; } = 0.68f;
+
     private FieldInfo baseAccuracyField;
+    private FieldInfo forcedTargetField;
     private bool showPanel;
     private GUIStyle panelStyle;
     private GUIStyle titleStyle;
@@ -39,9 +45,10 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         }
 
         Instance = this;
-        baseAccuracyField = typeof(Regiment).GetField(
-            "baseAccuracy",
-            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        baseAccuracyField = typeof(Regiment).GetField("baseAccuracy", flags);
+        forcedTargetField = typeof(Regiment).GetField("forcedTarget", flags);
 
         if (baseAccuracyField == null)
             Debug.LogError("COMBAT-TUNE: Regiment.baseAccuracy blev ikke fundet.");
@@ -85,6 +92,94 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         return Mathf.Clamp(CasualtiesPerBody, 1, 100);
     }
 
+    public static float GetConfiguredRangeMultiplier(Regiment regiment, float distance)
+    {
+        if (regiment == null)
+            return 1f;
+
+        if (distance <= regiment.CloseRange)
+            return Mathf.Max(0.01f, CloseRangeMultiplier);
+
+        if (distance <= regiment.EffectiveRange)
+        {
+            float t = Mathf.InverseLerp(regiment.CloseRange, regiment.EffectiveRange, distance);
+            return Mathf.Lerp(
+                Mathf.Max(0.01f, CloseRangeMultiplier),
+                Mathf.Max(0.01f, MediumRangeMultiplier),
+                t);
+        }
+
+        float longT = Mathf.InverseLerp(regiment.EffectiveRange, regiment.MaximumRange, distance);
+        return Mathf.Lerp(
+            Mathf.Max(0.01f, MediumRangeMultiplier),
+            Mathf.Max(0.01f, LongRangeMultiplier),
+            longT);
+    }
+
+    public static string GetRangeBandLabel(Regiment regiment, float distance)
+    {
+        if (regiment == null)
+            return "UNKNOWN";
+
+        if (distance <= regiment.CloseRange)
+            return "CLOSE";
+        if (distance <= regiment.EffectiveRange)
+            return "MEDIUM";
+        if (distance <= regiment.MaximumRange)
+            return "LONG";
+        return "OUT";
+    }
+
+    public static float GetConfiguredQualityMultiplier(Regiment regiment)
+    {
+        if (regiment == null)
+            return 1f;
+
+        float morale01 = Mathf.Clamp01(regiment.Morale / 100f);
+        float cohesion01 = Mathf.Clamp01(regiment.Cohesion / 100f);
+
+        float moraleFactor = Mathf.Lerp(
+            Mathf.Clamp01(MoraleAccuracyFloor),
+            1f,
+            morale01);
+
+        float cohesionFactor = Mathf.Lerp(
+            Mathf.Clamp01(CohesionAccuracyFloor),
+            1f,
+            cohesion01);
+
+        return moraleFactor * cohesionFactor;
+    }
+
+    public static int GetConfiguredFiringMen(Regiment regiment)
+    {
+        if (regiment == null)
+            return 0;
+
+        return Mathf.Max(
+            0,
+            Mathf.RoundToInt(
+                regiment.CurrentStrength * Mathf.Clamp(FiringFractionPercent, 1f, 100f) / 100f));
+    }
+
+    public static float GetExpectedHitsPreview(Regiment regiment, float distance)
+    {
+        if (regiment == null)
+            return 0f;
+
+        float weaponFactor = regiment.WeaponType == InfantryWeaponType.DreyseNeedleRifle
+            ? 0.013f / 0.014f
+            : 1f;
+
+        float chancePerFiringMan =
+            Mathf.Max(0.00001f, BaseHitChancePercent / 100f) *
+            weaponFactor *
+            GetConfiguredRangeMultiplier(regiment, distance) *
+            GetConfiguredQualityMultiplier(regiment);
+
+        return GetConfiguredFiringMen(regiment) * chancePerFiringMan;
+    }
+
     private void ApplyCombatTuning()
     {
         if (baseAccuracyField == null)
@@ -99,19 +194,26 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
             if (regiment == null)
                 continue;
 
-            Regiment target = FindNearestReferenceTarget(regiment, battle);
-            float rangeMultiplier = MediumRangeMultiplier;
+            Regiment target = GetReferenceTarget(regiment, battle);
+            float distance = target != null
+                ? Vector3.Distance(regiment.transform.position, target.transform.position)
+                : regiment.EffectiveRange;
 
-            if (target != null)
-            {
-                float distance = Vector3.Distance(regiment.transform.position, target.transform.position);
-                rangeMultiplier = GetRangeTuningMultiplier(regiment, distance);
-            }
+            float desiredRangeMultiplier = GetConfiguredRangeMultiplier(regiment, distance);
+            float kernelRangeMultiplier = GetKernelRangeMultiplier(regiment, distance);
 
-            // The original kernel internally assumes 58% of the regiment fires in a volley.
-            // Scaling baseAccuracy by requested/58 makes the TEST slider act like a firing-fraction control
-            // without replacing the authoritative combat kernel in this gate.
+            // Regiment.FireVolley currently multiplies by raw morale*cohesion and assumes
+            // 58% firing men. Compensate those legacy kernel terms here so the sliders
+            // represent the actual requested model exactly once, rather than being applied
+            // on top of the old curve a second time.
+            float kernelQuality = Mathf.Max(
+                0.05f,
+                Mathf.Clamp01(regiment.Morale / 100f) *
+                Mathf.Clamp01(regiment.Cohesion / 100f));
+
+            float desiredQuality = GetConfiguredQualityMultiplier(regiment);
             float firingFractionScale = Mathf.Clamp(FiringFractionPercent, 1f, 100f) / 58f;
+
             float weaponFactor = regiment.WeaponType == InfantryWeaponType.DreyseNeedleRifle
                 ? 0.013f / 0.014f
                 : 1f;
@@ -119,11 +221,27 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
             float tunedAccuracy =
                 Mathf.Max(0.00001f, BaseHitChancePercent / 100f) *
                 weaponFactor *
-                Mathf.Max(0.01f, rangeMultiplier) *
-                firingFractionScale;
+                firingFractionScale *
+                (desiredRangeMultiplier / Mathf.Max(0.01f, kernelRangeMultiplier)) *
+                (desiredQuality / kernelQuality);
 
             baseAccuracyField.SetValue(regiment, tunedAccuracy);
         }
+    }
+
+    private Regiment GetReferenceTarget(Regiment shooter, BattleManager battle)
+    {
+        if (shooter == null)
+            return null;
+
+        if (forcedTargetField != null)
+        {
+            Regiment forced = forcedTargetField.GetValue(shooter) as Regiment;
+            if (forced != null && !forced.IsRouted && forced.Team != shooter.Team)
+                return forced;
+        }
+
+        return FindNearestReferenceTarget(shooter, battle);
     }
 
     private static Regiment FindNearestReferenceTarget(Regiment shooter, BattleManager battle)
@@ -147,26 +265,17 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         return nearest;
     }
 
-    private static float GetRangeTuningMultiplier(Regiment regiment, float distance)
+    private static float GetKernelRangeMultiplier(Regiment regiment, float distance)
     {
-        if (distance <= regiment.CloseRange)
-            return CloseRangeMultiplier;
-
-        if (distance <= regiment.EffectiveRange)
-        {
-            float t = Mathf.InverseLerp(regiment.CloseRange, regiment.EffectiveRange, distance);
-            return Mathf.Lerp(CloseRangeMultiplier, MediumRangeMultiplier, t);
-        }
-
-        float longT = Mathf.InverseLerp(regiment.EffectiveRange, regiment.MaximumRange, distance);
-        return Mathf.Lerp(MediumRangeMultiplier, LongRangeMultiplier, longT);
+        float distance01 = Mathf.Clamp01(distance / Mathf.Max(1f, regiment.MaximumRange));
+        return Mathf.Lerp(1.35f, 0.16f, Mathf.Pow(distance01, 0.85f));
     }
 
     private Rect GetPanelRect()
     {
-        float width = Mathf.Min(430f, Mathf.Max(330f, Screen.width - 80f));
-        float height = 286f;
-        return new Rect((Screen.width - width) * 0.5f, 78f, width, height);
+        float width = Mathf.Min(460f, Mathf.Max(350f, Screen.width - 80f));
+        float height = 346f;
+        return new Rect((Screen.width - width) * 0.5f, 102f, width, height);
     }
 
     private void EnsureStyles()
@@ -243,6 +352,20 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
             20f, 100f,
             FiringFractionPercent.ToString("0") + "%");
 
+        MoraleAccuracyFloor = DrawFloatSlider(
+            x, ref y, w,
+            "Min. morale accuracy",
+            MoraleAccuracyFloor,
+            0.20f, 1.00f,
+            Mathf.RoundToInt(MoraleAccuracyFloor * 100f) + "%");
+
+        CohesionAccuracyFloor = DrawFloatSlider(
+            x, ref y, w,
+            "Min. cohesion accuracy",
+            CohesionAccuracyFloor,
+            0.20f, 1.00f,
+            Mathf.RoundToInt(CohesionAccuracyFloor * 100f) + "%");
+
         float ammo = StartingAmmoRoundsPerMan;
         ammo = DrawFloatSlider(
             x, ref y, w,
@@ -281,7 +404,7 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         float max,
         string valueText)
     {
-        const float labelWidth = 174f;
+        const float labelWidth = 184f;
         const float valueWidth = 66f;
         GUI.Label(new Rect(x, y, labelWidth, 22f), label, labelStyle);
         GUI.Label(new Rect(x + width - valueWidth, y, valueWidth, 22f), valueText, labelStyle);
@@ -302,5 +425,7 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         FiringFractionPercent = 58f;
         StartingAmmoRoundsPerMan = 60;
         CasualtiesPerBody = 8;
+        MoraleAccuracyFloor = 0.72f;
+        CohesionAccuracyFloor = 0.68f;
     }
 }
