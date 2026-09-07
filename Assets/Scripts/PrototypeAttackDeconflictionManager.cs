@@ -111,7 +111,9 @@ public sealed class PrototypeAttackDeconflictionManager : MonoBehaviour
             if (timeCompare != 0)
                 return timeCompare;
 
-            return a.GetInstanceID().CompareTo(b.GetInstanceID());
+            // Unity 6.6 marks Object.GetInstanceID() obsolete. RegimentName is stable
+            // and deterministic for the QA OOB, so it is a safer tie-breaker here.
+            return string.CompareOrdinal(a.RegimentName, b.RegimentName);
         });
 
         Regiment primary = attackers[0];
