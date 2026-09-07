@@ -9,6 +9,9 @@ Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 Previous gate: v00.00.08 reload/experience, 0-hit volley, 'Ramte N' and simple casualty visual retained
 Scenario: Danish test regiments are defenders; Prussian test regiments are attackers
+QA OOB expansion: TEST now contains four Danish and four Prussian infantry regiments (eight total) arranged in four starting lanes per side for group-control and multi-unit AI testing
+Attack frontage deconfliction: when several AI-controlled regiments converge on the same enemy, the first engager may retain the primary approach while later arrivals detect friendly frontage conflict and seek alternating flank attack slots instead of stacking on top of the first unit
+Attack spacing telemetry: AI-SPACING logs unit, target and assigned secondary attack slot when deconfliction activates
 Battlefield: doubled from 180x120 to 360x240 with expanded camera bounds and greater starting separation
 Fire geometry: directional 120-degree forward fire fan follows regiment facing; no 360-degree firing ring
 Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
