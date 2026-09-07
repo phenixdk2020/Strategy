@@ -28,6 +28,10 @@ Fire discipline menu: HOLD / CLOSE / MEDIUM / LONG applies to selected Danish re
 Battle HUD revision: full regiment info is shown only for selected or mouse-hovered units; the panel is offset away from the regiment so the formation remains visible
 Command UI revision: selected-unit Officer AI controls are a fixed bottom command bar only 96 px high, using two compact control rows plus one status row
 UI input isolation: clicks inside time controls or the bottom command bar do not issue battlefield selection/move/attack orders
+Multi-selection: Ctrl+left-click or Shift+left-click adds/removes Danish regiments from the current selection
+Formation-line order: hold right mouse button on terrain and drag a line; the live terrain-following preview rotates with the drag, and release assigns selected regiments evenly along that line
+Formation-line facing: reversing the right-drag direction flips the facing; a minimum 22-unit centre spacing prevents selected regiments from stacking on top of each other
+Formation control: manual F/C selects line/column; Officer AI may use column for longer approach marches and returns to line near engagement based on Tactical Skill and distance
 Enemy AI: Prussian officers start Offensive with order aggression 65 and Medium fire policy; 18th uses a flank/approach waypoint before reassessing attack
 Enemy behaviour rule: attackers close to officer/order preferred range, deploy to line near engagement, may stabilise under morale pressure, and do not receive combat-stat cheats
 Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision noise only, not combat stats or hidden knowledge
