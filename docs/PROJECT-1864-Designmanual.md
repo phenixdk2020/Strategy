@@ -30,6 +30,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Backlog B-170–B-179 — Officer AI, delegeret kommando og AI Unit ON/OFF](backlog/B-170-OFFICER-AI-DELEGATION.md)
 - [Backlog B-180–B-189 — symmetrisk fjende-AI, sværhedsgrad og v00.00.09-prioritet](backlog/B-180-AI-DIFFICULTY-AND-V009.md)
 - [Backlog B-190–B-199 — officerstats, Composure/Nerve og AI decision model](backlog/B-190-OFFICER-STATS-MODEL.md)
+- [Backlog B-200–B-209 — Close/Medium/Long range bands, HQ hierarchy, semantic zoom og couriers](backlog/B-200-COMMAND-VISUALS-RANGE-HQ-COURIERS.md)
 
 ## v00.00.09 Officer AI — implementeringsstatus
 
@@ -41,9 +42,15 @@ Easy/Normal/Hard påvirker i første prototype kun den computerstyrede preussisk
 
 Alle officerprofiler i v00.00.09 er QA-data og er ikke historiske ratings. Historiske officerdata skal senere komme fra kildebelagt OOB/officer-database.
 
+## Command-visualisation efter v00.00.09
+
+Efter den første Officer AI-gate er næste command-UI-retning fastlagt: våbenrækkevidde opdeles visuelt i **Close / Medium / Long** med stiplede grænser, mens den underliggende accuracy fortsat er en kontinuerlig kurve. Højere formationer får fysiske HQ-entities; valg af et HQ viser relationer til direkte underenheder. Ved udzoomning skifter enheder via semantic zoom fra 3D-formationer til forenklet formation display og derefter NATO/APP-6-lignende taktiske symboler uden at ændre simulation state.
+
+Ordrer transporteres senere gennem et egentligt courier/order-lifecycle-system. En aktiv ordre kan vises som en stiplet route fra afsender-HQ til modtager med en bevægelig courier-markør, hvis position svarer til faktisk simulation progress. Command relation lines og konkrete order routes er to separate overlays, og de vises primært ved valgt HQ/enhed eller aktiv Command Overlay for at undgå visuelt rod.
+
 ## Versionshistorik
 
-- **v00.02.08 / P0A v00.00.09 work branch** — Officer AI er rykket frem som næste gameplay-gate. Første implementation har shared `OfficerAIController`, `AI UNIT ON/OFF`, missions for defend/hold/move/attack, otte kerne-officerstats + separat Experience, Composure-baseret stressreaktion, Easy/Normal/Hard uden combat cheats, reason codes og `AI-DIAG` telemetry. Den eksisterende v00.00.08 combat/reload/feedback/casualty-visual skal fortsat bestå regressionstesten. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
+- **v00.02.08 / P0A v00.00.09 work branch** — Officer AI er rykket frem som næste gameplay-gate. Første implementation har shared `OfficerAIController`, `AI UNIT ON/OFF`, missions for defend/hold/move/attack, otte kerne-officerstats + separat Experience, Composure-baseret stressreaktion, Easy/Normal/Hard uden combat cheats, reason codes og `AI-DIAG` telemetry. Den eksisterende v00.00.08 combat/reload/feedback/casualty-visual skal fortsat bestå regressionstesten. Samme designbaseline fastlægger efterfølgende Close/Medium/Long range bands med continuous accuracy, fysiske HQ-entities med command-links, semantic zoom til NATO/APP-6-lignende symboler og synlig courier/order progress som en stiplet route med bevægelig marker. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
 - **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er terminalt pauset indtil restart, RTS-kamera timeScale-uafhængigt og defensive guards forbedret.
 - **v00.02.06** — Unity compile-gate: `CS0136` rettet, obsolete object lookup erstattet og unused state fjernet.
