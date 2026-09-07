@@ -135,6 +135,21 @@ Senere kan courieren:
 
 Der er ikke behov for fuld individuel combat-AI. Tæt på kameraet kan en ryttermodel følge den samme lightweight route state; langt væk eksisterer kun data + UI-marker.
 
+### Courier interception — område-/risikomodel
+
+**BESLUTTET.** Spilleren skal ikke mikro-jage enkelte budbringere. Interception afgøres primært af formationer, reconnaissance og kontrol af området omkring courier-ruten.
+
+Hvis en eller flere fjendtlige formationer kommer mellem afsender-HQ og modtageren, kan systemet:
+
+- forsøge en alternativ rute,
+- øge courierens ETA,
+- sætte ordren i `Delayed` eller `Searching`,
+- i sjældnere tilfælde markere courier/order som `Lost` eller `Intercepted`.
+
+Risikoen påvirkes bl.a. af enemy presence/ZOC, cavalry/scouts, own screening/escort, roads, woods/villages, terrain, daylight/night, distance og Staff/Command quality. **Intercepted** skal være mærkbart, men forholdsvis sjældent, så command-friction føles plausibel uden at blive frustrerende.
+
+Fjendens courier-markører er underlagt fog of war. Spilleren ser ikke automatisk alle enemy couriers; de kan først blive synlige gennem scouts/cavalry/local observation. Dermed må courier-UI ikke fungere som en skjult radar til fjendtlige HQ'er.
+
 ## B-207 — Command overlay og clutter control
 
 **BESLUTTET.** Command-links og courier routes vises ikke permanent for hele hæren.
