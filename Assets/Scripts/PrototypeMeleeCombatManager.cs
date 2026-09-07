@@ -66,8 +66,7 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
         if (!ready || BattleManager.Instance == null || BattleManager.Instance.Regiments == null)
             return;
 
-        List<Regiment> regiments = BattleManager.Instance.Regiments;
-        HashSet<Regiment> engaged = new HashSet<Regiment>();
+        IReadOnlyList<Regiment> regiments = BattleManager.Instance.Regiments;
 
         for (int i = 0; i < regiments.Count; i++)
         {
@@ -83,9 +82,6 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
 
                 if (!AreInContact(a, b))
                     continue;
-
-                engaged.Add(a);
-                engaged.Add(b);
 
                 // Contact becomes bayonet/melee combat rather than two formations
                 // continuing to walk through one another or firing volleys point blank.
