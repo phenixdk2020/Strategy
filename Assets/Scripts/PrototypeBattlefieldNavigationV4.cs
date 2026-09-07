@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 // v00.00.09 TEST navigation replacement.
 // V4 replaces the tangent/one-obstacle steering with a persistent A* route over
@@ -54,15 +55,12 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
     private const float BridgeHalfLengthX = 8.0f;
     private const float BridgeHalfWidthZ = 4.0f;
 
-    // Movement is planned for a compact marching footprint. The final destination
-    // is still validated for LINE, so a regiment may march through a gap in COLUMN
-    // but cannot finish deployed on top of a tree/building.
     private const float TravelClearance = 3.8f;
     private const float LineDestinationClearance = 9.0f;
 
     private const float CellSize = 4.0f;
-    private const int GridWidth = 89;   // -176 .. +176 inclusive
-    private const int GridHeight = 59;  // -116 .. +116 inclusive
+    private const int GridWidth = 89;
+    private const int GridHeight = 59;
     private const float PathPointArrival = 2.2f;
     private const float ReplanStuckSeconds = 0.85f;
     private const float GoalChangeTolerance = 0.80f;
@@ -171,7 +169,7 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
     {
         obstacles.Clear();
 
-        Transform[] all = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        Transform[] all = Object.FindObjectsByType<Transform>();
         foreach (Transform item in all)
         {
             if (item == null)
@@ -180,8 +178,6 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
             switch (item.name)
             {
                 case "Tree":
-                    // Trunk/near-crown tactical footprint. TravelClearance is added
-                    // separately, so the regiment centre stays well outside it.
                     AddObstacle("Tree", item.position, 2.6f);
                     break;
                 case "Farmhouse":
@@ -274,8 +270,6 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
 
         if (state.Path.Count == 0)
         {
-            // A failed route must never silently collapse into "stand still in the
-            // tree". Try one explicit escape point and plan again from there.
             if (TryEmergencyEscape(regiment, state, state.Goal))
                 PlanPath(regiment, state, "EmergencyEscape");
 
@@ -402,8 +396,6 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
             state.PathIndex++;
         }
 
-        // If the remaining route has become line-clear after the last obstacle,
-        // collapse it to the original goal. This prevents unnecessary zig-zagging.
         if (state.PathIndex < state.Path.Count - 1 &&
             SegmentWalkable(current, state.Goal, TravelClearance))
         {
@@ -505,7 +497,6 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
                     if (closed[neighbor] || !GridNodeWalkable(neighbor))
                         continue;
 
-                    // Do not cut diagonally through the corner of an obstacle.
                     if (dx != 0 && dz != 0)
                     {
                         int orthogonalA = cz * GridWidth + nx;
@@ -552,8 +543,6 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
 
         reverse.Reverse();
 
-        // The first grid point is only an anchor near the regiment; steering to it
-        // can cause a needless step backwards, so skip it when possible.
         int start = reverse.Count > 1 ? 1 : 0;
         for (int i = start; i < reverse.Count; i++)
             path.Add(reverse[i]);
@@ -791,10 +780,6 @@ public sealed class PrototypeBattlefieldNavigationV4 : MonoBehaviour
                 if (!IsPointWalkable(candidate, TravelClearance))
                     continue;
 
-                // For emergency recovery we allow the exact current point to be
-                // invalid, but the candidate itself must be safe. Bias toward the
-                // original destination so recovery does not send the unit backwards
-                // unless that is the only escape.
                 float cost = radius + PlanarDistance(candidate, goal) * 0.08f;
                 if (cost >= bestCost)
                     continue;
