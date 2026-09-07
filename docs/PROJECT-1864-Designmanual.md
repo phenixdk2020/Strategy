@@ -1,13 +1,13 @@
 # PROJECT 1864 — Designmanual
 
 **Aktuel designbaseline: v00.02.08**  
-**Aktuel prototype-workbranch: P0A v00.00.09 OFFICER AI TEST**
+**Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
 
-Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00.00.09**, officerstats, AI difficulty, kendte begrænsninger og den fulde Unity acceptance-test ligger i [P0A v00.00.09 Release Notes](releases/P0A-v00.00.09-RELEASE-NOTES.md).
+Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00.00.09**, officerstats, AI difficulty, skydning/fire policy, tactical command-menu, kendte begrænsninger og den fulde Unity acceptance-test ligger i [P0A v00.00.09 Release Notes](releases/P0A-v00.00.09-RELEASE-NOTES.md).
 
 ## Indhold
 
@@ -25,7 +25,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
-- [Release Notes — P0A v00.00.09 OFFICER AI TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
+- [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
 - [Backlog B-160–B-169 — strategisk landudvikling](backlog/B-160-STRATEGIC-DEVELOPMENT.md)
 - [Backlog B-170–B-179 — Officer AI, delegeret kommando og AI Unit ON/OFF](backlog/B-170-OFFICER-AI-DELEGATION.md)
@@ -38,21 +38,37 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Backlog B-240–B-249 — udvidet kavaleri- og dragonmodel](backlog/B-240-CAVALRY-DRAGOONS-EXPANDED.md)
 - [Backlog B-250–B-259 — fog of war, scouts og HQ command effectiveness](backlog/B-250-FOG-SCOUTS-COMMAND-EFFECTIVENESS.md)
 
-## v00.00.09 Officer AI — implementeringsstatus
+## v00.00.09 Tactical Command Test — implementeringsstatus
 
-P0A v00.00.09 på arbejdsbranchen implementerer den første shared officer-AI-kernel. Danske regimenter kan delegeres med `AI UNIT ON/OFF`, mens preussiske regimenter bruger samme `OfficerAIController` som standard. Officerprofilen består af Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution og Composure/Nerve samt separat Officer Experience.
+P0A v00.00.09 på arbejdsbranchen implementerer den første sammenhængende tactical-command slice oven på v00.00.08. Danske testregimenter er **forsvarere**, mens de preussiske testregimenter er **angribere**. Battlefield er udvidet fra 180x120 til **360x240**, startafstanden er forøget, og kameraets bounds/zoom er udvidet, så spilleren har reel tid og plads til at pause, inspicere, udstede ordrer og manøvrere før kontakt.
 
-Composure/Nerve er et aktivt AI-input: under stigende battle stress påvirker den både reaction delay og decision noise. Dermed holdes officerens egen evne til at bevare overblik adskilt fra hans Leadership, Inspiration og regimentets morale.
+Alle fire regimenter får `OfficerProfile` + `OfficerAIController`. Danske regimenter starter AI OFF, mens preussiske regimenter starter AI ON gennem samme shared decision core. Officerprofilen består af Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution og Composure/Nerve samt separat Officer Experience. Composure påvirker stress-relateret reaction delay og decision noise; alle profiler i v00.00.09 er QA-data og ikke historiske ratings.
 
-Easy/Normal/Hard påvirker i første prototype kun den computerstyrede preussiske sides ekstra reaction/noise layer. Difficulty må ikke ændre weapon accuracy, reload, range, movement, morale, cohesion, casualties eller skjult viden. Player-delegerede danske officerer bruger deres faktiske QA-profil på referenceindstillinger uanset enemy difficulty.
+Valgte danske regimenter kan toggles med **`I` = AI UNIT ON/OFF**; `A` er fortsat kamera-left i WASD. En contextual command-menu giver `DEFENSIVE / BALANCED / OFFENSIVE` doctrine, en 0–100 commander `forsigtig ↔ aggressiv` intent og fire policy `HOLD / CLOSE / MEDIUM / LONG`. Commander intent biaser execution, men officerens egen Aggressiveness er fortsat dominerende i første model. Højreklik går direkte til Regiment, når AI er OFF, og bliver Officer AI Move/Attack mission, når AI er ON.
 
-Alle officerprofiler i v00.00.09 er QA-data og er ikke historiske ratings. Historiske officerdata skal senere komme fra kildebelagt OOB/officer-database.
+Fjendens Officer AI må ikke blot løbe frem. Preussiske angribere starter Offensive med OrderAgg 65 og Medium fire policy. AI beregner preferred engagement range ud fra officer/order/doctrine, kan bruge column på længere approach, deployer til line ved engagement, kan stabilisere under morale pressure og lukker nu faktisk til sin beregnede preferred range i stedet for at blive maskeret af den gamle `OrderAttack` stopafstand. 18th Regiment har desuden et flank/approach waypoint før det reassesserer angrebet.
 
-v00.00.09 har desuden en fælles simulation time-control bar med **PAUSE / x0,5 / PLAY x1 / x2 / x5 / x20** og synligt dato/klokkeslæt. x0,5 er slow tactical mode til ordreafgivelse og observation under pres. Pause stopper AI, movement, reload/fire progression og battle clock samlet, mens kamera/UI fortsat er brugbart.
+Easy/Normal/Hard påvirker kun den computerstyrede preussiske sides ekstra reaction/noise layer. Difficulty må ikke ændre weapon accuracy, reload, range, movement, morale, cohesion, casualties, officer stats eller skjult viden. Player-delegerede danske officerer bruger deres faktiske QA-profil på referenceindstillinger uanset enemy difficulty.
+
+v00.00.09 har en fælles simulation time-control bar med **PAUSE / x0,5 / PLAY x1 / x2 / x5 / x20** og synligt dato/klokkeslæt. x0,5 er slow tactical mode til ordreafgivelse og observation under pres. Pause stopper AI, movement, reload/fire progression og battle clock samlet, mens kamera/UI fortsat er brugbart.
+
+## Directional fire, fire discipline og accuracy
+
+Den gamle 360° infantry range-ring er erstattet af en **120° fremadrettet fire fan (±60°)**, som følger regimentets facing og åbner ud fra formationens frontage. Det repræsenterer, at soldater i en linje kan traverse våbnet til siderne, men at regimentet ikke kan skyde lige effektivt bagud uden at vende/reformere.
+
+Ved valgt regiment vises tre nested grænser:
+
+- **Close:** op til 50 % af `EffectiveRange`.
+- **Medium:** op til `EffectiveRange`.
+- **Long:** op til `MaximumRange`.
+
+Fire policy bestemmer **hvornår** enheden må åbne ild: `HOLD`, `CLOSE`, `MEDIUM` eller `LONG`. Et mål skal både være inden for fire-policy-afstanden og inden for den forward fire arc. Close/Medium/Long er ordre-/UI-grænser; den underliggende accuracy er en **kontinuerlig distancekurve**, så tættere mål gradvist bliver lettere at ramme uden kunstige hit-chance spring ved band-grænserne. Weapon-profile reload, Experience-reload, 0-hit og positiv `Ramte N` feedback fra v00.00.08 bevares.
+
+Næste combat-fase udbygger samme retning med formation-segmenteret `eligibleFiringFraction`, LOS, friendly obstruction, terrain/smoke og target exposure, så kun den del af regimentets frontage der reelt kan skyde bidrager til salven.
 
 ## Command-visualisation efter v00.00.09
 
-Efter den første Officer AI-gate er næste command-UI-retning fastlagt: våbenrækkevidde opdeles visuelt i **Close / Medium / Long** med stiplede grænser, mens den underliggende accuracy fortsat er en kontinuerlig kurve. Højere formationer får fysiske HQ-entities; valg af et HQ viser relationer til direkte underenheder. Ved udzoomning skifter enheder via semantic zoom fra 3D-formationer til forenklet formation display og derefter NATO/APP-6-lignende taktiske symboler uden at ændre simulation state.
+Efter v00.00.09 runtime-gaten fortsætter command-UI-retningen med fysiske HQ-entities, command-links, courier/order lifecycle, fog-of-war reports og semantic zoom. Valg af et HQ viser relationer til direkte underenheder. Ved udzoomning skifter enheder via semantic zoom fra 3D-formationer til forenklet formation display og derefter NATO/APP-6-lignende taktiske symboler uden at ændre simulation state.
 
 Ordrer transporteres senere gennem et egentligt courier/order-lifecycle-system. En aktiv ordre kan vises som en stiplet route fra afsender-HQ til modtager med en bevægelig courier-markør, hvis position svarer til faktisk simulation progress. Command relationship lines og konkrete order routes er to separate overlays, og de vises primært ved valgt HQ/enhed eller aktiv Command Overlay for at undgå visuelt rod.
 
@@ -100,7 +116,7 @@ Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan besky
 
 ## Versionshistorik
 
-- **v00.02.08 / P0A v00.00.09 work branch** — Officer AI er rykket frem som næste gameplay-gate. Første implementation har shared `OfficerAIController`, `AI UNIT ON/OFF`, missions for defend/hold/move/attack, otte kerne-officerstats + separat Experience, Composure-baseret stressreaktion, Easy/Normal/Hard uden combat cheats, reason codes og `AI-DIAG` telemetry. v00.00.09 har desuden Pause/x0,5/x1/x2/x5/x20 og battle clock som fælles simulation controls. Den eksisterende v00.00.08 combat/reload/feedback/casualty-visual skal fortsat bestå regressionstesten. Samme designbaseline fastlægger efterfølgende Close/Medium/Long range bands, fysiske HQ-entities, semantic zoom, courier/order progress og interception, formation-segmenteret fire eligibility, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model samt fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
+- **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile` på alle fire regimenter; `I` toggler player delegation; Defensive/Balanced/Offensive doctrine og 0–100 commander aggression intent; preussiske Officer AI-angribere med preferred-range/manoeuvre/stabilise adfærd; directional 120° infantry fire fan; HOLD/CLOSE/MEDIUM/LONG fire discipline; continuous closer-is-easier accuracy; battlefield 360x240; Pause/x0,5/x1/x2/x5/x20 og battle clock. v00.00.08 reload/0-hit/`Ramte N`/casualty-visual skal fortsat regressionsbestå. De senere besluttede systemer omfatter segmenteret fire eligibility, fysiske HQ-entities, semantic zoom, courier/order progress/interception, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model og fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
 - **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er terminalt pauset indtil restart, RTS-kamera timeScale-uafhængigt og defensive guards forbedret.
 - **v00.02.06** — Unity compile-gate: `CS0136` rettet, obsolete object lookup erstattet og unused state fjernet.
