@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[DefaultExecutionOrder(-300)]
+[DefaultExecutionOrder(300)]
 public sealed class PlayerCommander : MonoBehaviour
 {
     private sealed class MovementRoute
@@ -9,7 +9,7 @@ public sealed class PlayerCommander : MonoBehaviour
         public readonly List<Vector3> Waypoints = new List<Vector3>();
         public int CurrentIndex;
         public Vector3 FinalFacing;
-        public RegimentFormation Formation;
+        public RegimentFormation FinalFormation = RegimentFormation.Line;
         public bool HasExplicitFinalFacing;
     }
 
@@ -32,11 +32,12 @@ public sealed class PlayerCommander : MonoBehaviour
     private Vector3 rightDragStart;
     private Vector3 rightDragEnd;
     private LineRenderer formationPreview;
+    private LineRenderer facingGuidePreview;
 
     private const float FormationDragThreshold = 4f;
     private const float RegimentLineSpacing = 22f;
     private const float FacingStepDegrees = 15f;
-    private const float RouteArrivalDistance = 1.8f;
+    private const float RouteArrivalDistance = 3.25f;
 
     private void Awake()
     {
@@ -69,9 +70,6 @@ public sealed class PlayerCommander : MonoBehaviour
             if (cam == null)
                 return;
         }
-
-        UpdateRoutes();
-        UpdateOrderGhosts();
 
         bool pointerOverSimulationControls =
             BattleManager.Instance != null &&
@@ -123,6 +121,12 @@ public sealed class PlayerCommander : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.X))
             RotateSelectedFacing(FacingStepDegrees);
+
+        // PlayerCommander executes after OfficerAIController. An explicit player route
+        // therefore remains authoritative instead of an officer decision silently
+        // cancelling a waypoint while the route is still active.
+        UpdateRoutes();
+        UpdateOrderGhosts();
     }
 
     public void RotateSelectedFacing(float degrees)
@@ -162,9 +166,12 @@ public sealed class PlayerCommander : MonoBehaviour
         {
             regiment.SetFormation(formation);
 
+            // A route may be marched in column, but the destination footprint is
+            // deliberately a deployed line unless the destination system is later
+            // expanded with an explicit final-formation selector.
             if (routes.TryGetValue(regiment, out MovementRoute route))
             {
-                route.Formation = formation;
+                route.FinalFormation = RegimentFormation.Line;
                 UpdateGhostFootprint(regiment);
             }
         });
@@ -315,7 +322,7 @@ public sealed class PlayerCommander : MonoBehaviour
             regiment,
             destination,
             hasExplicitFacing ? explicitFacing : travelFacing,
-            regiment.Formation,
+            RegimentFormation.Line,
             hasExplicitFacing);
     }
 
@@ -348,7 +355,7 @@ public sealed class PlayerCommander : MonoBehaviour
                 regiment,
                 destination,
                 facing,
-                regiment.Formation,
+                RegimentFormation.Line,
                 false);
         }
     }
@@ -384,8 +391,6 @@ public sealed class PlayerCommander : MonoBehaviour
             Vector3 destination = Vector3.Lerp(start, end, t);
             destination.y =
                 PrototypeBootstrap.SampleGroundHeight(destination.x, destination.z) + 0.10f;
-
-            regiment.SetFormation(RegimentFormation.Line);
 
             ReplaceRoute(
                 regiment,
@@ -430,7 +435,7 @@ public sealed class PlayerCommander : MonoBehaviour
         Regiment regiment,
         Vector3 destination,
         Vector3 finalFacing,
-        RegimentFormation formation,
+        RegimentFormation finalFormation,
         bool hasExplicitFacing)
     {
         ClearRoute(regiment);
@@ -439,7 +444,7 @@ public sealed class PlayerCommander : MonoBehaviour
         {
             CurrentIndex = 0,
             FinalFacing = NormalizedFacing(finalFacing, regiment.transform.forward),
-            Formation = formation,
+            FinalFormation = finalFormation,
             HasExplicitFinalFacing = hasExplicitFacing
         };
 
@@ -463,7 +468,7 @@ public sealed class PlayerCommander : MonoBehaviour
             route = new MovementRoute
             {
                 CurrentIndex = 0,
-                Formation = regiment.Formation
+                FinalFormation = RegimentFormation.Line
             };
             routes[regiment] = route;
         }
@@ -483,7 +488,7 @@ public sealed class PlayerCommander : MonoBehaviour
             ? NormalizedFacing(explicitFacing, automaticFacing)
             : automaticFacing.normalized;
         route.HasExplicitFinalFacing = hasExplicitFacing;
-        route.Formation = regiment.Formation;
+        route.FinalFormation = RegimentFormation.Line;
 
         CreateOrUpdateOrderGhost(regiment);
 
@@ -524,7 +529,13 @@ public sealed class PlayerCommander : MonoBehaviour
             delta.y = 0f;
 
             if (delta.sqrMagnitude > RouteArrivalDistance * RouteArrivalDistance)
+            {
+                // Enforce the explicit route after Officer AI has made its frame decision.
+                // The officer can still choose march formation, but cannot silently drop
+                // the waypoint because of an unrelated local attack decision.
+                regiment.OrderMove(target);
                 continue;
+            }
 
             route.CurrentIndex++;
 
@@ -534,12 +545,18 @@ public sealed class PlayerCommander : MonoBehaviour
                 continue;
             }
 
-            regiment.SetFormation(route.Formation);
+            regiment.SetFormation(route.FinalFormation);
+            regiment.OrderHold();
+
             if (route.FinalFacing.sqrMagnitude > 0.01f)
             {
                 regiment.transform.rotation =
                     Quaternion.LookRotation(route.FinalFacing.normalized, Vector3.up);
             }
+
+            OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
+            if (controller != null && controller.AIEnabled)
+                controller.SetHoldMission();
 
             if (completed == null)
                 completed = new List<Regiment>();
@@ -764,30 +781,13 @@ public sealed class PlayerCommander : MonoBehaviour
             return;
         }
 
-        Vector3 forward = NormalizedFacing(route.FinalFacing, regiment.transform.forward);
-        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
-
-        float halfWidth = route.Formation == RegimentFormation.Line ? 9.5f : 3.0f;
-        float halfDepth = route.Formation == RegimentFormation.Line ? 2.6f : 7.5f;
-
         Vector3 center = route.Waypoints[route.Waypoints.Count - 1];
-        Vector3[] corners =
-        {
-            center - right * halfWidth - forward * halfDepth,
-            center + right * halfWidth - forward * halfDepth,
-            center + right * halfWidth + forward * halfDepth,
-            center - right * halfWidth + forward * halfDepth,
-            center - right * halfWidth - forward * halfDepth
-        };
-
-        ghost.Footprint.positionCount = corners.Length;
-
-        for (int i = 0; i < corners.Length; i++)
-        {
-            Vector3 p = corners[i];
-            p.y = PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 0.42f;
-            ghost.Footprint.SetPosition(i, p);
-        }
+        DrawFootprint(
+            ghost.Footprint,
+            center,
+            route.FinalFacing,
+            route.FinalFormation,
+            regiment.transform.forward);
     }
 
     private void ClearRoute(Regiment regiment)
@@ -848,73 +848,102 @@ public sealed class PlayerCommander : MonoBehaviour
 
     private void EnsureFormationPreview()
     {
-        if (formationPreview != null)
+        if (formationPreview != null && facingGuidePreview != null)
             return;
 
-        GameObject previewObject = new GameObject("FormationLinePreview");
-        formationPreview = previewObject.AddComponent<LineRenderer>();
-        formationPreview.useWorldSpace = true;
-        formationPreview.loop = false;
-        formationPreview.widthMultiplier = 0.28f;
-        formationPreview.numCapVertices = 2;
-        formationPreview.numCornerVertices = 2;
+        GameObject previewRoot = new GameObject("FormationOrderPreview");
+        previewRoot.transform.SetParent(transform, true);
 
-        Shader shader = Shader.Find("Unlit/Color");
-        if (shader == null)
-            shader = Shader.Find("Sprites/Default");
-        if (shader == null)
-            shader = Shader.Find("Standard");
+        formationPreview = CreateGhostLine(
+            previewRoot.transform,
+            "DestinationPreview",
+            0.30f,
+            new Color(1f, 0.88f, 0.12f));
 
-        Material material = new Material(shader)
-        {
-            name = "FormationLinePreviewMaterial",
-            color = new Color(0.98f, 0.88f, 0.18f)
-        };
+        facingGuidePreview = CreateGhostLine(
+            previewRoot.transform,
+            "FacingGuidePreview",
+            0.15f,
+            new Color(0.98f, 0.98f, 0.72f));
 
-        formationPreview.sharedMaterial = material;
         formationPreview.enabled = false;
+        facingGuidePreview.enabled = false;
     }
 
     private void UpdateFormationPreview()
     {
         EnsureFormationPreview();
 
-        Vector3 delta = rightDragEnd - rightDragStart;
-        delta.y = 0f;
-
-        if (delta.sqrMagnitude < 0.04f)
+        if (selected.Count == 0)
         {
             SetFormationPreviewVisible(false);
             return;
         }
 
-        // Single unit: right-click defines destination; drag defines final facing.
-        // Alt uses the same preview for the final waypoint facing.
+        Vector3 delta = rightDragEnd - rightDragStart;
+        delta.y = 0f;
+        bool hasFacingDrag = delta.magnitude >= FormationDragThreshold;
+
+        // Single regiment or Alt-waypoint: click position is the destination/waypoint.
+        // While RMB is held, the yellow destination footprint itself rotates live.
+        // Destination footprint is always deployed LINE, even if the regiment is
+        // currently marching in COLUMN.
         if (selected.Count == 1 || rightDragAlt)
         {
-            const int segments = 10;
-            formationPreview.positionCount = segments + 1;
+            Regiment reference = selected[0];
+            Vector3 fallbackFacing = reference != null
+                ? reference.transform.forward
+                : Vector3.forward;
 
-            for (int i = 0; i <= segments; i++)
+            Vector3 facing = hasFacingDrag
+                ? delta.normalized
+                : NormalizedFacing(fallbackFacing, Vector3.forward);
+
+            DrawFootprint(
+                formationPreview,
+                rightDragStart,
+                facing,
+                RegimentFormation.Line,
+                fallbackFacing);
+
+            if (hasFacingDrag)
             {
-                float t = i / (float)segments;
-                Vector3 p = Vector3.Lerp(rightDragStart, rightDragEnd, t);
-                p.y = PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 0.46f;
-                formationPreview.SetPosition(i, p);
+                Vector3 start = rightDragStart;
+                start.y = PrototypeBootstrap.SampleGroundHeight(start.x, start.z) + 0.52f;
+
+                Vector3 end = rightDragStart + facing * 11f;
+                end.y = PrototypeBootstrap.SampleGroundHeight(end.x, end.z) + 0.52f;
+
+                facingGuidePreview.positionCount = 2;
+                facingGuidePreview.SetPosition(0, start);
+                facingGuidePreview.SetPosition(1, end);
+                facingGuidePreview.enabled = true;
+            }
+            else
+            {
+                facingGuidePreview.enabled = false;
             }
 
-            SetFormationPreviewVisible(true);
+            formationPreview.enabled = true;
             return;
         }
 
-        // Several selected units: drag defines the line they will occupy.
+        facingGuidePreview.enabled = false;
+
+        if (delta.sqrMagnitude < 0.04f)
+        {
+            formationPreview.enabled = false;
+            return;
+        }
+
+        // Several selected units: drag defines the deployment line.
         Vector3 direction = delta.normalized;
         Vector3 midpoint = (rightDragStart + rightDragEnd) * 0.5f;
         float requiredLength =
             Mathf.Max(delta.magnitude, Mathf.Max(0, selected.Count - 1) * RegimentLineSpacing);
 
-        Vector3 start = midpoint - direction * requiredLength * 0.5f;
-        Vector3 end = midpoint + direction * requiredLength * 0.5f;
+        Vector3 startLine = midpoint - direction * requiredLength * 0.5f;
+        Vector3 endLine = midpoint + direction * requiredLength * 0.5f;
 
         const int lineSegments = 24;
         formationPreview.positionCount = lineSegments + 1;
@@ -922,18 +951,55 @@ public sealed class PlayerCommander : MonoBehaviour
         for (int i = 0; i <= lineSegments; i++)
         {
             float t = i / (float)lineSegments;
-            Vector3 p = Vector3.Lerp(start, end, t);
-            p.y = PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 0.42f;
+            Vector3 p = Vector3.Lerp(startLine, endLine, t);
+            p.y = PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 0.48f;
             formationPreview.SetPosition(i, p);
         }
 
-        SetFormationPreviewVisible(true);
+        formationPreview.enabled = true;
+    }
+
+    private static void DrawFootprint(
+        LineRenderer line,
+        Vector3 center,
+        Vector3 facing,
+        RegimentFormation formation,
+        Vector3 fallbackFacing)
+    {
+        if (line == null)
+            return;
+
+        Vector3 forward = NormalizedFacing(facing, fallbackFacing);
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+
+        float halfWidth = formation == RegimentFormation.Line ? 9.5f : 3.0f;
+        float halfDepth = formation == RegimentFormation.Line ? 2.6f : 7.5f;
+
+        Vector3[] corners =
+        {
+            center - right * halfWidth - forward * halfDepth,
+            center + right * halfWidth - forward * halfDepth,
+            center + right * halfWidth + forward * halfDepth,
+            center - right * halfWidth + forward * halfDepth,
+            center - right * halfWidth - forward * halfDepth
+        };
+
+        line.positionCount = corners.Length;
+
+        for (int i = 0; i < corners.Length; i++)
+        {
+            Vector3 p = corners[i];
+            p.y = PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 0.50f;
+            line.SetPosition(i, p);
+        }
     }
 
     private void SetFormationPreviewVisible(bool visible)
     {
         if (formationPreview != null)
             formationPreview.enabled = visible;
+        if (facingGuidePreview != null)
+            facingGuidePreview.enabled = visible && facingGuidePreview.positionCount > 0;
     }
 
     private void ForEachSelected(System.Action<Regiment> action)
