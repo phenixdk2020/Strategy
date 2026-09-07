@@ -1,77 +1,18 @@
-PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09b
-Build status: TEST
-Build name: TACTICAL COMMAND TEST 09B
-Visible build marker: PROJECT 1864 | v00.00.09b TEST is shown permanently in the upper-left corner during Play mode
-TEST versioning rule: every delivered TEST revision receives a visible suffix bump (v00.00.09a, v00.00.09b, v00.00.09c...) so screenshots and test feedback can always be tied to the exact revision
+PROJECT 1864 - Campaign / Strategic Prototype
+Prototype version: v00.00.10a
+Build status: CAMPAIGN TEST
+Build name: CAMPAIGN MAP TRACK 10A
+Visible build marker: PROJECT 1864 | v00.00.10a CAMPAIGN TEST is shown permanently in the upper-left corner during Play mode
+Track rule: campaign work proceeds independently on branch campaign while tactical fixes continue on branch test
+Inherited tactical baseline: campaign branch was forked from v00.00.09b TEST and keeps the current tactical battle scene/code as its starting battle layer
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
-Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
-Built-in modules enabled: IMGUI, Particle System, Physics, Audio
-Previous gate: v00.00.08 reload/experience, 0-hit volley, 'Ramte N' and simple casualty visual retained
-Scenario: Danish test regiments are defenders; Prussian test regiments are attackers
-QA OOB expansion: TEST now contains four Danish and four Prussian infantry regiments (eight total) arranged in four starting lanes per side for group-control and multi-unit AI testing
-Attack frontage deconfliction: when several AI-controlled regiments converge on the same enemy, the first engager retains the primary frontage while later arrivals are assigned distinct lateral frontage slots beside it instead of converging on the target centre
-Attack frontage V2: secondary frontage slots are scored against travel distance, blocked destinations, houses/fences, river crossings, line-to-target obstruction and friendly separation so later arrivals prefer a genuinely usable side of the engagement instead of parking behind a building or another regiment
-Attack frontage hold rule: a secondary regiment that reaches its assigned frontage slot holds that local position and faces the target instead of receiving a new centre-seeking OrderAttack that would recreate overlap
-Attack spacing telemetry: AI-SPACING-V2 logs unit, target, slot and final obstacle-aware slot position when frontage allocation activates
-Battlefield navigation TEST layer: farmhouse, barn and fence posts remain blocked tactical space; river/water remains bridge-only
-Navigation v00.00.09b tree rule: individual decorative trees are pass-through and are removed from active navigation obstacle sets; the v00.00.09a anti-tree snag layer is disabled
-Navigation v00.00.09b design intent: proper woods/forest terrain will later be represented as area-based movement/cohesion/visibility modifiers instead of each decorative tree acting as a hard collision obstacle
-Navigation V4: persistent A* routing remains active for buildings, fences and river/water; the original player/AI destination is preserved while V4 owns short-term steering points
-Navigation V4 obstacle rule: route planning uses a compact marching clearance and automatically changes a regiment to COLUMN when an intermediate A* route is required; the final destination is validated with LINE clearance so a deployed formation cannot finish on top of a building/fence/water obstacle
-Navigation V4 recovery: if a regiment starts or becomes trapped inside blocked tactical space, it is moved to the nearest legal escape point and the original route is replanned
-Navigation V4 stuck recovery: a regiment that makes effectively no progress for roughly 0.85 simulation seconds automatically replans its route and performs an emergency escape if no legal A* route can initially be generated
-Navigation V4 telemetry: NAV-V4 reports direct/A* route creation, route point counts, stuck replans, emergency unstick/escape and no-route failures
-Navigation 09B telemetry: NAV-09B reports tree pass-through activation and count of removed tree obstacles
-Navigation compatibility: V3 and previous active recovery steering layers remain in the TEST repository for reference/static queries but are disabled once Navigation V4 takes control; 09A is explicitly disabled by 09B
-River crossing rule: the stream is non-traversable terrain for infantry; A* movement can cross it only through the fixed bridge zone
-Bridge march rule: bridge/obstacle routes use COLUMN-sized movement clearance; pontoon construction remains reserved for later engineer capability
-Pontoon rule: no regiment may cross open water merely by moving through it; pontoon construction is reserved for a later engineer-attachment capability and is not available without engineer support
-Melee TEST layer: opposing infantry formations that physically contact each other and are not separated by water/solid obstacles enter bayonet/melee contact instead of walking through each other or continuing point-blank volley fire
-Melee resolution: contact holds both formations, faces them toward each other, applies repeated strength/morale/cohesion losses, preserves normal rout thresholds and feeds casualty visuals through strength loss
-Melee telemetry: MELEE-DIAG announces contact and MELEE-LOG records both units, distance, losses, remaining strength, morale and cohesion per melee pulse
-Battlefield: doubled from 180x120 to 360x240 with expanded camera bounds and greater starting separation
-Fire geometry: directional 120-degree forward fire fan follows regiment facing; no 360-degree firing ring
-Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
-Range fan visibility: Close/Medium arcs and outer Long fan are terrain-following, unlit, thicker and higher-contrast so no side disappears into uneven ground
-Fire policy: HOLD / CLOSE / MEDIUM / LONG determines when a regiment may open fire
-Accuracy: TEST tuning compensates the legacy kernel so Close/Medium/Long multipliers are applied exactly once instead of stacking on top of the old distance curve
-Combat tuning menu: F9 or KAMP F9 opens runtime sliders for base hit chance per firing man, Close/Medium/Long factors, firing fraction, morale/cohesion accuracy floors, starting ammunition rounds per man and losses per visible casualty body
-Combat tuning defaults: base hit chance 1.40%, Close x1.75, Medium x1.00, Long x0.30, 58% firing fraction, morale floor 72%, cohesion floor 68%, 60 starting rounds per man and 8 losses per visible casualty body
-Morale/cohesion accuracy revision: morale and cohesion still reduce hit probability, but accuracy no longer collapses toward zero merely because prolonged close-range fire has reduced both values while hundreds of men remain formed
-Volley diagnostics: every detected volley writes VOLLEY-LOG to Unity Console with battle time, shooter, target, distance, range band, fire policy, strength, firing men, morale, cohesion, quality multiplier, base hit chance, range multiplier, expected hits, resolved hits, target strength and ammunition before/after
-Fire eligibility MVP: target must be inside selected fire-policy range and inside the forward fire arc
-Reload: weapon profile base reload + bounded regiment Experience modifier retained from v00.00.08
-Volley feedback revision: TEST layer detects every resolved volley and shows temporary Ramte N including Ramte 0; feedback lifetime increased for readability
-Ammunition TEST model: starting rounds per man are configurable; one volley consumes one round per man; display is rounds per man, not total cartridges; no automatic regeneration
-Officer assignment: every prototype regiment receives an OfficerProfile + OfficerAIController at runtime
-Officer core stats: Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution, Composure/Nerve
-Officer background: Experience is separate and primarily reduces decision noise
-Player delegation: I toggles AI UNIT ON/OFF for selected Danish regiment(s); A remains camera-left in WASD
-Officer AI doctrine menu: DEFENSIVE / BALANCED / OFFENSIVE applies to selected Danish regiment(s)
-Commander aggression intent: 0-100 slider biases cautious/aggressive execution, while officer Aggressiveness remains dominant (70% officer / 30% order before doctrine bias)
-Fire discipline menu: HOLD / CLOSE / MEDIUM / LONG applies to selected Danish regiment(s)
-Battle HUD revision: selected/mouse-over info is compact and includes current/initial strength, Tab/losses, Ammo rounds per man, weapon/reload/formation, fire ranges, morale/cohesion and compact Officer AI state
-Command UI safe-area revision: bottom command bar is two rows, 58 px high, inset 50 px horizontally and 42 px from the lower edge so it remains visible in slightly zoomed Unity Game view
-Time HUD safe-area revision: date/time plus PAUSE/x0.5/x1/x2/x5/x20 are centred 20 px below the upper edge; Space and 0/1/2/3/4 remain shortcuts
-UI input isolation: clicks inside time controls, combat tuning panel or bottom command bar do not issue battlefield selection/move/attack orders
-Multi-selection: Ctrl+left-click or Shift+left-click adds/removes Danish regiments from the current selection
-Formation control: manual F/C selects line/column; Officer AI may use column for longer approach marches and returns to line near engagement based on Tactical Skill and distance
-Single-unit move/facing: right-click location is the destination; while RMB is held the yellow destination footprint itself rotates live with the mouse drag, with a short facing guide showing the final direction before release
-Destination formation rule: movement may be executed in column, but the destination ghost footprint and final deployed state are LINE by default
-Multi-unit move/facing revision: with several units selected, RMB-down location is the CENTER of the final group frontage; dragging points the common facing direction; regiment centres are distributed on a line perpendicular to that facing, so dragging right makes every selected regiment face right
-Multi-unit preview: a visible center marker anchors the RMB-down point; the yellow frontage preview is centred on it and a facing guide points in the common drag direction
-Waypoint routes: Alt+right-click appends a waypoint; for multiple selected regiments the waypoint point is the group centre and units retain a common frontage/facing relationship; Alt+right-drag sets explicit final facing
-Waypoint obedience revision: PlayerCommander executes after Officer AI and reasserts the active player route every frame; Navigation V4 preserves that original route goal while independently steering around tactical obstacles
-Order ghosts: route ghost follows the player-issued waypoints and the final destination footprint shows final LINE formation and facing; Z/X can rotate final ghost facing without cancelling movement
-Facing order: Z rotates selected regiment(s) 15 degrees left; X rotates 15 degrees right; matching compact buttons remain in the bottom command bar
-Casualty visuals: bodies accumulate at the actual formation position as losses occur even while units remain stationary and exchange fire; density is runtime-configurable, default one visible body per eight losses
-Enemy AI: Prussian officers start Offensive with order aggression 65 and Medium fire policy; 18th uses a flank/approach waypoint before reassessing attack
-Enemy behaviour rule: attackers close to officer/order preferred range, deploy to line near engagement, may stabilise under morale pressure, and do not receive combat-stat cheats
-Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision noise only, not combat stats or hidden knowledge
-AI telemetry: AI-DIAG exposes unit, officer, doctrine, order aggression, effective aggression, fire policy, mission, task and reason
-Pause semantics: AI, movement, waypoint movement, reload, combat and battle clock stop together; camera/UI remain usable
-Slow tactical mode: x0.5 gives twice the real-world reaction time per unit of simulation time without changing combat stats
-QA state: v00.00.09b TEST requires Unity 6000.6.0f1 compile + Play acceptance before it can be called runtime validated
+Campaign target loop: Campaign map -> movement/contact -> tactical battle -> battle result -> campaign map
+Campaign MVP scope: separate campaign scene, strategic map nodes/regions, formation tokens, campaign clock/pause/speed, movement routes, contact/battle prompt, tactical handoff and return-state persistence
+Campaign state continuity target: regiment IDs, strength, ammunition, morale/cohesion, officer profile, attacker/defender role, location and campaign date/time must survive tactical handoff and return
+Campaign architecture rule: new campaign code/scenes should be isolated from tactical navigation/combat files wherever possible to reduce merge conflicts between tracks
+Tactical synchronization rule: only accepted tactical fixes are later merged/cherry-picked into campaign; campaign development must not wait on minor tactical polish
+Historical-data rule: early map/node positions are QA placeholders until source-backed geography/OOB research is completed
+Campaign backlog: docs/backlog/B-270-CAMPAIGN-MAP-V010.md
+QA state: v00.00.10a CAMPAIGN TEST is a development track and is not runtime validated until Unity compile + Play acceptance is reported
