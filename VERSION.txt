@@ -14,11 +14,13 @@ Fire geometry: directional 120-degree forward fire fan follows regiment facing; 
 Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
 Range fan visibility: Close/Medium arcs and outer Long fan are terrain-following, unlit, thicker and higher-contrast so no side disappears into uneven ground
 Fire policy: HOLD / CLOSE / MEDIUM / LONG determines when a regiment may open fire
-Accuracy: continuous distance curve; closer targets are progressively easier to hit with no hard accuracy jump at range-band boundaries
+Accuracy: core distance curve remains continuous; TEST tuning adds user-adjustable Close/Medium/Long multipliers so range lethality can be calibrated without code changes
+Combat tuning menu: F9 or KAMP F9 opens runtime sliders for base hit chance per firing man, Close/Medium/Long factors, firing fraction, starting ammunition rounds per man and losses per visible casualty body
+Combat tuning defaults: base hit chance 1.40%, Close x1.75, Medium x1.00, Long x0.30, 58% firing fraction, 60 starting rounds per man and 8 losses per visible casualty body
 Fire eligibility MVP: target must be inside selected fire-policy range and inside the forward fire arc
 Reload: weapon profile base reload + bounded regiment Experience modifier retained from v00.00.08
-Volley feedback revision: TEST layer detects every resolved volley and shows temporary Ramte N including Ramte 0, so feedback does not disappear merely because later volleys score zero hits
-Ammunition TEST model: each regiment starts at 60 carried rounds per man; one volley consumes one round per man; display is rounds per man, not total cartridges; no automatic regeneration
+Volley feedback revision: TEST layer detects every resolved volley and shows temporary Ramte N including Ramte 0; feedback lifetime increased for readability
+Ammunition TEST model: starting rounds per man are configurable; one volley consumes one round per man; display is rounds per man, not total cartridges; no automatic regeneration
 Officer assignment: every prototype regiment receives an OfficerProfile + OfficerAIController at runtime
 Officer core stats: Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution, Composure/Nerve
 Officer background: Experience is separate and primarily reduces decision noise
@@ -26,21 +28,22 @@ Player delegation: I toggles AI UNIT ON/OFF for selected Danish regiment(s); A r
 Officer AI doctrine menu: DEFENSIVE / BALANCED / OFFENSIVE applies to selected Danish regiment(s)
 Commander aggression intent: 0-100 slider biases cautious/aggressive execution, while officer Aggressiveness remains dominant (70% officer / 30% order before doctrine bias)
 Fire discipline menu: HOLD / CLOSE / MEDIUM / LONG applies to selected Danish regiment(s)
-Battle HUD revision: full regiment info is shown only for selected or mouse-hovered units; compact box includes current/initial strength, Tab/losses, Ammo rounds per man, weapon/reload/formation, fire ranges, morale/cohesion and compact Officer AI state
-Command UI revision: selected-unit Officer AI controls are a fixed responsive bottom command bar only 60-66 px high with two control rows and no third status row
-Time HUD revision: battle date/time and PAUSE/x0.5/x1/x2/x5/x20 are in one persistent centred top bar; Space and 0/1/2/3/4 remain shortcuts
-UI input isolation: clicks inside time controls or the bottom command bar do not issue battlefield selection/move/attack orders
+Battle HUD revision: selected/mouse-over info is compact and includes current/initial strength, Tab/losses, Ammo rounds per man, weapon/reload/formation, fire ranges, morale/cohesion and compact Officer AI state
+Command UI safe-area revision: bottom command bar is two rows, 58 px high, inset 50 px horizontally and 42 px from the lower edge so it remains visible in slightly zoomed Unity Game view
+Time HUD safe-area revision: date/time plus PAUSE/x0.5/x1/x2/x5/x20 are centred 20 px below the upper edge; Space and 0/1/2/3/4 remain shortcuts
+UI input isolation: clicks inside time controls, combat tuning panel or bottom command bar do not issue battlefield selection/move/attack orders
 Multi-selection: Ctrl+left-click or Shift+left-click adds/removes Danish regiments from the current selection
 Formation control: manual F/C selects line/column; Officer AI may use column for longer approach marches and returns to line near engagement based on Tactical Skill and distance
-Formation-line order: hold right mouse button on terrain and drag a line; live terrain-following preview rotates with the drag, and release assigns selected regiments evenly along that line
-Formation-line facing: reversing the right-drag direction flips the final facing; minimum 22-unit centre spacing prevents selected regiments stacking on top of each other
-Order ghosts: every move order receives a terrain-following ghost path from regiment to destination plus a persistent destination footprint showing where and how the regiment is expected to stand
-Facing order: Z rotates selected regiment(s) 15 degrees left; X rotates 15 degrees right; matching DREJ -15 / DREJ +15 buttons are in the compact bottom command bar; if a move ghost exists the final ghost facing is rotated instead of losing the movement order
-Casualty visuals: representative bodies accumulate as losses occur, approximately one visible body per ten losses; bodies are spread across/behind the frontage and remain where the casualties occurred even while formations stand and exchange fire
+Single-unit move/facing: right-click location is the destination; hold right mouse and drag from that point to define the regiment's final facing before release
+Multi-unit formation-line order: with several units selected, hold right mouse and drag a line; selected regiments are assigned evenly along the line and drag direction determines facing
+Waypoint routes: Alt+right-click appends a waypoint; repeat for multiple waypoints; Alt+right-drag on a waypoint sets an explicit final facing for the route
+Order ghosts: route ghost follows all remaining waypoints and the final destination footprint shows final formation and facing; Z/X can rotate final ghost facing without cancelling movement
+Facing order: Z rotates selected regiment(s) 15 degrees left; X rotates 15 degrees right; matching compact buttons remain in the bottom command bar
+Casualty visuals: bodies accumulate at the actual formation position as losses occur even while units remain stationary and exchange fire; density is runtime-configurable, default one visible body per eight losses
 Enemy AI: Prussian officers start Offensive with order aggression 65 and Medium fire policy; 18th uses a flank/approach waypoint before reassessing attack
 Enemy behaviour rule: attackers close to officer/order preferred range, deploy to line near engagement, may stabilise under morale pressure, and do not receive combat-stat cheats
 Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision noise only, not combat stats or hidden knowledge
 AI telemetry: AI-DIAG exposes unit, officer, doctrine, order aggression, effective aggression, fire policy, mission, task and reason
-Pause semantics: AI, movement, reload, combat and battle clock stop together; camera/UI remain usable
+Pause semantics: AI, movement, waypoint movement, reload, combat and battle clock stop together; camera/UI remain usable
 Slow tactical mode: x0.5 gives twice the real-world reaction time per unit of simulation time without changing combat stats
 QA state: v00.00.09 TEST requires Unity 6000.6.0f1 compile + Play acceptance before it can be called runtime validated
