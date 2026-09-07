@@ -19,6 +19,14 @@ public enum InfantryWeaponType
     DreyseNeedleRifle
 }
 
+public enum RegimentFirePolicy
+{
+    HoldFire,
+    CloseRange,
+    MediumRange,
+    LongRange
+}
+
 public sealed class Regiment : MonoBehaviour
 {
     public string RegimentName { get; private set; }
@@ -38,6 +46,9 @@ public sealed class Regiment : MonoBehaviour
     public float CurrentReloadSeconds => BaseReloadSeconds * GetExperienceReloadMultiplier();
     public float EffectiveRange { get; private set; }
     public float MaximumRange { get; private set; }
+    public float CloseRange => EffectiveRange * 0.50f;
+    public float FireArcHalfAngle => 60f;
+    public RegimentFirePolicy FirePolicy { get; private set; } = RegimentFirePolicy.MediumRange;
     public int LastVolleyHits { get; private set; }
     public bool HasHitFeedback => LastVolleyHits > 0 && Time.unscaledTime < hitFeedbackUntil;
     public bool ShowRange { get; set; } = true;
@@ -57,7 +68,9 @@ public sealed class Regiment : MonoBehaviour
     private bool hasAiWaypoint;
     private Vector3 aiWaypoint;
     private GameObject selectionMarker;
-    private LineRenderer rangeRing;
+    private LineRenderer closeRangeFan;
+    private LineRenderer mediumRangeFan;
+    private LineRenderer longRangeFan;
     private ParticleSystem smoke;
     private Material uniformMaterial;
     private Material darkMaterial;
@@ -195,20 +208,9 @@ public sealed class Regiment : MonoBehaviour
         Destroy(selectionMarker.GetComponent<Collider>());
         selectionMarker.SetActive(false);
 
-        rangeRing = gameObject.AddComponent<LineRenderer>();
-        rangeRing.useWorldSpace = false;
-        rangeRing.loop = true;
-        rangeRing.positionCount = 72;
-        rangeRing.widthMultiplier = 0.18f;
-        rangeRing.sharedMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.95f, 0.78f, 0.18f), "RangeRing");
-        for (int i = 0; i < rangeRing.positionCount; i++)
-        {
-            float a = i / (float)rangeRing.positionCount * Mathf.PI * 2f;
-            rangeRing.SetPosition(i, new Vector3(Mathf.Cos(a) * EffectiveRange, 0.15f, Mathf.Sin(a) * EffectiveRange));
-        }
-        rangeRing.enabled = false;
+        CreateRangeFans();
 
-        var psObject = new GameObject("BlackPowderSmoke");
+        GameObject psObject = new GameObject("BlackPowderSmoke");
         psObject.transform.SetParent(transform, false);
         psObject.transform.localPosition = new Vector3(0f, 1.1f, 1.2f);
         smoke = psObject.AddComponent<ParticleSystem>();
@@ -234,6 +236,61 @@ public sealed class Regiment : MonoBehaviour
         RefreshVisualStrength();
     }
 
+    private void CreateRangeFans()
+    {
+        closeRangeFan = CreateRangeFan(
+            "CloseRangeFan",
+            CloseRange,
+            0.08f,
+            new Color(0.95f, 0.78f, 0.18f));
+
+        mediumRangeFan = CreateRangeFan(
+            "MediumRangeFan",
+            EffectiveRange,
+            0.11f,
+            new Color(0.95f, 0.64f, 0.12f));
+
+        longRangeFan = CreateRangeFan(
+            "LongRangeFan",
+            MaximumRange,
+            0.17f,
+            new Color(0.95f, 0.42f, 0.10f));
+
+        SetRangeVisualEnabled(false);
+    }
+
+    private LineRenderer CreateRangeFan(string objectName, float range, float width, Color color)
+    {
+        GameObject fanObject = new GameObject(objectName);
+        fanObject.transform.SetParent(transform, false);
+
+        LineRenderer line = fanObject.AddComponent<LineRenderer>();
+        line.useWorldSpace = false;
+        line.loop = true;
+        line.widthMultiplier = width;
+        line.sharedMaterial = PrototypeBootstrap.CreateSharedMaterial(color, objectName + "Material");
+
+        const int arcSegments = 28;
+        const float muzzleHalfWidth = 8.5f;
+        const float muzzleZ = 1.30f;
+        line.positionCount = arcSegments + 3;
+
+        line.SetPosition(0, new Vector3(-muzzleHalfWidth, 0.15f, muzzleZ));
+
+        for (int i = 0; i <= arcSegments; i++)
+        {
+            float t = i / (float)arcSegments;
+            float angle = Mathf.Lerp(-FireArcHalfAngle, FireArcHalfAngle, t) * Mathf.Deg2Rad;
+            float x = Mathf.Sin(angle) * range;
+            float z = Mathf.Cos(angle) * range;
+            line.SetPosition(i + 1, new Vector3(x, 0.15f, z));
+        }
+
+        line.SetPosition(line.positionCount - 1, new Vector3(muzzleHalfWidth, 0.15f, muzzleZ));
+        line.enabled = false;
+        return line;
+    }
+
     private void Update()
     {
         if (IsRouted)
@@ -255,8 +312,10 @@ public sealed class Regiment : MonoBehaviour
 
         if (forcedTarget != null && !forcedTarget.IsRouted)
         {
-            float d = Vector3.Distance(transform.position, forcedTarget.transform.position);
-            if (d > EffectiveRange * 0.92f)
+            float distance = Vector3.Distance(transform.position, forcedTarget.transform.position);
+            float stopRange = GetAttackStopRange();
+
+            if (distance > stopRange)
             {
                 destination = forcedTarget.transform.position;
                 hasDestination = true;
@@ -264,15 +323,22 @@ public sealed class Regiment : MonoBehaviour
             else
             {
                 hasDestination = false;
+                FaceTarget(forcedTarget, 3.0f);
             }
         }
 
         UpdateMovement();
         UpdateSoldierFormation();
 
-        if (!hasDestination && Time.time >= nextFireTime)
+        if (!hasDestination && Time.time >= nextFireTime && FirePolicy != RegimentFirePolicy.HoldFire)
         {
-            Regiment target = forcedTarget != null && !forcedTarget.IsRouted ? forcedTarget : FindNearestEnemy(MaximumRange);
+            Regiment target = null;
+
+            if (forcedTarget != null && !forcedTarget.IsRouted && CanFireAt(forcedTarget))
+                target = forcedTarget;
+            else
+                target = FindNearestEnemyInFireArc(GetFireTriggerRange());
+
             if (target != null)
                 FireVolley(target);
         }
@@ -280,6 +346,8 @@ public sealed class Regiment : MonoBehaviour
 
     private void UpdateAI()
     {
+        // Legacy v00.00.08 AI. v00.00.09 OfficerAIPrototypeManager disables this
+        // path at runtime so both teams use OfficerAIController instead.
         aiThinkTimer -= Time.deltaTime;
         if (aiThinkTimer > 0f)
             return;
@@ -383,46 +451,155 @@ public sealed class Regiment : MonoBehaviour
     {
         Regiment nearest = null;
         float best = maxDistance;
+
         foreach (Regiment candidate in BattleManager.Instance.Regiments)
         {
             if (candidate == null || candidate.Team == Team || candidate.IsRouted)
                 continue;
-            float d = Vector3.Distance(transform.position, candidate.transform.position);
-            if (d < best)
+
+            float distance = Vector3.Distance(transform.position, candidate.transform.position);
+            if (distance < best)
             {
-                best = d;
+                best = distance;
                 nearest = candidate;
             }
         }
+
         return nearest;
+    }
+
+    private Regiment FindNearestEnemyInFireArc(float maxDistance)
+    {
+        Regiment nearest = null;
+        float best = maxDistance;
+
+        foreach (Regiment candidate in BattleManager.Instance.Regiments)
+        {
+            if (candidate == null || candidate.Team == Team || candidate.IsRouted)
+                continue;
+
+            float distance = Vector3.Distance(transform.position, candidate.transform.position);
+            if (distance > best || !IsTargetInFireArc(candidate))
+                continue;
+
+            best = distance;
+            nearest = candidate;
+        }
+
+        return nearest;
+    }
+
+    public float GetFireTriggerRange()
+    {
+        switch (FirePolicy)
+        {
+            case RegimentFirePolicy.HoldFire:
+                return 0f;
+            case RegimentFirePolicy.CloseRange:
+                return CloseRange;
+            case RegimentFirePolicy.LongRange:
+                return MaximumRange;
+            default:
+                return EffectiveRange;
+        }
+    }
+
+    public string GetFirePolicyLabel()
+    {
+        switch (FirePolicy)
+        {
+            case RegimentFirePolicy.HoldFire:
+                return "HOLD";
+            case RegimentFirePolicy.CloseRange:
+                return "CLOSE";
+            case RegimentFirePolicy.LongRange:
+                return "LONG";
+            default:
+                return "MEDIUM";
+        }
+    }
+
+    public bool IsTargetInFireArc(Regiment target)
+    {
+        if (target == null)
+            return false;
+
+        Vector3 toTarget = target.transform.position - transform.position;
+        toTarget.y = 0f;
+        if (toTarget.sqrMagnitude < 0.01f)
+            return true;
+
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.01f)
+            return true;
+
+        return Vector3.Angle(forward.normalized, toTarget.normalized) <= FireArcHalfAngle;
+    }
+
+    public bool CanFireAt(Regiment target)
+    {
+        if (target == null || target.Team == Team || target.IsRouted || FirePolicy == RegimentFirePolicy.HoldFire)
+            return false;
+
+        float distance = Vector3.Distance(transform.position, target.transform.position);
+        return distance <= GetFireTriggerRange() && IsTargetInFireArc(target);
+    }
+
+    public void SetFirePolicy(RegimentFirePolicy policy)
+    {
+        FirePolicy = policy;
+    }
+
+    private float GetAttackStopRange()
+    {
+        if (FirePolicy == RegimentFirePolicy.HoldFire)
+            return EffectiveRange * 0.70f;
+
+        return Mathf.Max(4f, GetFireTriggerRange() * 0.92f);
+    }
+
+    private float GetRangeAccuracyMultiplier(float distance)
+    {
+        // Continuous distance curve: no artificial accuracy jump at the Close/Medium/Long
+        // UI boundaries. Closer targets are progressively easier to hit.
+        float distance01 = Mathf.Clamp01(distance / Mathf.Max(1f, MaximumRange));
+        return Mathf.Lerp(1.35f, 0.16f, Mathf.Pow(distance01, 0.85f));
     }
 
     private void FireVolley(Regiment target)
     {
-        float distance = Vector3.Distance(transform.position, target.transform.position);
-        if (distance > MaximumRange)
+        if (!CanFireAt(target))
             return;
 
-        Vector3 toTarget = target.transform.position - transform.position;
-        toTarget.y = 0f;
-        if (toTarget.sqrMagnitude > 0.01f)
-        {
-            Quaternion desired = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desired, 0.5f);
-        }
+        float distance = Vector3.Distance(transform.position, target.transform.position);
+        FaceTarget(target, 0.75f);
 
-        float rangeQuality = Mathf.Clamp01(1f - distance / MaximumRange);
-        float effectiveBonus = distance <= EffectiveRange ? 1.0f : 0.55f;
+        float rangeAccuracy = GetRangeAccuracyMultiplier(distance);
         float quality = (Morale / 100f) * (Cohesion / 100f);
         int firingMen = Mathf.RoundToInt(CurrentStrength * 0.58f);
-        float expected = firingMen * baseAccuracy * (0.35f + 0.95f * rangeQuality) * effectiveBonus * quality;
+        float expected = firingMen * baseAccuracy * rangeAccuracy * quality;
         int hits = Mathf.Clamp(Mathf.RoundToInt(expected * Random.Range(0.72f, 1.28f)), 0, 16);
-        float shock = Mathf.Lerp(1.5f, 5.0f, rangeQuality);
+        float shock = Mathf.Lerp(5.0f, 1.5f, Mathf.Clamp01(distance / MaximumRange));
 
         target.ReceiveVolley(hits, shock, this);
         smoke.Emit(Random.Range(18, 34));
         nextFireTime = Time.time + CurrentReloadSeconds * Random.Range(0.90f, 1.12f);
         Cohesion = Mathf.Max(30f, Cohesion - Random.Range(0.4f, 1.2f));
+    }
+
+    private void FaceTarget(Regiment target, float turnRate)
+    {
+        if (target == null)
+            return;
+
+        Vector3 toTarget = target.transform.position - transform.position;
+        toTarget.y = 0f;
+        if (toTarget.sqrMagnitude <= 0.01f)
+            return;
+
+        Quaternion desired = Quaternion.LookRotation(toTarget.normalized, Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, desired, turnRate * Time.deltaTime);
     }
 
     public void ReceiveVolley(int hits, float shock, Regiment attacker)
@@ -446,13 +623,16 @@ public sealed class Regiment : MonoBehaviour
     {
         if (IsRouted)
             return;
+
         IsRouted = true;
         Morale = Mathf.Min(Morale, 15f);
         forcedTarget = null;
-        Vector3 retreat = transform.position + (Team == BattleTeam.Denmark ? Vector3.left : Vector3.right) * 90f;
-        retreat.z += Random.Range(-15f, 15f);
+
+        Vector3 retreat = transform.position + (Team == BattleTeam.Denmark ? Vector3.left : Vector3.right) * 150f;
+        retreat.z += Random.Range(-25f, 25f);
         destination = retreat;
         hasDestination = true;
+
         BattleManager.Instance.NotifyRout(this);
     }
 
@@ -466,22 +646,33 @@ public sealed class Regiment : MonoBehaviour
     public void SetSelected(bool selected)
     {
         IsSelected = selected;
+
         if (selectionMarker != null)
             selectionMarker.SetActive(selected);
-        if (rangeRing != null)
-            rangeRing.enabled = selected && ShowRange;
+
+        SetRangeVisualEnabled(selected && ShowRange);
     }
 
     public void RefreshRangeVisibility()
     {
-        if (rangeRing != null)
-            rangeRing.enabled = IsSelected && ShowRange;
+        SetRangeVisualEnabled(IsSelected && ShowRange);
+    }
+
+    private void SetRangeVisualEnabled(bool enabledValue)
+    {
+        if (closeRangeFan != null)
+            closeRangeFan.enabled = enabledValue;
+        if (mediumRangeFan != null)
+            mediumRangeFan.enabled = enabledValue;
+        if (longRangeFan != null)
+            longRangeFan.enabled = enabledValue;
     }
 
     public void OrderMove(Vector3 worldPoint)
     {
         if (IsRouted)
             return;
+
         forcedTarget = null;
         destination = worldPoint;
         destination.y = PrototypeBootstrap.SampleGroundHeight(destination.x, destination.z) + 0.10f;
@@ -492,12 +683,18 @@ public sealed class Regiment : MonoBehaviour
     {
         if (IsRouted || target == null || target.Team == Team)
             return;
+
         forcedTarget = target;
-        float d = Vector3.Distance(transform.position, target.transform.position);
-        if (d > EffectiveRange * 0.92f)
+        float distance = Vector3.Distance(transform.position, target.transform.position);
+
+        if (distance > GetAttackStopRange())
         {
             destination = target.transform.position;
             hasDestination = true;
+        }
+        else
+        {
+            hasDestination = false;
         }
     }
 
@@ -505,6 +702,7 @@ public sealed class Regiment : MonoBehaviour
     {
         if (IsRouted)
             return;
+
         hasDestination = false;
         forcedTarget = null;
     }
@@ -512,8 +710,11 @@ public sealed class Regiment : MonoBehaviour
     public void SetFormation(RegimentFormation formation)
     {
         Formation = formation;
+
         BoxCollider box = GetComponent<BoxCollider>();
         if (box != null)
-            box.size = formation == RegimentFormation.Line ? new Vector3(19f, 2.2f, 5f) : new Vector3(6f, 2.2f, 15f);
+            box.size = formation == RegimentFormation.Line
+                ? new Vector3(19f, 2.2f, 5f)
+                : new Vector3(6f, 2.2f, 15f);
     }
 }
