@@ -21,13 +21,21 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         GermanConfederationOther
     }
 
+    private enum MapZoomBand
+    {
+        Close,
+        Operational,
+        Strategic
+    }
+
     private sealed class Zone
     {
         public string Id;
         public string Name;
         public CampaignNation Owner;
+        public float Longitude;
+        public float Latitude;
         public Vector2 Position;
-        public Vector2 Size;
         public readonly List<string> Neighbours = new List<string>();
         public GameObject Visual;
     }
@@ -44,12 +52,21 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         public GameObject Visual;
     }
 
+    private sealed class City
+    {
+        public string Name;
+        public float Longitude;
+        public float Latitude;
+        public GameObject Visual;
+    }
+
     public const bool CampaignModeEnabled = true;
     public static GrandCampaignBootstrap Instance { get; private set; }
 
     private readonly Dictionary<string, Zone> zones = new Dictionary<string, Zone>();
     private readonly Dictionary<string, Army> armies = new Dictionary<string, Army>();
     private readonly List<CampaignNation> playableNations = new List<CampaignNation>();
+    private readonly List<City> cities = new List<City>();
 
     private Camera campaignCamera;
     private CampaignNation playerNation = CampaignNation.Denmark;
@@ -57,13 +74,18 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
     private Zone selectedZone;
     private Army selectedArmy;
 
+    // Grand Campaign canonical start chosen for PROJECT 1864.
     private bool paused;
     private float campaignSpeed = 1f;
-    private DateTime campaignTime = new DateTime(1864, 2, 1, 8, 0, 0);
+    private DateTime campaignTime = new DateTime(1851, 1, 1, 8, 0, 0);
+
+    private MapZoomBand zoomBand = MapZoomBand.Operational;
 
     private GUIStyle titleStyle;
     private GUIStyle smallStyle;
     private GUIStyle zoneStyle;
+    private GUIStyle cityStyle;
+    private GUIStyle mapInfoStyle;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void AutoCreate()
@@ -71,7 +93,7 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         if (Object.FindAnyObjectByType<GrandCampaignBootstrap>() != null)
             return;
 
-        GameObject root = new GameObject("PROJECT1864_GrandCampaign_v000010c");
+        GameObject root = new GameObject("PROJECT1864_GrandCampaign_v000010e");
         DontDestroyOnLoad(root);
         root.AddComponent<GrandCampaignBootstrap>();
     }
@@ -97,35 +119,30 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
     private void BuildPlayableNationList()
     {
+        // v00.00.10e deliberately activates Denmark only. The enum/data contract
+        // keeps the already-decided future nations, but we do not expose empty
+        // countries until the Denmark vertical slice is proven.
         playableNations.Add(CampaignNation.Denmark);
-        playableNations.Add(CampaignNation.SwedenNorway);
-        playableNations.Add(CampaignNation.Prussia);
-        playableNations.Add(CampaignNation.Austria);
-        playableNations.Add(CampaignNation.France);
-        playableNations.Add(CampaignNation.UnitedKingdom);
-        playableNations.Add(CampaignNation.Russia);
-        playableNations.Add(CampaignNation.Netherlands);
-        playableNations.Add(CampaignNation.Hanover);
-        playableNations.Add(CampaignNation.Mecklenburg);
-        playableNations.Add(CampaignNation.GermanConfederationOther);
     }
 
     private void BuildCampaignWorld()
     {
         Application.targetFrameRate = 120;
         RenderSettings.fog = false;
-        RenderSettings.ambientLight = new Color(0.62f, 0.64f, 0.66f);
+        RenderSettings.ambientLight = new Color(0.60f, 0.62f, 0.64f);
 
         CreateCamera();
         CreateLight();
         CreateSeaBoard();
+        CreateRealDenmarkGeography();
         CreateZones();
+        CreateCities();
         CreateArmies();
 
         Debug.Log(string.Format(
-            "CAMPAIGN-10C|Installed=True|PlayableNations={0}|Zones={1}|Armies={2}|Map=QA-Geographic-Scaffold",
-            playableNations.Count,
+            "CAMPAIGN-10E|Installed=True|Start=1851-01-01|Geo=WGS84|Source=NaturalEarth50m|Focus=Denmark|Zones={0}|Cities={1}|Armies={2}|DEM=False",
             zones.Count,
+            cities.Count,
             armies.Count));
     }
 
@@ -139,10 +156,12 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         campaignCamera = cameraObject.AddComponent<Camera>();
         campaignCamera.tag = "MainCamera";
         campaignCamera.orthographic = true;
-        campaignCamera.orthographicSize = 60f;
+        campaignCamera.orthographicSize = 43f;
         campaignCamera.nearClipPlane = 0.1f;
         campaignCamera.farClipPlane = 300f;
-        cameraObject.transform.position = new Vector3(8f, 95f, 4f);
+        campaignCamera.backgroundColor = new Color(0.16f, 0.29f, 0.40f);
+        campaignCamera.clearFlags = CameraClearFlags.SolidColor;
+        cameraObject.transform.position = new Vector3(11f, 95f, 1f);
         cameraObject.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
     }
 
@@ -151,142 +170,92 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         GameObject lightObject = new GameObject("Campaign Sun");
         Light light = lightObject.AddComponent<Light>();
         light.type = LightType.Directional;
-        light.intensity = 1.1f;
+        light.intensity = 1.05f;
         lightObject.transform.rotation = Quaternion.Euler(55f, -25f, 0f);
     }
 
     private void CreateSeaBoard()
     {
         GameObject sea = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        sea.name = "Grand Campaign Sea Board";
-        sea.transform.position = new Vector3(0f, -1.0f, 0f);
-        sea.transform.localScale = new Vector3(180f, 1f, 125f);
-        sea.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.20f, 0.34f, 0.46f), "CampaignSea");
+        sea.name = "Grand Campaign Sea";
+        sea.transform.position = new Vector3(10f, -0.45f, 0f);
+        sea.transform.localScale = new Vector3(170f, 0.8f, 105f);
+        sea.GetComponent<Renderer>().sharedMaterial =
+            CreateMaterial(new Color(0.18f, 0.34f, 0.47f), "CampaignSea");
         Collider collider = sea.GetComponent<Collider>();
         if (collider != null)
             Destroy(collider);
     }
 
-    private void CreateZones()
+    private void CreateRealDenmarkGeography()
     {
-        AddZone("DK-NJ", "Nordjylland", CampaignNation.Denmark, -12, 32, 10, 10);
-        AddZone("DK-CJ", "Midtjylland", CampaignNation.Denmark, -11, 21, 10, 10);
-        AddZone("DK-SJ", "Sydjylland", CampaignNation.Denmark, -10, 10, 10, 10);
-        AddZone("DK-FYN", "Fyn", CampaignNation.Denmark, 1, 12, 7, 7);
-        AddZone("DK-SJL", "Sjælland", CampaignNation.Denmark, 10, 14, 9, 8);
-        AddZone("DK-BOR", "Bornholm", CampaignNation.Denmark, 25, 16, 5, 5);
-
-        AddZone("SN-SCA", "Skåne", CampaignNation.SwedenNorway, 13, 27, 10, 9);
-        AddZone("SN-GOT", "Götaland", CampaignNation.SwedenNorway, 17, 39, 12, 11);
-        AddZone("SN-SVE", "Svealand", CampaignNation.SwedenNorway, 22, 52, 13, 12);
-        AddZone("SN-OSL", "Oslofjord", CampaignNation.SwedenNorway, -2, 46, 11, 10);
-        AddZone("SN-NOR", "Sydnorge", CampaignNation.SwedenNorway, -11, 55, 13, 11);
-
-        AddZone("PR-SH", "Schleswig", CampaignNation.Prussia, -8, 0, 11, 8);
-        AddZone("PR-HOL", "Holstein", CampaignNation.Prussia, -6, -9, 12, 8);
-        AddZone("PR-BRA", "Brandenburg", CampaignNation.Prussia, 20, -7, 13, 10);
-        AddZone("PR-POM", "Pommern", CampaignNation.Prussia, 31, 2, 13, 9);
-        AddZone("PR-SIL", "Schlesien", CampaignNation.Prussia, 33, -17, 13, 10);
-        AddZone("PR-RHI", "Rheinprovinz", CampaignNation.Prussia, -23, -20, 13, 11);
-
-        AddZone("AT-BOH", "Böhmen", CampaignNation.Austria, 25, -31, 14, 11);
-        AddZone("AT-MOR", "Mähren", CampaignNation.Austria, 40, -31, 11, 10);
-        AddZone("AT-LAU", "Niederösterreich", CampaignNation.Austria, 43, -43, 13, 10);
-        AddZone("AT-TYR", "Tirol", CampaignNation.Austria, 21, -47, 14, 9);
-
-        AddZone("FR-N", "Nordfrankrig", CampaignNation.France, -49, -24, 15, 12);
-        AddZone("FR-PAR", "Île-de-France", CampaignNation.France, -48, -38, 14, 11);
-        AddZone("FR-E", "Østfrankrig", CampaignNation.France, -31, -38, 15, 11);
-        AddZone("FR-S", "Sydfrankrig", CampaignNation.France, -45, -53, 20, 10);
-
-        AddZone("UK-S", "Sydengland", CampaignNation.UnitedKingdom, -72, -18, 14, 10);
-        AddZone("UK-N", "Nordengland", CampaignNation.UnitedKingdom, -73, -5, 13, 11);
-        AddZone("UK-SCO", "Skotland", CampaignNation.UnitedKingdom, -75, 10, 13, 13);
-        AddZone("UK-WAL", "Wales", CampaignNation.UnitedKingdom, -83, -11, 8, 10);
-
-        AddZone("NL-HOL", "Holland", CampaignNation.Netherlands, -28, -7, 8, 8);
-        AddZone("NL-N", "Nordnederlandene", CampaignNation.Netherlands, -27, 2, 8, 8);
-
-        AddZone("HA-W", "Hannover Vest", CampaignNation.Hanover, -15, -8, 10, 9);
-        AddZone("HA-E", "Hannover Øst", CampaignNation.Hanover, -4, -8, 10, 9);
-
-        AddZone("ME-S", "Mecklenburg-Schwerin", CampaignNation.Mecklenburg, 12, 2, 10, 8);
-        AddZone("ME-ST", "Mecklenburg-Strelitz", CampaignNation.Mecklenburg, 20, 2, 7, 7);
-
-        AddZone("DE-C", "Tyske Forbund - Midt", CampaignNation.GermanConfederationOther, -3, -25, 15, 11);
-        AddZone("DE-S", "Tyske Forbund - Syd", CampaignNation.GermanConfederationOther, 2, -40, 18, 12);
-
-        AddZone("RU-BAL", "Russiske Østersøprovinser", CampaignNation.Russia, 57, 18, 17, 12);
-        AddZone("RU-POL", "Kongeriget Polen", CampaignNation.Russia, 55, -8, 16, 13);
-        AddZone("RU-STP", "Sankt Petersborg", CampaignNation.Russia, 73, 32, 16, 13);
-        AddZone("RU-W", "Vestlige Rusland", CampaignNation.Russia, 77, 4, 18, 16);
-
-        Link("DK-NJ", "DK-CJ");
-        Link("DK-CJ", "DK-SJ");
-        Link("DK-SJ", "PR-SH");
-        Link("DK-SJ", "DK-FYN");
-        Link("DK-FYN", "DK-SJL");
-        Link("DK-SJL", "SN-SCA");
-        Link("DK-SJL", "DK-BOR");
-
-        Link("SN-SCA", "SN-GOT");
-        Link("SN-GOT", "SN-SVE");
-        Link("SN-GOT", "SN-OSL");
-        Link("SN-OSL", "SN-NOR");
-
-        Link("PR-SH", "PR-HOL");
-        Link("PR-HOL", "HA-E");
-        Link("PR-HOL", "ME-S");
-        Link("ME-S", "ME-ST");
-        Link("ME-ST", "PR-BRA");
-        Link("PR-BRA", "PR-POM");
-        Link("PR-BRA", "PR-SIL");
-        Link("PR-BRA", "DE-C");
-        Link("PR-RHI", "NL-HOL");
-        Link("PR-RHI", "DE-C");
-        Link("HA-W", "HA-E");
-        Link("HA-W", "NL-HOL");
-        Link("HA-E", "DE-C");
-        Link("DE-C", "DE-S");
-        Link("DE-S", "AT-BOH");
-        Link("AT-BOH", "AT-MOR");
-        Link("AT-MOR", "AT-LAU");
-        Link("AT-BOH", "AT-TYR");
-        Link("FR-N", "FR-PAR");
-        Link("FR-PAR", "FR-E");
-        Link("FR-PAR", "FR-S");
-        Link("FR-E", "PR-RHI");
-        Link("FR-N", "NL-HOL");
-        Link("NL-HOL", "NL-N");
-        Link("UK-S", "UK-N");
-        Link("UK-N", "UK-SCO");
-        Link("UK-S", "UK-WAL");
-        Link("PR-POM", "RU-BAL");
-        Link("RU-BAL", "RU-STP");
-        Link("RU-BAL", "RU-POL");
-        Link("RU-POL", "RU-W");
-        Link("RU-STP", "RU-W");
+        Material land = CreateMaterial(new Color(0.38f, 0.47f, 0.27f), "DNK_Land_NaturalEarth50m");
+        Material coast = CreateMaterial(new Color(0.84f, 0.82f, 0.69f), "DNK_Coast_NaturalEarth50m");
+        CampaignDenmarkGeography.Create(land, coast);
     }
 
-    private void AddZone(string id, string name, CampaignNation owner, float x, float z, float width, float depth)
+    private void CreateZones()
     {
+        // Gameplay-zone centres are a v10e operational scaffold over real geography.
+        // They are NOT historical administrative borders. Polygon borders come later.
+        AddZone("DK-VEN", "Vendsyssel", CampaignNation.Denmark, 9.88f, 57.36f);
+        AddZone("DK-NJ", "Nordjylland", CampaignNation.Denmark, 9.45f, 56.86f);
+        AddZone("DK-MJ", "Midtjylland", CampaignNation.Denmark, 9.25f, 56.28f);
+        AddZone("DK-VJ", "Vestjylland", CampaignNation.Denmark, 8.70f, 55.82f);
+        AddZone("DK-OJ", "Østjylland", CampaignNation.Denmark, 10.03f, 56.10f);
+        AddZone("DK-SJ", "Sydjylland", CampaignNation.Denmark, 9.25f, 55.25f);
+        AddZone("DK-FYN", "Fyn", CampaignNation.Denmark, 10.30f, 55.34f);
+        AddZone("DK-NSJ", "Nordsjælland", CampaignNation.Denmark, 12.13f, 55.94f);
+        AddZone("DK-KBH", "København", CampaignNation.Denmark, 12.5683f, 55.6761f);
+        AddZone("DK-SSJ", "Sydsjælland", CampaignNation.Denmark, 11.82f, 55.28f);
+        AddZone("DK-LF", "Lolland-Falster", CampaignNation.Denmark, 11.62f, 54.78f);
+        AddZone("DK-BOR", "Bornholm", CampaignNation.Denmark, 14.91f, 55.12f);
+
+        Link("DK-VEN", "DK-NJ");
+        Link("DK-NJ", "DK-MJ");
+        Link("DK-MJ", "DK-VJ");
+        Link("DK-MJ", "DK-OJ");
+        Link("DK-VJ", "DK-SJ");
+        Link("DK-OJ", "DK-SJ");
+        Link("DK-SJ", "DK-FYN");
+        Link("DK-FYN", "DK-NSJ");
+        Link("DK-FYN", "DK-SSJ");
+        Link("DK-NSJ", "DK-KBH");
+        Link("DK-NSJ", "DK-SSJ");
+        Link("DK-SSJ", "DK-LF");
+        Link("DK-KBH", "DK-SSJ");
+
+        // Bornholm is intentionally disconnected in land-march routing. Sea
+        // transport becomes a separate naval/transport route system later.
+    }
+
+    private void AddZone(
+        string id,
+        string name,
+        CampaignNation owner,
+        float longitude,
+        float latitude)
+    {
+        Vector3 world = CampaignGeoProjection.Project(longitude, latitude, 0.42f);
         Zone zone = new Zone
         {
             Id = id,
             Name = name,
             Owner = owner,
-            Position = new Vector2(x, z),
-            Size = new Vector2(width, depth)
+            Longitude = longitude,
+            Latitude = latitude,
+            Position = new Vector2(world.x, world.z)
         };
 
-        GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        tile.name = "ZONE_" + id;
-        tile.transform.position = new Vector3(x, 0f, z);
-        tile.transform.localScale = new Vector3(width - 0.35f, 1.1f, depth - 0.35f);
-        tile.GetComponent<Renderer>().sharedMaterial = CreateMaterial(GetNationColor(owner), "Zone_" + id);
-        GrandCampaignZoneMarker marker = tile.AddComponent<GrandCampaignZoneMarker>();
+        GameObject markerObject = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        markerObject.name = "ZONE_" + id;
+        markerObject.transform.position = world;
+        markerObject.transform.localScale = new Vector3(1.25f, 0.11f, 1.25f);
+        markerObject.GetComponent<Renderer>().sharedMaterial =
+            CreateMaterial(new Color(0.76f, 0.64f, 0.24f), "ZoneMarker_" + id);
+        GrandCampaignZoneMarker marker = markerObject.AddComponent<GrandCampaignZoneMarker>();
         marker.Initialize(id);
-        zone.Visual = tile;
+        zone.Visual = markerObject;
 
         zones[id] = zone;
     }
@@ -299,31 +268,64 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         if (!zones[b].Neighbours.Contains(a)) zones[b].Neighbours.Add(a);
     }
 
-    private void CreateArmies()
+    private void CreateCities()
     {
-        AddArmy("DK-ARMY", "Den danske hær", CampaignNation.Denmark, "DK-SJ", 38000);
-        AddArmy("SN-ARMY", "Svensk-norsk feltstyrke", CampaignNation.SwedenNorway, "SN-SCA", 42000);
-        AddArmy("PR-ARMY", "Preussisk hær", CampaignNation.Prussia, "PR-HOL", 62000);
-        AddArmy("AT-ARMY", "Østrigsk korps", CampaignNation.Austria, "AT-BOH", 52000);
-        AddArmy("FR-ARMY", "Fransk feltarmé", CampaignNation.France, "FR-PAR", 85000);
-        AddArmy("UK-ARMY", "Britisk feltstyrke", CampaignNation.UnitedKingdom, "UK-S", 45000);
-        AddArmy("RU-ARMY", "Russisk vestarmé", CampaignNation.Russia, "RU-POL", 90000);
-        AddArmy("NL-ARMY", "Nederlandsk feltstyrke", CampaignNation.Netherlands, "NL-HOL", 25000);
-        AddArmy("HA-ARMY", "Hannoveransk hær", CampaignNation.Hanover, "HA-E", 30000);
-        AddArmy("ME-ARMY", "Mecklenburgsk kontingent", CampaignNation.Mecklenburg, "ME-S", 12000);
-        AddArmy("DE-ARMY", "Tysk forbundskontingent", CampaignNation.GermanConfederationOther, "DE-C", 40000);
+        AddCity("Aalborg", 9.9217f, 57.0488f);
+        AddCity("Viborg", 9.4020f, 56.4532f);
+        AddCity("Aarhus", 10.2039f, 56.1629f);
+        AddCity("Esbjerg", 8.4594f, 55.4765f);
+        AddCity("Kolding", 9.4722f, 55.4904f);
+        AddCity("Fredericia", 9.7526f, 55.5657f);
+        AddCity("Odense", 10.4024f, 55.4038f);
+        AddCity("København", 12.5683f, 55.6761f);
+        AddCity("Næstved", 11.7609f, 55.2299f);
+        AddCity("Rønne", 14.7066f, 55.1009f);
     }
 
-    private void AddArmy(string id, string name, CampaignNation nation, string zoneId, int strength)
+    private void AddCity(string name, float longitude, float latitude)
+    {
+        GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        visual.name = "CITY_" + name;
+        visual.transform.position = CampaignGeoProjection.Project(longitude, latitude, 0.48f);
+        visual.transform.localScale = new Vector3(0.36f, 0.10f, 0.36f);
+        visual.GetComponent<Renderer>().sharedMaterial =
+            CreateMaterial(new Color(0.87f, 0.84f, 0.72f), "CityMarker_" + name);
+        Collider collider = visual.GetComponent<Collider>();
+        if (collider != null)
+            Destroy(collider);
+
+        cities.Add(new City
+        {
+            Name = name,
+            Longitude = longitude,
+            Latitude = latitude,
+            Visual = visual
+        });
+    }
+
+    private void CreateArmies()
+    {
+        // QA formation only: location/strength is not yet presented as researched
+        // 1 January 1851 OOB. Stable ID and movement state are the test target.
+        AddArmy("DK-ARMY-QA", "Dansk hær — QA", CampaignNation.Denmark, "DK-SJ", 24000);
+    }
+
+    private void AddArmy(
+        string id,
+        string name,
+        CampaignNation nation,
+        string zoneId,
+        int strength)
     {
         if (!zones.TryGetValue(zoneId, out Zone zone))
             return;
 
         GameObject token = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         token.name = "ARMY_" + id;
-        token.transform.position = ZoneWorldPosition(zone) + new Vector3(0f, 1.25f, 0f);
-        token.transform.localScale = new Vector3(2.3f, 0.65f, 2.3f);
-        token.GetComponent<Renderer>().sharedMaterial = CreateMaterial(Color.Lerp(GetNationColor(nation), Color.white, 0.35f), "Army_" + id);
+        token.transform.position = ZoneWorldPosition(zone) + new Vector3(0f, 1.05f, 0f);
+        token.transform.localScale = new Vector3(1.65f, 0.42f, 1.65f);
+        token.GetComponent<Renderer>().sharedMaterial =
+            CreateMaterial(new Color(0.76f, 0.18f, 0.18f), "Army_" + id);
         GrandCampaignArmyMarker marker = token.AddComponent<GrandCampaignArmyMarker>();
         marker.Initialize(id);
 
@@ -353,18 +355,38 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
             return;
 
         Vector3 p = campaignCamera.transform.position;
-        float pan = 32f * Time.unscaledDeltaTime;
+        float pan = 27f * Time.unscaledDeltaTime * Mathf.Max(0.75f, campaignCamera.orthographicSize / 43f);
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) p.z += pan;
         if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) p.z -= pan;
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) p.x -= pan;
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) p.x += pan;
-        p.x = Mathf.Clamp(p.x, -78f, 78f);
-        p.z = Mathf.Clamp(p.z, -52f, 52f);
+        p.x = Mathf.Clamp(p.x, -35f, 66f);
+        p.z = Mathf.Clamp(p.z, -37f, 39f);
         campaignCamera.transform.position = p;
 
         float wheel = Input.mouseScrollDelta.y;
         if (Mathf.Abs(wheel) > 0.01f)
-            campaignCamera.orthographicSize = Mathf.Clamp(campaignCamera.orthographicSize - wheel * 4f, 22f, 78f);
+            campaignCamera.orthographicSize = Mathf.Clamp(campaignCamera.orthographicSize - wheel * 3.5f, 17f, 67f);
+
+        MapZoomBand nextBand = campaignCamera.orthographicSize <= 29f
+            ? MapZoomBand.Close
+            : campaignCamera.orthographicSize <= 49f
+                ? MapZoomBand.Operational
+                : MapZoomBand.Strategic;
+
+        if (nextBand != zoomBand)
+        {
+            zoomBand = nextBand;
+            Debug.Log("CAMPAIGN-ZOOM|Band=" + zoomBand + "|SemanticZoomFoundation=True");
+        }
+
+        foreach (Army army in armies.Values)
+        {
+            if (army.Visual == null)
+                continue;
+            float scale = zoomBand == MapZoomBand.Close ? 1.35f : zoomBand == MapZoomBand.Operational ? 1.65f : 2.20f;
+            army.Visual.transform.localScale = new Vector3(scale, 0.42f, scale);
+        }
     }
 
     private void HandleSelectionAndOrders()
@@ -411,7 +433,7 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
             if (!current.Neighbours.Contains(destination.Id))
             {
                 Debug.Log(string.Format(
-                    "CAMPAIGN-MOVE|Army={0}|From={1}|To={2}|Accepted=False|Reason=NotAdjacent",
+                    "CAMPAIGN-MOVE|Army={0}|From={1}|To={2}|Accepted=False|Reason=NotAdjacentOrSeaRouteMissing",
                     selectedArmy.Id,
                     current.Id,
                     destination.Id));
@@ -421,7 +443,7 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
             selectedArmy.DestinationZoneId = destination.Id;
             selectedArmy.Progress = 0f;
             Debug.Log(string.Format(
-                "CAMPAIGN-MOVE|Army={0}|From={1}|To={2}|Accepted=True",
+                "CAMPAIGN-MOVE|Army={0}|From={1}|To={2}|Accepted=True|Geo=WGS84Projected",
                 selectedArmy.Id,
                 current.Id,
                 destination.Id));
@@ -456,12 +478,14 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
                 !zones.TryGetValue(army.DestinationZoneId, out Zone to))
                 continue;
 
-            float travelHours = Mathf.Max(6f, Vector2.Distance(from.Position, to.Position) * 1.2f);
+            // First slice uses projected geographic distance only. Road/terrain,
+            // rail, weather, fatigue and staff quality are later modifiers.
+            float travelHours = Mathf.Max(5f, Vector2.Distance(from.Position, to.Position) * 0.85f);
             float hoursPerRealSecond = 0.2f * campaignSpeed;
             army.Progress += Time.unscaledDeltaTime * hoursPerRealSecond / travelHours;
 
-            Vector3 start = ZoneWorldPosition(from) + new Vector3(0f, 1.25f, 0f);
-            Vector3 end = ZoneWorldPosition(to) + new Vector3(0f, 1.25f, 0f);
+            Vector3 start = ZoneWorldPosition(from) + new Vector3(0f, 1.05f, 0f);
+            Vector3 end = ZoneWorldPosition(to) + new Vector3(0f, 1.05f, 0f);
             army.Visual.transform.position = Vector3.Lerp(start, end, Mathf.Clamp01(army.Progress));
 
             if (army.Progress < 1f)
@@ -503,7 +527,7 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
     private static Vector3 ZoneWorldPosition(Zone zone)
     {
-        return new Vector3(zone.Position.x, 0f, zone.Position.y);
+        return new Vector3(zone.Position.x, 0.42f, zone.Position.y);
     }
 
     private void EnsureStyles()
@@ -533,6 +557,20 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
             alignment = TextAnchor.MiddleCenter
         };
         zoneStyle.normal.textColor = Color.white;
+
+        cityStyle = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 9,
+            alignment = TextAnchor.MiddleLeft
+        };
+        cityStyle.normal.textColor = new Color(0.95f, 0.94f, 0.84f);
+
+        mapInfoStyle = new GUIStyle(GUI.skin.box)
+        {
+            fontSize = 9,
+            alignment = TextAnchor.MiddleLeft
+        };
+        mapInfoStyle.normal.textColor = Color.white;
     }
 
     private void OnGUI()
@@ -547,28 +585,27 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
         DrawTopBar();
         DrawSelectionPanel();
+        DrawMapInfo();
         DrawZoneLabels();
+        if (zoomBand == MapZoomBand.Close)
+            DrawCityLabels();
     }
 
     private void DrawNationSelection()
     {
         float width = 430f;
-        float height = 390f;
+        float height = 150f;
         Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
         GUI.Box(panel, string.Empty);
-        GUI.Box(new Rect(panel.x + 10f, panel.y + 10f, panel.width - 20f, 34f), "VÆLG LAND — GRAND CAMPAIGN 1864", titleStyle);
+        GUI.Box(new Rect(panel.x + 10f, panel.y + 10f, panel.width - 20f, 34f), "GRAND CAMPAIGN — 1. JANUAR 1851", titleStyle);
+        GUI.Label(new Rect(panel.x + 25f, panel.y + 50f, panel.width - 50f, 22f), "v10e bygger Danmark som første real-geography vertical slice.");
 
-        float y = panel.y + 54f;
-        foreach (CampaignNation nation in playableNations)
+        if (GUI.Button(new Rect(panel.x + 55f, panel.y + 82f, panel.width - 110f, 34f), "START SOM DANMARK"))
         {
-            if (GUI.Button(new Rect(panel.x + 35f, y, panel.width - 70f, 25f), NationLabel(nation)))
-            {
-                playerNation = nation;
-                nationChosen = true;
-                SelectFirstArmyForNation();
-                Debug.Log("CAMPAIGN-NATION|Player=" + nation);
-            }
-            y += 28f;
+            playerNation = CampaignNation.Denmark;
+            nationChosen = true;
+            SelectFirstArmyForNation();
+            Debug.Log("CAMPAIGN-NATION|Player=Denmark|Start=1851-01-01|Geo=NaturalEarth50m");
         }
     }
 
@@ -586,13 +623,15 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
     private void DrawTopBar()
     {
-        Rect bar = new Rect(230f, 8f, Mathf.Min(760f, Screen.width - 240f), 31f);
+        Rect bar = new Rect(230f, 8f, Mathf.Max(520f, Mathf.Min(780f, Screen.width - 240f)), 31f);
         GUI.Box(bar, string.Empty);
 
         string state = paused ? "PAUSE" : "x" + campaignSpeed.ToString("0");
-        GUI.Label(new Rect(bar.x + 8f, bar.y + 6f, 310f, 20f), campaignTime.ToString("dd MMM yyyy HH:mm") + " | " + state + " | " + NationLabel(playerNation));
+        GUI.Label(
+            new Rect(bar.x + 8f, bar.y + 6f, 330f, 20f),
+            campaignTime.ToString("dd MMM yyyy HH:mm") + " | " + state + " | Danmark");
 
-        float x = bar.x + 330f;
+        float x = bar.x + 340f;
         if (GUI.Button(new Rect(x, bar.y + 4f, 70f, 23f), paused ? "FORTSÆT" : "PAUSE")) paused = !paused;
         x += 74f;
         if (GUI.Button(new Rect(x, bar.y + 4f, 48f, 23f), "x1")) { campaignSpeed = 1f; paused = false; }
@@ -606,69 +645,70 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
     private void DrawSelectionPanel()
     {
-        Rect panel = new Rect(8f, 42f, 300f, 132f);
+        Rect panel = new Rect(8f, 42f, 310f, 144f);
         GUI.Box(panel, string.Empty);
 
         string zoneText = selectedZone != null
-            ? string.Format("Zone: {0} ({1})\nEjer: {2}\nNaboer: {3}", selectedZone.Name, selectedZone.Id, NationLabel(selectedZone.Owner), string.Join(", ", selectedZone.Neighbours))
+            ? string.Format(
+                "Zone: {0} ({1})\nWGS84: {2:0.0000}°E, {3:0.0000}°N\nNaboer: {4}",
+                selectedZone.Name,
+                selectedZone.Id,
+                selectedZone.Longitude,
+                selectedZone.Latitude,
+                string.Join(", ", selectedZone.Neighbours))
             : "Zone: ingen";
-        GUI.Box(new Rect(panel.x + 6f, panel.y + 6f, panel.width - 12f, 62f), zoneText, smallStyle);
+        GUI.Box(new Rect(panel.x + 6f, panel.y + 6f, panel.width - 12f, 70f), zoneText, smallStyle);
 
         string armyText = selectedArmy != null
-            ? string.Format("Formation: {0}\nStyrke: {1:N0} | Position: {2}\nRMB på nabozone = marchordre", selectedArmy.Name, selectedArmy.Strength, selectedArmy.CurrentZoneId)
+            ? string.Format(
+                "Formation: {0}\nStyrke: {1:N0} [QA]\nRMB på nabozone = marchordre",
+                selectedArmy.Name,
+                selectedArmy.Strength)
             : "Formation: ingen valgt";
-        GUI.Box(new Rect(panel.x + 6f, panel.y + 72f, panel.width - 12f, 54f), armyText, smallStyle);
+        GUI.Box(new Rect(panel.x + 6f, panel.y + 80f, panel.width - 12f, 57f), armyText, smallStyle);
+    }
+
+    private void DrawMapInfo()
+    {
+        Rect box = new Rect(8f, Screen.height - 76f, 395f, 68f);
+        GUI.Box(
+            box,
+            "REAL GEO: Natural Earth 1:50m | CRS: WGS84\n" +
+            "Aktiv detaljeregion: Danmark | Zoom: " + zoomBand + "\n" +
+            "Zonecentre = gameplay scaffold | DEM + 1851 historiske grænser/infrastruktur følger",
+            mapInfoStyle);
     }
 
     private void DrawZoneLabels()
     {
-        if (campaignCamera == null)
+        if (campaignCamera == null || zoomBand == MapZoomBand.Strategic)
             return;
 
         foreach (Zone zone in zones.Values)
         {
-            Vector3 screen = campaignCamera.WorldToScreenPoint(ZoneWorldPosition(zone) + new Vector3(0f, 1.2f, 0f));
+            Vector3 screen = campaignCamera.WorldToScreenPoint(ZoneWorldPosition(zone) + new Vector3(0f, 0.3f, 0f));
             if (screen.z <= 0f)
                 continue;
 
             float y = Screen.height - screen.y;
-            GUI.Label(new Rect(screen.x - 55f, y - 10f, 110f, 20f), zone.Name, zoneStyle);
+            GUI.Label(new Rect(screen.x - 58f, y - 12f, 116f, 20f), zone.Name, zoneStyle);
         }
     }
 
-    private static string NationLabel(CampaignNation nation)
+    private void DrawCityLabels()
     {
-        switch (nation)
-        {
-            case CampaignNation.Denmark: return "Danmark";
-            case CampaignNation.SwedenNorway: return "Sverige-Norge";
-            case CampaignNation.Prussia: return "Preussen";
-            case CampaignNation.Austria: return "Østrig";
-            case CampaignNation.France: return "Frankrig";
-            case CampaignNation.UnitedKingdom: return "Storbritannien";
-            case CampaignNation.Russia: return "Rusland";
-            case CampaignNation.Netherlands: return "Nederlandene";
-            case CampaignNation.Hanover: return "Kongeriget Hannover";
-            case CampaignNation.Mecklenburg: return "Mecklenburg";
-            default: return "Øvrige tyske forbundsstater";
-        }
-    }
+        if (campaignCamera == null)
+            return;
 
-    private static Color GetNationColor(CampaignNation nation)
-    {
-        switch (nation)
+        foreach (City city in cities)
         {
-            case CampaignNation.Denmark: return new Color(0.62f, 0.18f, 0.18f);
-            case CampaignNation.SwedenNorway: return new Color(0.22f, 0.45f, 0.67f);
-            case CampaignNation.Prussia: return new Color(0.22f, 0.24f, 0.28f);
-            case CampaignNation.Austria: return new Color(0.78f, 0.74f, 0.64f);
-            case CampaignNation.France: return new Color(0.28f, 0.38f, 0.67f);
-            case CampaignNation.UnitedKingdom: return new Color(0.58f, 0.20f, 0.26f);
-            case CampaignNation.Russia: return new Color(0.34f, 0.52f, 0.42f);
-            case CampaignNation.Netherlands: return new Color(0.80f, 0.42f, 0.16f);
-            case CampaignNation.Hanover: return new Color(0.70f, 0.58f, 0.30f);
-            case CampaignNation.Mecklenburg: return new Color(0.46f, 0.52f, 0.32f);
-            default: return new Color(0.52f, 0.42f, 0.33f);
+            if (city.Visual == null)
+                continue;
+            Vector3 screen = campaignCamera.WorldToScreenPoint(city.Visual.transform.position);
+            if (screen.z <= 0f)
+                continue;
+            float y = Screen.height - screen.y;
+            GUI.Label(new Rect(screen.x + 5f, y - 9f, 105f, 18f), city.Name, cityStyle);
         }
     }
 
