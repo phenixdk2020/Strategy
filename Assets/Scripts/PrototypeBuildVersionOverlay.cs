@@ -5,7 +5,7 @@ using UnityEngine;
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
-    public const string BuildVersion = "v00.00.09b";
+    public const string BuildVersion = "v00.00.09c";
     public const string BuildChannel = "TEST";
 
     private GUIStyle style;
@@ -13,7 +13,7 @@ public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
-        if (Object.FindAnyObjectByType<PrototypeBuildVersionOverlay>() != null)
+        if (UnityEngine.Object.FindAnyObjectByType<PrototypeBuildVersionOverlay>() != null)
             return;
 
         GameObject root = new GameObject("PrototypeBuildVersionOverlay_" + BuildVersion);
