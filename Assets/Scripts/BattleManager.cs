@@ -11,26 +11,27 @@ public sealed class BattleManager : MonoBehaviour
     public float BattleMinutes => battleMinutes;
 
     private const float GameMinutesPerSimulationSecond = 2.2f;
-    private const float UnitInfoWidth = 276f;
-    private const float UnitInfoHeight = 118f;
-    private const float BottomUiReserve = 188f;
+    private const float UnitInfoWidth = 330f;
+    private const float UnitInfoHeight = 104f;
+    private const float BottomUiReserve = 76f;
 
     private readonly List<Regiment> regiments = new List<Regiment>();
     private float battleMinutes = 10f * 60f + 20f;
     private float speed = 1f;
     private bool paused;
     private string resultMessage = string.Empty;
+
     private GUIStyle unitStyle;
     private GUIStyle hitStyle;
     private GUIStyle topStyle;
-    private GUIStyle helpStyle;
     private GUIStyle timeStyle;
+    private GUIStyle miniStyle;
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning("Duplicate BattleManager detected; the duplicate component has been disabled.");
+            Debug.LogWarning("Duplicate BattleManager detected; duplicate disabled.");
             enabled = false;
             return;
         }
@@ -72,8 +73,6 @@ public sealed class BattleManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha4))
             SetSpeed(20f);
 
-        // Time.deltaTime is scaled by Time.timeScale, so the battle clock advances
-        // in lockstep with simulation speed and stops completely while paused.
         if (!paused)
             battleMinutes += Time.deltaTime * GameMinutesPerSimulationSecond;
 
@@ -88,7 +87,7 @@ public sealed class BattleManager : MonoBehaviour
 
     public void NotifyRout(Regiment regiment)
     {
-        // Hook for future chronicle, prisoners, wounded and command reports.
+        // Hook for future chronicle / prisoner / casualty reporting.
     }
 
     public bool IsPointerOverSimulationControls(Vector3 mousePosition)
@@ -108,7 +107,7 @@ public sealed class BattleManager : MonoBehaviour
             return null;
 
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        RaycastHit[] hits = Physics.RaycastAll(ray, 1500f);
+        RaycastHit[] hits = Physics.RaycastAll(ray, 1600f);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
         foreach (RaycastHit hit in hits)
@@ -124,15 +123,15 @@ public sealed class BattleManager : MonoBehaviour
     private static Rect GetUnitInfoRect(Vector3 screen)
     {
         float anchorY = Screen.height - screen.y;
-        float x = screen.x + 30f;
+        float x = screen.x + 26f;
 
-        if (x + UnitInfoWidth > Screen.width - 10f)
-            x = screen.x - UnitInfoWidth - 30f;
+        if (x + UnitInfoWidth > Screen.width - 8f)
+            x = screen.x - UnitInfoWidth - 26f;
 
-        x = Mathf.Clamp(x, 10f, Mathf.Max(10f, Screen.width - UnitInfoWidth - 10f));
+        x = Mathf.Clamp(x, 6f, Mathf.Max(6f, Screen.width - UnitInfoWidth - 6f));
 
-        float maxY = Mathf.Max(82f, Screen.height - BottomUiReserve - UnitInfoHeight);
-        float y = Mathf.Clamp(anchorY - UnitInfoHeight - 42f, 82f, maxY);
+        float maxY = Mathf.Max(42f, Screen.height - BottomUiReserve - UnitInfoHeight - 4f);
+        float y = Mathf.Clamp(anchorY - UnitInfoHeight - 30f, 42f, maxY);
 
         return new Rect(x, y, UnitInfoWidth, UnitInfoHeight);
     }
@@ -205,8 +204,8 @@ public sealed class BattleManager : MonoBehaviour
 
     private Rect GetTimeControlRect()
     {
-        const float width = 585f;
-        return new Rect(Mathf.Max(10f, Screen.width - width - 10f), 10f, width, 34f);
+        float width = Mathf.Min(690f, Mathf.Max(420f, Screen.width - 12f));
+        return new Rect((Screen.width - width) * 0.5f, 6f, width, 32f);
     }
 
     private void EnsureStyles()
@@ -215,33 +214,33 @@ public sealed class BattleManager : MonoBehaviour
             return;
 
         unitStyle = new GUIStyle(GUI.skin.box);
-        unitStyle.fontSize = 11;
-        unitStyle.alignment = TextAnchor.MiddleCenter;
+        unitStyle.fontSize = 10;
+        unitStyle.alignment = TextAnchor.MiddleLeft;
+        unitStyle.padding = new RectOffset(8, 8, 5, 5);
         unitStyle.normal.textColor = Color.white;
 
         hitStyle = new GUIStyle(GUI.skin.box);
-        hitStyle.fontSize = 16;
+        hitStyle.fontSize = 14;
         hitStyle.fontStyle = FontStyle.Bold;
         hitStyle.alignment = TextAnchor.MiddleCenter;
         hitStyle.normal.textColor = new Color(1f, 0.88f, 0.30f);
 
         topStyle = new GUIStyle(GUI.skin.box);
-        topStyle.fontSize = 14;
+        topStyle.fontSize = 12;
         topStyle.fontStyle = FontStyle.Bold;
         topStyle.alignment = TextAnchor.MiddleCenter;
         topStyle.normal.textColor = Color.white;
 
-        helpStyle = new GUIStyle(GUI.skin.box);
-        helpStyle.fontSize = 12;
-        helpStyle.alignment = TextAnchor.UpperLeft;
-        helpStyle.wordWrap = true;
-        helpStyle.normal.textColor = Color.white;
-
         timeStyle = new GUIStyle(GUI.skin.box);
-        timeStyle.fontSize = 12;
+        timeStyle.fontSize = 10;
         timeStyle.fontStyle = FontStyle.Bold;
         timeStyle.alignment = TextAnchor.MiddleCenter;
         timeStyle.normal.textColor = Color.white;
+
+        miniStyle = new GUIStyle(GUI.skin.box);
+        miniStyle.fontSize = 9;
+        miniStyle.alignment = TextAnchor.MiddleLeft;
+        miniStyle.normal.textColor = Color.white;
     }
 
     private void DrawTimeControls(string clock)
@@ -249,39 +248,44 @@ public sealed class BattleManager : MonoBehaviour
         Rect panel = GetTimeControlRect();
         GUI.Box(panel, string.Empty);
 
-        float x = panel.x + 4f;
-        float y = panel.y + 4f;
+        float x = panel.x + 3f;
+        float y = panel.y + 3f;
         const float h = 26f;
+        const float gap = 3f;
 
-        if (GUI.Button(new Rect(x, y, 48f, h), Mathf.Approximately(speed, 1f) && !paused ? "[PLAY]" : "PLAY"))
-            SetSpeed(1f);
-        x += 52f;
-
-        if (GUI.Button(new Rect(x, y, 58f, h), paused ? "[PAUSE]" : "PAUSE"))
+        if (GUI.Button(new Rect(x, y, 55f, h), paused ? "[PAUSE]" : "PAUSE"))
             SetPaused(true);
-        x += 62f;
+        x += 55f + gap;
 
-        if (GUI.Button(new Rect(x, y, 48f, h), Mathf.Approximately(speed, 0.5f) && !paused ? "[x0.5]" : "x0.5"))
+        if (GUI.Button(new Rect(x, y, 46f, h), Mathf.Approximately(speed, 0.5f) && !paused ? "[0.5]" : "0.5"))
             SetSpeed(0.5f);
-        x += 52f;
+        x += 46f + gap;
 
-        if (GUI.Button(new Rect(x, y, 42f, h), Mathf.Approximately(speed, 2f) && !paused ? "[x2]" : "x2"))
+        if (GUI.Button(new Rect(x, y, 42f, h), Mathf.Approximately(speed, 1f) && !paused ? "[1]" : "1"))
+            SetSpeed(1f);
+        x += 42f + gap;
+
+        if (GUI.Button(new Rect(x, y, 42f, h), Mathf.Approximately(speed, 2f) && !paused ? "[2]" : "2"))
             SetSpeed(2f);
-        x += 46f;
+        x += 42f + gap;
 
-        if (GUI.Button(new Rect(x, y, 42f, h), Mathf.Approximately(speed, 5f) && !paused ? "[x5]" : "x5"))
+        if (GUI.Button(new Rect(x, y, 42f, h), Mathf.Approximately(speed, 5f) && !paused ? "[5]" : "5"))
             SetSpeed(5f);
-        x += 46f;
+        x += 42f + gap;
 
-        if (GUI.Button(new Rect(x, y, 48f, h), Mathf.Approximately(speed, 20f) && !paused ? "[x20]" : "x20"))
+        if (GUI.Button(new Rect(x, y, 48f, h), Mathf.Approximately(speed, 20f) && !paused ? "[20]" : "20"))
             SetSpeed(20f);
-        x += 52f;
+        x += 48f + gap;
 
         string state = paused
             ? "PAUSED"
             : (Mathf.Approximately(speed, 0.5f) ? "x0.5" : "x" + speed.ToString("0"));
 
-        GUI.Box(new Rect(x, y, panel.xMax - x - 4f, h), clock + "  [" + state + "]", timeStyle);
+        float clockWidth = Mathf.Max(120f, panel.xMax - x - 3f);
+        GUI.Box(
+            new Rect(x, y, clockWidth, h),
+            clock + " | " + state + " | AI " + OfficerAIPrototypeManager.CurrentDifficulty,
+            timeStyle);
     }
 
     private void OnGUI()
@@ -290,32 +294,14 @@ public sealed class BattleManager : MonoBehaviour
 
         int hours = Mathf.FloorToInt(battleMinutes / 60f) % 24;
         int minutes = Mathf.FloorToInt(battleMinutes) % 60;
-        string clock = $"1 Feb 1864  {hours:00}:{minutes:00}";
-
-        Rect timePanel = GetTimeControlRect();
-        float titleWidth = Mathf.Max(200f, timePanel.x - 20f);
-
-        GUI.Box(
-            new Rect(10, 10, titleWidth, 34),
-            "PROJECT 1864 - P0A v00.00.09 TACTICAL COMMAND TEST",
-            topStyle);
+        string clock = $"1 Feb 1864 {hours:00}:{minutes:00}";
 
         DrawTimeControls(clock);
 
         GUI.Box(
-            new Rect(10, 80, 300, 92),
-            "DANMARK - FORSVARERE\nHold højderyggen og gården\nBrug fire discipline, manøvre og lokal Officer AI\nFjenden skal bryde stillingen",
-            helpStyle);
-
-        GUI.Box(
-            new Rect(Screen.width - 310, 80, 300, 92),
-            "PREUSSEN - ANGRIBERE\nOfficer AI skal manøvrere og angribe\n18th søger flank/approach før engagement\nIngen skjulte combat-bonusser",
-            helpStyle);
-
-        GUI.Box(
-            new Rect(10, 180, 365, 94),
-            "STYRING\nKlik/Shift+klik = vælg | Højreklik = flyt/angrib | I = Officer AI\nF/C/H/T = line/column/hold/range | Space = pause\n0/1/2/3/4 = x0.5/x1/x2/x5/x20 | WASD/QE/hjul = kamera",
-            helpStyle);
+            new Rect(6f, 42f, Mathf.Min(465f, Screen.width - 12f), 24f),
+            "TEST: DK forsvarer | PR angriber | Ctrl/Shift multi | højre-drag linje | Z/X drej 15° | T range",
+            miniStyle);
 
         Camera mainCamera = Camera.main;
         Regiment hoveredRegiment = GetHoveredRegiment(mainCamera);
@@ -336,44 +322,46 @@ public sealed class BattleManager : MonoBehaviour
             {
                 infoRect = GetUnitInfoRect(screen);
                 string team = regiment.Team == BattleTeam.Denmark ? "DK" : "PR";
-                string routed = regiment.IsRouted ? "  ROUTED" : string.Empty;
                 string context = regiment.IsSelected ? "VALGT" : "MOUSE OVER";
+                string routed = regiment.IsRouted ? " | ROUTED" : string.Empty;
+                int losses = Mathf.Max(0, regiment.InitialStrength - regiment.CurrentStrength);
+                int ammo = PrototypeCombatStatusManager.GetAmmunitionRoundsPerMan(regiment);
 
                 OfficerAIController ai = regiment.GetComponent<OfficerAIController>();
-                string aiLine = "AI controller installing";
+                string aiLine = "AI controller installerer";
                 string taskLine = string.Empty;
 
                 if (ai != null && ai.Officer != null)
                 {
                     aiLine = string.Format(
-                        "{0} | {1} | {2} | OrdAgg {3:0}",
-                        ai.AIEnabled ? "AI ON" : "AI OFF",
+                        "AI {0} | {1} | {2} | Agg {3:0}",
+                        ai.AIEnabled ? "ON" : "OFF",
                         ai.Officer.OfficerName,
                         ai.Doctrine,
                         ai.OrderAggressiveness);
 
-                    taskLine = ai.CurrentTask + " | " + ai.ReasonCode;
+                    taskLine = "Task " + ai.CurrentTask;
                 }
 
                 string label =
-                    $"{context} - {regiment.RegimentName} ({team})  {regiment.CurrentStrength}\n" +
-                    $"{regiment.WeaponShortName} | Exp {regiment.Experience:0} | Reload {regiment.CurrentReloadSeconds:0.0}s\n" +
-                    $"Fire {regiment.GetFirePolicyLabel()} | Arc {regiment.FireArcHalfAngle * 2f:0}° | M {regiment.EffectiveRange:0} / L {regiment.MaximumRange:0}\n" +
-                    $"Morale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}\n" +
-                    aiLine + "\n" + taskLine;
+                    $"{context} - {regiment.RegimentName} ({team}) | {regiment.CurrentStrength}/{regiment.InitialStrength} | Tab {losses} | Ammo {ammo}/60\n" +
+                    $"{regiment.WeaponShortName} | Exp {regiment.Experience:0} | Reload {regiment.CurrentReloadSeconds:0.0}s | {regiment.Formation}\n" +
+                    $"Fire {regiment.GetFirePolicyLabel()} | Arc {regiment.FireArcHalfAngle * 2f:0}° | C {regiment.CloseRange:0} M {regiment.EffectiveRange:0} L {regiment.MaximumRange:0}\n" +
+                    $"Morale {regiment.Morale:0} | Coh {regiment.Cohesion:0}{routed}\n" +
+                    aiLine + " | " + taskLine;
 
                 GUI.Box(infoRect, label, unitStyle);
             }
 
-            if (regiment.HasHitFeedback)
+            if (PrototypeCombatStatusManager.TryGetVolleyFeedback(regiment, out int volleyHits))
             {
                 float hitY = showInfo
-                    ? Mathf.Max(48f, infoRect.y - 30f)
-                    : Mathf.Max(48f, Screen.height - screen.y - 64f);
+                    ? Mathf.Max(70f, infoRect.y - 28f)
+                    : Mathf.Max(70f, Screen.height - screen.y - 52f);
 
                 GUI.Box(
-                    new Rect(screen.x - 62f, hitY, 124f, 26f),
-                    $"Ramte {regiment.LastVolleyHits}",
+                    new Rect(screen.x - 55f, hitY, 110f, 24f),
+                    $"Ramte {volleyHits}",
                     hitStyle);
             }
         }
