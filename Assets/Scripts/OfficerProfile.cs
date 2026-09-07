@@ -76,6 +76,22 @@ public sealed class OfficerProfile
                 return new OfficerProfile(
                     "QA Officer D", 61f, 68f, 55f, 43f, 60f, 84f, 32f, 63f, 52f);
 
+            case "2. Regiment":
+                return new OfficerProfile(
+                    "QA Officer E", 68f, 61f, 76f, 66f, 70f, 72f, 48f, 75f, 64f);
+
+            case "6. Regiment":
+                return new OfficerProfile(
+                    "QA Officer F", 56f, 72f, 58f, 52f, 55f, 67f, 38f, 58f, 49f);
+
+            case "12th Regiment":
+                return new OfficerProfile(
+                    "QA Officer G", 66f, 58f, 73f, 69f, 64f, 61f, 70f, 71f, 60f);
+
+            case "24th Regiment":
+                return new OfficerProfile(
+                    "QA Officer H", 63f, 62f, 67f, 81f, 59f, 54f, 82f, 56f, 57f);
+
             default:
                 return new OfficerProfile(
                     "QA Officer", 60f, 60f, 60f, 60f, 60f, 60f, 50f, 60f, 50f);
