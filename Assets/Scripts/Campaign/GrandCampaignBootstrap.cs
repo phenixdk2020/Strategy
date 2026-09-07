@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 [DefaultExecutionOrder(-30000)]
 public sealed class GrandCampaignBootstrap : MonoBehaviour
@@ -70,7 +71,7 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         if (Object.FindAnyObjectByType<GrandCampaignBootstrap>() != null)
             return;
 
-        GameObject root = new GameObject("PROJECT1864_GrandCampaign_v000010b");
+        GameObject root = new GameObject("PROJECT1864_GrandCampaign_v000010c");
         DontDestroyOnLoad(root);
         root.AddComponent<GrandCampaignBootstrap>();
     }
@@ -122,7 +123,7 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         CreateArmies();
 
         Debug.Log(string.Format(
-            "CAMPAIGN-10B|Installed=True|PlayableNations={0}|Zones={1}|Armies={2}|Map=QA-Geographic-Scaffold",
+            "CAMPAIGN-10C|Installed=True|PlayableNations={0}|Zones={1}|Armies={2}|Map=QA-Geographic-Scaffold",
             playableNations.Count,
             zones.Count,
             armies.Count));
@@ -168,8 +169,6 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
     private void CreateZones()
     {
-        // QA geographic scaffold only. Positions are intentionally coarse and will
-        // be replaced by georeferenced polygons/DEM without changing the ZoneId model.
         AddZone("DK-NJ", "Nordjylland", CampaignNation.Denmark, -12, 32, 10, 10);
         AddZone("DK-CJ", "Midtjylland", CampaignNation.Denmark, -11, 21, 10, 10);
         AddZone("DK-SJ", "Sydjylland", CampaignNation.Denmark, -10, 10, 10, 10);
