@@ -1,37 +1,42 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10d
+Prototype version: v00.00.10e
 Build status: CAMPAIGN TEST
-Build name: GRAND CAMPAIGN ZONE TEST 10D
-Visible build marker: PROJECT 1864 | v00.00.10d CAMPAIGN TEST is shown permanently in the upper-left corner during Play mode
+Build name: WORLD GEO BASE / DENMARK DETAIL 10E
+Visible build marker: PROJECT 1864 | v00.00.10e CAMPAIGN TEST is shown permanently in the upper-left corner during Play mode
 Track rule: campaign work proceeds independently on branch campaign while tactical fixes continue on branch test
-Inherited tactical baseline: campaign branch was forked from v00.00.09b TEST and keeps the tactical battle code compiled as the future battle layer
+Inherited tactical baseline: campaign branch keeps the tactical battle code compiled as the future battle layer
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Campaign startup: campaign branch now starts GrandCampaignBootstrap instead of automatically creating the tactical battlefield
-Grand Campaign rule: player can select a playable state; architecture must not assume Denmark is always the player
-Playable state scaffold: Denmark, Sweden-Norway, Prussia, Austria, France, United Kingdom, Russia, Netherlands, Kingdom of Hanover, Mecklenburg and an interim aggregate for remaining German Confederation states until full historical state research is completed
-Historical state rule: no unified Germany exists in the 1864 campaign model; German territory is represented by Prussia, Austria and contemporary German states/confederation members
-Zone model: all countries are divided into named strategic zones with stable ZoneId, owner, neighbours and hooks for terrain, roads, rail, rivers, ports, depots, fortifications, economy, recruitment and tactical battlefield extraction
-Scale target: zone architecture is designed to grow to roughly 100-200+ zones; current build uses a smaller QA geographic scaffold only to prove interaction/state/routing
-Geographic map rule: final Grand Campaign terrain must be based on real geography plus DEM/elevation; historical 1864 roads, rail, towns, woods, crossings and infrastructure are separate historical data layers
-Nation selection: campaign starts with a choose-country panel
-Zone interaction: left-click selects zones/formations; selected player formation can receive a right-click march order to an adjacent zone
-Strategic movement: campaign army tokens move between adjacent zones with travel progress and arrival logging
+Grand Campaign canonical start: 1 January 1851 08:00
+Grand Campaign pacing rule: 1851 gives the player years for mobilization, industrial/military modernization, infrastructure and diplomacy before the 1864 milestone
+Campaign startup v00.00.10e: Denmark is the only active/playable vertical-slice nation while the common data model retains the already-decided future nations
+World geography architecture: authoritative geographic identity is WGS84 longitude/latitude; Unity X/Z is only a local render projection and may be retiled/recentered later without rewriting campaign state
+World expansion rule: the geography architecture is intended to expand from Denmark to Europe and theoretically the whole world by loading additional geographic tiles/data layers against the same WGS84 model
+Real map source v00.00.10e: Denmark coastline/island geometry is derived from Natural Earth 1:50m Admin-0 DNK geometry; Natural Earth is the physical geographic base layer, not the historical political layer
+Real map content v00.00.10e: Jutland, Zealand, Funen, Lolland, Langeland, Falster/Moen group, Amager, Aeroe, Als, Samsoe, Laesoe and Bornholm are represented as real-geography land parts from the Natural Earth dataset
+Historical boundary warning: Natural Earth country geometry is modern physical/admin reference geometry and must NOT be interpreted as exact 1851 political borders; Schleswig, Holstein, Lauenburg and other 1851 political relationships require a separate source-backed historical layer
+Terrain status: v00.00.10e land is flat geographic mesh with coastline; real DEM/elevation is the next terrain layer and is not yet simulated
+Zone model: Denmark currently has 12 operational gameplay zone centres over the real map: Vendsyssel, Nordjylland, Midtjylland, Vestjylland, Oestjylland, Sydjylland, Fyn, Nordsjaelland, Koebenhavn, Sydsjaelland, Lolland-Falster and Bornholm
+Zone historical warning: current zone centres/adjacency are gameplay scaffolding, not claimed historical administrative borders; later zone polygons will be source-backed and fitted to real geography
+Zone interaction: left-click selects a zone or player formation; right-click on an adjacent zone gives a march order
+Sea route rule: Bornholm is deliberately disconnected from land-march routing; naval/sea transport will be a separate route capability
+Strategic movement v00.00.10e: movement uses projected geographic distance as first travel-time basis; roads, terrain, rail, weather, fatigue, supply and staff quality are later modifiers
+Campaign cities v00.00.10e: Aalborg, Viborg, Aarhus, Esbjerg, Kolding, Fredericia, Odense, Koebenhavn, Naestved and Roenne are placed by geographic coordinates as first settlement markers
+Settlement historical rule: city marker locations are geographic anchors; population, fortification, industry, rail, road, port and 1851 economic/military values require historical data before simulation claims are made
+Army state v00.00.10e: one Danish QA formation exists only to prove stable IDs, selection and geographic movement; its strength/location are explicitly not final researched 1851 OOB
 Campaign clock: Space pauses; 1/2/3/4 set x1/x5/x20/x100; top bar also exposes pause/speed controls
-Contact hook: enemy formations arriving in the same zone pause the campaign and emit CAMPAIGN-CONTACT as the first battle-prompt hook
-Formation standards v00.00.10d: current campaign army tokens receive a visible national/formation standard as a close-zoom identity aid
+Semantic zoom foundation v00.00.10e: camera now reports Close / Operational / Strategic zoom bands and changes army-token scale; close zoom exposes city labels, operational zoom exposes zone labels, strategic mode suppresses detailed labels
+Semantic zoom target: Campaign and Battle mode share the same semantic-zoom principle; future long zoom uses NATO/APP-6-like formation symbols without altering simulation IDs/state
+Formation standards: campaign formation tokens keep the v00.00.10d QA standard system as close-zoom identity aid
 Regimental standards shared rule: individual regimental colours belong to stable regiment identity and must also be visible in Battle mode; campaign army/corps tokens must not display dozens of standards unless the formation is unfolded/inspected
 Standards historical rule: current standard graphics are QA placeholders only; final patterns, insignia, issue dates and number of colours per formation require source-backed historical data
-Standards future state: captured/lost standards become battle result and campaign state later; precise enemy standard identity remains subject to fog-of-war/intelligence
-Semantic zoom rule: semantic zoom/NATO-APP-6-like symbol abstraction is a shared requirement for BOTH Battle mode and Campaign mode; simulation IDs/state remain unchanged across visual zoom levels
-Battle semantic zoom: close = full 3D soldiers/guns/horses/HQ/casualties/standards; medium = simplified formations/banners; long = NATO/APP-6-like unit symbols; very long = optional higher-echelon aggregation without changing simulation
-Campaign semantic zoom: close = terrain/zones/roads/towns/formations/standards; medium = zone labels + formation symbols; long = division/corps/army symbols; very long = national/army overview aggregation
 Campaign target loop: Grand Campaign -> movement/contact -> tactical battle -> battle result -> Grand Campaign
 Campaign state continuity target: regiment/formation IDs, strength, ammunition, morale/cohesion, officer profile, attacker/defender role, zone/location and campaign date/time must survive tactical handoff and return
 Campaign architecture rule: new campaign code is isolated under Assets/Scripts/Campaign where practical to reduce merge conflicts with tactical development
 Tactical synchronization rule: only accepted tactical fixes are later merged/cherry-picked into campaign; campaign development must not wait on minor tactical polish
-Unity 6.6 compatibility fix v00.00.10c: ambiguous System.Object/UnityEngine.Object references in GrandCampaignBootstrap and PrototypeBattlefieldNavigationV4 are resolved explicitly to UnityEngine.Object
-Unity 6.6 compatibility fix v00.00.10c: PrototypeBattlefieldNavigationV4 uses the current parameterless FindObjectsByType<T>() overload instead of the deprecated FindObjectsSortMode overload
-Backlogs: docs/backlog/B-270-CAMPAIGN-MAP-V010.md, docs/backlog/B-280-GRAND-CAMPAIGN-COUNTRIES-ZONES.md, docs/backlog/B-290-GRAND-CAMPAIGN-SETTLEMENTS-CONSTRUCTION-TRADE.md and docs/backlog/B-310-REGIMENTAL-STANDARDS.md
-QA state: v00.00.10d CAMPAIGN TEST is not runtime validated until Unity 6000.6.0f1 compile + Play acceptance is reported
+New code v00.00.10e: CampaignGeoProjection.cs provides the global-ready WGS84 -> Unity render projection
+New code v00.00.10e: CampaignDenmarkGeography.cs builds the Denmark Natural Earth coastline/land mesh and coastline renderers at runtime
+New code v00.00.10e: GrandCampaignBootstrap.cs now starts 1851, focuses Denmark, places real geography/cities/zones and retains movement/time/state hooks
+Backlogs: docs/backlog/B-270-CAMPAIGN-MAP-V010.md, docs/backlog/B-280-GRAND-CAMPAIGN-COUNTRIES-ZONES.md, docs/backlog/B-290-GRAND-CAMPAIGN-SETTLEMENTS-CONSTRUCTION-TRADE.md, docs/backlog/B-295-WORLD-GEO-DENMARK-FOUNDATION.md and docs/backlog/B-310-REGIMENTAL-STANDARDS.md
+QA state: v00.00.10e CAMPAIGN TEST is not runtime validated until Unity 6000.6.0f1 compile + Play acceptance is reported
