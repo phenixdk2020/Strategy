@@ -134,8 +134,8 @@ public sealed class BattleManager : MonoBehaviour
 
         x = Mathf.Clamp(x, 24f, Mathf.Max(24f, Screen.width - UnitInfoWidth - 24f));
 
-        float maxY = Mathf.Max(84f, Screen.height - BottomUiReserve - UnitInfoHeight);
-        float y = Mathf.Clamp(anchorY - UnitInfoHeight - 28f, 84f, maxY);
+        float maxY = Mathf.Max(104f, Screen.height - BottomUiReserve - UnitInfoHeight);
+        float y = Mathf.Clamp(anchorY - UnitInfoHeight - 28f, 104f, maxY);
 
         return new Rect(x, y, UnitInfoWidth, UnitInfoHeight);
     }
@@ -209,7 +209,7 @@ public sealed class BattleManager : MonoBehaviour
     private Rect GetTimeControlRect()
     {
         float width = Mathf.Min(650f, Mathf.Max(390f, Screen.width - 120f));
-        return new Rect((Screen.width - width) * 0.5f, 20f, width, 30f);
+        return new Rect((Screen.width - width) * 0.5f, 40f, width, 30f);
     }
 
     private void EnsureStyles()
@@ -307,7 +307,7 @@ public sealed class BattleManager : MonoBehaviour
 
         float helperWidth = Mathf.Min(650f, Mathf.Max(320f, Screen.width - 160f));
         GUI.Box(
-            new Rect((Screen.width - helperWidth) * 0.5f, 54f, helperWidth, 22f),
+            new Rect((Screen.width - helperWidth) * 0.5f, 74f, helperWidth, 22f),
             "Ctrl/Shift multi | RMB: mål + træk = facing | Alt+RMB = waypoint | F/C formation | Z/X drej | F9 kamp-setup",
             miniStyle);
 
@@ -362,8 +362,8 @@ public sealed class BattleManager : MonoBehaviour
             if (PrototypeCombatStatusManager.TryGetVolleyFeedback(regiment, out int volleyHits))
             {
                 float hitY = showInfo
-                    ? Mathf.Max(82f, infoRect.y - 27f)
-                    : Mathf.Max(82f, Screen.height - screen.y - 50f);
+                    ? Mathf.Max(102f, infoRect.y - 27f)
+                    : Mathf.Max(102f, Screen.height - screen.y - 50f);
 
                 GUI.Box(
                     new Rect(screen.x - 55f, hitY, 110f, 24f),
