@@ -5,6 +5,13 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoBootstrap()
     {
+        // campaign branch owns startup through GrandCampaignBootstrap. Keep the
+        // tactical bootstrap compiled as the future battle layer, but do not create
+        // the tactical battlefield while the Grand Campaign shell is active.
+        if (GrandCampaignBootstrap.CampaignModeEnabled ||
+            Object.FindAnyObjectByType<GrandCampaignBootstrap>() != null)
+            return;
+
         if (Object.FindAnyObjectByType<BattleManager>() != null)
             return;
 
@@ -38,9 +45,6 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         systems.AddComponent<BattleManager>();
         systems.AddComponent<PlayerCommander>();
 
-        // v00.00.09 test scenario: Denmark defends west; Prussia attacks from east.
-        // The battlefield and starting separation are doubled so there is real time
-        // to pause, inspect, set fire discipline and manoeuvre before contact.
         CreateRegiment(
             "1. Regiment",
             BattleTeam.Denmark,
