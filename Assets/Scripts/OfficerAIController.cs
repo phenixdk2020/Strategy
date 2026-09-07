@@ -9,11 +9,20 @@ public enum OfficerAIMission
     AttackNearest
 }
 
+public enum OfficerAIDoctrine
+{
+    Defensive,
+    Balanced,
+    Offensive
+}
+
 public sealed class OfficerAIController : MonoBehaviour
 {
     public bool AIEnabled { get; private set; }
     public OfficerProfile Officer { get; private set; }
     public OfficerAIMission Mission { get; private set; } = OfficerAIMission.Hold;
+    public OfficerAIDoctrine Doctrine { get; private set; } = OfficerAIDoctrine.Defensive;
+    public float OrderAggressiveness { get; private set; } = 50f;
     public string CurrentTask { get; private set; } = "MANUAL";
     public string ReasonCode { get; private set; } = "Direct player control";
 
@@ -39,6 +48,19 @@ public sealed class OfficerAIController : MonoBehaviour
         defendAnchor = regiment.transform.position;
         AIEnabled = enabledAtStart;
 
+        if (regiment.Team == BattleTeam.Prussia)
+        {
+            Doctrine = OfficerAIDoctrine.Offensive;
+            OrderAggressiveness = 65f;
+            regiment.SetFirePolicy(RegimentFirePolicy.MediumRange);
+        }
+        else
+        {
+            Doctrine = OfficerAIDoctrine.Defensive;
+            OrderAggressiveness = 35f;
+            regiment.SetFirePolicy(RegimentFirePolicy.MediumRange);
+        }
+
         if (enabledAtStart)
         {
             if (initialWaypoint.HasValue)
@@ -46,15 +68,20 @@ public sealed class OfficerAIController : MonoBehaviour
                 Mission = OfficerAIMission.MoveToPoint;
                 missionPoint = initialWaypoint.Value;
                 returnToAttackNearestAfterMove = true;
-                SetStatus("ADVANCE", "Initial mission waypoint");
+                SetStatus("MANOEUVRE", "Attacker flank/approach waypoint");
             }
             else
             {
                 Mission = regiment.Team == BattleTeam.Prussia
                     ? OfficerAIMission.AttackNearest
                     : OfficerAIMission.DefendArea;
-                SetStatus("ASSESS", "Officer taking local control");
+                SetStatus(
+                    regiment.Team == BattleTeam.Prussia ? "ASSESS ATTACK" : "DEFEND",
+                    regiment.Team == BattleTeam.Prussia
+                        ? "Attacker assessing route and engagement distance"
+                        : "Defender taking local control");
             }
+
             thinkTimer = 0.05f;
         }
         else
@@ -94,15 +121,82 @@ public sealed class OfficerAIController : MonoBehaviour
         if (AIEnabled)
         {
             defendAnchor = regiment.transform.position;
-            Mission = OfficerAIMission.DefendArea;
-            regiment.OrderHold();
-            SetStatus("ASSESS", "AI UNIT enabled - defend current area");
+
+            if (Doctrine == OfficerAIDoctrine.Offensive)
+            {
+                Mission = OfficerAIMission.AttackNearest;
+                SetStatus("ASSESS ATTACK", "AI UNIT enabled with offensive doctrine");
+            }
+            else
+            {
+                Mission = OfficerAIMission.DefendArea;
+                regiment.OrderHold();
+                SetStatus("DEFEND", "AI UNIT enabled - defend current area");
+            }
         }
         else
         {
             Mission = OfficerAIMission.Hold;
             SetStatus("MANUAL", "AI UNIT disabled");
         }
+    }
+
+    public void SetDoctrine(OfficerAIDoctrine value)
+    {
+        Doctrine = value;
+
+        if (!AIEnabled || regiment == null || regiment.IsRouted)
+            return;
+
+        thinkTimer = 0f;
+
+        if (Mission == OfficerAIMission.AttackTarget || Mission == OfficerAIMission.MoveToPoint)
+        {
+            SetStatus(CurrentTask, "Doctrine changed to " + Doctrine + " - explicit mission retained");
+            return;
+        }
+
+        defendAnchor = regiment.transform.position;
+
+        if (Doctrine == OfficerAIDoctrine.Offensive)
+        {
+            Mission = OfficerAIMission.AttackNearest;
+            SetStatus("ASSESS ATTACK", "Offensive doctrine ordered");
+        }
+        else
+        {
+            Mission = OfficerAIMission.DefendArea;
+            SetStatus("DEFEND", Doctrine + " doctrine ordered around current position");
+        }
+    }
+
+    public void SetOrderAggressiveness(float value)
+    {
+        OrderAggressiveness = Mathf.Clamp(value, 0f, 100f);
+        thinkTimer = 0f;
+
+        if (AIEnabled)
+            SetStatus(CurrentTask, "Commander aggression intent updated");
+    }
+
+    public float GetEffectiveAggressiveness()
+    {
+        if (Officer == null)
+            return OrderAggressiveness;
+
+        float blended = Officer.Aggressiveness * 0.70f + OrderAggressiveness * 0.30f;
+
+        switch (Doctrine)
+        {
+            case OfficerAIDoctrine.Defensive:
+                blended -= 12f;
+                break;
+            case OfficerAIDoctrine.Offensive:
+                blended += 12f;
+                break;
+        }
+
+        return Mathf.Clamp(blended, 0f, 100f);
     }
 
     public void SetMoveMission(Vector3 worldPoint)
@@ -171,23 +265,30 @@ public sealed class OfficerAIController : MonoBehaviour
             if (pointDistance <= 3f)
             {
                 defendAnchor = regiment.transform.position;
+
                 if (returnToAttackNearestAfterMove)
                 {
                     Mission = OfficerAIMission.AttackNearest;
                     returnToAttackNearestAfterMove = false;
-                    SetStatus("ASSESS", "Waypoint reached - seeking enemy");
+                    SetStatus("ASSESS ATTACK", "Manoeuvre point reached - reassessing attack");
                 }
                 else
                 {
-                    Mission = OfficerAIMission.DefendArea;
-                    SetStatus("DEFEND", "Mission point reached");
+                    Mission = Doctrine == OfficerAIDoctrine.Offensive
+                        ? OfficerAIMission.AttackNearest
+                        : OfficerAIMission.DefendArea;
+                    SetStatus(
+                        Doctrine == OfficerAIDoctrine.Offensive ? "ASSESS ATTACK" : "DEFEND",
+                        "Mission point reached");
                 }
+
                 return;
             }
 
             bool immediateThreat = nearestEnemy != null &&
                                    Vector3.Distance(regiment.transform.position, nearestEnemy.transform.position) <= regiment.MaximumRange;
-            float independencePressure = Officer.Aggressiveness - Officer.Discipline;
+
+            float independencePressure = GetEffectiveAggressiveness() - Officer.Discipline;
 
             if (!immediateThreat || independencePressure < 12f)
             {
@@ -195,9 +296,11 @@ public sealed class OfficerAIController : MonoBehaviour
                     regiment.SetFormation(RegimentFormation.Column);
 
                 regiment.OrderMove(missionPoint);
-                SetStatus("ADVANCE", immediateThreat
-                    ? "Discipline keeps unit on assigned movement"
-                    : "Moving to assigned mission point");
+                SetStatus(
+                    "MANOEUVRE",
+                    immediateThreat
+                        ? "Discipline keeps unit on assigned movement"
+                        : "Moving to assigned mission point");
                 return;
             }
 
@@ -216,12 +319,27 @@ public sealed class OfficerAIController : MonoBehaviour
 
             float enemyDistance = Vector3.Distance(regiment.transform.position, nearestEnemy.transform.position);
             float distanceFromAnchor = Vector3.Distance(regiment.transform.position, defendAnchor);
-            float permittedAdvance = Mathf.Lerp(2f, 14f, Officer.Aggressiveness / 100f);
+            float aggression01 = GetEffectiveAggressiveness() / 100f;
 
-            if (enemyDistance > regiment.MaximumRange && distanceFromAnchor >= permittedAdvance)
+            float doctrineAdvance;
+            switch (Doctrine)
             {
+                case OfficerAIDoctrine.Offensive:
+                    doctrineAdvance = Mathf.Lerp(10f, 28f, aggression01);
+                    break;
+                case OfficerAIDoctrine.Balanced:
+                    doctrineAdvance = Mathf.Lerp(5f, 18f, aggression01);
+                    break;
+                default:
+                    doctrineAdvance = Mathf.Lerp(2f, 11f, aggression01);
+                    break;
+            }
+
+            if (enemyDistance > regiment.MaximumRange && distanceFromAnchor >= doctrineAdvance)
+            {
+                regiment.SetFormation(RegimentFormation.Line);
                 regiment.OrderHold();
-                SetStatus("DEFEND", "Holding assigned local area");
+                SetStatus("DEFEND", "Holding assigned defensive area");
                 return;
             }
 
@@ -245,8 +363,12 @@ public sealed class OfficerAIController : MonoBehaviour
             }
         }
 
-        EngageEnemy(target, stress,
-            Mission == OfficerAIMission.AttackTarget ? "Executing designated attack" : "Seeking nearest enemy");
+        EngageEnemy(
+            target,
+            stress,
+            Mission == OfficerAIMission.AttackTarget
+                ? "Executing designated attack"
+                : "Attacker assessing nearest enemy");
     }
 
     private void EngageEnemy(Regiment target, float stress, string baseReason)
@@ -259,8 +381,9 @@ public sealed class OfficerAIController : MonoBehaviour
             Officer.Inspiration * 0.25f +
             Officer.Composure * 0.40f) / 100f;
         float stabiliseThreshold = Mathf.Lerp(46f, 24f, stability);
+        float effectiveAggressiveness = GetEffectiveAggressiveness();
 
-        if (regiment.Morale < stabiliseThreshold && Officer.Aggressiveness < 72f)
+        if (regiment.Morale < stabiliseThreshold && effectiveAggressiveness < 72f)
         {
             regiment.SetFormation(RegimentFormation.Line);
             regiment.OrderHold();
@@ -269,34 +392,62 @@ public sealed class OfficerAIController : MonoBehaviour
         }
 
         float distance = Vector3.Distance(regiment.transform.position, target.transform.position);
-        float aggression01 = Officer.Aggressiveness / 100f;
+        float aggression01 = effectiveAggressiveness / 100f;
         float tactical01 = Officer.TacticalSkill / 100f;
-        float preferredRangeFactor = Mathf.Lerp(0.96f, 0.72f, aggression01);
+
+        float preferredRangeFactor = Mathf.Lerp(0.98f, 0.68f, aggression01);
         preferredRangeFactor *= Mathf.Lerp(0.96f, 1.04f, tactical01);
 
         float noise = GetDecisionNoise(stress);
         preferredRangeFactor *= 1f + Random.Range(-noise, noise);
+
         float preferredRange = Mathf.Clamp(
             regiment.EffectiveRange * preferredRangeFactor,
-            regiment.EffectiveRange * 0.62f,
+            regiment.EffectiveRange * 0.58f,
             regiment.EffectiveRange * 1.02f);
 
-        if (distance > preferredRange)
+        float fireTriggerRange = regiment.GetFireTriggerRange();
+        if (regiment.FirePolicy == RegimentFirePolicy.HoldFire)
+        {
+            preferredRange = Mathf.Min(preferredRange, regiment.CloseRange * 0.90f);
+        }
+        else
+        {
+            preferredRange = Mathf.Min(preferredRange, fireTriggerRange * 0.96f);
+        }
+
+        if (distance > preferredRange + 1.0f)
         {
             if (Officer.TacticalSkill >= 58f && distance > regiment.EffectiveRange * 1.35f)
                 regiment.SetFormation(RegimentFormation.Column);
             else
                 regiment.SetFormation(RegimentFormation.Line);
 
-            regiment.OrderAttack(target);
-            SetStatus("ADVANCE/ATTACK", baseReason + " - closing to preferred range");
+            Vector3 toward = target.transform.position - regiment.transform.position;
+            toward.y = 0f;
+
+            if (toward.sqrMagnitude > 0.01f)
+            {
+                float closeDistance = Mathf.Max(0f, distance - preferredRange);
+                Vector3 closePoint = regiment.transform.position + toward.normalized * closeDistance;
+                regiment.OrderMove(closePoint);
+            }
+
+            SetStatus(
+                "MANOEUVRE/ATTACK",
+                baseReason + " - closing to officer/order preferred range");
         }
         else
         {
             regiment.SetFormation(RegimentFormation.Line);
             regiment.OrderHold();
             regiment.OrderAttack(target);
-            SetStatus("ENGAGE", baseReason + " - preferred engagement range reached");
+
+            string fireConstraint = regiment.FirePolicy == RegimentFirePolicy.HoldFire
+                ? " - HOLD FIRE"
+                : " - fire policy " + regiment.GetFirePolicyLabel();
+
+            SetStatus("ENGAGE", baseReason + " - preferred engagement range reached" + fireConstraint);
         }
     }
 
@@ -332,6 +483,7 @@ public sealed class OfficerAIController : MonoBehaviour
         float experienceFactor = Mathf.Lerp(1.0f, 0.55f, Officer.Experience / 100f);
         float composureFactor = Mathf.Lerp(1.0f, 0.58f, Officer.Composure / 100f);
         float stressFactor = 1f + stress * composureFactor;
+
         return Mathf.Clamp(difficultyNoise * experienceFactor * stressFactor, 0.01f, 0.30f);
     }
 
@@ -339,6 +491,7 @@ public sealed class OfficerAIController : MonoBehaviour
     {
         float moraleStress = 1f - regiment.Morale / 100f;
         float cohesionStress = 1f - regiment.Cohesion / 100f;
+
         return Mathf.Clamp01(moraleStress * 0.58f + cohesionStress * 0.42f);
     }
 
@@ -350,6 +503,7 @@ public sealed class OfficerAIController : MonoBehaviour
 
         Regiment nearest = null;
         float best = maxDistance;
+
         foreach (Regiment candidate in manager.Regiments)
         {
             if (candidate == null || candidate == regiment || candidate.Team == regiment.Team || candidate.IsRouted)
@@ -362,6 +516,7 @@ public sealed class OfficerAIController : MonoBehaviour
                 nearest = candidate;
             }
         }
+
         return nearest;
     }
 
@@ -376,13 +531,18 @@ public sealed class OfficerAIController : MonoBehaviour
 
         lastTelemetryKey = telemetryKey;
         string difficulty = OfficerAIPrototypeManager.CurrentDifficulty.ToString();
+
         Debug.Log(string.Format(
-            "AI-DIAG|Unit={0}|Team={1}|Officer={2}|AI={3}|Difficulty={4}|Mission={5}|Task={6}|Reason={7}",
+            "AI-DIAG|Unit={0}|Team={1}|Officer={2}|AI={3}|Difficulty={4}|Doctrine={5}|OrderAgg={6:0}|EffectiveAgg={7:0}|Fire={8}|Mission={9}|Task={10}|Reason={11}",
             regiment.RegimentName,
             regiment.Team,
             Officer != null ? Officer.OfficerName : "None",
             AIEnabled,
             difficulty,
+            Doctrine,
+            OrderAggressiveness,
+            GetEffectiveAggressiveness(),
+            regiment.GetFirePolicyLabel(),
             Mission,
             task,
             reason));
