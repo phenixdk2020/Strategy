@@ -7,14 +7,14 @@ public sealed class BattleManager : MonoBehaviour
     public static BattleManager Instance { get; private set; }
     public IReadOnlyList<Regiment> Regiments => regiments;
     public bool IsPaused => paused;
-    public int SimulationSpeed => paused ? 0 : speed;
+    public float SimulationSpeed => paused ? 0f : speed;
     public float BattleMinutes => battleMinutes;
 
     private const float GameMinutesPerSimulationSecond = 2.2f;
 
     private readonly List<Regiment> regiments = new List<Regiment>();
     private float battleMinutes = 10f * 60f + 20f;
-    private int speed = 1;
+    private float speed = 1f;
     private bool paused;
     private string resultMessage = string.Empty;
     private GUIStyle unitStyle;
@@ -58,14 +58,16 @@ public sealed class BattleManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space))
             SetPaused(!paused);
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+            SetSpeed(0.5f);
         if (Input.GetKeyDown(KeyCode.Alpha1))
-            SetSpeed(1);
+            SetSpeed(1f);
         if (Input.GetKeyDown(KeyCode.Alpha2))
-            SetSpeed(2);
+            SetSpeed(2f);
         if (Input.GetKeyDown(KeyCode.Alpha3))
-            SetSpeed(5);
+            SetSpeed(5f);
         if (Input.GetKeyDown(KeyCode.Alpha4))
-            SetSpeed(20);
+            SetSpeed(20f);
 
         // Time.deltaTime is scaled by Time.timeScale. Therefore the battle clock
         // advances in lockstep with the selected simulation speed and stops
@@ -128,7 +130,7 @@ public sealed class BattleManager : MonoBehaviour
         Time.timeScale = paused ? 0f : speed;
     }
 
-    private void SetSpeed(int newSpeed)
+    private void SetSpeed(float newSpeed)
     {
         // A battle result is terminal. Mouse-based time controls must not be able to
         // resume the simulation even for a single frame after victory/defeat.
@@ -138,10 +140,14 @@ public sealed class BattleManager : MonoBehaviour
             return;
         }
 
-        if (newSpeed != 1 && newSpeed != 2 && newSpeed != 5 && newSpeed != 20)
-            newSpeed = 1;
+        bool valid =
+            Mathf.Approximately(newSpeed, 0.5f) ||
+            Mathf.Approximately(newSpeed, 1f) ||
+            Mathf.Approximately(newSpeed, 2f) ||
+            Mathf.Approximately(newSpeed, 5f) ||
+            Mathf.Approximately(newSpeed, 20f);
 
-        speed = newSpeed;
+        speed = valid ? newSpeed : 1f;
         paused = false;
         Time.timeScale = speed;
     }
@@ -156,7 +162,7 @@ public sealed class BattleManager : MonoBehaviour
 
     private Rect GetTimeControlRect()
     {
-        const float width = 515f;
+        const float width = 585f;
         return new Rect(Mathf.Max(10f, Screen.width - width - 10f), 10f, width, 34f);
     }
 
@@ -204,27 +210,31 @@ public sealed class BattleManager : MonoBehaviour
         float y = panel.y + 4f;
         const float h = 26f;
 
-        if (GUI.Button(new Rect(x, y, 48f, h), speed == 1 && !paused ? "[PLAY]" : "PLAY"))
-            SetSpeed(1);
+        if (GUI.Button(new Rect(x, y, 48f, h), Mathf.Approximately(speed, 1f) && !paused ? "[PLAY]" : "PLAY"))
+            SetSpeed(1f);
         x += 52f;
 
         if (GUI.Button(new Rect(x, y, 58f, h), paused ? "[PAUSE]" : "PAUSE"))
             SetPaused(true);
         x += 62f;
 
-        if (GUI.Button(new Rect(x, y, 42f, h), speed == 2 && !paused ? "[x2]" : "x2"))
-            SetSpeed(2);
-        x += 46f;
-
-        if (GUI.Button(new Rect(x, y, 42f, h), speed == 5 && !paused ? "[x5]" : "x5"))
-            SetSpeed(5);
-        x += 46f;
-
-        if (GUI.Button(new Rect(x, y, 48f, h), speed == 20 && !paused ? "[x20]" : "x20"))
-            SetSpeed(20);
+        if (GUI.Button(new Rect(x, y, 48f, h), Mathf.Approximately(speed, 0.5f) && !paused ? "[x0.5]" : "x0.5"))
+            SetSpeed(0.5f);
         x += 52f;
 
-        string state = paused ? "PAUSED" : "x" + speed;
+        if (GUI.Button(new Rect(x, y, 42f, h), Mathf.Approximately(speed, 2f) && !paused ? "[x2]" : "x2"))
+            SetSpeed(2f);
+        x += 46f;
+
+        if (GUI.Button(new Rect(x, y, 42f, h), Mathf.Approximately(speed, 5f) && !paused ? "[x5]" : "x5"))
+            SetSpeed(5f);
+        x += 46f;
+
+        if (GUI.Button(new Rect(x, y, 48f, h), Mathf.Approximately(speed, 20f) && !paused ? "[x20]" : "x20"))
+            SetSpeed(20f);
+        x += 52f;
+
+        string state = paused ? "PAUSED" : (Mathf.Approximately(speed, 0.5f) ? "x0.5" : "x" + speed.ToString("0"));
         GUI.Box(new Rect(x, y, panel.xMax - x - 4f, h), clock + "  [" + state + "]", timeStyle);
     }
 
@@ -288,8 +298,8 @@ public sealed class BattleManager : MonoBehaviour
                 GUI.Box(new Rect(screen.x - 62f, y - 30f, 124f, 26f), $"Ramte {regiment.LastVolleyHits}", hitStyle);
         }
 
-        GUI.Box(new Rect(10, Screen.height - 116, 430, 106),
-            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\nF = line | C = column | H = hold | T = range | A = AI UNIT ON/OFF\nWASD = kamera | Q/E = roter | hjul = zoom | Space = pause/resume\n1 = Play | 2 = x2 | 3 = x5 | 4 = x20 | R = restart", helpStyle);
+        GUI.Box(new Rect(10, Screen.height - 116, 455, 106),
+            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\nF = line | C = column | H = hold | T = range | A = AI UNIT ON/OFF\nWASD = kamera | Q/E = roter | hjul = zoom | Space = pause/resume\n0 = x0.5 | 1 = Play | 2 = x2 | 3 = x5 | 4 = x20 | R = restart", helpStyle);
 
         if (!string.IsNullOrEmpty(resultMessage))
         {
