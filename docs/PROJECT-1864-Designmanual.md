@@ -16,6 +16,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 3A: 13–19 — Taktiske 3D-slag, kamp, våbenarter, casualties, retreat og flåde](parts/part-03a-13-19.md)
 - [Del 3B: 20 — Befolkning, økonomi, byudvikling, industri, handel, forskning, rekruttering, træning, sanitet/fanger, regimentshistorik og perks](parts/part-03b-20-20.md)
 - [Del 3C: 20.16 — Strategisk landudvikling: veje, jernbane, gårde, hesteopdræt, våbenindustri og regionale projekter](parts/part-03c-20-16-strategic-development.md)
+- [Del 3D: Battle supply, skumring/nat, overnight resupply, kavaleri og dragoner](parts/part-03d-night-supply-cavalry.md)
 - [Del 4: 21–27 — Strategisk/taktisk AI, terræn, performance, UI, save/modding og historisk datamodel](parts/part-04-21-27.md)
 - [Del 5A: Feature-arkitektur F00–F15](parts/part-05a-F00-F15.md)
 - [Del 5B: Feature-arkitektur F16–F31](parts/part-05b-F16-F31.md)
@@ -32,6 +33,9 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Backlog B-190–B-199 — officerstats, Composure/Nerve og AI decision model](backlog/B-190-OFFICER-STATS-MODEL.md)
 - [Backlog B-200–B-209 — Close/Medium/Long range bands, HQ hierarchy, semantic zoom og couriers](backlog/B-200-COMMAND-VISUALS-RANGE-HQ-COURIERS.md)
 - [Backlog B-210–B-219 — fire eligibility, skudkegle og højere formation templates](backlog/B-210-FIRE-ELIGIBILITY-AND-HIGHER-FORMATIONS.md)
+- [Backlog B-220–B-229 — Play/Pause/x2/x5/x20, simulationstid og klokke](backlog/B-220-SIMULATION-TIME-CONTROLS.md)
+- [Backlog B-230–B-239 — battle supply, skumring/nat og overnight resupply](backlog/B-230-BATTLE-SUPPLY-NIGHT-OPERATIONS.md)
+- [Backlog B-240–B-249 — udvidet kavaleri- og dragonmodel](backlog/B-240-CAVALRY-DRAGOONS-EXPANDED.md)
 
 ## v00.00.09 Officer AI — implementeringsstatus
 
@@ -42,6 +46,8 @@ Composure/Nerve er et aktivt AI-input: under stigende battle stress påvirker de
 Easy/Normal/Hard påvirker i første prototype kun den computerstyrede preussiske sides ekstra reaction/noise layer. Difficulty må ikke ændre weapon accuracy, reload, range, movement, morale, cohesion, casualties eller skjult viden. Player-delegerede danske officerer bruger deres faktiske QA-profil på referenceindstillinger uanset enemy difficulty.
 
 Alle officerprofiler i v00.00.09 er QA-data og er ikke historiske ratings. Historiske officerdata skal senere komme fra kildebelagt OOB/officer-database.
+
+v00.00.09 har desuden en fælles simulation time-control bar med **PLAY / PAUSE / x2 / x5 / x20** og synligt dato/klokkeslæt. Pause stopper AI, movement, reload/fire progression og battle clock samlet, mens kamera/UI fortsat er brugbart.
 
 ## Command-visualisation efter v00.00.09
 
@@ -55,9 +61,29 @@ Combat resolution skal senere beregne **hvor stor en del af formationens frontag
 
 Højere HQ'er skal samtidig kunne opstille deres underenheder efter data-drevne formation templates, fx **4 abreast**, **3 + 1 reserve**, **2 + 2**, echelon, march column og kombinationer med artilleri i centre/wing/rear-high-ground slots. Reserve er en faktisk rolle/state, og Officer AI skal senere kunne vælge og tilpasse template ud fra mission, terræn, frontage, artilleri, flanker, reservebehov og officerens stats. Templates giver målpositioner; terrain fitting må justere dem til brugbart terræn uden at bryde enhedsidentitet eller command relation.
 
+## Battle supply, nat og flerdagsslag
+
+Forsyning under et taktisk slag skal være fysisk og begrænset. Enheder forbruger konkret ammunition og kan kun genforsynes fra kompatible wagons/caissons/field trains/depots med reel beholdning, transportkapacitet og en brugbar rute. Resupply under aktiv kamp er muligt, men kan være langsomt, delvist eller blokeret af enemy fire, terrain, manglende wagons/horses eller afskårne forbindelser.
+
+Skumring skal være en **phase transition**, ikke et universelt hard battle stop. Battle state kan fortsætte som `DAYLIGHT -> DUSK -> NIGHT -> DAWN`. Normal organiseret formation combat reduceres kraftigt i mørke, mens hold, withdrawal, reorganisation, casualty collection, fieldworks, patrols, courier traffic og resupply fortsat kan ske. Begrænset night fighting er muligt, men skal være risikabelt og afhænge af mission/officer/doctrine.
+
+Natten bliver et naturligt resupply-vindue. En formation får dog kun overnight resupply, hvis den stadig har eller kan genetablere en fysisk supply route tilbage til egne lines/field train, og der faktisk findes stock og transportkapacitet. **Afskårne enheder får ingen automatisk ammunition om natten.** Flerdagsslag fortsætter med persistent casualties, ammo, fatigue, positions, fieldworks, officer/equipment state og supply connectivity.
+
+Sunrise/sunset/dusk skal senere beregnes ud fra dato, geografisk position og relevant weather/light state. UI kan auto-pause ved skumring/daggry og give command-valg som `Hold positions`, `Withdraw`, `Continue night operations`, `Reorganize/resupply` eller `Prepare dawn attack`.
+
+## Kavaleri og dragoner
+
+Kavaleri skal være langt mere end en charge-knap. Det får roller inden for **reconnaissance, screening/counter-recon, flank security, courier support/escort, pursuit, raids mod supply/courier/telegraph routes og exploitation**.
+
+Dragoner kan bevæge sig mounted og sidde af til sustained fire/combat. Ved dismount efterlades horses og horse holders som en faktisk tactical state; remount tager tid og kan reduceres eller mislykkes, hvis heste/holdere er tabt eller spredt. Mounted mobility påvirkes af horse fatigue, casualties og terrain.
+
+Charge-resultater skal afhænge af target formation/state, facing, terrain, surprise, cavalry cohesion/fatigue/momentum og officer quality. Et frontalt charge mod steady formed infantry med god fire discipline skal være meget risikabelt, mens cavalry kan være særdeles effektivt mod routed/disordered infantry, exposed skirmishers, retreating artillery/transport og isolerede rear-area targets.
+
+Cavalry raids kobles direkte til supply- og command-systemet: en cavalry formation kan true eller skære en supply/courier route uden at erobre hele regionen. Det kan dermed forhindre overnight resupply og øge command delay.
+
 ## Versionshistorik
 
-- **v00.02.08 / P0A v00.00.09 work branch** — Officer AI er rykket frem som næste gameplay-gate. Første implementation har shared `OfficerAIController`, `AI UNIT ON/OFF`, missions for defend/hold/move/attack, otte kerne-officerstats + separat Experience, Composure-baseret stressreaktion, Easy/Normal/Hard uden combat cheats, reason codes og `AI-DIAG` telemetry. Den eksisterende v00.00.08 combat/reload/feedback/casualty-visual skal fortsat bestå regressionstesten. Samme designbaseline fastlægger efterfølgende Close/Medium/Long range bands med continuous accuracy, fysiske HQ-entities med command-links, semantic zoom til NATO/APP-6-lignende symboler, synlig courier/order progress, formation-segmenteret fire eligibility/skudkegle samt højere formation templates med reel reserve- og artillery-role. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
+- **v00.02.08 / P0A v00.00.09 work branch** — Officer AI er rykket frem som næste gameplay-gate. Første implementation har shared `OfficerAIController`, `AI UNIT ON/OFF`, missions for defend/hold/move/attack, otte kerne-officerstats + separat Experience, Composure-baseret stressreaktion, Easy/Normal/Hard uden combat cheats, reason codes og `AI-DIAG` telemetry. v00.00.09 har desuden Play/Pause/x2/x5/x20 og battle clock som fælles simulation controls. Den eksisterende v00.00.08 combat/reload/feedback/casualty-visual skal fortsat bestå regressionstesten. Samme designbaseline fastlægger efterfølgende Close/Medium/Long range bands, fysiske HQ-entities, semantic zoom, courier/order progress, formation-segmenteret fire eligibility, højere formation templates, fysisk battle resupply, night/overnight logistics og en udvidet cavalry/dragoon model. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
 - **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er terminalt pauset indtil restart, RTS-kamera timeScale-uafhængigt og defensive guards forbedret.
 - **v00.02.06** — Unity compile-gate: `CS0136` rettet, obsolete object lookup erstattet og unused state fjernet.
