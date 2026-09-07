@@ -3,8 +3,7 @@ using UnityEngine;
 
 public sealed class PrototypeCasualtyVisualManager : MonoBehaviour
 {
-    private readonly Dictionary<Regiment, int> lastObservedStrength = new Dictionary<Regiment, int>();
-    private readonly HashSet<Regiment> casualtyVisualCreated = new HashSet<Regiment>();
+    private readonly Dictionary<Regiment, int> createdVisuals = new Dictionary<Regiment, int>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -27,26 +26,36 @@ public sealed class PrototypeCasualtyVisualManager : MonoBehaviour
             if (regiment == null)
                 continue;
 
-            if (!lastObservedStrength.TryGetValue(regiment, out int previousStrength))
-                previousStrength = regiment.InitialStrength;
+            int losses = Mathf.Max(0, regiment.InitialStrength - regiment.CurrentStrength);
+            int desiredVisuals = losses <= 0 ? 0 : Mathf.Clamp(Mathf.CeilToInt(losses / 10f), 1, 60);
 
-            if (regiment.CurrentStrength < previousStrength && !casualtyVisualCreated.Contains(regiment))
+            if (!createdVisuals.TryGetValue(regiment, out int currentVisuals))
+                currentVisuals = 0;
+
+            while (currentVisuals < desiredVisuals)
             {
-                CreateCasualtyVisual(regiment);
-                casualtyVisualCreated.Add(regiment);
+                CreateCasualtyVisual(regiment, currentVisuals);
+                currentVisuals++;
             }
 
-            lastObservedStrength[regiment] = regiment.CurrentStrength;
+            createdVisuals[regiment] = currentVisuals;
         }
     }
 
-    private void CreateCasualtyVisual(Regiment regiment)
+    private void CreateCasualtyVisual(Regiment regiment, int visualIndex)
     {
-        Vector3 position = regiment.transform.position;
-        position += new Vector3(Random.Range(-2.2f, 2.2f), 0f, Random.Range(-1.8f, 1.8f));
+        // Spread bodies across and just behind the frontage so losses are visible even
+        // while the regiment is stationary and exchanging fire, instead of only becoming
+        // obvious after the formation marches away.
+        Vector3 localOffset = new Vector3(
+            Random.Range(-8.0f, 8.0f),
+            0f,
+            Random.Range(-3.3f, 2.0f));
+
+        Vector3 position = regiment.transform.TransformPoint(localOffset);
         position.y = PrototypeBootstrap.SampleGroundHeight(position.x, position.z) + 0.20f;
 
-        GameObject casualty = new GameObject(regiment.RegimentName + "_PrototypeCasualty");
+        GameObject casualty = new GameObject(regiment.RegimentName + "_PrototypeCasualty_" + (visualIndex + 1));
         casualty.transform.SetParent(transform, true);
         casualty.transform.position = position;
         casualty.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
