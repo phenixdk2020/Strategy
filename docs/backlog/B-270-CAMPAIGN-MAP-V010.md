@@ -2,58 +2,67 @@
 
 ## Purpose
 
-Efter P0A v00.00.09 Tactical Command TEST er næste naturlige vertical-slice trin at forbinde de taktiske slag til en enkel campaign/strategisk realtidsmodel. Målet er ikke at bygge hele grand-strategy-spillet på én gang, men at få den første komplette loop:
+Efter P0A v00.00.09 Tactical Command TEST forbindes de taktiske slag med det strategiske lag gennem første komplette loop:
 
-`Campaign map -> movement/contact -> tactical battle -> battle result -> tilbage til campaign map`
+`3D campaign map -> movement/contact -> tactical battle -> battle result -> tilbage til campaign map`
 
-## Gate før implementering
+## Fast geografisk scope
 
-v00.00.09 bør først bestå én sidste tactical stability-test:
+Campaign-kortet skal dække **Danmark, Sverige, Norge, Finland og Tyskland** på ét sammenhængende strategisk kort.
 
-1. Unity compiler uden blocking errors.
-2. Fire/range/reload/ammunition fungerer.
-3. Multi-select + group facing fungerer med AI OFF.
-4. Officer AI kan angribe uden at stable regimenter oven i hinanden.
-5. Huse/træer/forhindringer kan ikke bruges som destination eller passeres direkte.
-6. Floden kan kun krydses via bro; ponton kræver senere engineer capability.
-7. Infantry contact udløser melee i stedet for gennemgang.
-8. Pause/speed og UI fungerer stabilt.
+Dette er ikke et lokalt Slesvig-only kort og ikke et rent skematisk nodekort.
 
-Når dette er godkendt, kan v00.00.09 fryses som tactical baseline og v00.00.10 begynde.
+Grundprincipper:
+
+- geografien lagres i reel latitude/longitude,
+- strategisk visning projekteres til et interaktivt 3D-kort,
+- kortet skal kunne panoreres, zoomes og roteres,
+- byer, terræn, veje, jernbaner, floder, skove og befæstninger bygges som separate datalag,
+- formationer og strategiske objekter ligger oven på samme geografiske koordinatsystem,
+- node-/rutenet bruges til strategisk navigation og state, men må ikke erstatte det geografiske kort visuelt.
+
+Historisk-politisk model holdes adskilt fra geografisk region. Eksempel: Finland ligger geografisk i `Finland`, men kontrolleres i 1864 af det Russiske Imperium; Norge og Sverige modelleres under Sverige-Norge; Tyskland er geografisk map-region, mens politisk kontrol kan være Preussen eller andre tyske stater/forbund.
+
+## Gate fra v00.00.09
+
+Tactical v00.00.09 skal fortsat runtime-testes for de seneste navigation/melee-rettelser. Campaign-arbejdet udvikles parallelt på `work/v00.00.10-campaign-map` og må ikke promoveres til TEST/main, før tactical-baseline er godkendt.
 
 ## v00.00.10 MVP scope
 
 ### B-270 Campaign scene
 
-- Ny separat campaign scene.
-- 2D/2.5D strategisk kort med terrain/background og pan/zoom.
+- Ny separat `CampaignMap` scene.
+- Interaktiv 3D strategisk visning med pan/zoom/rotation.
+- Kortets koordinater dækker Tyskland til Finland og Norge.
 - Tactical battle scene forbliver separat.
-- Ingen Unity-scene skal destruere den anden branches baseline; campaign bygges additivt i TEST.
+- Editor-menu skal kunne åbne Campaign Map og Tactical Battle separat.
 
 ### B-271 Geografisk datamodel
 
-Første prototype bruger et begrænset område med noder/regioner frem for pixel-perfect fri bevægelse.
+Strategiske locations lagres med:
 
-En node kan indeholde:
-
+- stabil ID,
 - navn,
-- koordinat,
-- ejer/kontrol,
+- geografisk region: Danmark/Sverige/Norge/Finland/Tyskland,
+- latitude/longitude,
+- projiceret map-position,
+- politisk controller,
 - terrain type,
 - road links,
-- rail link senere,
+- rail capability,
 - river/crossing flags,
 - depot/supply capability,
+- port capability,
 - fortification flag,
-- tactical battlefield template reference.
+- tactical battlefield template reference senere.
 
-Den historiske node-/regionliste skal senere dokumenteres med kilder; QA-layout må ikke præsenteres som historisk præcis før research er gennemført.
+Første kodebaserede geographic network indeholder større strategiske locations i alle fem map-regioner. Den visuelle coast/relief-layer starter grov og opgraderes senere til højere opløsning uden at ændre formations-/nodekoordinater.
 
 ### B-272 Strategic formations
 
-Campaign map viser formationer som stacks/tokens med stabil ID.
+Campaign map viser formationer som tokens/stacks med stabil ID.
 
-Første state:
+State:
 
 - nation/team,
 - formation name,
@@ -62,33 +71,34 @@ Første state:
 - ammunition,
 - morale/cohesion summary,
 - officer/HQ reference,
-- current node,
+- current location,
 - destination/route,
 - movement state.
 
-Samme regiment-ID skal kunne leve videre fra campaign til tactical og tilbage igen.
+Samme regiment-ID skal leve videre fra campaign til tactical og tilbage igen.
 
 ### B-273 Strategic movement og tid
 
 - Campaign time kører i realtid med pause og speed controls.
-- Formationer flyttes langs road/node links.
-- Travel time afhænger først af distance + terrain/road modifier.
-- Senere kobles weather, fatigue, supply, bridge damage og staff quality på.
-- To fjendtlige formationsgrupper i samme contact area kan udløse battle.
+- Formationer flyttes gennem det geografiske road/node network.
+- Travel time beregnes fra reel geografisk distance + terrain/route modifiers.
+- Ghost route vises på kortet.
+- Prussian QA formations kan få automatiske syd->nord angrebsruter for at teste contact-loopet.
+- Senere kobles weather, fatigue, supply, bridge damage, rail transport og staff quality på.
 
 ### B-274 Battle trigger
 
-Ved kontakt vises et battle panel med minimum:
+Ved fjendtlig kontakt vises battle panel med:
 
 - location,
 - angriber,
 - forsvarer,
 - deltagende formationer,
 - estimated strength,
-- `Fight Tactical Battle`,
+- `KÆMP TAKTISK`,
 - senere `Auto Resolve`.
 
-MVP går direkte fra campaign scene til den eksisterende tactical prototype.
+Campaign-time pauses under battle prompt.
 
 ### B-275 Campaign -> Tactical transfer
 
@@ -103,71 +113,83 @@ Følgende state skal overføres:
 - battle location/template,
 - campaign date/time.
 
-Det taktiske bootstrap-scenarie med hårdkodede QA-regimenter skal gradvist kunne erstattes af en BattleContext payload.
+Det hårdkodede QA tactical bootstrap skal kunne erstattes af `CampaignBattleContext`, når slaget startes fra campaign map.
 
 ### B-276 Tactical -> Campaign result
 
-Efter slag returneres som minimum:
+Efter slag returneres:
 
 - surviving strength,
 - ammunition,
 - morale/cohesion,
 - routed/destroyed state,
 - winner/control result,
-- officer state senere,
-- captured equipment/prisoners senere.
+- senere officer state,
+- senere captured equipment/prisoners.
 
 Der må ikke ske midnight/full reset mellem lagene.
 
 ### B-277 Campaign UI MVP
 
 - Topbar: dato/tid + pause/speed.
-- Venstre eller nederste compact selection panel.
-- Klik på formation viser stats og route.
-- Højreklik node = movement order.
-- Ghost route/path mellem noder.
-- Ownership/control vises enkelt og tydeligt.
+- Compact selection panel.
+- Klik formation = selection/stats.
+- Højreklik strategisk location = movement order.
+- Ghost route/path.
+- City/location labels.
+- ownership/control skal kunne aflæses.
+- WASD pan, Q/E rotation, mouse wheel zoom.
 
-### B-278 Supply hook
+### B-278 Map layers / supply hook
 
-MVP kan begynde med simpelt supply-connected boolean/level, men dataarkitekturen skal støtte de senere fysiske supply-systemer:
+Map-arkitekturen skal have separate lag for:
 
-- depot,
-- road/rail route,
-- ammunition replacement,
-- food/fodder,
-- wagons,
-- cut-off state.
+- coastline/landmass,
+- relief/height,
+- forests,
+- rivers/lakes,
+- roads,
+- railways,
+- ports,
+- fortifications,
+- depots/supply,
+- political control,
+- later fog of war/intelligence.
+
+Supply starter simpelt, men dataarkitekturen skal støtte depot, road/rail route, ammunition, food/fodder, wagons og cut-off state.
 
 ### B-279 Acceptance for first campaign loop
 
-1. Campaign scene åbner uden errors.
-2. Kort kan pan/zoomes.
-3. Mindst én dansk og én preussisk formation kan flyttes mellem noder.
-4. Campaign clock kan pause/accelereres.
-5. Enemy contact udløser battle prompt.
-6. Tactical scene åbnes med attacker/defender context.
-7. Tactical battle kan afsluttes.
-8. Resultat returneres til campaign map.
-9. Strength/ammunition efter slag matcher tactical result.
-10. Det er muligt at fortsætte campaign efter slaget.
+1. Campaign scene åbner uden blocking errors.
+2. Kortet viser det aftalte geografiske område Danmark + Sverige + Norge + Finland + Tyskland.
+3. Kortet kan pan/zoom/roteres.
+4. Locations ligger på latitude/longitude-baserede positioner.
+5. Dansk formation kan vælges og få movement order.
+6. Campaign clock kan pause/accelereres.
+7. Formation bevæger sig mellem locations og ghost route følger ordren.
+8. Enemy contact udløser battle prompt.
+9. Tactical scene åbnes med attacker/defender context.
+10. Tactical battle kan afsluttes og resultat returneres til campaign.
+11. Strength/ammunition efter slag matcher tactical result.
+12. Campaign kan fortsætte efter slaget.
 
 ## Ikke i første v00.00.10 slice
 
-Følgende designes til senere og må ikke blokere første loop:
+Følgende må ikke blokere første loop:
 
 - fuld diplomacy,
 - national economy,
 - production chains,
 - research trees,
 - recruitment/training depth,
-- full strategic fog of war,
+- komplet strategic fog of war,
 - historical OOB completeness,
-- rail timetables,
-- naval campaign,
+- komplette rail timetables,
+- fuldt naval campaign system,
 - engineer/pontoon construction UI,
-- save-game completeness.
+- save-game completeness,
+- final high-resolution coastline/DEM artwork.
 
 ## Design principle
 
-Første campaign prototype skal bevise **state continuity** mellem strategisk og taktisk lag. Når det virker, kan dybere economy, logistics, fog of war, engineering, cavalry reconnaissance, HQ/couriers og historical OOB bygges oven på en allerede fungerende game loop.
+Første campaign prototype skal bevise **geografisk korrekt coordinate foundation + state continuity** mellem strategisk og taktisk lag. Det visuelle kort må starte groft, men må ikke være et skematisk lokalkort; alle senere højopløselige kortlag skal kunne monteres oven på samme latitude/longitude model.
