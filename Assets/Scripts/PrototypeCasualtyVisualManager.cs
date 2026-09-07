@@ -21,13 +21,17 @@ public sealed class PrototypeCasualtyVisualManager : MonoBehaviour
         if (battleManager == null)
             return;
 
+        int casualtiesPerBody = PrototypeCombatTuningManager.GetCasualtiesPerBody();
+
         foreach (Regiment regiment in battleManager.Regiments)
         {
             if (regiment == null)
                 continue;
 
             int losses = Mathf.Max(0, regiment.InitialStrength - regiment.CurrentStrength);
-            int desiredVisuals = losses <= 0 ? 0 : Mathf.Clamp(Mathf.CeilToInt(losses / 10f), 1, 60);
+            int desiredVisuals = losses <= 0
+                ? 0
+                : Mathf.Clamp(Mathf.CeilToInt(losses / (float)casualtiesPerBody), 1, 100);
 
             if (!createdVisuals.TryGetValue(regiment, out int currentVisuals))
                 currentVisuals = 0;
@@ -44,16 +48,17 @@ public sealed class PrototypeCasualtyVisualManager : MonoBehaviour
 
     private void CreateCasualtyVisual(Regiment regiment, int visualIndex)
     {
-        // Spread bodies across and just behind the frontage so losses are visible even
-        // while the regiment is stationary and exchanging fire, instead of only becoming
-        // obvious after the formation marches away.
+        // Bodies are created at the formation's current battlefield position at the
+        // moment the loss threshold is crossed. They are parented to this manager,
+        // not to the regiment, so they remain where men fell when the regiment moves.
+        // This also makes losses accumulate visibly while two stationary lines exchange fire.
         Vector3 localOffset = new Vector3(
-            Random.Range(-8.0f, 8.0f),
+            Random.Range(-9.2f, 9.2f),
             0f,
-            Random.Range(-3.3f, 2.0f));
+            Random.Range(-4.0f, 2.8f));
 
         Vector3 position = regiment.transform.TransformPoint(localOffset);
-        position.y = PrototypeBootstrap.SampleGroundHeight(position.x, position.z) + 0.20f;
+        position.y = PrototypeBootstrap.SampleGroundHeight(position.x, position.z) + 0.22f;
 
         GameObject casualty = new GameObject(regiment.RegimentName + "_PrototypeCasualty_" + (visualIndex + 1));
         casualty.transform.SetParent(transform, true);
@@ -69,8 +74,8 @@ public sealed class PrototypeCasualtyVisualManager : MonoBehaviour
         GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
         body.name = "Body";
         body.transform.SetParent(casualty.transform, false);
-        body.transform.localScale = new Vector3(0.28f, 0.48f, 0.28f);
-        body.transform.localPosition = new Vector3(0f, 0.28f, 0f);
+        body.transform.localScale = new Vector3(0.33f, 0.54f, 0.33f);
+        body.transform.localPosition = new Vector3(0f, 0.31f, 0f);
         body.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
         body.GetComponent<Renderer>().sharedMaterial = uniformMaterial;
         Destroy(body.GetComponent<Collider>());
@@ -78,17 +83,17 @@ public sealed class PrototypeCasualtyVisualManager : MonoBehaviour
         GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         head.name = "Head";
         head.transform.SetParent(casualty.transform, false);
-        head.transform.localScale = Vector3.one * 0.28f;
-        head.transform.localPosition = new Vector3(0.62f, 0.24f, 0f);
+        head.transform.localScale = Vector3.one * 0.30f;
+        head.transform.localPosition = new Vector3(0.68f, 0.25f, 0f);
         head.GetComponent<Renderer>().sharedMaterial = uniformMaterial;
         Destroy(head.GetComponent<Collider>());
 
         GameObject rifle = GameObject.CreatePrimitive(PrimitiveType.Cube);
         rifle.name = "Rifle";
         rifle.transform.SetParent(casualty.transform, false);
-        rifle.transform.localScale = new Vector3(0.07f, 0.07f, 0.92f);
-        rifle.transform.localPosition = new Vector3(-0.05f, 0.18f, 0.38f);
-        rifle.transform.localRotation = Quaternion.Euler(0f, 28f, 0f);
+        rifle.transform.localScale = new Vector3(0.07f, 0.07f, 0.96f);
+        rifle.transform.localPosition = new Vector3(-0.05f, 0.18f, 0.40f);
+        rifle.transform.localRotation = Quaternion.Euler(0f, Random.Range(12f, 42f), 0f);
         rifle.GetComponent<Renderer>().sharedMaterial = equipmentMaterial;
         Destroy(rifle.GetComponent<Collider>());
     }
