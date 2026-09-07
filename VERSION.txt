@@ -11,13 +11,19 @@ Previous gate: v00.00.08 reload/experience, 0-hit volley, 'Ramte N' and simple c
 Scenario: Danish test regiments are defenders; Prussian test regiments are attackers
 QA OOB expansion: TEST now contains four Danish and four Prussian infantry regiments (eight total) arranged in four starting lanes per side for group-control and multi-unit AI testing
 Attack frontage deconfliction: when several AI-controlled regiments converge on the same enemy, the first engager retains the primary frontage while later arrivals are assigned distinct lateral frontage slots beside it instead of converging on the target centre
+Attack frontage V2: secondary frontage slots are scored against travel distance, blocked destinations, houses/trees/fences, river crossings, line-to-target obstruction and friendly separation so later arrivals prefer a genuinely usable side of the engagement instead of parking behind a building or another regiment
 Attack frontage hold rule: a secondary regiment that reaches its assigned frontage slot holds that local position and faces the target instead of receiving a new centre-seeking OrderAttack that would recreate overlap
-Attack spacing telemetry: AI-SPACING logs unit, target and assigned secondary attack slot when deconfliction activates
+Attack spacing telemetry: AI-SPACING-V2 logs unit, target, slot and final obstacle-aware slot position when frontage allocation activates
 Battlefield navigation TEST layer: farmhouse, barn, trees and fence posts are treated as blocked tactical space for regiment movement and destination placement; blocked route waypoints are moved to the nearest valid position
+Navigation recovery layer: if a formation starts inside or is driven into blocked terrain, an emergency safe-position recovery moves it back to navigable ground; a second obstacle query layer reinforces detours and exposes path-cost queries to attack-position planning
+Navigation recovery telemetry: NAV-RECOVERY reports emergency unstick events and installation state
 River crossing rule: the stream is non-traversable terrain for infantry; movement crossing the stream is automatically routed through the fixed bridge near the road crossing
 Bridge march rule: regiments crossing the fixed bridge temporarily use COLUMN and restore their previous formation after crossing
 Pontoon rule: no regiment may cross open water merely by moving through it; pontoon construction is reserved for a later engineer-attachment capability and is not available without engineer support
 Navigation telemetry: NAV-DIAG reports blocked destination adjustments, bridge routing and route-waypoint corrections
+Melee TEST layer: opposing infantry formations that physically contact each other and are not separated by water/solid obstacles enter bayonet/melee contact instead of walking through each other or continuing point-blank volley fire
+Melee resolution: contact holds both formations, faces them toward each other, applies repeated strength/morale/cohesion losses, preserves normal rout thresholds and feeds casualty visuals through strength loss
+Melee telemetry: MELEE-DIAG announces contact and MELEE-LOG records both units, distance, losses, remaining strength, morale and cohesion per melee pulse
 Battlefield: doubled from 180x120 to 360x240 with expanded camera bounds and greater starting separation
 Fire geometry: directional 120-degree forward fire fan follows regiment facing; no 360-degree firing ring
 Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
