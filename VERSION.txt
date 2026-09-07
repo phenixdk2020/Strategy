@@ -25,7 +25,7 @@ Officer AI doctrine menu: DEFENSIVE / BALANCED / OFFENSIVE applies to selected D
 Commander aggression intent: 0-100 slider biases cautious/aggressive execution, while officer Aggressiveness remains dominant (70% officer / 30% order before doctrine bias)
 Fire discipline menu: HOLD / CLOSE / MEDIUM / LONG applies to selected Danish regiment(s)
 Battle HUD revision: full regiment info is shown only for selected or mouse-hovered units; the panel is offset away from the regiment so the formation remains visible
-Command UI revision: selected-unit Officer AI controls are a fixed full-width bottom command bar rather than a floating right-side panel
+Command UI revision: selected-unit Officer AI controls are a fixed bottom command bar only 96 px high, using two compact control rows plus one status row
 UI input isolation: clicks inside time controls or the bottom command bar do not issue battlefield selection/move/attack orders
 Enemy AI: Prussian officers start Offensive with order aggression 65 and Medium fire policy; 18th uses a flank/approach waypoint before reassessing attack
 Enemy behaviour rule: attackers close to officer/order preferred range, deploy to line near engagement, may stabilise under morale pressure, and do not receive combat-stat cheats
