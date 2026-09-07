@@ -14,7 +14,8 @@ Officer background: Experience is separate and primarily reduces decision noise
 Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision noise only, not combat stats or hidden knowledge
 AI telemetry: AI-DIAG console entries expose unit, officer, mission, task and reason code
 HUD QA: unit labels expose AI state, officer, Tactical Skill, Initiative, Composure, current task and reason
-Time controls: clickable PLAY, PAUSE, x2, x5, x20 plus battle date/time clock in top bar
-Time keys: Space pause/resume; 1=Play/x1, 2=x2, 3=x5, 4=x20
+Time controls: clickable PLAY/x1, PAUSE, x0.5, x2, x5, x20 plus battle date/time clock in top bar
+Time keys: Space pause/resume; 0=x0.5, 1=Play/x1, 2=x2, 3=x5, 4=x20
 Pause semantics: AI, movement, reload, combat and battle clock stop together; camera/UI remain usable
+Slow tactical mode: x0.5 gives twice the real-world reaction time per unit of simulation time without changing combat stats
 QA state: v00.00.09 TEST requires Unity compile and full Play acceptance test before promotion to main
