@@ -7,7 +7,8 @@ public sealed class PrototypeCombatStatusManager : MonoBehaviour
 {
     private sealed class CombatState
     {
-        public int AmmunitionRoundsPerMan = 60;
+        public int AmmunitionRoundsPerMan;
+        public int StartingAmmunitionRoundsPerMan;
         public float LastObservedNextFireTime;
         public int LastVolleyHits;
         public float FeedbackUntil;
@@ -66,16 +67,18 @@ public sealed class PrototypeCombatStatusManager : MonoBehaviour
 
             if (!states.TryGetValue(regiment, out CombatState state))
             {
-                state = new CombatState();
-                state.LastObservedNextFireTime = ReadNextFireTime(regiment);
+                int startingAmmo = PrototypeCombatTuningManager.GetStartingAmmoRoundsPerMan();
+                state = new CombatState
+                {
+                    AmmunitionRoundsPerMan = startingAmmo,
+                    StartingAmmunitionRoundsPerMan = startingAmmo,
+                    LastObservedNextFireTime = ReadNextFireTime(regiment)
+                };
                 states[regiment] = state;
             }
 
             float currentNextFireTime = ReadNextFireTime(regiment);
 
-            // FireVolley moves nextFireTime from its previous value to a future timestamp.
-            // Observing that transition lets this TEST layer count one carried round per man
-            // per volley without changing the v00.00.08 combat kernel yet.
             bool volleyDetected =
                 state.AmmunitionRoundsPerMan > 0 &&
                 !float.IsInfinity(currentNextFireTime) &&
@@ -88,17 +91,13 @@ public sealed class PrototypeCombatStatusManager : MonoBehaviour
 
                 Regiment target = GetLikelyTarget(regiment);
                 state.LastVolleyHits = target != null ? target.LastVolleyHits : 0;
-                state.FeedbackUntil = Time.unscaledTime + 1.75f;
+                state.FeedbackUntil = Time.unscaledTime + 2.35f;
             }
 
             state.LastObservedNextFireTime = currentNextFireTime;
 
             if (state.AmmunitionRoundsPerMan <= 0)
-            {
-                // No magical ammunition regeneration. A later supply system can replace this
-                // TEST-layer lock with actual carried/resupplied ammunition inventories.
                 nextFireTimeField.SetValue(regiment, float.PositiveInfinity);
-            }
         }
     }
 
@@ -144,11 +143,21 @@ public sealed class PrototypeCombatStatusManager : MonoBehaviour
     public static int GetAmmunitionRoundsPerMan(Regiment regiment)
     {
         if (Instance == null || regiment == null)
-            return 60;
+            return PrototypeCombatTuningManager.GetStartingAmmoRoundsPerMan();
 
         return Instance.states.TryGetValue(regiment, out CombatState state)
             ? state.AmmunitionRoundsPerMan
-            : 60;
+            : PrototypeCombatTuningManager.GetStartingAmmoRoundsPerMan();
+    }
+
+    public static int GetStartingAmmunitionRoundsPerMan(Regiment regiment)
+    {
+        if (Instance == null || regiment == null)
+            return PrototypeCombatTuningManager.GetStartingAmmoRoundsPerMan();
+
+        return Instance.states.TryGetValue(regiment, out CombatState state)
+            ? state.StartingAmmunitionRoundsPerMan
+            : PrototypeCombatTuningManager.GetStartingAmmoRoundsPerMan();
     }
 
     public static bool TryGetVolleyFeedback(Regiment regiment, out int hits)
