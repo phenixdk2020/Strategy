@@ -67,8 +67,8 @@ public sealed class BattleManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha4))
             SetSpeed(20);
 
-        // Time.deltaTime is scaled by Time.timeScale. Therefore the campaign/battle
-        // clock advances in lockstep with the selected simulation speed and stops
+        // Time.deltaTime is scaled by Time.timeScale. Therefore the battle clock
+        // advances in lockstep with the selected simulation speed and stops
         // completely while paused.
         if (!paused)
             battleMinutes += Time.deltaTime * GameMinutesPerSimulationSecond;
@@ -130,6 +130,14 @@ public sealed class BattleManager : MonoBehaviour
 
     private void SetSpeed(int newSpeed)
     {
+        // A battle result is terminal. Mouse-based time controls must not be able to
+        // resume the simulation even for a single frame after victory/defeat.
+        if (!string.IsNullOrEmpty(resultMessage))
+        {
+            SetPaused(true);
+            return;
+        }
+
         if (newSpeed != 1 && newSpeed != 2 && newSpeed != 5 && newSpeed != 20)
             newSpeed = 1;
 
@@ -229,7 +237,7 @@ public sealed class BattleManager : MonoBehaviour
         string clock = $"1 Feb 1864  {hours:00}:{minutes:00}";
 
         Rect timePanel = GetTimeControlRect();
-        float titleWidth = Mathf.Max(280f, timePanel.x - 20f);
+        float titleWidth = Mathf.Max(200f, timePanel.x - 20f);
         GUI.Box(new Rect(10, 10, titleWidth, 34), "PROJECT 1864 - P0A v00.00.09 OFFICER AI TEST", topStyle);
         DrawTimeControls(clock);
 
