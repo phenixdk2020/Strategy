@@ -6,6 +6,20 @@
 
 Grand Campaign skal være et egentligt land-/statsniveau-spil og ikke kun en lineær 1864-scenarieoversigt. Spilleren vælger en stat og styrer dens strategiske ressourcer, formationer, territorier og operationer gennem et zoneopdelt 3D-kort.
 
+## Campaign startdato — LÅST
+
+**Grand Campaign starter 1. januar 1851.**
+
+Designhensigt:
+
+- spilleren får ca. 13 års strategisk forberedelse frem mod 1864,
+- oprustning, mobilisering, våbenmodernisering, jernbane, depoter, officerer og doktrin skal kunne ændre et lands militære styrke over flere år,
+- 1850'ernes og 1860'ernes internationale krige og teknologiske udvikling skal kunne påvirke campaign-verdenen,
+- 1864 er en vigtig historisk milepæl, men ikke nødvendigvis kampagnens slutdato,
+- arkitekturen skal kunne understøtte senere alternative startdatoer/scenarier uden at ændre hovedkampagnens baseline.
+
+Første campaign clock/state skal derfor initialiseres til `1851-01-01` i stedet for 1864, når den historiske Danmark-first campaign erstatter QA-scaffolden.
+
 ## B-280 — Spilbare stater
 
 Den første datamodel skal kunne repræsentere og vælge de stater, der allerede er besluttet i projektet:
