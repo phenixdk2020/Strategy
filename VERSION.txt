@@ -10,8 +10,14 @@ Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 Previous gate: v00.00.08 reload/experience, 0-hit volley, 'Ramte N' and simple casualty visual retained
 Scenario: Danish test regiments are defenders; Prussian test regiments are attackers
 QA OOB expansion: TEST now contains four Danish and four Prussian infantry regiments (eight total) arranged in four starting lanes per side for group-control and multi-unit AI testing
-Attack frontage deconfliction: when several AI-controlled regiments converge on the same enemy, the first engager may retain the primary approach while later arrivals detect friendly frontage conflict and seek alternating flank attack slots instead of stacking on top of the first unit
+Attack frontage deconfliction: when several AI-controlled regiments converge on the same enemy, the first engager retains the primary frontage while later arrivals are assigned distinct lateral frontage slots beside it instead of converging on the target centre
+Attack frontage hold rule: a secondary regiment that reaches its assigned frontage slot holds that local position and faces the target instead of receiving a new centre-seeking OrderAttack that would recreate overlap
 Attack spacing telemetry: AI-SPACING logs unit, target and assigned secondary attack slot when deconfliction activates
+Battlefield navigation TEST layer: farmhouse, barn, trees and fence posts are treated as blocked tactical space for regiment movement and destination placement; blocked route waypoints are moved to the nearest valid position
+River crossing rule: the stream is non-traversable terrain for infantry; movement crossing the stream is automatically routed through the fixed bridge near the road crossing
+Bridge march rule: regiments crossing the fixed bridge temporarily use COLUMN and restore their previous formation after crossing
+Pontoon rule: no regiment may cross open water merely by moving through it; pontoon construction is reserved for a later engineer-attachment capability and is not available without engineer support
+Navigation telemetry: NAV-DIAG reports blocked destination adjustments, bridge routing and route-waypoint corrections
 Battlefield: doubled from 180x120 to 360x240 with expanded camera bounds and greater starting separation
 Fire geometry: directional 120-degree forward fire fan follows regiment facing; no 360-degree firing ring
 Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
