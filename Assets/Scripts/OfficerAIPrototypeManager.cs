@@ -16,7 +16,6 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
 
     private bool installed;
     private GUIStyle panelStyle;
-    private GUIStyle titleStyle;
     private GUIStyle labelStyle;
     private GUIStyle sectionStyle;
 
@@ -62,7 +61,6 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F8))
             SetDifficulty(OfficerAIDifficulty.Hard);
 
-        // I is deliberately used instead of A because A belongs to WASD camera movement.
         if (Input.GetKeyDown(KeyCode.I))
             ToggleSelectedAI();
     }
@@ -87,8 +85,6 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
             bool enemyControlled = regiment.Team == BattleTeam.Prussia;
             Vector3? initialWaypoint = null;
 
-            // The 18th demonstrates that an attacker may manoeuvre/flank before
-            // committing, instead of every enemy regiment simply running straight in.
             if (regiment.RegimentName == "18th Regiment")
                 initialWaypoint = new Vector3(18f, 0f, 72f);
 
@@ -174,11 +170,10 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
 
     private Rect GetControlPanelRect()
     {
-        // Keep the tactical command bar deliberately shallow so the battlefield
-        // remains the dominant part of the screen. Two control rows + one status row.
-        const float height = 96f;
-        float width = Mathf.Max(480f, Screen.width - 12f);
-        return new Rect(6f, Screen.height - height - 6f, width, height);
+        // Deliberately shallow: two 24 px rows plus small margins.
+        float height = Screen.height < 500f ? 60f : 66f;
+        float width = Mathf.Max(420f, Screen.width - 8f);
+        return new Rect(4f, Screen.height - height - 4f, width, height);
     }
 
     private void ToggleSelectedAI()
@@ -319,18 +314,12 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
             return;
 
         panelStyle = new GUIStyle(GUI.skin.box);
-        panelStyle.fontSize = 11;
+        panelStyle.fontSize = 9;
         panelStyle.alignment = TextAnchor.UpperLeft;
         panelStyle.normal.textColor = Color.white;
 
-        titleStyle = new GUIStyle(GUI.skin.box);
-        titleStyle.fontSize = 13;
-        titleStyle.fontStyle = FontStyle.Bold;
-        titleStyle.alignment = TextAnchor.MiddleCenter;
-        titleStyle.normal.textColor = Color.white;
-
         labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 10;
+        labelStyle.fontSize = 9;
         labelStyle.alignment = TextAnchor.MiddleLeft;
         labelStyle.normal.textColor = Color.white;
 
@@ -345,11 +334,6 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
 
         EnsureStyles();
 
-        GUI.Box(
-            new Rect(Screen.width * 0.5f - 255f, 48f, 510f, 28f),
-            "v00.00.09 TACTICAL COMMAND TEST   Difficulty: " + CurrentDifficulty + "   [F6/F7/F8]",
-            titleStyle);
-
         int selectedCount = GetSelectedDanishCount();
         if (selectedCount == 0)
             return;
@@ -362,62 +346,57 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
         Rect panel = GetControlPanelRect();
         GUI.Box(panel, string.Empty, panelStyle);
 
-        float x = panel.x + 6f;
-        float y = panel.y + 5f;
-        float w = panel.width - 12f;
-        float gap = 5f;
+        float x = panel.x + 4f;
+        float y = panel.y + 4f;
+        float w = panel.width - 8f;
+        const float gap = 4f;
+        const float buttonHeight = 24f;
 
-        // Row 1: selected formation + AI/doctrine. The information block is kept
-        // deliberately short; detailed unit data remains on hover/selection near the unit.
-        float infoWidth = Mathf.Clamp(w * 0.34f, 210f, 360f);
+        // Row 1: unit summary + AI/doctrine + facing buttons.
+        float infoWidth = Mathf.Clamp(w * 0.25f, 180f, 330f);
         string unitLine = selectedCount > 1
-            ? selectedCount + " valgte | " + firstController.Officer.OfficerName + " | Task " + firstController.CurrentTask
-            : firstRegiment.RegimentName + " | " + firstController.Officer.OfficerName + " | Task " + firstController.CurrentTask;
-        GUI.Label(new Rect(x, y, infoWidth, 24f), unitLine, sectionStyle);
+            ? selectedCount + " valgte | " + firstController.Officer.OfficerName + " | " + firstController.CurrentTask
+            : firstRegiment.RegimentName + " | " + firstController.Officer.OfficerName + " | " + firstController.CurrentTask;
+        GUI.Label(new Rect(x, y, infoWidth, buttonHeight), unitLine, sectionStyle);
 
         float controlX = x + infoWidth + gap;
-        float controlWidth = Mathf.Max(260f, w - infoWidth - gap);
-        float topButtonWidth = (controlWidth - gap * 3f) / 4f;
+        float controlWidth = Mathf.Max(220f, w - infoWidth - gap);
+        float topButtonWidth = (controlWidth - gap * 5f) / 6f;
 
-        if (GUI.Button(
-            new Rect(controlX, y, topButtonWidth, 24f),
-            firstController.AIEnabled ? "AI ON [I]" : "AI OFF [I]"))
-        {
+        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), firstController.AIEnabled ? "AI ON [I]" : "AI OFF [I]"))
             SetSelectedAIEnabled(!firstController.AIEnabled);
-        }
 
         controlX += topButtonWidth + gap;
-        if (GUI.Button(
-            new Rect(controlX, y, topButtonWidth, 24f),
-            firstController.Doctrine == OfficerAIDoctrine.Defensive ? "[DEFENSIV]" : "DEFENSIV"))
-        {
+        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF"))
             SetSelectedDoctrine(OfficerAIDoctrine.Defensive);
-        }
 
         controlX += topButtonWidth + gap;
-        if (GUI.Button(
-            new Rect(controlX, y, topButtonWidth, 24f),
-            firstController.Doctrine == OfficerAIDoctrine.Balanced ? "[BALANCERET]" : "BALANCERET"))
-        {
+        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL"))
             SetSelectedDoctrine(OfficerAIDoctrine.Balanced);
+
+        controlX += topButtonWidth + gap;
+        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF"))
+            SetSelectedDoctrine(OfficerAIDoctrine.Offensive);
+
+        controlX += topButtonWidth + gap;
+        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), "DREJ -15 [Z]"))
+        {
+            if (PlayerCommander.Instance != null)
+                PlayerCommander.Instance.RotateSelectedFacing(-15f);
         }
 
         controlX += topButtonWidth + gap;
-        if (GUI.Button(
-            new Rect(controlX, y, topButtonWidth, 24f),
-            firstController.Doctrine == OfficerAIDoctrine.Offensive ? "[OFFENSIV]" : "OFFENSIV"))
+        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), "DREJ +15 [X]"))
         {
-            SetSelectedDoctrine(OfficerAIDoctrine.Offensive);
+            if (PlayerCommander.Instance != null)
+                PlayerCommander.Instance.RotateSelectedFacing(15f);
         }
 
-        // Row 2: aggression intent on the left and fire discipline on the right.
-        y += 29f;
-        float aggressionWidth = Mathf.Clamp(w * 0.46f, 300f, 560f);
-        float aggressionLabelWidth = 105f;
-        GUI.Label(
-            new Rect(x, y, aggressionLabelWidth, 24f),
-            "Aggression " + firstController.OrderAggressiveness.ToString("0"),
-            sectionStyle);
+        // Row 2: aggression + fire discipline. No third text row.
+        y += buttonHeight + 4f;
+        float aggressionWidth = Mathf.Clamp(w * 0.40f, 240f, 520f);
+        float aggressionLabelWidth = 82f;
+        GUI.Label(new Rect(x, y, aggressionLabelWidth, buttonHeight), "Agg " + firstController.OrderAggressiveness.ToString("0"), sectionStyle);
 
         float newAggression = GUI.HorizontalSlider(
             new Rect(x + aggressionLabelWidth, y + 7f, aggressionWidth - aggressionLabelWidth, 18f),
@@ -429,56 +408,26 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
             SetSelectedOrderAggressiveness(newAggression);
 
         float fireX = x + aggressionWidth + gap * 2f;
-        float fireAvailable = Mathf.Max(280f, w - aggressionWidth - gap * 2f);
-        float fireLabelWidth = 42f;
+        float fireAvailable = Mathf.Max(220f, w - aggressionWidth - gap * 2f);
+        float fireLabelWidth = 28f;
         float fireButtonWidth = (fireAvailable - fireLabelWidth - gap * 3f) / 4f;
-        GUI.Label(new Rect(fireX, y, fireLabelWidth, 24f), "Ild:", sectionStyle);
+        GUI.Label(new Rect(fireX, y, fireLabelWidth, buttonHeight), "Ild", sectionStyle);
         fireX += fireLabelWidth;
 
-        if (GUI.Button(
-            new Rect(fireX, y, fireButtonWidth, 24f),
-            firstRegiment.FirePolicy == RegimentFirePolicy.HoldFire ? "[HOLD]" : "HOLD"))
-        {
+        if (GUI.Button(new Rect(fireX, y, fireButtonWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.HoldFire ? "[HOLD]" : "HOLD"))
             SetSelectedFirePolicy(RegimentFirePolicy.HoldFire);
-        }
 
         fireX += fireButtonWidth + gap;
-        if (GUI.Button(
-            new Rect(fireX, y, fireButtonWidth, 24f),
-            firstRegiment.FirePolicy == RegimentFirePolicy.CloseRange ? "[CLOSE]" : "CLOSE"))
-        {
+        if (GUI.Button(new Rect(fireX, y, fireButtonWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.CloseRange ? "[CLOSE]" : "CLOSE"))
             SetSelectedFirePolicy(RegimentFirePolicy.CloseRange);
-        }
 
         fireX += fireButtonWidth + gap;
-        if (GUI.Button(
-            new Rect(fireX, y, fireButtonWidth, 24f),
-            firstRegiment.FirePolicy == RegimentFirePolicy.MediumRange ? "[MEDIUM]" : "MEDIUM"))
-        {
+        if (GUI.Button(new Rect(fireX, y, fireButtonWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.MediumRange ? "[MED]" : "MED"))
             SetSelectedFirePolicy(RegimentFirePolicy.MediumRange);
-        }
 
         fireX += fireButtonWidth + gap;
-        if (GUI.Button(
-            new Rect(fireX, y, fireButtonWidth, 24f),
-            firstRegiment.FirePolicy == RegimentFirePolicy.LongRange ? "[LONG]" : "LONG"))
-        {
+        if (GUI.Button(new Rect(fireX, y, fireButtonWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.LongRange ? "[LONG]" : "LONG"))
             SetSelectedFirePolicy(RegimentFirePolicy.LongRange);
-        }
-
-        // Row 3 is information only and uses very little vertical space.
-        y += 28f;
-        GUI.Label(
-            new Rect(x, y, w, 18f),
-            string.Format(
-                "{0} | {1} | Range C {2:0} / M {3:0} / L {4:0} | Arc {5:0}° | Officer stats er primære; doctrine/ordre er bias",
-                firstController.Officer.CompactSummary,
-                firstController.AIEnabled ? "AI ON" : "AI OFF",
-                firstRegiment.CloseRange,
-                firstRegiment.EffectiveRange,
-                firstRegiment.MaximumRange,
-                firstRegiment.FireArcHalfAngle * 2f),
-            labelStyle);
     }
 }
 
