@@ -1,21 +1,35 @@
 PROJECT 1864 - Unity Battle Prototype
 Prototype version: v00.00.09
 Build status: TEST
+Build name: TACTICAL COMMAND TEST
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 Previous gate: v00.00.08 reload/experience, 0-hit volley, 'Ramte N' and simple casualty visual retained
-Officer AI: shared OfficerAIController for delegated Danish and enemy Prussian regiments
-Player delegation: A toggles AI UNIT ON/OFF for selected Danish regiment(s)
+Scenario: Danish test regiments are defenders; Prussian test regiments are attackers
+Battlefield: doubled from 180x120 to 360x240 with expanded camera bounds and greater starting separation
+Fire geometry: directional 120-degree forward fire fan follows regiment facing; no 360-degree firing ring
+Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
+Fire policy: HOLD / CLOSE / MEDIUM / LONG determines when a regiment may open fire
+Accuracy: continuous distance curve; closer targets are progressively easier to hit with no hard accuracy jump at range-band boundaries
+Fire eligibility MVP: target must be inside selected fire-policy range and inside the forward fire arc
+Reload: weapon profile base reload + bounded regiment Experience modifier retained from v00.00.08
+Volley feedback: 0-hit remains possible; positive resolved hits show temporary 'Ramte N'
+Officer assignment: every prototype regiment receives an OfficerProfile + OfficerAIController at runtime
 Officer core stats: Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution, Composure/Nerve
 Officer background: Experience is separate and primarily reduces decision noise
+Player delegation: I toggles AI UNIT ON/OFF for selected Danish regiment(s); A remains camera-left in WASD
+Officer AI doctrine menu: DEFENSIVE / BALANCED / OFFENSIVE applies to selected Danish regiment(s)
+Commander aggression intent: 0-100 slider biases cautious/aggressive execution, while officer Aggressiveness remains dominant (70% officer / 30% order before doctrine bias)
+Fire discipline menu: HOLD / CLOSE / MEDIUM / LONG applies to selected Danish regiment(s)
+Enemy AI: Prussian officers start Offensive with order aggression 65 and Medium fire policy; 18th uses a flank/approach waypoint before reassessing attack
+Enemy behaviour rule: attackers close to officer/order preferred range, deploy to line near engagement, may stabilise under morale pressure, and do not receive combat-stat cheats
 Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision noise only, not combat stats or hidden knowledge
-AI telemetry: AI-DIAG console entries expose unit, officer, mission, task and reason code
-HUD QA: unit labels expose AI state, officer, Tactical Skill, Initiative, Composure, current task and reason
+AI telemetry: AI-DIAG exposes unit, officer, doctrine, order aggression, effective aggression, fire policy, mission, task and reason
 Time controls: clickable PLAY/x1, PAUSE, x0.5, x2, x5, x20 plus battle date/time clock in top bar
 Time keys: Space pause/resume; 0=x0.5, 1=Play/x1, 2=x2, 3=x5, 4=x20
 Pause semantics: AI, movement, reload, combat and battle clock stop together; camera/UI remain usable
 Slow tactical mode: x0.5 gives twice the real-world reaction time per unit of simulation time without changing combat stats
-QA state: v00.00.09 TEST requires Unity compile and full Play acceptance test before promotion to main
+QA state: v00.00.09 TEST requires Unity 6000.6.0f1 compile + Play acceptance before it can be called runtime validated
