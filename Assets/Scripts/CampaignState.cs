@@ -5,7 +5,20 @@ using UnityEngine;
 public enum CampaignNation
 {
     Denmark,
-    Prussia
+    Prussia,
+    Austria,
+    SwedenNorway,
+    RussianEmpire,
+    GermanConfederation
+}
+
+public enum CampaignMapRegion
+{
+    Denmark,
+    Sweden,
+    Norway,
+    Finland,
+    Germany
 }
 
 public enum CampaignTerrainType
@@ -15,7 +28,9 @@ public enum CampaignTerrainType
     Forest,
     Urban,
     Fortified,
-    RiverCrossing
+    RiverCrossing,
+    Coastal,
+    Mountain
 }
 
 [Serializable]
@@ -23,11 +38,16 @@ public sealed class CampaignNodeState
 {
     public string Id;
     public string Name;
+    public CampaignMapRegion Region;
+    public double Latitude;
+    public double Longitude;
     public Vector2 MapPosition;
     public CampaignNation Controller;
     public CampaignTerrainType Terrain;
     public bool HasDepot;
     public bool HasBridge;
+    public bool HasPort;
+    public bool HasRail;
     public readonly List<string> Links = new List<string>();
 }
 
