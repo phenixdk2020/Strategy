@@ -98,6 +98,39 @@ Vigtige inputs:
 
 Et frontalt charge mod steady, formed infantry med god fire discipline skal være meget risikabelt. Charge mod shaken/routed/exposed formations kan være ekstremt effektivt.
 
+### Infantry anti-cavalry response — FORM SQUARE
+
+**BESLUTTET.** Infantry skal kunne få ordren **FORM SQUARE** som specifik anti-cavalry formation, herunder mod mounted dragoon/cavalry charge.
+
+Square er ikke en gratis bonus. Det er en tidskrævende formation change, hvor regimentet samler front mod flere retninger og præsenterer bajonetter udad. Resultatet skal være stærkt mod et direkte mounted charge, men have klare omkostninger.
+
+Regler/egenskaber:
+
+- Square kan gives manuelt af spilleren og vælges automatisk af Officer AI.
+- Bajonetter orienteres udad på alle sider som del af square-state/visual.
+- Formation change tager tid; et regiment der overraskes midt i deployment kan blive ramt før square er færdig.
+- Høj Cohesion, Discipline og Composure gør formationen hurtigere og mere stabil.
+- Lav Morale/Cohesion, flank surprise eller meget kort cavalry warning distance øger risikoen for mislykket/ufuldstændig square.
+- Et færdigt, steady square skal være meget svært og dyrt at charge frontalt med cavalry/dragoner.
+- Square reducerer mobility kraftigt og gør regimentet mindre fleksibelt mod infantry fire/manoeuvre.
+- Square præsenterer et tæt mål og er derfor mere sårbart over for artillery og koncentreret infantry fire end en normal line med samme situation.
+- Square må ikke give 360° fuld-strength volley. Firing eligibility fordeles mellem square-siderne efter observerede targets og frontage.
+- Når cavalry-truslen falder, skal officer/player kunne **REFORM LINE** eller anden relevant formation; reform tager også tid.
+
+Officer AI må ikke reagere på ordet "cavalry" alene. Den skal bruge en dynamisk cavalry-threat score baseret på blandt andet:
+
+- om mounted enemy faktisk charger/accelererer mod enheden,
+- distance og estimated time-to-contact,
+- approach angle (front/flank/rear),
+- enemy mounted strength/cohesion,
+- eget terrain og obstacles,
+- støtte fra nabo-infanteri/artilleri,
+- eget Morale/Cohesion,
+- Officer Tactical Skill, Initiative, Discipline og Composure,
+- konkurrerende threats, især nært artillery/infantry fire.
+
+Eksempel: en lille cavalry-enhed 200 m væk skal normalt ikke få et regiment til at forlade en god firing line. Et hurtigt mounted charge på kort afstand mod en eksponeret flank skal derimod kunne udløse FORM SQUARE straks, hvis officerens observation/reaction er god nok.
+
 ## B-247 — Terrain restrictions
 
 **BESLUTTET.** Cavalry mobility og charge quality påvirkes kraftigt af:
@@ -139,6 +172,11 @@ Senere prototype skal mindst verificere:
 8. Woods/fences/ditches reducerer mounted maneuver/charge effectiveness.
 9. Cavalry kan true/cut supply/courier routes.
 10. Officer AI kan vælge mellem screen/recon/hold/charge/pursuit/dismount efter mission og officer stats.
+11. Infantry kan manuelt FORM SQUARE og senere REFORM LINE.
+12. Officer AI kan vælge FORM SQUARE ved en konkret høj mounted-charge threat, men undgår unødvendig square mod lav/fjern cavalry threat.
+13. Et steady square reducerer cavalry charge success markant, mens et sent/ufuldstændigt square kan brydes.
+14. Square har reel trade-off: lav mobility og større vulnerability mod artillery/concentrated fire.
+15. Square-fire fordeles på relevante sider og må ikke fungere som 360° full-strength volley.
 
 ## Historical research gate
 
