@@ -12,6 +12,7 @@ Scenario: Danish test regiments are defenders; Prussian test regiments are attac
 Battlefield: doubled from 180x120 to 360x240 with expanded camera bounds and greater starting separation
 Fire geometry: directional 120-degree forward fire fan follows regiment facing; no 360-degree firing ring
 Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
+Range fan visibility: Close/Medium arcs and outer Long fan are terrain-following, unlit, thicker and higher-contrast so no side disappears into uneven ground
 Fire policy: HOLD / CLOSE / MEDIUM / LONG determines when a regiment may open fire
 Accuracy: continuous distance curve; closer targets are progressively easier to hit with no hard accuracy jump at range-band boundaries
 Fire eligibility MVP: target must be inside selected fire-policy range and inside the forward fire arc
