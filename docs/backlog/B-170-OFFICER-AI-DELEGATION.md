@@ -2,7 +2,7 @@
 
 **Status: BESLUTTET / AKTIV IMPLEMENTERING**  
 **Designbaseline: v00.02.08**  
-**Target prototype: P0A v00.00.09 TEST**
+**Target prototype: P0A v00.00.09 TACTICAL COMMAND TEST**
 
 Dette supplement fastlægger spillerens mulighed for at delegere styringen af egne formationer til deres officerer. Systemet bygger oven på commander stats, personality, autonomy, order delay, fog of war og hierarchical AI.
 
@@ -10,16 +10,16 @@ Fjendens formationer bruger samme officerbaserede decision core. Difficulty ligg
 
 ## B-170 — AI Unit ON/OFF
 
-**BESLUTTET / AKTIV v00.00.09.** En valgt formation får en tydelig kommando:
+**BESLUTTET / IMPLEMENTERET v00.00.09 TEST.** En valgt formation har en tydelig kommando:
 
 `AI UNIT: OFF / ON`
 
-- **OFF** = spilleren vælger selv formationens taktiske handlinger. Officeren påvirker senere execution quality, reaction time, cohesion, morale og ordreopfattelse, men vælger ikke nye lokale tasks.
+- **OFF** = spilleren vælger selv formationens taktiske handlinger.
 - **ON** = den lokale officer fører formationen inden for mission, commander intent og constraints.
-- Toggle-state skal være synlig i battle UI.
+- Toggle-state er synlig i battle UI.
 - AI ON er delegation, ikke en gameplay-bonus.
 
-I v00.00.09 toggles valgte danske regimenter med `A`.
+I v00.00.09 toggles valgte danske regimenter med **`I`**. `A` er reserveret til WASD-kamera og bruges ikke som AI-toggle.
 
 ## B-171 — Missionen er AI'ens ramme
 
@@ -32,6 +32,8 @@ Første runtime missions:
 - MoveToPoint.
 - AttackTarget.
 - AttackNearest.
+
+Højreklik går i v00.00.09 direkte til Regiment, når AI er OFF, og gennem `OfficerAIController`, når AI er ON.
 
 Senere udvides dette med Defend line, Support formation, Screen, Guard artillery/supply, Reserve, Delay, Withdraw og Pursue samt mission constraints som `do not leave area`, `conserve ammunition` eller `do not pursue`.
 
@@ -54,7 +56,7 @@ Officer Experience er separat baggrundsværdi.
 
 **Composure/Nerve** beskriver officerens egen evne til at bevare overblik under pres og må ikke blandes sammen med Leadership, Inspiration eller regimentets morale. I v00.00.09 påvirker den stress-relateret reaction delay og decision noise.
 
-To officerer med samme mission kan derfor reagere forskelligt. En initiativrig/aggressiv officer kan søge tættere engagement eller afbryde en movement mission for en lokal trussel, mens en mere disciplineret/forsigtig officer kan holde missionen og området længere.
+To officerer med samme mission kan derfor reagere forskelligt.
 
 ## B-173 — AI bruger kun tilgængelig information
 
@@ -73,33 +75,54 @@ v00.00.09 bruger endnu prototype-slagmarkens simple target visibility og er derf
 
 ## B-174 — AI reaction set
 
-**PLANLAGT / MVP DELVIST IMPLEMENTERET.** Når AI Unit er ON kan officerens første controller:
+**BESLUTTET / MVP DELVIST IMPLEMENTERET.** Når AI Unit er ON kan officerens controller:
 
 - move/advance,
 - hold/stabilise,
 - vælge/holde attack target,
 - vælge approach/engagement distance,
 - skifte line/column i simple situationer,
-- overholde eller lokalt afvige fra movement mission ud fra Discipline/Aggressiveness.
+- overholde eller lokalt afvige fra movement mission ud fra Discipline/effective Aggressiveness,
+- tage commander doctrine og aggression intent med som bias,
+- respektere commander fire policy som hard constraint.
 
-Senere reaction set omfatter cover, prone, skirmishers, fire discipline, reserve support, rally, withdrawal, artillery fire-control og cavalry/dragoon actions.
+Senere reaction set omfatter cover, prone, skirmishers, reserve support, rally, withdrawal, artillery fire-control og cavalry/dragoon actions.
 
-## B-175 — Autonomy begrænser AI
+## B-175 — Doctrine, ordre-intent og officerens egen personlighed
 
-**BESLUTTET.** `AI Unit ON/OFF` og `Autonomy` er separate systemer.
+**BESLUTTET / IMPLEMENTERET v00.00.09 TEST.** Selected-unit command-menuen giver tre doctrine-valg:
 
-- AI OFF: direkte spillerkontrol.
-- AI ON + Strict: konservativ mission execution.
-- AI ON + Normal: lokale justeringer tilladt.
-- AI ON + Independent: betydelig metode-/timingfrihed inden for intent.
+- `DEFENSIVE`
+- `BALANCED`
+- `OFFENSIVE`
 
-Autonomy er endnu ikke eksponeret som runtime selector i v00.00.09 MVP; første build beviser shared officer decision core før dette lag kobles på.
+Desuden har spilleren en 0–100 ordre-slider:
+
+`forsigtig 0  <---->  100 aggressiv`
+
+Dette er **commander intent**, ikke en direkte omskrivning af officerprofilen.
+
+Før doctrine-bias beregnes første MVP effective aggressiveness som:
+
+`Officer Aggressiveness * 0.70 + Commander OrderAggressiveness * 0.30`
+
+Doctrine giver derefter bounded bias:
+
+- Defensive: `-12`
+- Balanced: `0`
+- Offensive: `+12`
+
+Officerens egne stats er dermed fortsat den dominerende adfærdskilde. To officerer kan udføre den samme Offensive ordre forskelligt.
+
+Danmarks testregimenter starter som **Defensive / OrderAgg 35**, når AI aktiveres. Preussiske angribere starter **Offensive / OrderAgg 65**.
+
+Autonomy `Strict/Normal/Independent` er fortsat et separat senere system og må ikke blandes sammen med doctrine eller aggression intent.
 
 ## B-176 — Player override og order delay
 
 **BESLUTTET.** Spilleren kan slå AI Unit OFF og udstede nye ordrer. Toggle må på sigt ikke teleportere information eller ophæve command friction.
 
-v00.00.09 bruger immediate prototype-control. En allerede igangsat order kan fortsætte, indtil spilleren giver en ny direkte ordre. Senere order-delay/courier-system håndterer realistisk kontrolskift.
+v00.00.09 bruger immediate prototype-control. Senere order-delay/courier-system håndterer realistisk kontrolskift.
 
 ## B-177 — Hierarkisk delegation
 
@@ -115,38 +138,70 @@ Første reason/task eksempler:
 
 - `Moving to assigned mission point`
 - `Discipline keeps unit on assigned movement`
-- `Aggressive local reaction during movement`
-- `Holding assigned local area`
+- `Attacker assessing nearest enemy`
+- `Holding assigned defensive area`
 - `Morale pressure - officer pauses advance`
-- `Preferred engagement range reached`
+- `closing to officer/order preferred range`
+- `preferred engagement range reached`
 
-Console telemetry bruger `AI-DIAG|...` med unit, team, officer, AI state, difficulty, mission, task og reason.
+Console telemetry bruger `AI-DIAG|...` med:
+
+- unit,
+- team,
+- officer,
+- AI state,
+- difficulty,
+- doctrine,
+- OrderAgg,
+- EffectiveAgg,
+- fire policy,
+- mission,
+- task,
+- reason.
 
 ## B-179 — Battle UI
 
-**AKTIV v00.00.09 QA.** Test-HUD viser:
+**IMPLEMENTERET v00.00.09 TEST.** Ved valg af danske regimenter vises en command-menu med:
+
+`AI UNIT | DOCTRINE | ORDER AGGRESSION | FIRE POLICY`
+
+Menuen indeholder konkret:
 
 - AI ON/OFF,
-- QA officer,
-- Tactical Skill,
-- Initiative,
-- Composure,
-- current task,
-- reason code.
+- Defensive/Balanced/Offensive,
+- 0–100 aggression-intent slider,
+- HOLD/CLOSE/MEDIUM/LONG fire policy,
+- officer compact profile,
+- current task.
 
-Et separat selected-unit AI-panel viser den kompakte fulde officerprofil. Den endelige kontekstuelle bundmenu kommer senere og skal mindst have:
+Klik på menuen isoleres fra battlefield input, så UI-click ikke samtidig bliver selection/move/attack.
 
-`AI UNIT [OFF/ON] | AUTONOMY | MISSION | ORDRESTATUS`
+Den fremtidige hierarkiske menu udvides senere med bl.a. `AUTONOMY | MISSION | ORDRESTATUS | COURIER STATUS`.
 
 ## Designværn
 
 - AI ON må ikke give information, formationen ikke burde have.
 - Officerstats er AI-/command-inputs, ikke skjulte generiske combat buffs.
 - Difficulty må ikke omskrive officerens historiske profil.
+- Commander doctrine/order må bias adfærd, men ikke erstatte officerens personality/stat-model.
 - Dårlige/stressede officerer må kunne reagere suboptimalt på en forklarlig måde.
 - Composure beskriver officerens egen stressstabilitet; regimentets morale/cohesion er separate states.
 - En spiller skal senere kunne føre alt selv, delegere dele eller fungere primært som øverstkommanderende.
 
-## Implementeringsprioritet
+## Implementeringsstatus v00.00.09
 
-P0A v00.00.09 implementerer den første vertikale slice med AI UNIT ON/OFF, otte QA-officerstats + separat Experience, shared decision core for Danmark/Preussen, Easy/Normal/Hard, UI-state/reason codes og telemetry. Fuld brigadehierarki, courier-system og avancerede combat-actions kommer efter første AI-gate.
+P0A v00.00.09 har nu:
+
+- AI UNIT ON/OFF på `I`,
+- OfficerProfile til alle fire regimenter,
+- shared decision core for Danmark/Preussen,
+- otte QA-officerstats + separat Experience,
+- Defensive/Balanced/Offensive doctrine,
+- commander 0–100 aggression intent,
+- fire-policy constraint,
+- preferred-range close movement,
+- attacker/defender testscenario,
+- Easy/Normal/Hard,
+- UI-state/reason codes og telemetry.
+
+Fuld brigadehierarki, courier-system, fog-of-war og avancerede combat-actions kommer efter denne gate.
