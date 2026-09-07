@@ -20,10 +20,13 @@ public sealed class PlayerCommander : MonoBehaviour
                 return;
         }
 
-        if (Input.GetMouseButtonDown(0))
+        bool pointerOverSimulationControls = BattleManager.Instance != null &&
+                                             BattleManager.Instance.IsPointerOverSimulationControls(Input.mousePosition);
+
+        if (!pointerOverSimulationControls && Input.GetMouseButtonDown(0))
             HandleSelection();
 
-        if (Input.GetMouseButtonDown(1))
+        if (!pointerOverSimulationControls && Input.GetMouseButtonDown(1))
             HandleOrder();
 
         if (Input.GetKeyDown(KeyCode.H))
