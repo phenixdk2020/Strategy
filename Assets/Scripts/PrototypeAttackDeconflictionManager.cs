@@ -72,8 +72,8 @@ public sealed class PrototypeAttackDeconflictionManager : MonoBehaviour
 
             float distance = PlanarDistance(regiment.transform.position, target.transform.position);
             float engagementThreshold = Mathf.Max(
-                regiment.EffectiveRange * 1.15f,
-                regiment.GetFireTriggerRange() + 12f);
+                regiment.EffectiveRange * 1.30f,
+                regiment.GetFireTriggerRange() + 18f);
 
             if (!state.EnteredEngagement && distance <= engagementThreshold)
             {
@@ -111,8 +111,6 @@ public sealed class PrototypeAttackDeconflictionManager : MonoBehaviour
             if (timeCompare != 0)
                 return timeCompare;
 
-            // Unity 6.6 marks Object.GetInstanceID() obsolete. RegimentName is stable
-            // and deterministic for the QA OOB, so it is a safer tie-breaker here.
             return string.CompareOrdinal(a.RegimentName, b.RegimentName);
         });
 
@@ -121,111 +119,166 @@ public sealed class PrototypeAttackDeconflictionManager : MonoBehaviour
         primaryState.HasSlot = false;
         primaryState.SlotIndex = 0;
 
-        Vector3 baseRadial = primary.transform.position - target.transform.position;
-        baseRadial.y = 0f;
+        Vector3 radial = primary.transform.position - target.transform.position;
+        radial.y = 0f;
 
-        if (baseRadial.sqrMagnitude < 0.01f)
+        if (radial.sqrMagnitude < 0.01f)
         {
-            baseRadial = -target.transform.forward;
-            baseRadial.y = 0f;
+            radial = -target.transform.forward;
+            radial.y = 0f;
         }
 
-        if (baseRadial.sqrMagnitude < 0.01f)
-            baseRadial = Vector3.left;
+        if (radial.sqrMagnitude < 0.01f)
+            radial = Vector3.left;
 
-        baseRadial.Normalize();
+        radial.Normalize();
+        Vector3 frontageDirection = Vector3.Cross(Vector3.up, radial).normalized;
+
+        float primaryRadius = Mathf.Clamp(
+            PlanarDistance(primary.transform.position, target.transform.position),
+            GetAttackSlotRadius(primary) * 0.88f,
+            GetAttackSlotRadius(primary) * 1.12f);
+
+        HashSet<int> reservedSlots = new HashSet<int>();
+        reservedSlots.Add(0);
 
         for (int i = 1; i < attackers.Count; i++)
         {
             Regiment attacker = attackers[i];
             EngagementState state = states[attacker];
 
-            bool conflict = state.HasSlot || HasFrontageConflict(attacker, attackers, i, target);
-            if (!conflict)
-                continue;
+            int slotIndex = ChooseBestSlot(
+                attacker,
+                target,
+                radial,
+                frontageDirection,
+                primaryRadius,
+                reservedSlots);
 
-            if (!state.HasSlot || state.SlotIndex != i)
+            reservedSlots.Add(slotIndex);
+
+            if (!state.HasSlot || state.SlotIndex != slotIndex)
             {
                 state.HasSlot = true;
-                state.SlotIndex = i;
+                state.SlotIndex = slotIndex;
 
                 Debug.Log(string.Format(
-                    "AI-SPACING|Unit={0}|Target={1}|Role=Secondary|Slot={2}|Reason=Friendly attack frontage conflict",
+                    "AI-SPACING|Unit={0}|Target={1}|Role=Secondary|Slot={2}|Reason=Shared target frontage allocation",
                     attacker.RegimentName,
                     target.RegimentName,
-                    i));
+                    slotIndex));
             }
 
-            float slotAngle = GetSlotAngleDegrees(i);
-            Vector3 radial = Quaternion.Euler(0f, slotAngle, 0f) * baseRadial;
-            float radius = GetAttackSlotRadius(attacker);
+            Vector3 slot = BuildSlotPosition(
+                target,
+                radial,
+                frontageDirection,
+                primaryRadius,
+                slotIndex);
 
-            Vector3 slot = target.transform.position + radial.normalized * radius;
-            slot.x = Mathf.Clamp(slot.x, -170f, 170f);
-            slot.z = Mathf.Clamp(slot.z, -110f, 110f);
+            Vector3 safeSlot;
+            if (PrototypeBattlefieldNavigationManager.TryFindNearestValidDestination(
+                slot,
+                RegimentFormation.Line,
+                out safeSlot))
+            {
+                slot = safeSlot;
+            }
+
             slot.y = PrototypeBootstrap.SampleGroundHeight(slot.x, slot.z) + 0.10f;
 
             float distanceToSlot = PlanarDistance(attacker.transform.position, slot);
-
             attacker.SetFormation(RegimentFormation.Line);
 
             if (distanceToSlot > SlotArrivalDistance)
             {
-                // This manager executes after OfficerAIController and PlayerCommander.
-                // It therefore resolves only the final local attack position for an
-                // AI-controlled attack and does not interfere with explicit waypoint missions.
                 attacker.OrderMove(slot);
             }
             else
             {
-                attacker.OrderAttack(target);
+                // Hold the allocated frontage instead of issuing OrderAttack(target),
+                // because OrderAttack would pull every secondary regiment back toward
+                // the target centre and recreate the overlap we are trying to avoid.
+                attacker.OrderHold();
+                FaceTarget(attacker, target);
             }
         }
     }
 
-    private bool HasFrontageConflict(
+    private static int ChooseBestSlot(
         Regiment attacker,
-        List<Regiment> orderedAttackers,
-        int attackerIndex,
-        Regiment target)
+        Regiment target,
+        Vector3 radial,
+        Vector3 frontageDirection,
+        float radius,
+        HashSet<int> reservedSlots)
     {
-        Vector3 attackerRadial = attacker.transform.position - target.transform.position;
-        attackerRadial.y = 0f;
+        int bestSlot = 1;
+        float bestCost = float.PositiveInfinity;
 
-        for (int i = 0; i < attackerIndex; i++)
+        for (int magnitude = 1; magnitude <= 4; magnitude++)
         {
-            Regiment earlier = orderedAttackers[i];
-            if (earlier == null)
-                continue;
+            int[] candidates = { magnitude, -magnitude };
 
-            float friendlyDistance =
-                PlanarDistance(attacker.transform.position, earlier.transform.position);
-
-            if (friendlyDistance < MinimumFriendlySeparation)
-                return true;
-
-            Vector3 earlierRadial = earlier.transform.position - target.transform.position;
-            earlierRadial.y = 0f;
-
-            if (attackerRadial.sqrMagnitude > 0.01f && earlierRadial.sqrMagnitude > 0.01f)
+            foreach (int candidate in candidates)
             {
-                float angularSeparation = Vector3.Angle(
-                    attackerRadial.normalized,
-                    earlierRadial.normalized);
+                if (reservedSlots.Contains(candidate))
+                    continue;
 
-                if (angularSeparation < 24f)
-                    return true;
+                Vector3 slot = BuildSlotPosition(
+                    target,
+                    radial,
+                    frontageDirection,
+                    radius,
+                    candidate);
+
+                float travelCost = PlanarDistance(attacker.transform.position, slot);
+
+                // A blocked destination is still possible because navigation can route
+                // around obstacles, but prefer a directly valid frontage slot when one exists.
+                if (PrototypeBattlefieldNavigationManager.IsBlockedDestination(
+                    slot,
+                    RegimentFormation.Line))
+                {
+                    travelCost += 60f;
+                }
+
+                if (travelCost < bestCost)
+                {
+                    bestCost = travelCost;
+                    bestSlot = candidate;
+                }
             }
         }
 
-        return false;
+        return bestSlot;
     }
 
-    private static float GetSlotAngleDegrees(int slotIndex)
+    private static Vector3 BuildSlotPosition(
+        Regiment target,
+        Vector3 radial,
+        Vector3 frontageDirection,
+        float radius,
+        int slotIndex)
     {
-        int pair = (slotIndex + 1) / 2;
-        float angle = 34f * pair;
-        return slotIndex % 2 == 1 ? angle : -angle;
+        float lateralOffset = slotIndex * MinimumFriendlySeparation;
+        Vector3 slot = target.transform.position + radial * radius + frontageDirection * lateralOffset;
+        slot.x = Mathf.Clamp(slot.x, -170f, 170f);
+        slot.z = Mathf.Clamp(slot.z, -110f, 110f);
+        return slot;
+    }
+
+    private static void FaceTarget(Regiment attacker, Regiment target)
+    {
+        if (attacker == null || target == null)
+            return;
+
+        Vector3 facing = target.transform.position - attacker.transform.position;
+        facing.y = 0f;
+        if (facing.sqrMagnitude < 0.01f)
+            return;
+
+        attacker.transform.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
     }
 
     private static float GetAttackSlotRadius(Regiment attacker)
