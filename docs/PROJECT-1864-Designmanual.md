@@ -33,9 +33,10 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Backlog B-190–B-199 — officerstats, Composure/Nerve og AI decision model](backlog/B-190-OFFICER-STATS-MODEL.md)
 - [Backlog B-200–B-209 — Close/Medium/Long range bands, HQ hierarchy, semantic zoom og couriers](backlog/B-200-COMMAND-VISUALS-RANGE-HQ-COURIERS.md)
 - [Backlog B-210–B-219 — fire eligibility, skudkegle og højere formation templates](backlog/B-210-FIRE-ELIGIBILITY-AND-HIGHER-FORMATIONS.md)
-- [Backlog B-220–B-229 — Play/Pause/x2/x5/x20, simulationstid og klokke](backlog/B-220-SIMULATION-TIME-CONTROLS.md)
+- [Backlog B-220–B-229 — Pause/x0,5/x1/x2/x5/x20, simulationstid og klokke](backlog/B-220-SIMULATION-TIME-CONTROLS.md)
 - [Backlog B-230–B-239 — battle supply, skumring/nat og overnight resupply](backlog/B-230-BATTLE-SUPPLY-NIGHT-OPERATIONS.md)
 - [Backlog B-240–B-249 — udvidet kavaleri- og dragonmodel](backlog/B-240-CAVALRY-DRAGOONS-EXPANDED.md)
+- [Backlog B-250–B-259 — fog of war, scouts og HQ command effectiveness](backlog/B-250-FOG-SCOUTS-COMMAND-EFFECTIVENESS.md)
 
 ## v00.00.09 Officer AI — implementeringsstatus
 
@@ -47,13 +48,15 @@ Easy/Normal/Hard påvirker i første prototype kun den computerstyrede preussisk
 
 Alle officerprofiler i v00.00.09 er QA-data og er ikke historiske ratings. Historiske officerdata skal senere komme fra kildebelagt OOB/officer-database.
 
-v00.00.09 har desuden en fælles simulation time-control bar med **PLAY / PAUSE / x2 / x5 / x20** og synligt dato/klokkeslæt. Pause stopper AI, movement, reload/fire progression og battle clock samlet, mens kamera/UI fortsat er brugbart.
+v00.00.09 har desuden en fælles simulation time-control bar med **PAUSE / x0,5 / PLAY x1 / x2 / x5 / x20** og synligt dato/klokkeslæt. x0,5 er slow tactical mode til ordreafgivelse og observation under pres. Pause stopper AI, movement, reload/fire progression og battle clock samlet, mens kamera/UI fortsat er brugbart.
 
 ## Command-visualisation efter v00.00.09
 
 Efter den første Officer AI-gate er næste command-UI-retning fastlagt: våbenrækkevidde opdeles visuelt i **Close / Medium / Long** med stiplede grænser, mens den underliggende accuracy fortsat er en kontinuerlig kurve. Højere formationer får fysiske HQ-entities; valg af et HQ viser relationer til direkte underenheder. Ved udzoomning skifter enheder via semantic zoom fra 3D-formationer til forenklet formation display og derefter NATO/APP-6-lignende taktiske symboler uden at ændre simulation state.
 
-Ordrer transporteres senere gennem et egentligt courier/order-lifecycle-system. En aktiv ordre kan vises som en stiplet route fra afsender-HQ til modtager med en bevægelig courier-markør, hvis position svarer til faktisk simulation progress. Command relation lines og konkrete order routes er to separate overlays, og de vises primært ved valgt HQ/enhed eller aktiv Command Overlay for at undgå visuelt rod.
+Ordrer transporteres senere gennem et egentligt courier/order-lifecycle-system. En aktiv ordre kan vises som en stiplet route fra afsender-HQ til modtager med en bevægelig courier-markør, hvis position svarer til faktisk simulation progress. Command relationship lines og konkrete order routes er to separate overlays, og de vises primært ved valgt HQ/enhed eller aktiv Command Overlay for at undgå visuelt rod.
+
+Courier-interception håndteres primært som **område-/risikomodel**, ikke som manuel jagt på en enkelt lille rytter. Enemy presence, cavalry/scouts, screening, roads, terrain, mørke og command quality kan føre til reroute, delay, searching eller i sjældnere tilfælde lost/intercepted. Fjendens couriers er selv underlagt fog of war, så courier-markører ikke bliver en skjult radar til enemy HQ.
 
 ## Fire eligibility og højere formationer efter v00.00.09
 
@@ -81,9 +84,23 @@ Charge-resultater skal afhænge af target formation/state, facing, terrain, surp
 
 Cavalry raids kobles direkte til supply- og command-systemet: en cavalry formation kan true eller skære en supply/courier route uden at erobre hele regionen. Det kan dermed forhindre overnight resupply og øge command delay.
 
+## Fog of war, scouts og command effectiveness
+
+Fog of war er en **knowledge-state model**, ikke blot skjult grafik. En fjendtlig formation kan være `Unknown`, `Suspected`, `Contact`, `Identified`, `Fresh observation` eller `Stale`. Når kontakt mistes, kan last known position blive stående med faldende confidence i stedet for perfekt live-tracking.
+
+Reconnaissance kommer fra faktiske kilder som cavalry patrols, dragoner, skirmishers/scout detachments, line units, HQ, observation points og senere civilians/telegraph/naval reports. Spotting og identification påvirkes bl.a. af afstand, terrain, vegetation, elevation, daylight/night, weather, smoke, target size/movement, firing signature, scout quality og enemy screening.
+
+Information skal **rapporteres gennem command-nettet**. En scout kan derfor se en fjende før Division HQ ved det. Reports kan forsinkes eller gå tabt efter samme grundprincipper som couriers/orders. En lokal Officer AI kan reagere på frisk lokal information, mens overordnet HQ stadig arbejder med ældre knowledge state.
+
+HQ får et visuelt **command effectiveness envelope**, men ikke en hård magisk radius. Første niveauer er `Command Core -> Supported -> Extended -> Detached -> Isolated`. Command effectiveness falder gradvist med afstand, terrain og communication quality og følger den hierarkiske chain `Division HQ -> Brigade HQ -> Regiment/Battalion`.
+
+Dårlig command connectivity påvirker primært order delay, acknowledgement, reporting, coordination, reserve/support reaction og hvor meget formationen må stole på lokal Initiative/Tactical Skill/Composure. Den giver **ikke** en vilkårlig direkte accuracy- eller damage-penalty. Roads og gode courier routes kan senere udvide den effektive command reach, mens woods, rivers uden crossings, svært terræn og enemy interdiction kan skabe svage sektorer i envelope-visningen.
+
+Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan beskytte HQ/courier/supply approaches, opdage enemy scouts tidligere og reducere modstanderens observation confidence uden nødvendigvis at skulle destruere hver enkelt scout fysisk.
+
 ## Versionshistorik
 
-- **v00.02.08 / P0A v00.00.09 work branch** — Officer AI er rykket frem som næste gameplay-gate. Første implementation har shared `OfficerAIController`, `AI UNIT ON/OFF`, missions for defend/hold/move/attack, otte kerne-officerstats + separat Experience, Composure-baseret stressreaktion, Easy/Normal/Hard uden combat cheats, reason codes og `AI-DIAG` telemetry. v00.00.09 har desuden Play/Pause/x2/x5/x20 og battle clock som fælles simulation controls. Den eksisterende v00.00.08 combat/reload/feedback/casualty-visual skal fortsat bestå regressionstesten. Samme designbaseline fastlægger efterfølgende Close/Medium/Long range bands, fysiske HQ-entities, semantic zoom, courier/order progress, formation-segmenteret fire eligibility, højere formation templates, fysisk battle resupply, night/overnight logistics og en udvidet cavalry/dragoon model. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
+- **v00.02.08 / P0A v00.00.09 work branch** — Officer AI er rykket frem som næste gameplay-gate. Første implementation har shared `OfficerAIController`, `AI UNIT ON/OFF`, missions for defend/hold/move/attack, otte kerne-officerstats + separat Experience, Composure-baseret stressreaktion, Easy/Normal/Hard uden combat cheats, reason codes og `AI-DIAG` telemetry. v00.00.09 har desuden Pause/x0,5/x1/x2/x5/x20 og battle clock som fælles simulation controls. Den eksisterende v00.00.08 combat/reload/feedback/casualty-visual skal fortsat bestå regressionstesten. Samme designbaseline fastlægger efterfølgende Close/Medium/Long range bands, fysiske HQ-entities, semantic zoom, courier/order progress og interception, formation-segmenteret fire eligibility, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model samt fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
 - **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er terminalt pauset indtil restart, RTS-kamera timeScale-uafhængigt og defensive guards forbedret.
 - **v00.02.06** — Unity compile-gate: `CS0136` rettet, obsolete object lookup erstattet og unused state fjernet.
