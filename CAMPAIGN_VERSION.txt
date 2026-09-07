@@ -1,0 +1,11 @@
+PROJECT 1864 - Campaign Layer
+Campaign version: v00.00.11
+Build status: WORK
+Build name: CAMPAIGN MAP 00.00.11
+Base branch: work/v00.00.10-campaign-map-nodes50
+Tactical baseline: v00.00.09 TEST
+Campaign node target: 50
+Map coverage: Denmark + Sweden + Norway + Finland + Germany
+Purpose: next campaign iteration after the 50-node v00.00.10 map expansion
+Isolation rule: tactical AI is not changed by this campaign branch
+QA state: requires Unity compile and CampaignMap runtime acceptance before promotion
