@@ -1,46 +1,59 @@
 # PROJECT 1864 — Backlog B-200–B-209: Range bands, HQ, semantic zoom og couriers
 
-**Status: BESLUTTET / PLANLAGT**  
+**Status: DELVIST IMPLEMENTERET / RESTEN PLANLAGT**  
 **Designbaseline: v00.02.08**  
-**Implementering: efter første P0A v00.00.09 Officer AI-gate**
+**Aktuel prototype: P0A v00.00.09 TACTICAL COMMAND TEST**
 
-Dette supplement samler fire tæt forbundne UI-/command-systemer: visuel opdeling af våbenrækkevidde, fysiske HQ-enheder, hierarkiske command-links, semantic zoom og synlige budbringere/ordrer. De skal bygge oven på officer-AI, order lifecycle og fog-of-war i stedet for at være kosmetiske overlays uden simulation bag sig.
+Dette supplement samler tæt forbundne UI-/command-systemer: visuel opdeling af våbenrækkevidde, fysiske HQ-enheder, hierarkiske command-links, semantic zoom og synlige budbringere/ordrer. Range/fire-delen er nu delvist implementeret i v00.00.09; HQ/courier/semantic-zoom-delene følger efter den første runtime-gate.
 
 ## B-200 — Close / Medium / Long range bands
 
-**BESLUTTET.** Når spilleren viser en enheds skudfelt, opdeles det visuelt i tre bands:
+**BESLUTTET / IMPLEMENTERET FØRSTE MVP v00.00.09 TEST.** Når spilleren viser en infanterienheds skudfelt, vises tre fremadrettede fan-/sektorgrænser:
 
-- **Close**: ca. 0–50 % af våbnets `EffectiveRange`.
-- **Medium**: ca. 50–100 % af `EffectiveRange`.
-- **Long**: fra `EffectiveRange` til `MaximumRange`.
+- **Close**: 0–50 % af våbnets `EffectiveRange`.
+- **Medium**: op til `EffectiveRange`.
+- **Long**: op til `MaximumRange`.
 
-De præcise grænser er data pr. weapon profile og kan senere justeres historisk. Ovenstående er første designbaseline.
+Første v00.00.09 implementation bruger en **120° samlet forward fire fan (±60°)**, der følger regimentets facing. Fanen starter ved formationens frontage og åbner udad, så visualet ikke reducerer hele regimentet til ét center-ray, men stadig undgår den tidligere urealistiske 360° range-ring.
 
-UI:
+UI/runtime i første MVP:
 
-- Range overlay følger terrænet så vidt praktisk muligt.
-- De interne grænser vises som tynde stiplede/dashed linjer.
-- Den yderste `MaximumRange`-grænse skal være tydeligere end de interne bands.
-- Close / Medium / Long kan vises med diskrete labels ved valgt enhed, men må ikke fylde hele slagmarken med tekst.
-- Ved multi-select vises som standard kun den aktive/fokuserede enheds detaljerede bands for at undgå visuel støj.
+- `T` viser/skjuler range-fan.
+- Close/Medium/Long vises som tre nested fan boundaries.
+- Long/MaximumRange er den yderste grænse.
+- Target skal være inden for den valgte fire policy **og** inde i forward fire arc for at kunne beskydes.
+- Senere skal de interne grænser blive mere diskret dashed/stippled og terræn-/LOS-tilpassede.
+- Ved multi-select skal detailed range visual senere begrænses til focused unit for clutter control.
+
+### Fire policy
+
+**IMPLEMENTERET v00.00.09 TEST.** Commander kan vælge:
+
+- `HOLD` — ingen automatisk ild.
+- `CLOSE` — åbn ild ved Close range.
+- `MEDIUM` — åbn ild ved EffectiveRange.
+- `LONG` — åbn ild helt ud til MaximumRange.
+
+Fire policy er en ordre/constraint og må ikke automatisk ændre våbnets accuracy. Officer AI må vælge approach og preferred engagement range, men må ikke åbne ild tidligere end den valgte fire policy tillader.
 
 ## B-201 — Accuracy er kontinuerlig, bands er UI
 
-**BESLUTTET.** Close/Medium/Long er ikke tre hårde hit-chance-trin. Den underliggende hit probability skal ændre sig kontinuerligt med afstand.
+**BESLUTTET / IMPLEMENTERET FØRSTE MVP v00.00.09 TEST.** Close/Medium/Long er ikke tre hårde hit-chance-trin. Den underliggende hit probability ændrer sig kontinuerligt med afstand.
 
 Det betyder:
 
 - Close giver typisk den højeste hit probability.
 - Medium er våbnets normale effektive kampafstand.
 - Long er markant mindre sikker, men stadig mulig op til `MaximumRange`.
-- Morale, cohesion, training, experience, stance, target density, cover, smoke, weather og weapon quality kan senere modificere samme continuous curve.
-- Der må ikke opstå kunstige spring i accuracy, blot fordi målet krydser en stiplet UI-linje.
+- Der opstår ikke et kunstigt accuracy-jump, når et mål krydser en range-band boundary.
+- Morale og cohesion påvirker fortsat volley quality.
+- Training/experience, stance, target density, cover, smoke, weather og weapon quality kan senere modificere samme continuous curve.
 
-Første prototype kan bruge simple piecewise/lerp-kurver, men arkitekturen skal være en data-driven `AccuracyByRange`-curve pr. våbenprofil.
+v00.00.09 bruger en første bounded continuous distance-kurve. Senere flyttes den til en data-driven `AccuracyByRange`-curve pr. weapon profile.
 
 ## B-202 — HQ som fysisk command-entity
 
-**BESLUTTET.** Højere formationsniveauer som brigade, division, korps og army får et egentligt HQ på kortet.
+**BESLUTTET / PLANLAGT.** Højere formationsniveauer som brigade, division, korps og army får et egentligt HQ på kortet.
 
 Et HQ repræsenterer mindst:
 
@@ -57,7 +70,7 @@ HQ-positionen er simulation. Hvis HQ flyttes langt væk, afskæres, angribes ell
 
 ## B-203 — Klik på HQ viser kommandokæden
 
-**BESLUTTET.** Når et HQ vælges, vises command-links til dets direkte underenheder.
+**BESLUTTET / PLANLAGT.** Når et HQ vælges, vises command-links til dets direkte underenheder.
 
 Standardvisning:
 
@@ -76,7 +89,7 @@ Command relationship og en aktiv courier/order må ikke bruge samme visuelle spr
 
 ## B-204 — Semantic zoom og NATO/APP-6-lignende symboler
 
-**BESLUTTET.** Enhedsgrafikken skifter med kameraets zoomniveau i stedet for blot at blive mindre og mindre.
+**BESLUTTET / PLANLAGT.** Enhedsgrafikken skifter med kameraets zoomniveau i stedet for blot at blive mindre og mindre.
 
 Foreslået semantic zoom:
 
@@ -85,7 +98,7 @@ Foreslået semantic zoom:
 3. **Lang zoom** — NATO/APP-6-lignende taktiske symboler med unit type, echelon og retning.
 4. **Meget lang strategisk zoom** — formationer kan aggregeres på brigade/division/corps-niveau afhængigt af valgt command layer.
 
-NATO-symbolerne er en moderne **UI-abstraktion**, ikke in-world 1864-grafik. Spilleren kan senere få mulighed for historiske alternative symbolsets.
+NATO-symbolerne er en moderne **UI-abstraktion**, ikke in-world 1864-grafik.
 
 Teknisk krav:
 
@@ -95,7 +108,7 @@ Teknisk krav:
 
 ## B-205 — Courier/order-route visual
 
-**BESLUTTET.** En aktiv ordre skal kunne visualiseres som en stiplet/dashed rute fra afsenderens HQ til modtagende formation/HQ.
+**BESLUTTET / PLANLAGT.** En aktiv ordre skal kunne visualiseres som en stiplet/dashed rute fra afsenderens HQ til modtagende formation/HQ.
 
 På ruten vises en bevægelig markør:
 
@@ -112,7 +125,7 @@ ETA er et estimat; actual delivery afhænger af terræn, vej, movement, vejr, en
 
 ## B-206 — Courier er en simulation entity, men ikke tung soldier-AI
 
-**BESLUTTET.** Budbringeren skal have faktisk progress gennem verden, men må implementeres letvægtsmæssigt.
+**BESLUTTET / PLANLAGT.** Budbringeren skal have faktisk progress gennem verden, men må implementeres letvægtsmæssigt.
 
 Minimum state:
 
@@ -148,11 +161,11 @@ Hvis en eller flere fjendtlige formationer kommer mellem afsender-HQ og modtager
 
 Risikoen påvirkes bl.a. af enemy presence/ZOC, cavalry/scouts, own screening/escort, roads, woods/villages, terrain, daylight/night, distance og Staff/Command quality. **Intercepted** skal være mærkbart, men forholdsvis sjældent, så command-friction føles plausibel uden at blive frustrerende.
 
-Fjendens courier-markører er underlagt fog of war. Spilleren ser ikke automatisk alle enemy couriers; de kan først blive synlige gennem scouts/cavalry/local observation. Dermed må courier-UI ikke fungere som en skjult radar til fjendtlige HQ'er.
+Fjendens courier-markører er underlagt fog of war. Spilleren ser ikke automatisk alle enemy couriers; de kan først blive synlige gennem scouts/cavalry/local observation.
 
 ## B-207 — Command overlay og clutter control
 
-**BESLUTTET.** Command-links og courier routes vises ikke permanent for hele hæren.
+**BESLUTTET / PLANLAGT.** Command-links og courier routes vises ikke permanent for hele hæren.
 
 De vises når mindst én af følgende er sand:
 
@@ -177,28 +190,25 @@ Det skal være muligt at skelne mellem:
 - officeren har forstået/acknowledged,
 - formationen udfører den faktisk.
 
-Det er centralt for HQ-perspektivet: spilleren må ikke automatisk vide, at en modtager allerede handler på ordren.
-
 ## B-209 — Kobling til Officer AI
 
-**BESLUTTET.** Courier/HQ-systemet bliver transportlaget for Officer AI.
+**BESLUTTET / DELVIST IMPLEMENTERET.** v00.00.09 har allerede immediate Officer AI missions, doctrine, commander aggression intent og fire policy. Courier/HQ-systemet bliver senere transportlaget under samme controller.
 
-Når `AI UNIT ON`:
+Når `AI UNIT ON` i den senere command model:
 
 - officeren fortsætter sin nuværende mission og lokale autonomi,
-- en ny spiller-/overordnet ordre ændrer ikke missionen før ordren faktisk er delivered/understood efter command-modellen,
+- en ny spiller-/overordnet ordre ændrer ikke missionen før ordren faktisk er delivered/understood,
 - officerens Staff/Command Skill, Discipline, Initiative og Composure kan påvirke acknowledgement, fortolkning og reaction efter levering.
 
-Når `AI UNIT OFF` i høj realism mode gælder samme transportfriktion: direkte spillerinput repræsenterer en HQ-ordre og må ikke teleporteres. Assistance/arcade settings kan senere reducere eller fjerne denne delay.
+Når `AI UNIT OFF` i høj realism mode gælder samme transportfriktion: direkte spillerinput repræsenterer en HQ-ordre og må ikke teleporteres.
 
-## Prioritet efter v00.00.09
+## Prioritet efter v00.00.09 runtime-gate
 
-Anbefalet rækkefølge efter første Officer AI-gate:
+Range fan, fire policy og første continuous accuracy-by-range er nu flyttet ind i selve v00.00.09 TEST. Efter runtime-gaten er anbefalet rækkefølge derfor:
 
-1. **Range bands** som relativt lavrisiko battle-UI-forbedring.
+1. **Fire eligibility phase 2** — segmenteret frontage/LOS/target exposure oven på den nye forward fire arc.
 2. **HQ entity + command relationship overlay**.
 3. **Courier/order lifecycle MVP** med moving progress marker.
-4. **Semantic zoom / NATO-symbol mode**.
-5. Derefter dybere courier failure, reports/acknowledgements og højere-level brigade/division AI.
-
-Denne rækkefølge holder P0A v00.00.09 ren, men bringer hurtigt projektet videre mod vertical-slice-målet med reelle HQ'er, order delay og hierarkisk officer-AI.
+4. **Fog-of-war/scouts + command effectiveness** koblet til HQ/courier.
+5. **Semantic zoom / NATO-symbol mode**.
+6. Derefter dybere courier failure, reports/acknowledgements og højere-level brigade/division AI.
