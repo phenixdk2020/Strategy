@@ -14,9 +14,11 @@ Fire geometry: directional 120-degree forward fire fan follows regiment facing; 
 Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
 Range fan visibility: Close/Medium arcs and outer Long fan are terrain-following, unlit, thicker and higher-contrast so no side disappears into uneven ground
 Fire policy: HOLD / CLOSE / MEDIUM / LONG determines when a regiment may open fire
-Accuracy: core distance curve remains continuous; TEST tuning adds user-adjustable Close/Medium/Long multipliers so range lethality can be calibrated without code changes
-Combat tuning menu: F9 or KAMP F9 opens runtime sliders for base hit chance per firing man, Close/Medium/Long factors, firing fraction, starting ammunition rounds per man and losses per visible casualty body
-Combat tuning defaults: base hit chance 1.40%, Close x1.75, Medium x1.00, Long x0.30, 58% firing fraction, 60 starting rounds per man and 8 losses per visible casualty body
+Accuracy: TEST tuning now compensates the legacy kernel so Close/Medium/Long multipliers are applied exactly once instead of stacking on top of the old distance curve
+Combat tuning menu: F9 or KAMP F9 opens runtime sliders for base hit chance per firing man, Close/Medium/Long factors, firing fraction, morale/cohesion accuracy floors, starting ammunition rounds per man and losses per visible casualty body
+Combat tuning defaults: base hit chance 1.40%, Close x1.75, Medium x1.00, Long x0.30, 58% firing fraction, morale floor 72%, cohesion floor 68%, 60 starting rounds per man and 8 losses per visible casualty body
+Morale/cohesion accuracy revision: morale and cohesion still reduce hit probability, but accuracy no longer collapses toward zero merely because prolonged close-range fire has reduced both values while hundreds of men remain formed
+Volley diagnostics: every detected volley writes VOLLEY-LOG to Unity Console with battle time, shooter, target, distance, range band, fire policy, strength, firing men, morale, cohesion, quality multiplier, base hit chance, range multiplier, expected hits, resolved hits, target strength and ammunition before/after
 Fire eligibility MVP: target must be inside selected fire-policy range and inside the forward fire arc
 Reload: weapon profile base reload + bounded regiment Experience modifier retained from v00.00.08
 Volley feedback revision: TEST layer detects every resolved volley and shows temporary Ramte N including Ramte 0; feedback lifetime increased for readability
@@ -34,10 +36,12 @@ Time HUD safe-area revision: date/time plus PAUSE/x0.5/x1/x2/x5/x20 are centred 
 UI input isolation: clicks inside time controls, combat tuning panel or bottom command bar do not issue battlefield selection/move/attack orders
 Multi-selection: Ctrl+left-click or Shift+left-click adds/removes Danish regiments from the current selection
 Formation control: manual F/C selects line/column; Officer AI may use column for longer approach marches and returns to line near engagement based on Tactical Skill and distance
-Single-unit move/facing: right-click location is the destination; hold right mouse and drag from that point to define the regiment's final facing before release
+Single-unit move/facing: right-click location is the destination; while RMB is held the yellow destination footprint itself rotates live with the mouse drag, with a short facing guide showing the final direction before release
+Destination formation rule: movement may be executed in column, but the destination ghost footprint and final deployed state are LINE by default
 Multi-unit formation-line order: with several units selected, hold right mouse and drag a line; selected regiments are assigned evenly along the line and drag direction determines facing
 Waypoint routes: Alt+right-click appends a waypoint; repeat for multiple waypoints; Alt+right-drag on a waypoint sets an explicit final facing for the route
-Order ghosts: route ghost follows all remaining waypoints and the final destination footprint shows final formation and facing; Z/X can rotate final ghost facing without cancelling movement
+Waypoint obedience revision: PlayerCommander executes after Officer AI and reasserts the active player route every frame; route arrival tolerance is synchronized so Officer AI can no longer stop just outside a waypoint and strand the route
+Order ghosts: route ghost follows all remaining waypoints and the final destination footprint shows final LINE formation and facing; Z/X can rotate final ghost facing without cancelling movement
 Facing order: Z rotates selected regiment(s) 15 degrees left; X rotates 15 degrees right; matching compact buttons remain in the bottom command bar
 Casualty visuals: bodies accumulate at the actual formation position as losses occur even while units remain stationary and exchange fire; density is runtime-configurable, default one visible body per eight losses
 Enemy AI: Prussian officers start Offensive with order aggression 65 and Medium fire policy; 18th uses a flank/approach waypoint before reassessing attack
