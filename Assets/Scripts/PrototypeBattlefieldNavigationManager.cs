@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-[DefaultExecutionOrder(550)]
+[DefaultExecutionOrder(900)]
 public sealed class PrototypeBattlefieldNavigationManager : MonoBehaviour
 {
     private sealed class Obstacle
