@@ -11,6 +11,9 @@ public sealed class BattleManager : MonoBehaviour
     public float BattleMinutes => battleMinutes;
 
     private const float GameMinutesPerSimulationSecond = 2.2f;
+    private const float UnitInfoWidth = 276f;
+    private const float UnitInfoHeight = 118f;
+    private const float BottomUiReserve = 188f;
 
     private readonly List<Regiment> regiments = new List<Regiment>();
     private float battleMinutes = 10f * 60f + 20f;
@@ -97,6 +100,41 @@ public sealed class BattleManager : MonoBehaviour
 
         OfficerAIPrototypeManager aiManager = OfficerAIPrototypeManager.Instance;
         return aiManager != null && aiManager.IsPointerOverControls(mousePosition);
+    }
+
+    private Regiment GetHoveredRegiment(Camera mainCamera)
+    {
+        if (mainCamera == null || IsPointerOverSimulationControls(Input.mousePosition))
+            return null;
+
+        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+        RaycastHit[] hits = Physics.RaycastAll(ray, 1500f);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit hit in hits)
+        {
+            Regiment regiment = hit.collider.GetComponentInParent<Regiment>();
+            if (regiment != null)
+                return regiment;
+        }
+
+        return null;
+    }
+
+    private static Rect GetUnitInfoRect(Vector3 screen)
+    {
+        float anchorY = Screen.height - screen.y;
+        float x = screen.x + 30f;
+
+        if (x + UnitInfoWidth > Screen.width - 10f)
+            x = screen.x - UnitInfoWidth - 30f;
+
+        x = Mathf.Clamp(x, 10f, Mathf.Max(10f, Screen.width - UnitInfoWidth - 10f));
+
+        float maxY = Mathf.Max(82f, Screen.height - BottomUiReserve - UnitInfoHeight);
+        float y = Mathf.Clamp(anchorY - UnitInfoHeight - 42f, 82f, maxY);
+
+        return new Rect(x, y, UnitInfoWidth, UnitInfoHeight);
     }
 
     private void EvaluateBattleResult()
@@ -274,7 +312,13 @@ public sealed class BattleManager : MonoBehaviour
             "PREUSSEN - ANGRIBERE\nOfficer AI skal manøvrere og angribe\n18th søger flank/approach før engagement\nIngen skjulte combat-bonusser",
             helpStyle);
 
+        GUI.Box(
+            new Rect(10, 180, 365, 94),
+            "STYRING\nKlik/Shift+klik = vælg | Højreklik = flyt/angrib | I = Officer AI\nF/C/H/T = line/column/hold/range | Space = pause\n0/1/2/3/4 = x0.5/x1/x2/x5/x20 | WASD/QE/hjul = kamera",
+            helpStyle);
+
         Camera mainCamera = Camera.main;
+        Regiment hoveredRegiment = GetHoveredRegiment(mainCamera);
 
         foreach (Regiment regiment in regiments)
         {
@@ -285,53 +329,54 @@ public sealed class BattleManager : MonoBehaviour
             if (screen.z <= 0f)
                 continue;
 
-            float x = screen.x - 132f;
-            float y = Screen.height - screen.y - 49f;
-            string team = regiment.Team == BattleTeam.Denmark ? "DK" : "PR";
-            string routed = regiment.IsRouted ? "  ROUTED" : string.Empty;
+            bool showInfo = regiment.IsSelected || regiment == hoveredRegiment;
+            Rect infoRect = default;
 
-            OfficerAIController ai = regiment.GetComponent<OfficerAIController>();
-            string aiLine = "AI controller installing";
-            string taskLine = string.Empty;
-
-            if (ai != null && ai.Officer != null)
+            if (showInfo)
             {
-                aiLine = string.Format(
-                    "{0} | {1} | {2} | OrdAgg {3:0}",
-                    ai.AIEnabled ? "AI ON" : "AI OFF",
-                    ai.Officer.OfficerName,
-                    ai.Doctrine,
-                    ai.OrderAggressiveness);
+                infoRect = GetUnitInfoRect(screen);
+                string team = regiment.Team == BattleTeam.Denmark ? "DK" : "PR";
+                string routed = regiment.IsRouted ? "  ROUTED" : string.Empty;
+                string context = regiment.IsSelected ? "VALGT" : "MOUSE OVER";
 
-                taskLine = ai.CurrentTask + " | " + ai.ReasonCode;
+                OfficerAIController ai = regiment.GetComponent<OfficerAIController>();
+                string aiLine = "AI controller installing";
+                string taskLine = string.Empty;
+
+                if (ai != null && ai.Officer != null)
+                {
+                    aiLine = string.Format(
+                        "{0} | {1} | {2} | OrdAgg {3:0}",
+                        ai.AIEnabled ? "AI ON" : "AI OFF",
+                        ai.Officer.OfficerName,
+                        ai.Doctrine,
+                        ai.OrderAggressiveness);
+
+                    taskLine = ai.CurrentTask + " | " + ai.ReasonCode;
+                }
+
+                string label =
+                    $"{context} - {regiment.RegimentName} ({team})  {regiment.CurrentStrength}\n" +
+                    $"{regiment.WeaponShortName} | Exp {regiment.Experience:0} | Reload {regiment.CurrentReloadSeconds:0.0}s\n" +
+                    $"Fire {regiment.GetFirePolicyLabel()} | Arc {regiment.FireArcHalfAngle * 2f:0}° | M {regiment.EffectiveRange:0} / L {regiment.MaximumRange:0}\n" +
+                    $"Morale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}\n" +
+                    aiLine + "\n" + taskLine;
+
+                GUI.Box(infoRect, label, unitStyle);
             }
-
-            string label =
-                $"{regiment.RegimentName} ({team})  {regiment.CurrentStrength}\n" +
-                $"{regiment.WeaponShortName} | Exp {regiment.Experience:0} | Reload {regiment.CurrentReloadSeconds:0.0}s\n" +
-                $"Fire {regiment.GetFirePolicyLabel()} | Arc {regiment.FireArcHalfAngle * 2f:0}° | M {regiment.EffectiveRange:0} / L {regiment.MaximumRange:0}\n" +
-                $"Morale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}\n" +
-                aiLine + "\n" + taskLine;
-
-            GUI.Box(new Rect(x, y, 264f, 112f), label, unitStyle);
 
             if (regiment.HasHitFeedback)
             {
+                float hitY = showInfo
+                    ? Mathf.Max(48f, infoRect.y - 30f)
+                    : Mathf.Max(48f, Screen.height - screen.y - 64f);
+
                 GUI.Box(
-                    new Rect(screen.x - 62f, y - 30f, 124f, 26f),
+                    new Rect(screen.x - 62f, hitY, 124f, 26f),
                     $"Ramte {regiment.LastVolleyHits}",
                     hitStyle);
             }
         }
-
-        GUI.Box(
-            new Rect(10, Screen.height - 132, 520, 122),
-            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\n" +
-            "F = line | C = column | H = hold | T = range fan | I = AI UNIT ON/OFF\n" +
-            "WASD = kamera | Q/E = roter | hjul = zoom | Space = pause/resume\n" +
-            "0 = x0.5 | 1 = Play | 2 = x2 | 3 = x5 | 4 = x20 | R = restart\n" +
-            "Valgt regiment: menu til højre = AI doctrine, ordre-aggression og fire policy",
-            helpStyle);
 
         if (!string.IsNullOrEmpty(resultMessage))
         {
