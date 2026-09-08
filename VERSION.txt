@@ -1,24 +1,23 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13e
-Build status: DENMARK CLEAN RENDER DEV / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK CLEAN RENDER V13E
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e Denmark clean render
+Prototype version: v00.00.13f
+Build status: DENMARK LANDMESH FIX DEV / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK LANDMESH FIX V13F
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
-v13e architecture: stop stacking presentation repair layers; Denmark QA uses one clean render root V013E_DENMARK_CLEAN_RENDER
-v13e legacy suppression: all renderers under old L1 terrain, L2 hydrology, L3 land cover, L4 infrastructure, L5 settlements and L8 overlays are suppressed during Denmark clean-render QA
-v13e geography: Denmark is rebuilt directly from the Natural Earth Denmark longitude/latitude rings with CampaignGeoProjection.Project3D broad strategic coordinates
-v13e sea: old Campaign Sea Base renderer is suppressed and replaced by a thin clean sea surface centered on Denmark
-v13e relief: Denmark uses very low visual relief only; authoritative DEM/elevation remains future work
-v13e settlements: old Settlement3D renderers are suppressed; small clean settlement icons are rebuilt directly at authoritative Denmark node coordinates
-v13e infrastructure: old strategic-link renderers are suppressed; clean Denmark-focus road/rail/ferry lines are rebuilt from authoritative endpoint coordinates
-v13e labels: legacy CampaignMapController node labels are suppressed; clean label LOD shows only primary cities at overview height, secondary cities when zoomed in and all focus nodes close-up
-v13e camera: Home framing is tightened around Denmark; private Home position/rotation in CampaignMapCameraController is updated so Home returns to the same Denmark framing
-v13e construction: Aalborg barracks and Aarhus farm remain staged campaign-time projects and are re-grounded close to their authoritative nodes
-v13e context: Denmark plus Danish-controlled Flensburg/Schleswig are rendered in the clean QA slice; non-focus formation renderers are hidden
-Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13e
+v13f foundation: v13e clean sea/infrastructure/settlements are retained; only the defective Denmark landmesh/label presentation is replaced
+v13f winding fix: generated Denmark triangles are validated in Unity X/Z space and automatically reversed when their aggregate normal points downward
+v13f normal gate: every generated island contributes to AverageNormalY runtime validation; successful landmesh requires AverageNormalY > 0.05
+v13f land presentation: Denmark is visibly filled again with three restrained land-tone variants while retaining low visual relief and the clean coastline
+v13f labels: v13e label renderer is disabled after its Start pass; v13f owns a three-tier semantic label LOD with 2D collision avoidance
+v13f overview labels: Aalborg, Aarhus, Fredericia, Odense and Copenhagen are prioritised; regional/local names are progressively revealed when zooming in
+v13f southern context: Flensburg/Schleswig remain available at close zoom but are visually de-emphasised relative to Danish strategic centres
+v13f infrastructure: existing v13e road/rail/ferry lines are retained and receive a small clarity/width pass
+v13f camera: Denmark Home framing is slightly tightened while preserving the same broad campaign projection
+v13f construction: Aalborg barracks and Aarhus farm remain staged campaign-time projects and are re-grounded continuously
+Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13f
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
