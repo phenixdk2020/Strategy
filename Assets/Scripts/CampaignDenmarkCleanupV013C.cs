@@ -3,23 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Campaign v00.00.13c — Denmark terrain cleanup and grounding pass.
-// Presentation-only: strategic state, route distance, ETA and tactical systems are untouched.
+// Campaign v00.00.13c — corrected Denmark-focus presentation pass.
+// IMPORTANT: do not carve the coarse global v13 terrain with detailed Denmark geometry.
+// The Natural Earth Denmark layer is remapped explicitly from the legacy local projection
+// to the v11+ broad campaign projection and becomes the visible Denmark land surface.
 [DefaultExecutionOrder(2600)]
 public sealed class CampaignDenmarkCleanupV013C : MonoBehaviour
 {
     private const string DetailedDenmarkRootA = "GEO_Denmark_NaturalEarth50m_V013A";
     private const string DetailedDenmarkRootLegacy = "GEO_Denmark_NaturalEarth50m";
-    private const float CleanSeaY = -0.72f;
-    private const int TerrainXCount = 113; // v13 terrain: 112 segments + 1
-    private const int TerrainZCount = 137; // v13 terrain: 136 segments + 1
+    private const string DetailedDenmarkRootFixed = "GEO_Denmark_NaturalEarth50m_V013C_BROAD";
+    private const string GlobalTerrainName = "CampaignTerrainSurface_v013";
 
-    private readonly List<Vector2[]> denmarkRings = new List<Vector2[]>();
-    private Mesh terrainMesh;
-    private Transform terrainTransform;
-    private Vector3[] cleanVertices;
-    private bool[] denmarkMask;
-    private Material levelGroundMaterial;
+    private bool projectionRemapped;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -38,250 +34,63 @@ public sealed class CampaignDenmarkCleanupV013C : MonoBehaviour
     private void Start()
     {
         CampaignSession.EnsureInitialized();
-        levelGroundMaterial = CreateMaterial(new Color(0.30f, 0.35f, 0.20f), "V013C_LevelGround");
 
-        CaptureDetailedDenmarkRings();
-        RebuildDenmarkTerrainSurface();
-        RedrapeDetailedDenmark();
+        // v13c QA is Denmark-first. The coarse global terrain is presentation-only and is
+        // deliberately hidden rather than destructively reshaped. This removes the long
+        // rectangular cliffs/bands seen in the rejected first v13c runtime test.
+        DisableCoarseGlobalTerrain();
+
+        projectionRemapped = RemapDetailedDenmarkToBroadProjection();
+        CompactAndGroundLandCover();
+        GroundDenmarkSettlements();
+        GroundDenmarkNodesAndFormations();
+        GroundConstructionProjects();
         RedrapeDenmarkInfrastructure();
-        GroundDenmarkStaticObjects();
-        GroundDenmarkLandCover();
-        EnsureDenmarkSettlementPads();
-        EnsureConstructionPads();
+        HideNonDenmark3DContext();
 
         Debug.Log(string.Format(
-            "CAMPAIGN-V013C|DenmarkCleanup=True|Rings={0}|TerrainMesh={1}|Grounding=True|CoarseDenmarkCarved=True|GentleRelief=True|SimulationChanged=False",
-            denmarkRings.Count,
-            terrainMesh != null));
+            "CAMPAIGN-V013C|DenmarkCleanup=True|ProjectionRemapped={0}|GlobalTerrainRenderer=False|DetailedDenmarkVisible=True|Grounding=True|SimulationChanged=False",
+            projectionRemapped));
     }
 
     private void LateUpdate()
     {
-        // Older v13 helpers still use the original procedural height function.
-        // Re-ground Denmark objects after those helpers have run, without changing state.
-        GroundDenmarkDynamicObjects();
-        GroundConstructionRoots();
+        // Older v13 helpers still ground objects against the coarse procedural height.
+        // Run after them and restore the Denmark-focus presentation height.
+        GroundDenmarkNodesAndFormations();
+        GroundConstructionProjects();
+        HideNonDenmark3DContext();
     }
 
-    private void CaptureDetailedDenmarkRings()
+    private static void DisableCoarseGlobalTerrain()
     {
-        denmarkRings.Clear();
+        GameObject terrain = GameObject.Find(GlobalTerrainName);
+        if (terrain == null)
+            return;
 
-        GameObject root = GameObject.Find(DetailedDenmarkRootA);
+        Renderer renderer = terrain.GetComponent<Renderer>();
+        if (renderer != null)
+            renderer.enabled = false;
+    }
+
+    private bool RemapDetailedDenmarkToBroadProjection()
+    {
+        GameObject root = GameObject.Find(DetailedDenmarkRootFixed);
+        if (root != null)
+            return true;
+
+        root = GameObject.Find(DetailedDenmarkRootA);
         if (root == null)
             root = GameObject.Find(DetailedDenmarkRootLegacy);
-
         if (root == null)
         {
-            Debug.LogWarning("CAMPAIGN-V013C|DetailedDenmarkRoot=False|Fallback=LegacyEnvelopeOnly");
-            return;
-        }
-
-        MeshFilter[] filters = root.GetComponentsInChildren<MeshFilter>(true);
-        foreach (MeshFilter filter in filters)
-        {
-            if (filter == null || filter.sharedMesh == null)
-                continue;
-
-            Vector3[] vertices = filter.sharedMesh.vertices;
-            if (vertices == null || vertices.Length < 3)
-                continue;
-
-            Vector2[] ring = new Vector2[vertices.Length];
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                Vector3 world = filter.transform.TransformPoint(vertices[i]);
-                ring[i] = new Vector2(world.x, world.z);
-            }
-            denmarkRings.Add(ring);
-        }
-    }
-
-    private void RebuildDenmarkTerrainSurface()
-    {
-        GameObject terrainObject = GameObject.Find("CampaignTerrainSurface_v013");
-        if (terrainObject == null)
-        {
-            Debug.LogWarning("CAMPAIGN-V013C|TerrainSurface=False");
-            return;
-        }
-
-        MeshFilter filter = terrainObject.GetComponent<MeshFilter>();
-        if (filter == null || filter.sharedMesh == null)
-        {
-            Debug.LogWarning("CAMPAIGN-V013C|TerrainMesh=False");
-            return;
-        }
-
-        terrainTransform = terrainObject.transform;
-        terrainMesh = filter.mesh;
-        Vector3[] source = terrainMesh.vertices;
-        cleanVertices = (Vector3[])source.Clone();
-        denmarkMask = new bool[cleanVertices.Length];
-
-        if (cleanVertices.Length != TerrainXCount * TerrainZCount)
-        {
-            Debug.LogWarning(string.Format(
-                "CAMPAIGN-V013C|UnexpectedTerrainGrid=True|Vertices={0}|Expected={1}",
-                cleanVertices.Length,
-                TerrainXCount * TerrainZCount));
-        }
-
-        for (int i = 0; i < cleanVertices.Length; i++)
-        {
-            Vector3 local = cleanVertices[i];
-            Vector3 world = terrainTransform.TransformPoint(local);
-            double latitude;
-            double longitude;
-            BroadUnproject(world.x, world.z, out latitude, out longitude);
-
-            bool inDenmark = IsInsideDetailedDenmark(new Vector2(world.x, world.z));
-            denmarkMask[i] = inDenmark;
-
-            float desiredWorldY = world.y;
-
-            if (inDenmark)
-            {
-                desiredWorldY = GentleDenmarkHeight(world.x, world.z, latitude, longitude);
-            }
-            else if (IsLegacyDenmarkEnvelope(latitude, longitude))
-            {
-                // The old v13 terrain used coarse Jutland/Funen/Zealand polygons.
-                // Carve their overshoot back to water using the detailed Denmark surface.
-                desiredWorldY = CleanSeaY;
-            }
-            else if (world.y < -1.0f)
-            {
-                // Keep the hidden seabed just below the visible water plane instead of
-                // deep rectangular trenches that read as vertical map walls.
-                desiredWorldY = CleanSeaY;
-            }
-
-            Vector3 desiredWorld = new Vector3(world.x, desiredWorldY, world.z);
-            cleanVertices[i] = terrainTransform.InverseTransformPoint(desiredWorld);
-        }
-
-        SmoothDenmarkVertices(cleanVertices, denmarkMask, 3, 0.46f);
-
-        terrainMesh.vertices = cleanVertices;
-        terrainMesh.RecalculateNormals();
-        terrainMesh.RecalculateBounds();
-    }
-
-    private void SmoothDenmarkVertices(Vector3[] vertices, bool[] mask, int passes, float strength)
-    {
-        if (vertices == null || mask == null || vertices.Length != mask.Length)
-            return;
-        if (vertices.Length != TerrainXCount * TerrainZCount)
-            return;
-
-        Vector3[] buffer = new Vector3[vertices.Length];
-
-        for (int pass = 0; pass < passes; pass++)
-        {
-            Array.Copy(vertices, buffer, vertices.Length);
-
-            for (int z = 1; z < TerrainZCount - 1; z++)
-            {
-                for (int x = 1; x < TerrainXCount - 1; x++)
-                {
-                    int index = z * TerrainXCount + x;
-                    if (!mask[index])
-                        continue;
-
-                    float sum = vertices[index].y;
-                    int count = 1;
-                    int left = index - 1;
-                    int right = index + 1;
-                    int down = index - TerrainXCount;
-                    int up = index + TerrainXCount;
-
-                    if (mask[left]) { sum += vertices[left].y; count++; }
-                    if (mask[right]) { sum += vertices[right].y; count++; }
-                    if (mask[down]) { sum += vertices[down].y; count++; }
-                    if (mask[up]) { sum += vertices[up].y; count++; }
-
-                    float average = sum / count;
-                    buffer[index].y = Mathf.Lerp(vertices[index].y, average, strength);
-                }
-            }
-
-            Array.Copy(buffer, vertices, vertices.Length);
-        }
-    }
-
-    private float GentleDenmarkHeight(float x, float z, double latitude, double longitude)
-    {
-        float nx = (float)((longitude - 7.5) / 8.0);
-        float nz = (float)((latitude - 54.5) / 3.5);
-        float broad = Mathf.PerlinNoise(nx * 2.1f + 3.7f, nz * 2.4f + 8.3f);
-        float fine = Mathf.PerlinNoise(nx * 5.8f + 11.1f, nz * 6.3f + 2.4f);
-
-        // Gentle central-Jutland rise. This is visual proxy relief, not DEM elevation.
-        float dx = (float)(longitude - 9.35);
-        float dz = (float)(latitude - 56.15);
-        float centralJutland = Mathf.Exp(-(dx * dx / 0.95f + dz * dz / 0.75f)) * 0.20f;
-
-        return 0.22f + broad * 0.34f + fine * 0.10f + centralJutland;
-    }
-
-    private static bool IsLegacyDenmarkEnvelope(double latitude, double longitude)
-    {
-        bool jutland = latitude >= 54.90 && latitude <= 57.85 && longitude >= 7.80 && longitude <= 10.95;
-        bool funen = latitude >= 54.92 && latitude <= 55.85 && longitude >= 9.70 && longitude <= 10.98;
-        bool zealandAndSouthIslands = latitude >= 54.55 && latitude <= 56.25 && longitude >= 10.90 && longitude <= 12.48;
-        return jutland || funen || zealandAndSouthIslands;
-    }
-
-    private bool IsInsideDetailedDenmark(Vector2 point)
-    {
-        if (denmarkRings.Count == 0)
+            Debug.LogWarning("CAMPAIGN-V013C|DetailedDenmarkRoot=False");
             return false;
-
-        for (int i = 0; i < denmarkRings.Count; i++)
-        {
-            if (PointInPolygon(point, denmarkRings[i]))
-                return true;
-        }
-        return false;
-    }
-
-    private static bool PointInPolygon(Vector2 point, Vector2[] polygon)
-    {
-        if (polygon == null || polygon.Length < 3)
-            return false;
-
-        bool inside = false;
-        int j = polygon.Length - 1;
-
-        for (int i = 0; i < polygon.Length; i++)
-        {
-            Vector2 a = polygon[i];
-            Vector2 b = polygon[j];
-            float denominator = b.y - a.y;
-
-            if (Mathf.Abs(denominator) < 0.00001f)
-                denominator = denominator >= 0f ? 0.00001f : -0.00001f;
-
-            bool intersects = ((a.y > point.y) != (b.y > point.y)) &&
-                              (point.x < (b.x - a.x) * (point.y - a.y) / denominator + a.x);
-            if (intersects)
-                inside = !inside;
-
-            j = i;
         }
 
-        return inside;
-    }
-
-    private void RedrapeDetailedDenmark()
-    {
-        GameObject root = GameObject.Find(DetailedDenmarkRootA);
-        if (root == null)
-            root = GameObject.Find(DetailedDenmarkRootLegacy);
-        if (root == null || terrainMesh == null)
-            return;
-
+        // CampaignDenmarkGeography.Create() historically used the legacy local
+        // longitude/latitude projection. Convert every existing X/Z point back to
+        // lon/lat and then into the broad strategic projection used by nodes/routes.
         MeshFilter[] filters = root.GetComponentsInChildren<MeshFilter>(true);
         foreach (MeshFilter filter in filters)
         {
@@ -292,10 +101,21 @@ public sealed class CampaignDenmarkCleanupV013C : MonoBehaviour
             Vector3[] vertices = mesh.vertices;
             for (int i = 0; i < vertices.Length; i++)
             {
-                Vector3 world = filter.transform.TransformPoint(vertices[i]);
-                world.y = SampleCleanHeight(world.x, world.z) + 0.06f;
-                vertices[i] = filter.transform.InverseTransformPoint(world);
+                Vector3 legacyWorld = filter.transform.TransformPoint(vertices[i]);
+                Vector2 lonLat = CampaignGeoProjection.Unproject(legacyWorld);
+
+                double longitude = lonLat.x;
+                double latitude = lonLat.y;
+                if (!LooksLikeDenmark(latitude, longitude))
+                    continue;
+
+                Vector3 broadWorld = CampaignGeoProjection.Project3D(
+                    latitude,
+                    longitude,
+                    GentleDenmarkHeight(latitude, longitude));
+                vertices[i] = filter.transform.InverseTransformPoint(broadWorld);
             }
+
             mesh.vertices = vertices;
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
@@ -309,19 +129,211 @@ public sealed class CampaignDenmarkCleanupV013C : MonoBehaviour
 
             for (int i = 0; i < line.positionCount; i++)
             {
-                Vector3 p = line.GetPosition(i);
-                p.y = SampleCleanHeight(p.x, p.z) + 0.12f;
-                line.SetPosition(i, p);
+                Vector3 legacyWorld = line.GetPosition(i);
+                Vector2 lonLat = CampaignGeoProjection.Unproject(legacyWorld);
+                double longitude = lonLat.x;
+                double latitude = lonLat.y;
+                if (!LooksLikeDenmark(latitude, longitude))
+                    continue;
+
+                Vector3 broadWorld = CampaignGeoProjection.Project3D(
+                    latitude,
+                    longitude,
+                    GentleDenmarkHeight(latitude, longitude) + 0.08f);
+                line.SetPosition(i, broadWorld);
             }
-            line.widthMultiplier = 0.16f;
+
+            line.widthMultiplier = 0.12f;
+        }
+
+        root.name = DetailedDenmarkRootFixed;
+        return true;
+    }
+
+    private static float GentleDenmarkHeight(double latitude, double longitude)
+    {
+        float nx = (float)((longitude - 7.5) / 8.0);
+        float nz = (float)((latitude - 54.4) / 3.7);
+
+        float broad = Mathf.PerlinNoise(nx * 1.8f + 3.2f, nz * 2.0f + 7.4f);
+        float fine = Mathf.PerlinNoise(nx * 4.6f + 10.8f, nz * 4.9f + 2.1f);
+
+        // Denmark is intentionally low-relief in presentation space.
+        float dx = (float)(longitude - 9.35);
+        float dz = (float)(latitude - 56.15);
+        float centralJutland = Mathf.Exp(-(dx * dx / 1.15f + dz * dz / 0.95f)) * 0.14f;
+
+        return 0.28f + broad * 0.20f + fine * 0.055f + centralJutland;
+    }
+
+    private static float HeightFromWorld(float x, float z)
+    {
+        double latitude;
+        double longitude;
+        BroadUnproject(x, z, out latitude, out longitude);
+        return GentleDenmarkHeight(latitude, longitude);
+    }
+
+    private static void GroundDenmarkSettlements()
+    {
+        foreach (KeyValuePair<string, CampaignNodeState> pair in CampaignSession.Nodes)
+        {
+            CampaignNodeState node = pair.Value;
+            if (node == null || node.Region != CampaignMapRegion.Denmark)
+                continue;
+
+            GameObject settlement = GameObject.Find("Settlement3D_" + node.Id);
+            if (settlement == null)
+                continue;
+
+            settlement.transform.position = new Vector3(
+                node.MapPosition.x,
+                HeightFromWorld(node.MapPosition.x, node.MapPosition.y),
+                node.MapPosition.y);
+
+            // Old settlement miniatures covered tens of kilometres at broad-map scale.
+            // Keep the visual identity, but reduce the footprint so coastal towns do not
+            // hang over water or appear larger than entire islands.
+            settlement.transform.localScale = Vector3.one * 0.34f;
         }
     }
 
-    private void RedrapeDenmarkInfrastructure()
+    private static void GroundDenmarkNodesAndFormations()
     {
-        if (terrainMesh == null)
+        CampaignNodeView[] nodeViews = UnityEngine.Object.FindObjectsByType<CampaignNodeView>(FindObjectsSortMode.None);
+        foreach (CampaignNodeView view in nodeViews)
+        {
+            if (view == null)
+                continue;
+
+            CampaignNodeState node = CampaignSession.GetNode(view.NodeId);
+            if (node == null || node.Region != CampaignMapRegion.Denmark)
+                continue;
+
+            Vector3 p = view.transform.position;
+            p.x = node.MapPosition.x;
+            p.z = node.MapPosition.y;
+            p.y = HeightFromWorld(p.x, p.z) + 1.15f;
+            view.transform.position = p;
+        }
+
+        CampaignFormationView[] formationViews = UnityEngine.Object.FindObjectsByType<CampaignFormationView>(FindObjectsSortMode.None);
+        foreach (CampaignFormationView view in formationViews)
+        {
+            if (view == null)
+                continue;
+
+            CampaignFormationState formation = CampaignSession.GetFormation(view.FormationId);
+            if (formation == null)
+                continue;
+
+            CampaignNodeState node = CampaignSession.GetNode(formation.CurrentNodeId);
+            if (node == null || node.Region != CampaignMapRegion.Denmark)
+                continue;
+
+            Vector3 p = view.transform.position;
+            p.y = HeightFromWorld(p.x, p.z) + 3.2f;
+            view.transform.position = p;
+        }
+    }
+
+    private static void CompactAndGroundLandCover()
+    {
+        GameObject patches = GameObject.Find("V013B_DenmarkLandCover");
+        if (patches != null)
+        {
+            foreach (Transform child in patches.transform)
+            {
+                if (child == null)
+                    continue;
+
+                Vector3 p = PullTowardNearestDenmarkNode(child.position, 0.34f, 6.0f);
+                p.y = HeightFromWorld(p.x, p.z) + 0.035f;
+                child.position = p;
+                child.localScale *= 0.58f;
+            }
+        }
+
+        GameObject vegetation = GameObject.Find("V013B_Vegetation");
+        if (vegetation != null)
+        {
+            Transform[] transforms = vegetation.GetComponentsInChildren<Transform>(true);
+            foreach (Transform t in transforms)
+            {
+                if (t == null || !string.Equals(t.name, "Tree", StringComparison.Ordinal))
+                    continue;
+
+                Vector3 p = PullTowardNearestDenmarkNode(t.position, 0.34f, 6.5f);
+                p.y = HeightFromWorld(p.x, p.z);
+                t.position = p;
+                t.localScale *= 0.72f;
+            }
+        }
+    }
+
+    private static Vector3 PullTowardNearestDenmarkNode(Vector3 world, float factor, float maxDistance)
+    {
+        CampaignNodeState nearest = null;
+        float best = float.PositiveInfinity;
+
+        foreach (KeyValuePair<string, CampaignNodeState> pair in CampaignSession.Nodes)
+        {
+            CampaignNodeState node = pair.Value;
+            if (node == null || node.Region != CampaignMapRegion.Denmark)
+                continue;
+
+            float dx = world.x - node.MapPosition.x;
+            float dz = world.z - node.MapPosition.y;
+            float d2 = dx * dx + dz * dz;
+            if (d2 < best)
+            {
+                best = d2;
+                nearest = node;
+            }
+        }
+
+        if (nearest == null)
+            return world;
+
+        Vector2 delta = new Vector2(world.x - nearest.MapPosition.x, world.z - nearest.MapPosition.y) * factor;
+        if (delta.magnitude > maxDistance)
+            delta = delta.normalized * maxDistance;
+
+        world.x = nearest.MapPosition.x + delta.x;
+        world.z = nearest.MapPosition.y + delta.y;
+        return world;
+    }
+
+    private static void GroundConstructionProjects()
+    {
+        GroundConstruction(
+            "ConstructionProject_QA-BARRACKS-AALBORG",
+            "AALBORG",
+            new Vector2(2.4f, 1.7f),
+            0.46f);
+
+        GroundConstruction(
+            "ConstructionProject_QA-FARM-AARHUS",
+            "AARHUS",
+            new Vector2(-2.2f, 1.6f),
+            0.48f);
+    }
+
+    private static void GroundConstruction(string objectName, string nodeId, Vector2 offset, float visualScale)
+    {
+        GameObject root = GameObject.Find(objectName);
+        CampaignNodeState node = CampaignSession.GetNode(nodeId);
+        if (root == null || node == null)
             return;
 
+        float x = node.MapPosition.x + offset.x;
+        float z = node.MapPosition.y + offset.y;
+        root.transform.position = new Vector3(x, HeightFromWorld(x, z), z);
+        root.transform.localScale = Vector3.one * visualScale;
+    }
+
+    private static void RedrapeDenmarkInfrastructure()
+    {
         LineRenderer[] lines = UnityEngine.Object.FindObjectsByType<LineRenderer>(FindObjectsSortMode.None);
         foreach (LineRenderer line in lines)
         {
@@ -329,6 +341,7 @@ public sealed class CampaignDenmarkCleanupV013C : MonoBehaviour
                 continue;
 
             bool touchesDenmark = LinkTouchesDenmark(line.name);
+            line.enabled = touchesDenmark;
             if (!touchesDenmark)
                 continue;
 
@@ -336,16 +349,60 @@ public sealed class CampaignDenmarkCleanupV013C : MonoBehaviour
             for (int i = 0; i < line.positionCount; i++)
             {
                 Vector3 p = line.GetPosition(i);
-                if (type == CampaignStrategicLinkType.SeaFerry && !IsInsideDetailedDenmark(new Vector2(p.x, p.z)))
+                if (type == CampaignStrategicLinkType.SeaFerry)
+                {
                     p.y = -0.24f;
-                else
-                    p.y = SampleCleanHeight(p.x, p.z) + 0.18f;
+                }
+                else if (IsNearDenmarkWorld(p.x, p.z))
+                {
+                    p.y = HeightFromWorld(p.x, p.z) + 0.10f;
+                }
                 line.SetPosition(i, p);
             }
         }
     }
 
-    private bool LinkTouchesDenmark(string lineName)
+    private static void HideNonDenmark3DContext()
+    {
+        foreach (KeyValuePair<string, CampaignNodeState> pair in CampaignSession.Nodes)
+        {
+            CampaignNodeState node = pair.Value;
+            if (node == null)
+                continue;
+
+            bool visible = node.Region == CampaignMapRegion.Denmark;
+            SetRenderersVisible(GameObject.Find("Settlement3D_" + node.Id), visible);
+            SetRenderersVisible(GameObject.Find("CampaignNode_" + node.Id), visible);
+            SetRenderersVisible(GameObject.Find("CampaignControl_" + node.Id), visible);
+        }
+
+        CampaignFormationView[] formationViews = UnityEngine.Object.FindObjectsByType<CampaignFormationView>(FindObjectsSortMode.None);
+        foreach (CampaignFormationView view in formationViews)
+        {
+            if (view == null)
+                continue;
+
+            CampaignFormationState formation = CampaignSession.GetFormation(view.FormationId);
+            CampaignNodeState node = formation != null ? CampaignSession.GetNode(formation.CurrentNodeId) : null;
+            bool visible = node != null && node.Region == CampaignMapRegion.Denmark;
+            SetRenderersVisible(view.gameObject, visible);
+        }
+    }
+
+    private static void SetRenderersVisible(GameObject root, bool visible)
+    {
+        if (root == null)
+            return;
+
+        Renderer[] renderers = root.GetComponentsInChildren<Renderer>(true);
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer != null)
+                renderer.enabled = visible;
+        }
+    }
+
+    private static bool LinkTouchesDenmark(string lineName)
     {
         const string prefix = "StrategicLink_";
         if (lineName.Length <= prefix.Length)
@@ -376,188 +433,17 @@ public sealed class CampaignDenmarkCleanupV013C : MonoBehaviour
             CampaignSession.GetNode(ids[1]));
     }
 
-    private void GroundDenmarkStaticObjects()
+    private static bool LooksLikeDenmark(double latitude, double longitude)
     {
-        foreach (KeyValuePair<string, CampaignNodeState> pair in CampaignSession.Nodes)
-        {
-            CampaignNodeState node = pair.Value;
-            if (node == null || node.Region != CampaignMapRegion.Denmark)
-                continue;
-
-            GameObject settlement = GameObject.Find("Settlement3D_" + node.Id);
-            if (settlement != null)
-            {
-                Vector3 p = settlement.transform.position;
-                p.y = SampleCleanHeight(p.x, p.z);
-                settlement.transform.position = p;
-            }
-        }
-
-        GroundDenmarkDynamicObjects();
-        GroundConstructionRoots();
+        return latitude >= 54.2 && latitude <= 58.0 && longitude >= 7.0 && longitude <= 16.0;
     }
 
-    private void GroundDenmarkDynamicObjects()
+    private static bool IsNearDenmarkWorld(float x, float z)
     {
-        if (terrainMesh == null)
-            return;
-
-        CampaignNodeView[] nodes = UnityEngine.Object.FindObjectsByType<CampaignNodeView>(FindObjectsSortMode.None);
-        foreach (CampaignNodeView view in nodes)
-        {
-            if (view == null)
-                continue;
-
-            CampaignNodeState node = CampaignSession.GetNode(view.NodeId);
-            if (node == null || node.Region != CampaignMapRegion.Denmark)
-                continue;
-
-            Vector3 p = view.transform.position;
-            p.y = SampleCleanHeight(p.x, p.z) + 1.25f;
-            view.transform.position = p;
-        }
-
-        CampaignFormationView[] formations = UnityEngine.Object.FindObjectsByType<CampaignFormationView>(FindObjectsSortMode.None);
-        foreach (CampaignFormationView view in formations)
-        {
-            if (view == null)
-                continue;
-
-            Vector3 p = view.transform.position;
-            if (!IsNearDenmarkWorld(p.x, p.z))
-                continue;
-
-            p.y = SampleCleanHeight(p.x, p.z) + 4.0f;
-            view.transform.position = p;
-        }
-    }
-
-    private void GroundConstructionRoots()
-    {
-        GroundNamedObject("ConstructionProject_QA-BARRACKS-AALBORG");
-        GroundNamedObject("ConstructionProject_QA-FARM-AARHUS");
-    }
-
-    private void GroundNamedObject(string name)
-    {
-        GameObject root = GameObject.Find(name);
-        if (root == null || terrainMesh == null)
-            return;
-
-        Vector3 p = root.transform.position;
-        p.y = SampleCleanHeight(p.x, p.z);
-        root.transform.position = p;
-    }
-
-    private void GroundDenmarkLandCover()
-    {
-        if (terrainMesh == null)
-            return;
-
-        GameObject patches = GameObject.Find("V013B_DenmarkLandCover");
-        if (patches != null)
-        {
-            foreach (Transform child in patches.transform)
-            {
-                Vector3 p = child.position;
-                p.y = SampleCleanHeight(p.x, p.z) + 0.06f;
-                child.position = p;
-            }
-        }
-
-        GameObject vegetation = GameObject.Find("V013B_Vegetation");
-        if (vegetation != null)
-        {
-            Transform[] transforms = vegetation.GetComponentsInChildren<Transform>(true);
-            foreach (Transform t in transforms)
-            {
-                if (t == null || !string.Equals(t.name, "Tree", StringComparison.Ordinal))
-                    continue;
-
-                Vector3 p = t.position;
-                p.y = SampleCleanHeight(p.x, p.z);
-                t.position = p;
-            }
-        }
-    }
-
-    private void EnsureDenmarkSettlementPads()
-    {
-        foreach (KeyValuePair<string, CampaignNodeState> pair in CampaignSession.Nodes)
-        {
-            CampaignNodeState node = pair.Value;
-            if (node == null || node.Region != CampaignMapRegion.Denmark)
-                continue;
-
-            GameObject settlement = GameObject.Find("Settlement3D_" + node.Id);
-            if (settlement == null || settlement.transform.Find("V013C_LevelGround") != null)
-                continue;
-
-            GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            pad.name = "V013C_LevelGround";
-            pad.transform.SetParent(settlement.transform, false);
-            pad.transform.localPosition = new Vector3(0f, 0.05f, 0f);
-            float radius = node.Terrain == CampaignTerrainType.Urban ? 8.2f : 6.2f;
-            if (node.Terrain == CampaignTerrainType.Fortified)
-                radius = 7.0f;
-            pad.transform.localScale = new Vector3(radius, 0.05f, radius);
-            Renderer renderer = pad.GetComponent<Renderer>();
-            if (renderer != null)
-                renderer.sharedMaterial = levelGroundMaterial;
-            RemoveCollider(pad);
-        }
-    }
-
-    private void EnsureConstructionPads()
-    {
-        EnsureConstructionPad("ConstructionProject_QA-BARRACKS-AALBORG", new Vector3(10.5f, 0.06f, 8.0f));
-        EnsureConstructionPad("ConstructionProject_QA-FARM-AARHUS", new Vector3(9.0f, 0.06f, 8.0f));
-    }
-
-    private void EnsureConstructionPad(string objectName, Vector3 scale)
-    {
-        GameObject root = GameObject.Find(objectName);
-        if (root == null || root.transform.Find("V013C_LevelGround") != null)
-            return;
-
-        GameObject pad = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        pad.name = "V013C_LevelGround";
-        pad.transform.SetParent(root.transform, false);
-        pad.transform.localPosition = new Vector3(0f, 0.03f, 0f);
-        pad.transform.localScale = scale;
-        Renderer renderer = pad.GetComponent<Renderer>();
-        if (renderer != null)
-            renderer.sharedMaterial = levelGroundMaterial;
-        RemoveCollider(pad);
-    }
-
-    private float SampleCleanHeight(float worldX, float worldZ)
-    {
-        if (cleanVertices == null || cleanVertices.Length != TerrainXCount * TerrainZCount || terrainTransform == null)
-            return CampaignTerrainV013.SampleSurfaceY(worldX, worldZ);
-
-        Vector3 local = terrainTransform.InverseTransformPoint(new Vector3(worldX, 0f, worldZ));
-        float tx = Mathf.InverseLerp(-CampaignGeoProjection.MapWidth * 0.5f, CampaignGeoProjection.MapWidth * 0.5f, local.x);
-        float tz = Mathf.InverseLerp(-CampaignGeoProjection.MapDepth * 0.5f, CampaignGeoProjection.MapDepth * 0.5f, local.z);
-
-        float fx = Mathf.Clamp(tx, 0f, 1f) * (TerrainXCount - 1);
-        float fz = Mathf.Clamp(tz, 0f, 1f) * (TerrainZCount - 1);
-        int x0 = Mathf.Clamp(Mathf.FloorToInt(fx), 0, TerrainXCount - 1);
-        int z0 = Mathf.Clamp(Mathf.FloorToInt(fz), 0, TerrainZCount - 1);
-        int x1 = Mathf.Min(x0 + 1, TerrainXCount - 1);
-        int z1 = Mathf.Min(z0 + 1, TerrainZCount - 1);
-
-        float ux = fx - x0;
-        float uz = fz - z0;
-        float y00 = cleanVertices[z0 * TerrainXCount + x0].y;
-        float y10 = cleanVertices[z0 * TerrainXCount + x1].y;
-        float y01 = cleanVertices[z1 * TerrainXCount + x0].y;
-        float y11 = cleanVertices[z1 * TerrainXCount + x1].y;
-        float y0 = Mathf.Lerp(y00, y10, ux);
-        float y1 = Mathf.Lerp(y01, y11, ux);
-        float localY = Mathf.Lerp(y0, y1, uz);
-
-        return terrainTransform.TransformPoint(new Vector3(local.x, localY, local.z)).y;
+        double latitude;
+        double longitude;
+        BroadUnproject(x, z, out latitude, out longitude);
+        return latitude >= 53.8 && latitude <= 58.4 && longitude >= 6.5 && longitude <= 16.5;
     }
 
     private static void BroadUnproject(float x, float z, out double latitude, out double longitude)
@@ -566,43 +452,5 @@ public sealed class CampaignDenmarkCleanupV013C : MonoBehaviour
         double lat01 = z / CampaignGeoProjection.MapDepth + 0.5;
         longitude = CampaignGeoProjection.MinLongitude + lon01 * (CampaignGeoProjection.MaxLongitude - CampaignGeoProjection.MinLongitude);
         latitude = CampaignGeoProjection.MinLatitude + lat01 * (CampaignGeoProjection.MaxLatitude - CampaignGeoProjection.MinLatitude);
-    }
-
-    private static bool IsNearDenmarkWorld(float x, float z)
-    {
-        double latitude;
-        double longitude;
-        BroadUnproject(x, z, out latitude, out longitude);
-        return latitude >= 54.2 && latitude <= 58.2 && longitude >= 7.2 && longitude <= 15.8;
-    }
-
-    private static Material CreateMaterial(Color color, string name)
-    {
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-        if (shader == null)
-            shader = Shader.Find("Standard");
-        if (shader == null)
-            shader = Shader.Find("Unlit/Color");
-
-        Material material = new Material(shader)
-        {
-            name = name,
-            color = color
-        };
-
-        if (material.HasProperty("_Smoothness"))
-            material.SetFloat("_Smoothness", 0.08f);
-        if (material.HasProperty("_Glossiness"))
-            material.SetFloat("_Glossiness", 0.08f);
-        return material;
-    }
-
-    private static void RemoveCollider(GameObject obj)
-    {
-        if (obj == null)
-            return;
-        Collider collider = obj.GetComponent<Collider>();
-        if (collider != null)
-            UnityEngine.Object.Destroy(collider);
     }
 }
