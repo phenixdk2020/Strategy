@@ -6,13 +6,18 @@
 - Branch: `work/v00.00.11-campaign-map`
 - Tactical baseline: `v00.00.09 TEST`
 - Geographic scope: Denmark, Sweden, Norway, Finland and Germany
-- Runtime node target: 50
-- Active campaign backlog: B-280–B-299
+- Runtime node target: 50 canonical nodes
+- Active campaign backlog: B-280–B-359
+- B-310–B-319 is an already occupied cross-layer regimental-standards namespace and is not redefined by the campaign expansion
+- Intermediate core gate: B-299
+- Final promotion gate: B-359
 - Next campaign version after final gate: `v00.00.12`
 
 ## Version principle
 
-Campaign-versionen er en samlet **testbar feature-gate**, ikke et versionshop pr. commit. Derfor kan B-280–B-299, kodeændringer, diagnostics og UI-polish alle fortsætte under `v00.00.11`, indtil B-299 er bestået.
+Campaign-versionen er en samlet testbar feature-gate, ikke et versionshop pr. commit. Derfor kan mange backlogpunkter, kodeændringer, diagnostics og UI-polish fortsætte under `v00.00.11`, mens runtime QA samles i større batches.
+
+Implementeret arbejde må stå som `IMPLEMENTERET / AFVENTER QA`, indtil Unity 6.6 compile/runtime er gennemført. Manglende QA alene udløser ikke en ny campaign-version.
 
 ## Current campaign architecture
 
@@ -29,7 +34,7 @@ Campaign-laget bygger på:
 
 Det visuelle kort og navigation må udvikles uden at ændre tactical AI på campaign-branchen.
 
-## v00.00.11 usability layer
+## Existing v00.00.11 usability layer
 
 `CampaignMapUsabilityV011.cs` udbygger den eksisterende campaign prototype med en isoleret usability/diagnostic layer:
 
@@ -43,51 +48,79 @@ Det visuelle kort og navigation må udvikles uden at ændre tactical AI på camp
 - camera focus (`F`) and reset (`Home`),
 - compact runtime diagnostics.
 
-Den eksisterende `CampaignMapController` beholder authoritative campaign movement/pathfinding, route ghost, time progression and battle-contact logic. v00.00.11 layeren må ikke skabe en alternativ simulation-state.
+`CampaignMapSearchHoverV011.cs` tilføjer:
+
+- partial-match search for locations and formations,
+- camera focus to search result,
+- formation hover/OOB summary.
+
+Den eksisterende `CampaignMapController` beholder authoritative campaign movement/pathfinding, route ghost, time progression and battle-contact logic. v00.00.11 helper-layers må ikke skabe en alternativ simulation-state.
+
+## Expanded campaign work package
+
+### B-280–B-299 — Core map usability
+
+50-node validation, labels, route types, ETA, node selection, political control, formation stacking, camera navigation, diagnostics, search, layer planning, route breakdown, node roles, depot/infrastructure display, hover/OOB, performance and QA presets.
+
+B-299 er nu en intermediate core gate, ikke den endelige versionspromotion.
+
+### B-300–B-309 — Map intelligence & UX
+
+Semantic zoom, major-city priority, location hover, selected-node highlight, route emphasis, map legend, overview/minimap, bookmarks, formation list/OOB and contact/event markers.
+
+### B-310–B-319 — Regimental standards namespace
+
+Denne ID-range eksisterer allerede som tværgående standards/faner backlog. Campaign-integrationen kan bruge de eksisterende beslutninger, men range må ikke genbruges til andre campaign tasks.
+
+### B-320–B-329 — Movement & logistics
+
+Explicit edge data, road classes, rail, ferry/sea transfer, order queue, march stance, strategic fatigue, supply-source association, throughput and route interruption/reroute.
+
+### B-330–B-339 — Warfare & command
+
+Formation hierarchy, command relation, strategic order delay, enemy uncertainty, reconnaissance, battle initiation, reinforcement windows, retreat destination, battle aftermath and campaign battle history.
+
+### B-340–B-349 — World, economy & manpower
+
+Manpower, recruitment policy, replacements, equipment stockpiles, production, resources, treasury, regional/economic control split, trade hooks and economy diagnostics.
+
+### B-350–B-359 — Save, QA & polish
+
+Versioned campaign save snapshots, restore/load, autosave hooks, deterministic QA seed, integrity validation, 100+ node stress test, formation-count stress test, campaign error overlay, full regression preset and final B-359 promotion gate.
 
 ## Strategic link principle
 
-Link classification i v00.00.11 er første prototype-hook. `SeaFerry` bruges til kendte water-transfer legs i QA-nettet; links mellem rail-capable nodes kan klassificeres som rail candidates; øvrige links behandles som road/land links.
+Link classification i første v00.00.11 implementation er et prototype-hook. `SeaFerry` bruges til kendte water-transfer legs i QA-nettet; links mellem rail-capable nodes kan klassificeres som rail candidates; øvrige links behandles som road/land links.
 
-Senere versioner skal udvide dette til explicit infrastructure data, capacity, transport eligibility, military movement speed, supply throughput and disruption state. Prototype-classification må ikke behandles som endeligt historisk valideret 1864 transportdata.
+B-320+ skal senere flytte dette til explicit infrastructure edge data med type, distance, capacity, state, transport eligibility, movement cost, supply throughput og disruption state. Historisk validering skal kunne ske gennem data uden at rewrite UI/pathfinding.
 
 ## Political-control principle
 
-`CampaignMapRegion` beskriver geografi. `CampaignNation Controller` beskriver politisk/militær kontrol. Disse må ikke slås sammen.
+`CampaignMapRegion` beskriver geografi. `CampaignNation Controller` beskriver politisk/militær kontrol. Economic contribution/occupation state skal ligeledes kunne være separat.
 
-Eksempler:
-
-- Finland kan være region `Finland` med controller `RussianEmpire`.
-- Schleswig-Holstein locations kan ligge i region `Germany`, mens controller varierer efter campaign state.
-- Et tactical battle-resultat kan ændre controller uden at flytte eller omdefinere locationens geografi.
+Et tactical battle-resultat kan ændre controller eller military state uden at flytte eller omdefinere locationens geografi.
 
 ## Campaign UI direction
 
-v00.00.11 skal gøre kortet operationelt læsbart før næste store simulation layer. Prioriteten er:
+Prioriteten er operationel læsbarhed før kompleks simulation:
 
-1. location readability,
-2. selection and information,
-3. formation readability,
-4. route/ETA understanding,
-5. political/infrastructure overlays,
-6. camera navigation,
-7. diagnostics and reproducible QA.
+1. selection/search/focus,
+2. location and formation readability,
+3. route/ETA/infrastructure understanding,
+4. political/contact overlays,
+5. movement/logistics state,
+6. OOB/command/intelligence,
+7. economy and world-state hooks,
+8. save/integrity/reproducible QA.
 
-## Expanded B-290–B-299 direction
+## Development isolation
 
-Den udvidede v00.00.11 work package tilføjer plan for:
+Campaign-branchen må ikke bruges til at rette eller eksperimentere med tactical Officer AI, tactical formation steering eller battlefield navigation. Tactical battle modtager kun campaign context gennem definerede handoff-data.
 
-- search/find location,
-- map/layer filters,
-- route cost breakdown,
-- strategic node roles,
-- depot/supply overlay seed,
-- port/rail/fortification symbols,
-- formation hover/OOB summary,
-- label culling/performance,
-- deterministic campaign QA presets,
-- final B-299 promotion gate.
+Det er særligt vigtigt efter tactical navigation-regressionstest: campaign-udviklingen fortsætter parallelt og må ikke trække eksperimentelle tactical changes ind.
 
 ## QA rule
 
-En feature må gerne være implementeret i GitHub uden at blive kaldt godkendt. Status er `IMPLEMENTERET / AFVENTER QA`, indtil den er kompileret og runtime-testet i Unity 6.6. B-299 er den endelige gate for at åbne `v00.00.12`.
+En feature må gerne være implementeret i GitHub uden at blive kaldt godkendt. Status er `IMPLEMENTERET / AFVENTER QA`, indtil den er kompileret og runtime-testet i Unity 6.6.
+
+B-359 er den endelige gate for at åbne `v00.00.12`. Opgaver som ikke er nødvendige for promotion kan eksplicit deferred til v00.00.12+ med dokumenteret begrundelse, men de må ikke forsvinde fra backloggen.
