@@ -1,91 +1,91 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09g
+Prototype version: v00.00.09h
 Build status: TEST
-Build name: TACTICAL VISUAL MAP TEST 09G
-Visible build marker: PROJECT 1864 | v00.00.09g TEST is shown permanently in the upper-left corner during Play mode
-TEST versioning rule: every delivered TEST revision receives a visible suffix bump (v00.00.09a, v00.00.09b, v00.00.09c, v00.00.09d, v00.00.09e, v00.00.09f, v00.00.09g...) so screenshots and test feedback can always be tied to the exact revision
+Build name: SOLDIER VISUAL + UNIFORM + BOX SELECT TEST 09H
+Visible build marker: PROJECT 1864 | v00.00.09h TEST is shown permanently in the upper-left corner during Play mode
+TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
-Previous gate: v00.00.09f Movement V3 authority, tree pass-through correction, visible ghost range fan and removal of VALGT xN panel retained
-Scenario: Danish test regiments are defenders; Prussian test regiments are attackers
-QA OOB expansion: TEST contains four Danish and four Prussian infantry regiments (eight total) arranged in four starting lanes per side for group-control and multi-unit AI testing
-Regimental standards v00.00.09g: every tactical regiment receives an enlarged centre/command-group standard with stronger silhouette, cloth fold, cords, finial and stable per-regiment ribbon accent
-Regimental standards identity: Danish and Prussian QA standards use distinct readable placeholder designs; final regimental colours require historical source validation
-Regimental standards scope: standards are visual identity only in this MVP and do not alter combat stats; later design includes flag bearer/escort, historical colours, morale/command effects and captured/lost standards
-Visual battlefield v00.00.09g: scenic world footprint is expanded to approximately 720x480 around the existing 360x240 tactical core
-Visual battlefield detail: 18 field patches, three secondary road systems, hedgerows, six woodland clusters with 156 scenic trees, five hamlet groups, haystacks and field stones are added as presentation-only detail
-Visual battlefield authority: PrototypeBattlefieldVisualPass09G does not write Regiment destination, formation, Officer AI or combat state; 09f tactical movement authority remains unchanged
-Visual battlefield collision rule: the new 720x480 scenic outer mesh intentionally has no tactical collider in 09g; the existing 360x240 central mesh remains the authoritative clickable/movement test surface until navigation stabilization is accepted separately
-Camera v00.00.09g: zoom range expands from strategic overview (~300 m) down to approximately 3.8 m above local terrain height, with terrain-aware ground clearance so close zoom cannot pass through hills
-Camera v00.00.09g navigation: pan bounds expand to approximately +/-350 x and +/-230 z for viewing the larger scenic map; Shift accelerates pan and Ctrl enables precision pan
-Camera v00.00.09g zoom behavior: zoom speed scales with camera height so strategic zoom is fast while close inspection remains controllable; near clip is reduced to 0.08 and far clip increased to 1500 by the visual layer
-Future tactical unit gate: dragoons/cavalry and field artillery are the next major non-infantry tactical unit types after visual/stability acceptance
-Dragoon design baseline: mounted/dismounted states, horse fatigue/casualties, horse-holder state and timed remount are required; mounted mobility and dismounted sustained fire may not be active simultaneously
-Artillery design baseline: battery/piece count, gun type, crew, horses/limber, deploy/unlimber state, ammunition mix, LOS/fire arcs, counter-battery and capture/abandon states are required; artillery is not an infantry reskin
-Attack frontage deconfliction: when several AI-controlled regiments converge on the same enemy, the first engager retains the primary frontage while later arrivals are assigned distinct lateral frontage slots beside it instead of converging on the target centre
-Attack frontage V2: secondary frontage slots are scored against travel distance, blocked destinations, houses/fences, river crossings, line-to-target obstruction and friendly separation so later arrivals prefer a genuinely usable side of the engagement instead of parking behind a building or another regiment
-Attack frontage hold rule: a secondary regiment that reaches its assigned frontage slot holds that local position and faces the target instead of receiving a new centre-seeking OrderAttack that would recreate overlap
-Attack spacing telemetry: AI-SPACING-V2 logs unit, target, slot and final obstacle-aware slot position when frontage allocation activates
-Battlefield navigation TEST layer v00.00.09f: Movement V3 remains the single authoritative steering layer; farmhouse, barn and fence posts are blocked tactical space, decorative individual trees are pass-through, and river/water remains bridge-only
-Navigation v00.00.09f authority: PrototypeNavigationV3Authority explicitly enables Navigation V3, disables Navigation V4 and 09A, and permits 09B only as a non-steering tree-pass-through compatibility rule
-Navigation v00.00.09f tree correction: 09e video QA showed repeated NAV-V3 Tree detour recreation on multiple regiments and 999+ Console messages; 09B removes Tree obstacles from V3 and clears stale V3 navigation state so persistent Tree detours cannot survive the rule change
-Navigation V3: persistent obstacle detours preserve the original player/AI destination until the active obstacle is cleared instead of recalculating one-frame tangent steering
-Navigation V3 formation passage: LINE formations narrow to COLUMN for discrete building/fence/bridge passage and restore their previous formation when the full-width path is clear
-Navigation V3 recovery: if a regiment centre is inside blocked space, emergency recovery moves it to the nearest legal column-clearance position without discarding the original movement intent
-Navigation V3 telemetry: NAV-V3 reports installation, persistent detours, emergency unstick, blocked-goal adjustments, bridge routes and route-waypoint corrections; NAV-AUTH reports the 09f V3 authority state; NAV-09B reports Tree pass-through and V3 state reset
-Navigation V4 retention: the A* V4 experiment remains in the repository for later comparison/debugging but is runtime-disabled and is not allowed to own Regiment.destination or formation state
-Navigation 09A retention: anti-tree-snag remains disabled. 09B is enabled only to remove decorative Tree obstacles and reset stale navigation state; it does not write steering destinations
-Unity 6.6 compile fix v00.00.09d retained: PrototypeBattlefieldNavigationV4 explicitly aliases Object to UnityEngine.Object and uses the supported FindObjectsByType<T>() overload so the dormant comparison implementation still compiles
-River crossing rule: the stream is non-traversable terrain for infantry; movement can cross it only through the fixed bridge zone
-Bridge march rule: bridge/obstacle routes use COLUMN-sized movement clearance; pontoon construction remains reserved for later engineer capability
-Pontoon rule: no regiment may cross open water merely by moving through it; pontoon construction is reserved for a later engineer-attachment capability and is not available without engineer support
-Melee TEST layer: opposing infantry formations that physically contact each other and are not separated by water/solid obstacles enter bayonet/melee contact instead of walking through each other or continuing point-blank volley fire
-Melee resolution: contact holds both formations, faces them toward each other, applies repeated strength/morale/cohesion losses, preserves normal rout thresholds and feeds casualty visuals through strength loss
-Melee telemetry: MELEE-DIAG announces contact and MELEE-LOG records both units, distance, losses, remaining strength, morale and cohesion per melee pulse
-Battlefield tactical core: central movement/click test mesh remains 360x240 in v00.00.09g; the 720x480 scenic extension is deliberately presentation-only until navigation is separately widened and QA-tested
-Fire geometry: directional 120-degree forward fire fan follows regiment facing; no 360-degree firing ring
-Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
-Range fan visibility v00.00.09f retained: selected-unit Close/Medium/Long overlays are terrain-following ghost lines with material alpha kept at 1.0 and translucency applied only through LineRenderer vertex colour
-Fire policy: HOLD / CLOSE / MEDIUM / LONG determines when a regiment may open fire
-Accuracy: TEST tuning compensates the legacy kernel so Close/Medium/Long multipliers are applied exactly once instead of stacking on top of the old distance curve
-Combat tuning menu: F9 or KAMP F9 opens runtime sliders for base hit chance per firing man, Close/Medium/Long factors, firing fraction, morale/cohesion accuracy floors, starting ammunition rounds per man and losses per visible casualty body
-Combat tuning defaults: base hit chance 1.40%, Close x1.75, Medium x1.00, Long x0.30, 58% firing fraction, morale floor 72%, cohesion floor 68%, 60 starting rounds per man and 8 losses per visible casualty body
-Morale/cohesion accuracy revision: morale and cohesion still reduce hit probability, but accuracy no longer collapses toward zero merely because prolonged close-range fire has reduced both values while hundreds of men remain formed
-Volley diagnostics: every detected volley writes VOLLEY-LOG to Unity Console with battle time, shooter, target, distance, range band, fire policy, strength, firing men, morale, cohesion, quality multiplier, base hit chance, range multiplier, expected hits, resolved hits, target strength and ammunition before/after
-Fire eligibility MVP: target must be inside selected fire-policy range and inside the forward fire arc
-Reload: weapon profile base reload + bounded regiment Experience modifier retained from v00.00.08
-Volley feedback revision: TEST layer detects every resolved volley and shows temporary Ramte N including Ramte 0; feedback lifetime increased for readability
-Ammunition TEST model: starting rounds per man are configurable; one volley consumes one round per man; display is rounds per man, not total cartridges; no automatic regeneration
-Officer assignment: every prototype regiment receives an OfficerProfile + OfficerAIController at runtime
-Officer core stats: Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution, Composure/Nerve
-Officer background: Experience is separate and primarily reduces decision noise
-Player delegation: I toggles AI UNIT ON/OFF for selected Danish regiment(s); A remains camera-left in WASD
-Officer AI doctrine menu: DEFENSIVE / BALANCED / OFFENSIVE applies to selected Danish regiment(s)
-Commander aggression intent: 0-100 slider biases cautious/aggressive execution, while officer Aggressiveness remains dominant (70% officer / 30% order before doctrine bias)
-Fire discipline menu: HOLD / CLOSE / MEDIUM / LONG applies to selected Danish regiment(s)
-Battle HUD v00.00.09f retained: the persistent selected/multi-selected summary panel is hidden completely; the bottom command bar remains the control surface and mouse-over keeps only the small transient two-line regiment label
-Battle HUD multi-select v00.00.09f: no aggregate 'VALGT xN' battlefield panel is shown; multi-selection remains visible through selection markers, command bar context and range overlays
-Command UI safe-area revision: bottom command bar is two rows, 58 px high, inset 50 px horizontally and 42 px from the lower edge so it remains visible in slightly zoomed Unity Game view
-Time HUD safe-area revision: date/time plus PAUSE/x0.5/x1/x2/x5/x20 are centred 20 px below the upper edge; Space and 0/1/2/3/4 remain shortcuts
-UI input isolation: clicks inside time controls, combat tuning panel or bottom command bar do not issue battlefield selection/move/attack orders
-Multi-selection: Ctrl+left-click or Shift+left-click adds/removes Danish regiments from the current selection
-Formation control: manual F/C selects line/column; Officer AI may use column for longer approach marches and returns to line near engagement based on Tactical Skill and distance
-Single-unit move/facing: right-click location is the destination; while RMB is held the yellow destination footprint itself rotates live with the mouse drag, with a short facing guide showing the final direction before release
-Destination formation rule: movement may be executed in column, but the destination ghost footprint and final deployed state are LINE by default
-Multi-unit move/facing revision: with several units selected, RMB-down location is the CENTER of the final group frontage; dragging points the common facing direction; regiment centres are distributed on a line perpendicular to that facing, so dragging right makes every selected regiment face right
-Multi-unit preview: a visible center marker anchors the RMB-down point; the yellow frontage preview is centred on it and a facing guide points in the common drag direction
-Waypoint routes: Alt+right-click appends a waypoint; for multiple selected regiments the waypoint point is the group centre and units retain a common frontage/facing relationship; Alt+right-drag sets explicit final facing
-Waypoint obedience v00.00.09f: PlayerCommander continues to reassert active player routes; Navigation V3 sanitizes blocked building/fence/water waypoints and owns only short-term obstacle/bridge steering while preserving the route goal; decorative Trees are excluded from route blocking
-Order ghosts: route ghost follows the player-issued waypoints and the final destination footprint shows final LINE formation and facing; Z/X can rotate final ghost facing without cancelling movement
-Facing order: Z rotates selected regiment(s) 15 degrees left; X rotates 15 degrees right; matching compact buttons remain in the bottom command bar
-Casualty visuals: bodies accumulate at the actual formation position as losses occur even while units remain stationary and exchange fire; density is runtime-configurable, default one visible body per eight losses
-Enemy AI: Prussian officers start Offensive with order aggression 65 and Medium fire policy; 18th uses a flank/approach waypoint before reassessing attack
-Enemy behaviour rule: attackers close to officer/order preferred range, deploy to line near engagement, may stabilise under morale pressure, and do not receive combat-stat cheats
-Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision noise only, not combat stats or hidden knowledge
-AI telemetry: AI-DIAG exposes unit, officer, doctrine, order aggression, effective aggression, fire policy, mission, task and reason
-Pause semantics: AI, movement, waypoint movement, reload, combat and battle clock stop together; camera/UI remain usable
-Slow tactical mode: x0.5 gives twice the real-world reaction time per unit of simulation time without changing combat stats
-QA state: v00.00.09g TEST requires Unity 6000.6.0f1 compile + Play acceptance. Primary checks: VIS-09G installs; map visually extends to 720x480; close zoom reaches roughly 3.8 m above local terrain without clipping through hills; enhanced standards render; 09f movement authority remains V3/09B tree-pass-through; visual 09g code never writes movement/combat state; existing range cone remains visible; VALGT xN remains absent
+
+Previous accepted/retained layers
+- v00.00.09f Movement V3 authority remains the tactical steering baseline.
+- Navigation V4 and 09A remain runtime-disabled; 09B remains tree-pass-through only and does not own steering.
+- Decorative individual trees are pass-through; buildings/fence posts remain obstacles; river remains bridge-only.
+- v00.00.09g scenic battlefield, larger camera range and enhanced regimental standards are retained.
+- Scenic outer battlefield remains presentation-only; central 360x240 tactical core remains authoritative movement/click surface until navigation bounds are widened separately.
+
+v00.00.09h - Soldier Visual Pass 1
+- PrototypeSoldierVisualPass09H upgrades every existing representative infantry figure without replacing Regiment gameplay state.
+- Existing capsule body/rifle/headgear are refined and supplemented with visible head, separate trousers/legs, belt/straps, pack/equipment and bayonet silhouette.
+- Danish and Prussian infantry receive visibly different default colour profiles and headgear silhouettes.
+- Prussian representative soldiers receive a prototype spike silhouette; Danish soldiers receive a distinct brim/detail silhouette.
+- Representative soldier 1 receives officer sash/sword details; representative soldier 2 receives standard-bearer sash details.
+- Soldier visual pass never writes Regiment destination, formation, strength, morale, cohesion, fire policy or Officer AI state.
+
+v00.00.09h - Per-regiment uniform profiles
+- PrototypeUniformProfile09H stores Coat, Trousers, Headgear, Trim, Straps, Equipment, Skin, FlagPrimary, FlagSecondary and Ribbon colours.
+- Faction defaults exist for Denmark and Prussia.
+- Regiment defaults exist for the current eight-unit QA OOB so units can be visually distinguished while preserving faction identity.
+- Uniform colours are presentation-only and never alter combat or movement statistics.
+
+v00.00.09h - Uniform Designer
+- F10 opens/closes the in-game uniform designer.
+- Exactly one regiment must be selected for editing.
+- Uniform/fane parts can be selected and RGB values changed with live preview.
+- GEM stores the current regiment profile in local PlayerPrefs.
+- INDLÆS restores a saved profile.
+- REGIMENT STANDARD restores that regiment's QA default.
+- FACTION STANDARD restores the faction default.
+- Flag primary/secondary and ribbon colours update the existing 09g regimental standard.
+- UI clicks inside the Uniform Designer are protected from battlefield selection/order input.
+
+v00.00.09h - RTS box selection
+- Normal LMB click remains the existing single-unit selection behavior.
+- LMB drag beyond 9 pixels shows a translucent marquee rectangle.
+- On release, all non-routed Danish regiment centres inside the rectangle are selected.
+- No modifier = replace selection.
+- Shift + drag = add units inside the rectangle to the existing selection.
+- Ctrl + drag = toggle units inside the rectangle against the selection state captured at mouse-down.
+- Enemy/Prussian regiments cannot be selected by the player box selector.
+- Box selection changes selection only and never issues movement or combat orders.
+
+v00.00.09h - Video QA fixes from optagelse 1(2).mp4
+- 09g recording confirmed units reach engagement; the old multi-regiment tree-stall is not reproduced in this recording, so V3 movement code is deliberately unchanged in 09h.
+- The persistent VALGT/VALGT xN summary panel was still visible in the recording. 09h removes the draw call directly in BattleManager instead of relying on the 09f reflection hide workaround.
+- Ramte N feedback is now compact text-only rather than a large black battlefield box.
+- Black-powder particles showed obvious opaque white rectangular quads in close combat. PrototypeBattleVisualFix09H generates a soft-alpha runtime smoke sprite and retunes lifetime/size/fade to remove the square-edge artifact.
+
+Regimental standards
+- 09g enhanced centre standard with pole, finial, fold, cords and ribbon remains active.
+- 09h uniform profiles can recolour flag primary/secondary fields and regiment ribbon at runtime.
+- Final historical regimental colours still require source validation; current designs remain QA placeholders.
+
+Future tactical unit gate
+- Dragoons/cavalry and field artillery remain the next major non-infantry tactical unit types after visual/stability acceptance.
+- Dragon design baseline: mounted/dismounted states, horse fatigue/casualties, horse-holder state and timed remount; mounted mobility and dismounted sustained fire cannot be active simultaneously.
+- Artillery design baseline: battery/piece count, gun type, crew, horses/limber, deploy/unlimber, ammunition mix, LOS/fire arcs, counter-battery and capture/abandon states; artillery is not an infantry reskin.
+
+Combat/navigation retained
+- Fire geometry remains a directional 120-degree forward fire fan.
+- Range fan remains selected-unit ghost overlay from 09f.
+- Fire policy remains HOLD / CLOSE / MEDIUM / LONG.
+- Reload, ammunition, casualty visuals, melee and Officer AI logic are unchanged by 09h visual/control work.
+- Player right-click movement/facing, Alt+RMB waypoints, F/C formation, Z/X facing and route ghosts are retained.
+- Simulation controls remain PAUSE / x0.5 / x1 / x2 / x5 / x20.
+
+Primary 09h QA
+1. Unity 6000.6.0f1 compiles without errors.
+2. Visible build marker is PROJECT 1864 | v00.00.09h TEST.
+3. Existing 09f V3/09B movement authority remains active and movement behavior is not changed by 09h.
+4. No persistent VALGT or VALGT xN summary panel appears.
+5. Ramte N appears as small text and no longer hides formations.
+6. Volley smoke has soft transparent edges and no large white square quads.
+7. Close zoom shows visibly improved infantry silhouettes, equipment, officer and standard-bearer details.
+8. F10 Uniform Designer opens; RGB changes preview immediately; Save/Load/Reset functions work.
+9. LMB drag displays a marquee and selects all Danish regiment centres inside it.
+10. Shift-drag adds and Ctrl-drag toggles selection; Prussian units remain unselectable.
+11. Range cone remains visible and translucent.
+12. No new Console error spam is introduced.
