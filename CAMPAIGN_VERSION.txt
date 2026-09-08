@@ -6,14 +6,22 @@ Base branch: work/v00.00.10-campaign-map-nodes50
 Tactical baseline: v00.00.09 TEST
 Campaign node target: 50
 Map coverage: Denmark + Sweden + Norway + Finland + Germany
-Purpose: campaign usability and strategic interaction milestone after the 50-node v00.00.10 expansion
-Active work package: B-280-B-299
+Purpose: campaign usability, strategic interaction and systems-foundation milestone after the 50-node v00.00.10 expansion
+Active campaign work package: B-280-B-359
 Core backlog: docs/backlog/B-280-CAMPAIGN-MAP-V011.md
-Extended backlog: docs/backlog/B-290-CAMPAIGN-MAP-V011-EXTENDED.md
+Extended usability backlog: docs/backlog/B-290-CAMPAIGN-MAP-V011-EXTENDED.md
+Map intelligence backlog: docs/backlog/B-300-CAMPAIGN-V011-MAP-INTELLIGENCE.md
+Regimental standards namespace: B-310-B-319 remains defined separately in docs/backlog/B-310-REGIMENTAL-STANDARDS.md
+Movement/logistics backlog: docs/backlog/B-320-CAMPAIGN-V011-MOVEMENT-LOGISTICS.md
+Warfare/command backlog: docs/backlog/B-330-CAMPAIGN-V011-WAR-COMMAND.md
+World/economy backlog: docs/backlog/B-340-CAMPAIGN-V011-WORLD-ECONOMY.md
+Save/QA/polish backlog: docs/backlog/B-350-CAMPAIGN-V011-SAVE-QA-POLISH.md
 Design supplement: docs/PROJECT-1864-Campaign-v00.00.11-Design-Supplement.md
 Implementation wave 1: CampaignMapUsabilityV011.cs adds validation, node info, political control markers, link classification, stacking offsets, ETA, focus/reset and diagnostics
 Implementation wave 2: CampaignMapSearchHoverV011.cs adds location/formation search, camera focus and formation hover/OOB summary
-Version rule: multiple backlog tasks and commits remain v00.00.11 until the shared final B-299 acceptance gate passes
-Next campaign version after gate: v00.00.12
+Version rule: multiple backlog tasks and commits remain v00.00.11; implemented items may await batch Unity QA rather than forcing a version bump
+Intermediate core gate: B-299
+Final promotion gate: B-359
+Next campaign version after final gate: v00.00.12
 Isolation rule: tactical AI is not changed by this campaign branch
-QA state: implemented campaign additions require Unity compile/runtime acceptance; B-299 controls promotion
+QA state: campaign additions may be implemented in batches and remain IMPLEMENTERET / AFVENTER QA until Allan performs Unity compile/runtime testing; only B-359 can promote v00.00.11
