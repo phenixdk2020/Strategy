@@ -8,8 +8,9 @@ public sealed class CampaignLayerManagerV013 : MonoBehaviour
     private bool showInfrastructure = true;
     private bool showSettlements = true;
     private bool showLivingWorld = true;
-    private bool showOverlays = true;
+    private bool showOverlays = false;
     private bool showHydrology = true;
+    private bool showPanel = false;
 
     private GUIStyle panelStyle;
     private GUIStyle labelStyle;
@@ -28,8 +29,16 @@ public sealed class CampaignLayerManagerV013 : MonoBehaviour
         root.AddComponent<CampaignLayerManagerV013>();
     }
 
+    private void Start()
+    {
+        ApplyLayerDefaults();
+    }
+
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F5))
+            showPanel = !showPanel;
+
         if (Input.GetKeyDown(KeyCode.F6))
         {
             showInfrastructure = !showInfrastructure;
@@ -57,6 +66,15 @@ public sealed class CampaignLayerManagerV013 : MonoBehaviour
         }
     }
 
+    private void ApplyLayerDefaults()
+    {
+        SetLayer(CampaignTerrainV013.RootInfrastructure, showInfrastructure);
+        SetLayer(CampaignTerrainV013.RootSettlements, showSettlements);
+        SetLayer(CampaignTerrainV013.RootLivingWorld, showLivingWorld);
+        SetLayer(CampaignTerrainV013.RootOverlays, showOverlays);
+        SetLayer(CampaignTerrainV013.RootHydrology, showHydrology);
+    }
+
     private static void SetLayer(string name, bool visible)
     {
         GameObject root = GameObject.Find(name);
@@ -72,12 +90,12 @@ public sealed class CampaignLayerManagerV013 : MonoBehaviour
         panelStyle = new GUIStyle(GUI.skin.box)
         {
             alignment = TextAnchor.UpperLeft,
-            fontSize = 12,
+            fontSize = 11,
             padding = new RectOffset(8, 8, 7, 7)
         };
         labelStyle = new GUIStyle(GUI.skin.label)
         {
-            fontSize = 12,
+            fontSize = 11,
             alignment = TextAnchor.UpperLeft
         };
     }
@@ -85,14 +103,21 @@ public sealed class CampaignLayerManagerV013 : MonoBehaviour
     private void OnGUI()
     {
         EnsureStyles();
-        float width = 285f;
-        float height = 126f;
+
+        if (!showPanel)
+        {
+            GUI.Box(new Rect(Screen.width - 112f, 12f, 100f, 24f), "F5 LAYERS", panelStyle);
+            return;
+        }
+
+        float width = 230f;
+        float height = 128f;
         Rect rect = new Rect(Screen.width - width - 12f, 12f, width, height);
         GUI.Box(rect, string.Empty, panelStyle);
 
         float x = rect.x + 10f;
         float y = rect.y + 8f;
-        GUI.Label(new Rect(x, y, width - 20f, 20f), "3D MAP LAYERS", labelStyle);
+        GUI.Label(new Rect(x, y, width - 20f, 20f), "3D MAP LAYERS  [F5 hide]", labelStyle);
         y += 21f;
         GUI.Label(new Rect(x, y, width - 20f, 18f), "F6 Infrastructure: " + OnOff(showInfrastructure), labelStyle); y += 17f;
         GUI.Label(new Rect(x, y, width - 20f, 18f), "F7 Settlements: " + OnOff(showSettlements), labelStyle); y += 17f;
