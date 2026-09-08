@@ -1,14 +1,25 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09h1
+Prototype version: v00.00.09h2
 Build status: TEST
-Build name: SOLDIER VISUAL + UNIFORM + BOX SELECT TEST 09H1
-Visible build marker: PROJECT 1864 | v00.00.09h1 TEST is shown permanently in the upper-left corner during Play mode
+Build name: SOLDIER VISUAL + UNIFORM + BOX SELECT + FRONTAGE STABILITY TEST 09H2
+Visible build marker: PROJECT 1864 | v00.00.09h2 TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
+
+v00.00.09h2 - Attack frontage stability fix
+- Screenshot QA showed one Danish regiment remaining far behind while the other three advanced into engagement.
+- Root cause candidate identified in PrototypeAttackFrontagePlannerV2: secondary frontage slots were fully rescored every 0.25 seconds, allowing a unit to chase a moving/flipping slot while V3 simultaneously steered toward the latest destination.
+- Frontage slots are now sticky once allocated.
+- A slot is reconsidered only when it becomes blocked/conflicted, the target moves materially, or the regiment makes no meaningful progress for 3.5 seconds.
+- No-progress recovery deliberately excludes the current slot from the next choice so the unit tries an alternate frontage instead of reissuing the same failed destination.
+- Progress is measured against distance-to-slot with 0.65 m hysteresis so tiny movement/noise does not count as real progress.
+- Attack target selection gains hysteresis: a new nearest enemy must be materially closer before frontage ownership switches, reducing target churn between nearly equal enemies.
+- New telemetry prefix: AI-SPACING-V3. Replan reasons include InitialSlot, SlotConflict, SlotBlocked, TargetMoved and NoProgress; RecoveryCount increments on genuine no-progress recovery.
+- Navigation V3 remains the sole steering owner. 09h2 does not modify V3, 09B tree pass-through, combat resolution, Officer AI decision timing or player movement controls.
 
 v00.00.09h1 - Compile fix
 - Fixes CS0103 in PrototypeSoldierVisualPass09H where JsonUtility was unavailable in the current Unity project configuration.
@@ -60,10 +71,10 @@ v00.00.09h - RTS box selection
 - Box selection changes selection only and never issues movement or combat orders.
 
 v00.00.09h - Video QA fixes from optagelse 1(2).mp4
-- 09g recording confirmed units reach engagement; the old multi-regiment tree-stall is not reproduced in this recording, so V3 movement code is deliberately unchanged in 09h.
-- The persistent VALGT/VALGT xN summary panel was still visible in the recording. 09h removes the draw call directly in BattleManager instead of relying on the 09f reflection hide workaround.
-- Ramte N feedback is now compact text-only rather than a large black battlefield box.
-- Black-powder particles showed obvious opaque white rectangular quads in close combat. PrototypeBattleVisualFix09H generates a soft-alpha runtime smoke sprite and retunes lifetime/size/fade to remove the square-edge artifact.
+- 09g recording confirmed units reach engagement; the old multi-regiment tree-stall was not reproduced in that recording.
+- The persistent VALGT/VALGT xN summary panel is removed directly in BattleManager.
+- Ramte N feedback is compact text-only rather than a large black battlefield box.
+- Black-powder particles use a soft-alpha runtime smoke sprite and retuned lifetime/size/fade to remove square particle edges.
 
 Regimental standards
 - 09g enhanced centre standard with pole, finial, fold, cords and ribbon remains active.
@@ -72,27 +83,28 @@ Regimental standards
 
 Future tactical unit gate
 - Dragoons/cavalry and field artillery remain the next major non-infantry tactical unit types after visual/stability acceptance.
-- Dragon design baseline: mounted/dismounted states, horse fatigue/casualties, horse-holder state and timed remount; mounted mobility and dismounted sustained fire cannot be active simultaneously.
+- Dragoon design baseline: mounted/dismounted states, horse fatigue/casualties, horse-holder state and timed remount; mounted mobility and dismounted sustained fire cannot be active simultaneously.
 - Artillery design baseline: battery/piece count, gun type, crew, horses/limber, deploy/unlimber, ammunition mix, LOS/fire arcs, counter-battery and capture/abandon states; artillery is not an infantry reskin.
 
 Combat/navigation retained
 - Fire geometry remains a directional 120-degree forward fire fan.
 - Range fan remains selected-unit ghost overlay from 09f.
 - Fire policy remains HOLD / CLOSE / MEDIUM / LONG.
-- Reload, ammunition, casualty visuals, melee and Officer AI logic are unchanged by 09h/09h1 visual/control work.
+- Reload, ammunition, casualty visuals, melee and Officer AI logic are unchanged by 09h/09h1/09h2 visual/control/frontage work.
 - Player right-click movement/facing, Alt+RMB waypoints, F/C formation, Z/X facing and route ghosts are retained.
 - Simulation controls remain PAUSE / x0.5 / x1 / x2 / x5 / x20.
 
-Primary 09h1 QA
-1. Unity 6000.6.0f1 compiles without CS0103 JsonUtility errors.
-2. Visible build marker is PROJECT 1864 | v00.00.09h1 TEST.
-3. Existing 09f V3/09B movement authority remains active and movement behavior is not changed.
-4. No persistent VALGT or VALGT xN summary panel appears.
-5. Ramte N appears as small text and no longer hides formations.
-6. Volley smoke has soft transparent edges and no large white square quads.
-7. Close zoom shows visibly improved infantry silhouettes, equipment, officer and standard-bearer details.
-8. F10 Uniform Designer opens; RGB changes preview immediately; Save/Load/Reset functions work.
-9. LMB drag displays a marquee and selects all Danish regiment centres inside it.
-10. Shift-drag adds and Ctrl-drag toggles selection; Prussian units remain unselectable.
-11. Range cone remains visible and translucent.
-12. No new Console error spam is introduced.
+Primary 09h2 QA
+1. Unity 6000.6.0f1 compiles without red errors.
+2. Visible build marker is PROJECT 1864 | v00.00.09h2 TEST.
+3. Existing 09f V3/09B movement authority remains active.
+4. Repeat the four-regiment offensive test that previously left the bottom-left Danish regiment behind.
+5. Secondary attackers should keep one frontage destination instead of repeatedly changing slot.
+6. If a secondary attacker makes no progress for 3.5 seconds, Console should show AI-SPACING-V3 with Reason=NoProgress and a new slot.
+7. No persistent VALGT or VALGT xN summary panel appears.
+8. Ramte N remains compact text.
+9. Volley smoke has soft transparent edges.
+10. F10 Uniform Designer Save/Load/Reset works.
+11. LMB box selection, Shift-add and Ctrl-toggle work.
+12. Range cone remains visible and translucent.
+13. Existing yellow CS0618 FindObjectsByType/FindObjectsSortMode warnings may still appear; they are legacy Unity 6.6 deprecation warnings and are not part of this movement fix.
