@@ -1,11 +1,14 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13
-Build status: 3D DEV / CLEAN REBUILD
-Build name: CAMPAIGN 3D STRATEGIC WORLD V13
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 3D DEV
+Prototype version: v00.00.13a
+Build status: 3D POLISH DEV / CLEAN REBUILD
+Build name: CAMPAIGN 3D STRATEGIC WORLD V13A
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a visual polish
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
+Layer cleanup: inherited tactical build marker is suppressed on CampaignMap; strategic overlays are OFF by default; layer panel is collapsed by default and toggled with F5; search is hidden by default and toggled with F3
+Denmark focus: Home/default camera centers on Denmark; Natural Earth 1:50m Denmark geography is added as a terrain-conforming visual surface over the strategic terrain
+Graphics polish: darker sea/terrain palette, soft directional shadows, thinner strategic lines and coast rendering, detailed Denmark coastline/land parts
 3D scope: procedural strategic terrain, layered world roots, terrain-conforming map lines, 3D settlement miniatures, terrain-aware camera, campaign-time atmosphere and staged construction QA
 Authoritative distance rule: geographic coordinates/route geometry drive simulation; Unity render distance and vertical exaggeration do not change ETA
 Promotion status: DEV only; official active campaign remains v00.00.11 until gates/QA are satisfied
