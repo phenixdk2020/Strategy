@@ -1,10 +1,10 @@
-# B-390–B-399 — Campaign v00.00.12 Society, Events & Final QA
+# B-390–B-399 — Campaign v00.00.12 Society, Events & Integration Checkpoint
 
 ## Status
 
 **Target version:** `v00.00.12`  
 **State:** PLANLAGT  
-**Scope:** campaign society, events, occupation and v00.00.12 acceptance  
+**Scope:** campaign society, events, occupation and integration checkpoint  
 **Tactical AI:** må ikke ændres af dette work package.
 
 ## Retning
@@ -75,7 +75,8 @@ Acceptance:
 - seasonal state kommer fra campaign date/location,
 - modifiers er bounded og data-driven,
 - weather visual og simulation state er adskilt men synkroniseret,
-- disease behandles som formation/region state og ikke som tilfældig per-frame chance.
+- disease behandles som formation/region state og ikke som tilfældig per-frame chance,
+- movement/weather hooks kan levere data til B-403 formation mobility uden dobbelt model.
 
 ## B-396 — Newspaper and campaign event feed
 **Status:** PLANLAGT
@@ -110,10 +111,10 @@ Acceptance:
 - ingen gratis resources, instant construction eller hidden transport,
 - tactical AI-filer forbliver uberørte.
 
-## B-399 — Final Campaign v00.00.12 acceptance gate
+## B-399 — Society/events integration checkpoint
 **Status:** PLANLAGT
 
-B-399 er den planlagte endelige gate for campaign `v00.00.12`.
+B-399 er et integration checkpoint for society/events-delen af campaign `v00.00.12`. Den er ikke længere den endelige versionspromotion; den endelige gate ligger i B-409 efter formation-mobility work package.
 
 Acceptance:
 1. Unity 6.6 compiler: 0 blocking errors.
@@ -128,5 +129,5 @@ Acceptance:
 10. Living-world visuals afspejler relevante states uden at blive authoritative.
 11. Event feed og event framework respekterer fog of war.
 12. Strategic AI priority hooks må ikke ændre tactical AI.
-13. Save/load/integrity validator rapporterer ingen blocking campaign errors i regression preset.
-14. Alle deferred items registreres eksplicit før promotion til næste campaign version.
+13. Save/load/integrity validator rapporterer ingen blocking campaign errors i checkpoint preset.
+14. B-400–B-409 formation mobility kan fortsætte på samme v00.00.12 milestone uden at genåbne society-state.
