@@ -4,7 +4,8 @@ v00.00.13a state: DEV VISUAL POLISH / CLEAN REBUILD
 v00.00.13b state: DEV VISUAL POLISH PASS 1 / CLEAN CAMPAIGN LINEAGE
 v00.00.13c state: DEV DENMARK CLEANUP HOTFIX / CLEAN CAMPAIGN LINEAGE
 v00.00.13d state: DEV DENMARK MAP REBUILD / CLEAN CAMPAIGN LINEAGE
-Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 3D DEV -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d Denmark map rebuild
+v00.00.13e state: DEV DENMARK CLEAN RENDER FOUNDATION / CLEAN CAMPAIGN LINEAGE
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 3D DEV -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e Denmark clean render
 v00.00.11 work package: B-280-B-369
 v00.00.11 final gate: B-369
 v00.00.12 state: PLANNED
@@ -13,27 +14,24 @@ v00.00.12 final gate: B-409
 v00.00.13 work package: B-410-B-469
 v00.00.13 planned final gate: B-469
 v00.00.13 3D implementation: procedural terrain, L1-L10 layer roots, terrain-conforming strategic links, 3D settlement miniatures, terrain-aware camera, campaign-time atmosphere/day-night, layer visibility and staged construction prototypes
-v00.00.13a branch: work/v00.00.13a-campaign-visual-polish
-v00.00.13b branch: work/v00.00.13b-campaign-visual-polish
-v00.00.13c branch: work/v00.00.13c-denmark-cleanup
-v00.00.13d branch: work/v00.00.13d-denmark-map-rebuild
-v00.00.13c runtime-isolation fix: CampaignMap blocks PrototypeBootstrap; PrototypeBattle remains explicit-only
-v00.00.13c finding: tactical battlefield content had been auto-built on CampaignMap because CampaignModeEnabled had been false
-v00.00.13d projection rule: Denmark is no longer created in the legacy local projection and then remapped; the Natural Earth longitude/latitude rings are projected directly with CampaignGeoProjection.Project3D into the broad v11+ strategic coordinate system
-v00.00.13d terrain rule: no destructive carve of CampaignTerrainSurface_v013; the coarse renderer is hidden while Denmark is validated on a dedicated direct-projection mesh
-v00.00.13d relief rule: Denmark uses a deliberately low-amplitude presentation surface; authoritative elevation/DEM remains future work
-v00.00.13d visual cleanup: old v13a/v13c Denmark render roots and v13b land-cover/vegetation artifacts are suppressed during Denmark geography QA
-v00.00.13d settlement rule: Denmark settlement miniatures are grounded to the same presentation-height function and scaled for broad strategic-map use
-v00.00.13d construction rule: Aalborg barracks and Aarhus farm remain campaign-time staged projects and are retained/re-grounded
-v00.00.13d infrastructure rule: Denmark-focus links are redraped from authoritative endpoint lat/lon interpolation; ferry links stay at water level
-v00.00.13d UI rule: legacy all-Europe node labels plus V011 diagnostic/political/search UI are suppressed during Denmark-focus QA; Denmark labels use simple overlap avoidance
-v00.00.13d camera rule: the v13a Denmark-first CampaignMapCameraController Home position remains authoritative; V011 generic Home reset is disabled in this QA slice
-v00.00.13d simulation rule: no campaign movement, ETA, route distance, strategic state, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed
-v00.00.13d QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
+v00.00.13e branch: work/v00.00.13e-denmark-clean-render
+v00.00.13e architecture rule: Denmark QA no longer attempts to repair the old v13 stacked presentation. It creates one independent V013E_DENMARK_CLEAN_RENDER hierarchy after suppressing old render layers.
+v00.00.13e old-layer suppression: old L1 terrain, L2 hydrology, L3 land cover, L4 infrastructure, L5 settlements and L8 overlays remain in the scene only for compatibility/state but their renderers are disabled during Denmark clean QA.
+v00.00.13e projection rule: Natural Earth Denmark longitude/latitude rings are projected directly with the broad v11+ CampaignGeoProjection.Project3D API. No legacy local projection remap is part of the v13e render path.
+v00.00.13e terrain rule: one direct Denmark surface plus one clean sea surface; no coarse global terrain plate is visible in the Denmark QA view.
+v00.00.13e relief rule: Denmark has deliberately low-amplitude presentation relief. This does not claim DEM/elevation accuracy and does not affect strategic route distance.
+v00.00.13e settlement rule: legacy settlement renderers are hidden and clean small city/fort visuals are rebuilt at authoritative node positions.
+v00.00.13e infrastructure rule: legacy link renderers are hidden and clean focus-only road/rail/ferry renderers are rebuilt from authoritative node lat/lon endpoints.
+v00.00.13e label LOD: overview shows primary Danish cities only; secondary labels appear when zooming in; all focus labels are allowed close-up with overlap avoidance.
+v00.00.13e camera rule: initial view and Home are both tightened to Denmark and share the same stored home transform.
+v00.00.13e construction rule: Aalborg barracks and Aarhus farm remain staged campaign-time projects and are grounded on the clean Denmark presentation surface.
+v00.00.13e runtime isolation: tactical PrototypeBootstrap remains blocked on CampaignMap; no Strategy-Test navigation or Officer-AI changes are included.
+v00.00.13e simulation rule: no campaign movement, ETA, route distance, strategic state, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed.
+v00.00.13e QA gate: no giant green terrain slabs; Denmark immediately recognizable; primary labels readable at Home zoom; settlements/links align with Denmark; barracks/farm remain visible; Unity compiles without errors.
+v00.00.13e QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route geometry
 Projection rule: CampaignGeoProjection broad-map/geodesic APIs are authoritative for v11+ campaign content; legacy local projection exists only for backward compatibility and must not be used by new strategic presentation layers
 Runtime isolation: CampaignMap is the campaign runtime; tactical PrototypeBattle is explicit-only and must not auto-open or auto-bootstrap on CampaignMap
-Tactical isolation: no tactical navigation/Officer-AI QA fixes from Strategy-Test are included in the v00.00.13d campaign build
 Planned v00.00.14 milestone: GOVERNMENT, RESEARCH, DOCTRINE & STRATEGIC AI
 Planned v00.00.14 work package: B-470-B-539
 Planned v00.00.15 milestone: MULTI-NATION AI, TRADE, DIPLOMACY & ALLIANCES
