@@ -7,9 +7,11 @@ Tactical baseline: v00.00.09 TEST
 Campaign node target: 50
 Map coverage: Denmark + Sweden + Norway + Finland + Germany
 Purpose: campaign usability and strategic interaction milestone after the 50-node v00.00.10 expansion
-Active work package: B-280-B-289
-Backlog document: docs/backlog/B-280-CAMPAIGN-MAP-V011.md
-Version rule: multiple backlog tasks and commits remain v00.00.11 until the shared acceptance gate passes
+Active work package: B-280-B-299
+Core backlog: docs/backlog/B-280-CAMPAIGN-MAP-V011.md
+Extended backlog: docs/backlog/B-290-CAMPAIGN-MAP-V011-EXTENDED.md
+Implementation wave: CampaignMapUsabilityV011.cs adds validation, node info, political control markers, stacking offsets, ETA, focus/reset and diagnostics
+Version rule: multiple backlog tasks and commits remain v00.00.11 until the shared final B-299 acceptance gate passes
 Next campaign version after gate: v00.00.12
 Isolation rule: tactical AI is not changed by this campaign branch
-QA state: requires Unity compile plus B-280-B-289 CampaignMap runtime acceptance before promotion
+QA state: implemented campaign additions require Unity compile/runtime acceptance; B-299 controls promotion
