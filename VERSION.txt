@@ -1,14 +1,21 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09h
+Prototype version: v00.00.09h1
 Build status: TEST
-Build name: SOLDIER VISUAL + UNIFORM + BOX SELECT TEST 09H
-Visible build marker: PROJECT 1864 | v00.00.09h TEST is shown permanently in the upper-left corner during Play mode
+Build name: SOLDIER VISUAL + UNIFORM + BOX SELECT TEST 09H1
+Visible build marker: PROJECT 1864 | v00.00.09h1 TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
+
+v00.00.09h1 - Compile fix
+- Fixes CS0103 in PrototypeSoldierVisualPass09H where JsonUtility was unavailable in the current Unity project configuration.
+- Uniform persistence no longer depends on JsonUtility or JSON serialization.
+- Every uniform/flag colour is stored as PlayerPrefs float channels (R/G/B) plus a saved marker per regiment.
+- Uniform Designer Save/Load behavior is preserved.
+- No movement, combat, Officer AI, navigation, range, formation or selection semantics are changed by h1.
 
 Previous accepted/retained layers
 - v00.00.09f Movement V3 authority remains the tactical steering baseline.
@@ -72,14 +79,14 @@ Combat/navigation retained
 - Fire geometry remains a directional 120-degree forward fire fan.
 - Range fan remains selected-unit ghost overlay from 09f.
 - Fire policy remains HOLD / CLOSE / MEDIUM / LONG.
-- Reload, ammunition, casualty visuals, melee and Officer AI logic are unchanged by 09h visual/control work.
+- Reload, ammunition, casualty visuals, melee and Officer AI logic are unchanged by 09h/09h1 visual/control work.
 - Player right-click movement/facing, Alt+RMB waypoints, F/C formation, Z/X facing and route ghosts are retained.
 - Simulation controls remain PAUSE / x0.5 / x1 / x2 / x5 / x20.
 
-Primary 09h QA
-1. Unity 6000.6.0f1 compiles without errors.
-2. Visible build marker is PROJECT 1864 | v00.00.09h TEST.
-3. Existing 09f V3/09B movement authority remains active and movement behavior is not changed by 09h.
+Primary 09h1 QA
+1. Unity 6000.6.0f1 compiles without CS0103 JsonUtility errors.
+2. Visible build marker is PROJECT 1864 | v00.00.09h1 TEST.
+3. Existing 09f V3/09B movement authority remains active and movement behavior is not changed.
 4. No persistent VALGT or VALGT xN summary panel appears.
 5. Ramte N appears as small text and no longer hides formations.
 6. Volley smoke has soft transparent edges and no large white square quads.
