@@ -1,18 +1,19 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13b
-Build status: VISUAL POLISH PASS 1 / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN 3D STRATEGIC WORLD V13B
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b visual polish
+Prototype version: v00.00.13c
+Build status: DENMARK TERRAIN CLEANUP / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK CLEANUP V13C
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c Denmark cleanup
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
-Denmark focus: Home/default camera centers on Denmark; Natural Earth 1:50m Denmark geography remains the detailed campaign focus
-Visual pass: naturalized terrain/field palette, darker water, grouped vegetation, differentiated road/rail/ferry styling, settlement dressing, improved construction sites/workers, soft shadows and reduced overlay noise
-Construction QA: Aalborg barracks and Aarhus farm remain campaign-time staged projects and now receive extra materials, carts, scaffold/detail props and improved finished-site dressing
-UI readability: legacy prototype marker suppressed, strategic overlays remain OFF by default, layer panel collapsed by default, search hidden by default
-Authoritative distance rule: geographic coordinates/route geometry drive simulation; Unity render distance and vertical exaggeration do not change ETA
-Gameplay isolation: no campaign movement, ETA, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13b
-Promotion status: DEV only; official active campaign remains v00.00.11 until gates/QA are satisfied
+Denmark terrain: detailed Natural Earth Denmark geometry now drives the visible Denmark land footprint while legacy coarse Denmark polygon overshoot is carved back to water
+Relief cleanup: Denmark receives a gentler low-relief render profile with three smoothing passes; hidden seabed is raised close to the visible water plane to remove rectangular trench/cliff artifacts
+Settlement grounding: Danish nodes, settlement miniatures, formations, vegetation and construction QA projects are re-grounded to the cleaned terrain after legacy v13 helpers run
+Construction QA: Aalborg barracks and Aarhus farm remain staged campaign-time projects and receive level ground pads on the cleaned Denmark terrain
+Infrastructure: strategic links touching Denmark are re-draped to the cleaned terrain; ferry links stay above the water surface
+Denmark focus: Home/default camera remains centered on Denmark; detailed coast rendering is re-draped to the cleaned terrain
+Gameplay isolation: no campaign movement, ETA, route-distance, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13c
+Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 QA owner: local Unity compile/runtime verification by Allan
