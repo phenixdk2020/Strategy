@@ -1,44 +1,27 @@
-PROJECT 1864 - Campaign Layer
-Campaign version: v00.00.11
-Build status: WORK
-Build name: CAMPAIGN MAP 00.00.11
-Base branch: work/v00.00.10-campaign-map-nodes50
-Tactical baseline: v00.00.09 TEST
-Campaign node target: 50
-Map coverage: Denmark + Sweden + Norway + Finland + Germany
-Purpose: campaign usability, strategic interaction, systems foundation and living-map construction after the 50-node v00.00.10 expansion
-Active campaign work package: B-280-B-369
-Core backlog: docs/backlog/B-280-CAMPAIGN-MAP-V011.md
-Extended usability backlog: docs/backlog/B-290-CAMPAIGN-MAP-V011-EXTENDED.md
-Map intelligence backlog: docs/backlog/B-300-CAMPAIGN-V011-MAP-INTELLIGENCE.md
-Regimental standards namespace: B-310-B-319 remains defined separately in docs/backlog/B-310-REGIMENTAL-STANDARDS.md
-Movement/logistics backlog: docs/backlog/B-320-CAMPAIGN-V011-MOVEMENT-LOGISTICS.md
-Warfare/command backlog: docs/backlog/B-330-CAMPAIGN-V011-WAR-COMMAND.md
-World/economy backlog: docs/backlog/B-340-CAMPAIGN-V011-WORLD-ECONOMY.md
-Save/QA/polish backlog: docs/backlog/B-350-CAMPAIGN-V011-SAVE-QA-POLISH.md
-Construction/living-map backlog: docs/backlog/B-360-CAMPAIGN-V011-CONSTRUCTION-LIVING-MAP.md
-Living-world visual supplement: docs/backlog/B-360-CAMPAIGN-LIVING-WORLD.md
-Design supplement: docs/PROJECT-1864-Campaign-v00.00.11-Design-Supplement.md
-Implementation wave 1: CampaignMapUsabilityV011.cs adds validation, node info, political control markers, link classification, stacking offsets, ETA, focus/reset and diagnostics
-Implementation wave 2: CampaignMapSearchHoverV011.cs adds location/formation search, camera focus and formation hover/OOB summary
-Construction direction: systemic construction (option B); visual progress follows authoritative campaign-time and future economy/logistics hooks
-Version rule: multiple backlog tasks and commits remain v00.00.11; implemented items may await batch Unity QA rather than forcing a version bump
-Intermediate core gate: B-299
-Systems/polish checkpoint: B-359
-Final promotion gate: B-369
-Next campaign version after final gate: v00.00.12
-Planned v00.00.12 work package: B-370-B-409
-v00.00.12 planning: docs/PROJECT-1864-Campaign-v00.00.12-Planning.md
+Active campaign version: v00.00.11 WORK
+v00.00.11 work package: B-280-B-369
+v00.00.11 intermediate core gate: B-299
+B-310-B-319 reserved: regimental standards namespace; never reuse
+v00.00.11 movement/logistics: B-320-B-329
+v00.00.11 warfare/command: B-330-B-339
+v00.00.11 world/economy/manpower: B-340-B-349
+v00.00.11 save/QA/polish: B-350-B-359
+v00.00.11 construction/living map: B-360-B-369
+v00.00.11 final gate: B-369
+v00.00.12 state: PLANNED
+v00.00.12 work package: B-370-B-409
+v00.00.12 entry condition: v00.00.11/B-369 must pass before v00.00.12 becomes active
 v00.00.12 infrastructure/settlements: docs/backlog/B-370-CAMPAIGN-V012-INFRASTRUCTURE-SETTLEMENTS.md
 v00.00.12 logistics/transport: docs/backlog/B-380-CAMPAIGN-V012-LOGISTICS-TRANSPORT.md
-v00.00.12 society/events checkpoint: docs/backlog/B-390-CAMPAIGN-V012-WORLD-EVENTS-QA.md
+v00.00.12 world/events/QA: docs/backlog/B-390-CAMPAIGN-V012-WORLD-EVENTS-QA.md
 v00.00.12 formation mobility/march: docs/backlog/B-400-CAMPAIGN-V012-FORMATION-MOBILITY-MARCH.md
 v00.00.12 planned final gate: B-409
-v00.00.12 activation rule: planning may exist now, but v00.00.12 must not become active until B-369 passes
-Planned v00.00.13 milestone: 3D STRATEGIC WORLD & GEOSPATIAL FOUNDATION
-Planned v00.00.13 work package: B-410-B-469
+v00.00.13 state: PLANNED / DEV IMPLEMENTATION
+v00.00.13 work package: B-410-B-469
+v00.00.13 entry condition: v00.00.12/B-409 must pass before v00.00.13 becomes active
 v00.00.13 planning: docs/PROJECT-1864-Campaign-v00.00.13-Planning.md
 v00.00.13 3D architecture: docs/PROJECT-1864-Campaign-v00.00.13-3D-Map-Architecture.md
+v00.00.13 DEV notes: docs/releases/CAMPAIGN-v00.00.13-3D-DEV-NOTES.md
 v00.00.13 map scale/geodesy: docs/backlog/B-410-CAMPAIGN-V013-MAP-SCALE-GEODESY.md
 v00.00.13 terrain/hydrology: docs/backlog/B-420-CAMPAIGN-V013-TERRAIN-HYDROLOGY.md
 v00.00.13 infrastructure/settlements 3D: docs/backlog/B-430-CAMPAIGN-V013-INFRASTRUCTURE-SETTLEMENTS-3D.md
@@ -50,6 +33,7 @@ v00.00.13 activation rule: v00.00.12/B-409 must pass before v00.00.13 becomes ac
 v00.00.13 DEV branch: work/v00.00.13-3d-campaign-map
 v00.00.13 DEV implementation: procedural 3D terrain, layer roots, terrain-conforming strategic links, 3D settlement miniatures, terrain-aware camera, campaign-time atmosphere/day-night, layer visibility UI and staged barracks/farm construction prototype
 v00.00.13 DEV compile-fix 2026-09-08: Unity 6.6 Object ambiguity and deprecated FindObjectsSortMode calls corrected; compile/runtime QA still pending local Unity verification
+v00.00.13 DEV formation-fix 2026-09-08: tactical QA guard now deploys both Officer-AI and direct/manual regiments from temporary marching COLUMN back to LINE after movement has actually ended; explicit stationary manual COLUMN remains untouched
 v00.00.13 DEV QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA; branch is not promoted and does not bypass v00.00.12 gate
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route polylines
 3D layer rule: terrain, hydrology, land cover, infrastructure, settlements, strategic entities, living-world visuals, overlays, weather/atmosphere and UI share one geospatial coordinate contract
@@ -59,22 +43,15 @@ v00.00.14 planning: docs/PROJECT-1864-Campaign-v00.00.14-Planning.md
 v00.00.14 design supplement: docs/PROJECT-1864-Campaign-v00.00.14-Design-Supplement.md
 v00.00.14 government/ministers/delegation: docs/backlog/B-470-CAMPAIGN-V014-GOVERNMENT-MINISTERS-DELEGATION.md
 v00.00.14 research/technology: docs/backlog/B-480-CAMPAIGN-V014-RESEARCH-TECHNOLOGY.md
-v00.00.14 military doctrine/general staff: docs/backlog/B-490-CAMPAIGN-V014-MILITARY-DOCTRINE-GENERAL-STAFF.md
-v00.00.14 economy/development AI: docs/backlog/B-500-CAMPAIGN-V014-ECONOMIC-DEVELOPMENT-AI.md
+v00.00.14 doctrine/general staff: docs/backlog/B-490-CAMPAIGN-V014-MILITARY-DOCTRINE-GENERAL-STAFF.md
+v00.00.14 economic development AI: docs/backlog/B-500-CAMPAIGN-V014-ECONOMIC-DEVELOPMENT-AI.md
 v00.00.14 military buildup/mobilization AI: docs/backlog/B-510-CAMPAIGN-V014-MILITARY-BUILDUP-MOBILIZATION-AI.md
 v00.00.14 strategic planning/theatre AI: docs/backlog/B-520-CAMPAIGN-V014-STRATEGIC-PLANNING-THEATRE-AI.md
-v00.00.14 AI explainability/historical research/QA: docs/backlog/B-530-CAMPAIGN-V014-AI-EXPLAINABILITY-RESEARCH-QA.md
+v00.00.14 AI explainability/research/QA: docs/backlog/B-530-CAMPAIGN-V014-AI-EXPLAINABILITY-RESEARCH-QA.md
 v00.00.14 planned final gate: B-539
-v00.00.14 activation rule: v00.00.13/B-469 must pass before v00.00.14 becomes active
-Delegation rule: MANUAL / ADVISORY / ASSISTED / AUTO per portfolio; AI uses the same resources, construction times, transport capacity and information constraints as the player
-Historical research rule: factual content can carry source/provenance, confidence and historical/estimated/QA-placeholder status
 Planned v00.00.15 milestone: MULTI-NATION AI, TRADE, DIPLOMACY & ALLIANCES
 Planned v00.00.15 work package: B-540-B-599
 v00.00.15 planning: docs/PROJECT-1864-Campaign-v00.00.15-Planning.md
-v00.00.15 activation rule: v00.00.14/B-539 must pass before v00.00.15 becomes active
-Multi-nation parity rule: every non-player nation uses the same legal campaign systems as the player; PlayerControl is a controller assignment, not a special nation type
-International trade rule: trade contracts move real goods through real transport capacity and may be affected by route disruption/blockade/congestion
-Diplomacy/alliance rule: treaties do not grant perfect command or perfect shared intelligence; scope, communication delay and national ownership remain explicit
 Replay variation rule: historical scenario data defines the start and plausibility envelope, but country development, research, infrastructure and military buildup use bounded seed-based variation so repeated campaigns can diverge without becoming arbitrary
-Isolation rule: tactical AI logic is not changed by this campaign branch; Unity 6.6 API-only object-query maintenance may touch inherited tactical source without altering navigation behavior
-QA state: campaign additions may be implemented in batches and remain IMPLEMENTERET / AFVENTER QA until Allan performs Unity compile/runtime testing; only B-369 can promote current v00.00.11
+Isolation rule: campaign work must not directly rewrite tactical battlefield navigation unless explicitly scoped as tactical QA/integration correction
+QA rule: local Unity compile/runtime verification is performed by Allan; planning gates are not bypassed by DEV implementation
