@@ -13,6 +13,8 @@ Every country in the scenario must operate under the same strategic design rules
 
 The design must also support changing the player-controlled nation without changing the underlying simulation architecture. `PlayerControl` is therefore a controller assignment, not a special nation type.
 
+Historical starting conditions define the initial world, but country development is not a fixed historical script. AI priorities, ministers, threat assessments, resource constraints, research choices, infrastructure projects and force-structure decisions include bounded, seeded variation so repeated campaigns can develop differently while remaining plausible for the period.
+
 ## B-540–B-549 — Generic nation controller & AI parity
 
 - generic `NationState` / `NationController` contract,
@@ -80,11 +82,13 @@ Trade moves actual goods through transport capacity. A signed trade deal must no
 - sanctions/embargo interaction,
 - cooperation QA.
 
-## B-590–B-599 — World AI, long-run balance & final gate
+## B-590–B-599 — World AI, replay variation, long-run balance & final gate
 
 - all nations execute strategic planning cycles,
 - AI evaluates friends, rivals, threats and opportunities from known information,
 - national interests and historical scenario constraints,
+- seeded/bounded variation in development, research, infrastructure and force-structure priorities,
+- repeated campaigns may diverge without becoming arbitrary or technologically implausible,
 - diplomatic AI explanation/audit trail,
 - anti-exploit checks for circular trade/free resources,
 - long-run economy and military-growth simulation,
@@ -100,6 +104,25 @@ The same system executes both player and AI actions:
 `Nation intent -> minister/staff portfolio -> legal campaign action -> resource/time/transport cost -> result`
 
 AI nations may have different competence, doctrine, information, priorities and personalities, but they do not receive alternate rules.
+
+## Historical plausibility and replay variation
+
+The campaign uses historical data as the **starting condition and plausibility envelope**, not as a mandatory future script.
+
+Variation must be weighted and explainable rather than pure random noise. A country's development decision can consider:
+
+`Need + Threat + Geography + Economy + Resources + Ministers + Doctrine + PriorEvents + SeededVariation`
+
+Consequences:
+
+- the same country may emphasize railways, fortifications, industry, artillery, cavalry, reserves or logistics differently in separate campaigns,
+- military force structure may diverge from history if resources, ministers, doctrine or threats develop differently,
+- research and doctrine may follow different plausible paths,
+- minister changes and major events may redirect national policy during a campaign,
+- starting the same scenario with the same campaign seed must reproduce the same AI variation for QA/save-load purposes,
+- variation must never bypass technology plausibility, resource costs, manpower, construction time or information limits.
+
+Exact player-facing controls for the amount of historical variation can be decided later; the default design target is noticeable replay variation while preserving a recognizable 19th-century strategic world.
 
 ## Trade rule
 
