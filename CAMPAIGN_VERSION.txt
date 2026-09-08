@@ -1,21 +1,23 @@
 Active campaign version: v00.00.11 WORK
-Lineage: rebuilt cleanly on campaign v00.00.10e commit 07fec17980fad5709ce8d7e79b17d71714d108b0
-Runtime isolation: CampaignMap is authoritative for campaign testing; tactical PrototypeBattle must not auto-open on campaign branches
+v00.00.13 state: PLANNED / DEV IMPLEMENTATION / CLEAN REBUILD
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 3D DEV
 v00.00.11 work package: B-280-B-369
-v00.00.11 intermediate core gate: B-299
-B-310-B-319 reserved: regimental standards namespace; never reuse
-v00.00.11 movement/logistics: B-320-B-329
-v00.00.11 warfare/command: B-330-B-339
-v00.00.11 world/economy/manpower: B-340-B-349
-v00.00.11 save/QA/polish: B-350-B-359
-v00.00.11 construction/living map: B-360-B-369
 v00.00.11 final gate: B-369
 v00.00.12 state: PLANNED
 v00.00.12 work package: B-370-B-409
-v00.00.12 entry condition: v00.00.11/B-369 must pass before v00.00.12 becomes active
-v00.00.12 planned final gate: B-409
-v00.00.13 state: PLANNED / DEV IMPLEMENTATION AFTER CLEAN REBUILD
+v00.00.12 final gate: B-409
 v00.00.13 work package: B-410-B-469
 v00.00.13 planned final gate: B-469
-Isolation rule: campaign branches may retain inherited tactical code for future handoff compilation, but tactical TEST startup, navigation experiments and Officer-AI QA changes are not allowed to define campaign runtime behaviour
-QA rule: local Unity compile/runtime verification is required before promotion
+v00.00.13 3D implementation: procedural terrain, L1-L10 layer roots, terrain-conforming strategic links, 3D settlement miniatures, terrain-aware camera, campaign-time atmosphere/day-night, layer visibility and staged construction prototypes
+v00.00.13 branch: work/v00.00.13-campaign-rebuild
+v00.00.13 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
+3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route geometry
+Projection rule: CampaignGeoProjection keeps v00.00.10e Denmark compatibility and v00.00.11+ broad-map/geodesic APIs in one shared contract
+Runtime isolation: CampaignMap is the campaign runtime; tactical PrototypeBattle is explicit-only and must not auto-open
+Tactical isolation: no tactical navigation/Officer-AI QA fixes from Strategy-Test are included in the v00.00.13 campaign rebuild
+Planned v00.00.14 milestone: GOVERNMENT, RESEARCH, DOCTRINE & STRATEGIC AI
+Planned v00.00.14 work package: B-470-B-539
+Planned v00.00.15 milestone: MULTI-NATION AI, TRADE, DIPLOMACY & ALLIANCES
+Planned v00.00.15 work package: B-540-B-599
+Replay variation rule: historical scenario data defines the start and plausibility envelope, while development/research/infrastructure/force buildup may use bounded seeded variation
+QA rule: local Unity compile/runtime verification is performed by Allan; DEV implementation does not bypass formal gates

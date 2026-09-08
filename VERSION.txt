@@ -1,13 +1,14 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.11
-Build status: CAMPAIGN WORK / CLEAN REBUILD
-Build name: CAMPAIGN MAP V11
-Base lineage: campaign v00.00.10e clean baseline (07fec17980fad5709ce8d7e79b17d71714d108b0)
+Prototype version: v00.00.13
+Build status: 3D DEV / CLEAN REBUILD
+Build name: CAMPAIGN 3D STRATEGIC WORLD V13
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 3D DEV
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
-Campaign isolation: tactical TEST navigation/AI branches are not imported into this build
-Geospatial compatibility: v00.00.10e Denmark WGS84 local projection is preserved while v00.00.11 broad-map projection/distance APIs are added to the same CampaignGeoProjection contract
-Campaign v00.00.11 state: WORK / requires local Unity compile + runtime QA
-Campaign v00.00.11 scope: strategic map, 50-node network, formation movement, usability/search helpers and campaign-time simulation foundation
+Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
+3D scope: procedural strategic terrain, layered world roots, terrain-conforming map lines, 3D settlement miniatures, terrain-aware camera, campaign-time atmosphere and staged construction QA
+Authoritative distance rule: geographic coordinates/route geometry drive simulation; Unity render distance and vertical exaggeration do not change ETA
+Promotion status: DEV only; official active campaign remains v00.00.11 until gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
+QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 QA owner: local Unity compile/runtime verification by Allan
