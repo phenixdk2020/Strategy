@@ -1,42 +1,13 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10e
-Build status: CAMPAIGN TEST
-Build name: WORLD GEO BASE / DENMARK DETAIL 10E
-Visible build marker: PROJECT 1864 | v00.00.10e CAMPAIGN TEST is shown permanently in the upper-left corner during Play mode
-Track rule: campaign work proceeds independently on branch campaign while tactical fixes continue on branch test
-Inherited tactical baseline: campaign branch keeps the tactical battle code compiled as the future battle layer
-Design manual baseline: v00.02.08
-Unity editor baseline: 6000.6.0f1 (Unity 6.6)
-Repository layout: Unity project root = repository root
-Grand Campaign canonical start: 1 January 1851 08:00
-Grand Campaign pacing rule: 1851 gives the player years for mobilization, industrial/military modernization, infrastructure and diplomacy before the 1864 milestone
-Campaign startup v00.00.10e: Denmark is the only active/playable vertical-slice nation while the common data model retains the already-decided future nations
-World geography architecture: authoritative geographic identity is WGS84 longitude/latitude; Unity X/Z is only a local render projection and may be retiled/recentered later without rewriting campaign state
-World expansion rule: the geography architecture is intended to expand from Denmark to Europe and theoretically the whole world by loading additional geographic tiles/data layers against the same WGS84 model
-Real map source v00.00.10e: Denmark coastline/island geometry is derived from Natural Earth 1:50m Admin-0 DNK geometry; Natural Earth is the physical geographic base layer, not the historical political layer
-Real map content v00.00.10e: Jutland, Zealand, Funen, Lolland, Langeland, Falster/Moen group, Amager, Aeroe, Als, Samsoe, Laesoe and Bornholm are represented as real-geography land parts from the Natural Earth dataset
-Historical boundary warning: Natural Earth country geometry is modern physical/admin reference geometry and must NOT be interpreted as exact 1851 political borders; Schleswig, Holstein, Lauenburg and other 1851 political relationships require a separate source-backed historical layer
-Terrain status: v00.00.10e land is flat geographic mesh with coastline; real DEM/elevation is the next terrain layer and is not yet simulated
-Zone model: Denmark currently has 12 operational gameplay zone centres over the real map: Vendsyssel, Nordjylland, Midtjylland, Vestjylland, Oestjylland, Sydjylland, Fyn, Nordsjaelland, Koebenhavn, Sydsjaelland, Lolland-Falster and Bornholm
-Zone historical warning: current zone centres/adjacency are gameplay scaffolding, not claimed historical administrative borders; later zone polygons will be source-backed and fitted to real geography
-Zone interaction: left-click selects a zone or player formation; right-click on an adjacent zone gives a march order
-Sea route rule: Bornholm is deliberately disconnected from land-march routing; naval/sea transport will be a separate route capability
-Strategic movement v00.00.10e: movement uses projected geographic distance as first travel-time basis; roads, terrain, rail, weather, fatigue, supply and staff quality are later modifiers
-Campaign cities v00.00.10e: Aalborg, Viborg, Aarhus, Esbjerg, Kolding, Fredericia, Odense, Koebenhavn, Naestved and Roenne are placed by geographic coordinates as first settlement markers
-Settlement historical rule: city marker locations are geographic anchors; population, fortification, industry, rail, road, port and 1851 economic/military values require historical data before simulation claims are made
-Army state v00.00.10e: one Danish QA formation exists only to prove stable IDs, selection and geographic movement; its strength/location are explicitly not final researched 1851 OOB
-Campaign clock: Space pauses; 1/2/3/4 set x1/x5/x20/x100; top bar also exposes pause/speed controls
-Semantic zoom foundation v00.00.10e: camera now reports Close / Operational / Strategic zoom bands and changes army-token scale; close zoom exposes city labels, operational zoom exposes zone labels, strategic mode suppresses detailed labels
-Semantic zoom target: Campaign and Battle mode share the same semantic-zoom principle; future long zoom uses NATO/APP-6-like formation symbols without altering simulation IDs/state
-Formation standards: campaign formation tokens keep the v00.00.10d QA standard system as close-zoom identity aid
-Regimental standards shared rule: individual regimental colours belong to stable regiment identity and must also be visible in Battle mode; campaign army/corps tokens must not display dozens of standards unless the formation is unfolded/inspected
-Standards historical rule: current standard graphics are QA placeholders only; final patterns, insignia, issue dates and number of colours per formation require source-backed historical data
-Campaign target loop: Grand Campaign -> movement/contact -> tactical battle -> battle result -> Grand Campaign
-Campaign state continuity target: regiment/formation IDs, strength, ammunition, morale/cohesion, officer profile, attacker/defender role, zone/location and campaign date/time must survive tactical handoff and return
-Campaign architecture rule: new campaign code is isolated under Assets/Scripts/Campaign where practical to reduce merge conflicts with tactical development
-Tactical synchronization rule: only accepted tactical fixes are later merged/cherry-picked into campaign; campaign development must not wait on minor tactical polish
-New code v00.00.10e: CampaignGeoProjection.cs provides the global-ready WGS84 -> Unity render projection
-New code v00.00.10e: CampaignDenmarkGeography.cs builds the Denmark Natural Earth coastline/land mesh and coastline renderers at runtime
-New code v00.00.10e: GrandCampaignBootstrap.cs now starts 1851, focuses Denmark, places real geography/cities/zones and retains movement/time/state hooks
-Backlogs: docs/backlog/B-270-CAMPAIGN-MAP-V010.md, docs/backlog/B-280-GRAND-CAMPAIGN-COUNTRIES-ZONES.md, docs/backlog/B-290-GRAND-CAMPAIGN-SETTLEMENTS-CONSTRUCTION-TRADE.md, docs/backlog/B-295-WORLD-GEO-DENMARK-FOUNDATION.md and docs/backlog/B-310-REGIMENTAL-STANDARDS.md
-QA state: v00.00.10e CAMPAIGN TEST is not runtime validated until Unity 6000.6.0f1 compile + Play acceptance is reported
+Prototype version: v00.00.11
+Build status: CAMPAIGN WORK / CLEAN REBUILD
+Build name: CAMPAIGN MAP V11
+Base lineage: campaign v00.00.10e clean baseline (07fec17980fad5709ce8d7e79b17d71714d108b0)
+Runtime scene: Assets/Scenes/CampaignMap.unity
+Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
+Campaign isolation: tactical TEST navigation/AI branches are not imported into this build
+Geospatial compatibility: v00.00.10e Denmark WGS84 local projection is preserved while v00.00.11 broad-map projection/distance APIs are added to the same CampaignGeoProjection contract
+Campaign v00.00.11 state: WORK / requires local Unity compile + runtime QA
+Campaign v00.00.11 scope: strategic map, 50-node network, formation movement, usability/search helpers and campaign-time simulation foundation
+Unity baseline: 6000.6.0f1 (Unity 6.6)
+QA owner: local Unity compile/runtime verification by Allan

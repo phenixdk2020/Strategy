@@ -1,0 +1,21 @@
+Active campaign version: v00.00.11 WORK
+Lineage: rebuilt cleanly on campaign v00.00.10e commit 07fec17980fad5709ce8d7e79b17d71714d108b0
+Runtime isolation: CampaignMap is authoritative for campaign testing; tactical PrototypeBattle must not auto-open on campaign branches
+v00.00.11 work package: B-280-B-369
+v00.00.11 intermediate core gate: B-299
+B-310-B-319 reserved: regimental standards namespace; never reuse
+v00.00.11 movement/logistics: B-320-B-329
+v00.00.11 warfare/command: B-330-B-339
+v00.00.11 world/economy/manpower: B-340-B-349
+v00.00.11 save/QA/polish: B-350-B-359
+v00.00.11 construction/living map: B-360-B-369
+v00.00.11 final gate: B-369
+v00.00.12 state: PLANNED
+v00.00.12 work package: B-370-B-409
+v00.00.12 entry condition: v00.00.11/B-369 must pass before v00.00.12 becomes active
+v00.00.12 planned final gate: B-409
+v00.00.13 state: PLANNED / DEV IMPLEMENTATION AFTER CLEAN REBUILD
+v00.00.13 work package: B-410-B-469
+v00.00.13 planned final gate: B-469
+Isolation rule: campaign branches may retain inherited tactical code for future handoff compilation, but tactical TEST startup, navigation experiments and Officer-AI QA changes are not allowed to define campaign runtime behaviour
+QA rule: local Unity compile/runtime verification is required before promotion
