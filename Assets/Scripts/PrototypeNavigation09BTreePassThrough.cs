@@ -2,11 +2,10 @@ using System.Collections;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f TEST tree pass-through compatibility layer.
-// Individual decorative trees are NOT hard tactical obstacles. Movement V3 remains
-// the sole steering owner; this component only removes Tree entries from navigation
-// obstacle collections and clears stale V3/V4 route state once so old tree detours
-// cannot persist after the rule is applied.
+// v00.00.09h4 TEST soft-obstacle compatibility layer.
+// Individual decorative trees and fence posts are NOT hard tactical obstacles.
+// Movement V3 remains the sole steering owner; this component only removes soft
+// visual obstacles from navigation collections and clears stale route state once.
 [DefaultExecutionOrder(1900)]
 public sealed class PrototypeNavigation09BTreePassThrough : MonoBehaviour
 {
@@ -18,7 +17,7 @@ public sealed class PrototypeNavigation09BTreePassThrough : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeNavigation09BTreePassThrough>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeNavigation09BTreePassThrough_v000009f");
+        GameObject root = new GameObject("PrototypeNavigationSoftPassThrough_v000009h4");
         root.AddComponent<PrototypeNavigation09BTreePassThrough>();
     }
 
@@ -32,62 +31,61 @@ public sealed class PrototypeNavigation09BTreePassThrough : MonoBehaviour
         if (v3 == null)
             return;
 
-        // Keep the 09A anti-tree-snag layer completely disabled. Decorative trees
-        // are pass-through instead of obstacles requiring local avoidance.
         PrototypeNavigation09AHotfix hotfix09a =
             Object.FindAnyObjectByType<PrototypeNavigation09AHotfix>();
         if (hotfix09a != null)
             hotfix09a.enabled = false;
 
-        int removed = 0;
-        removed += RemoveTreeObstacles(v3);
+        int removedTrees = 0;
+        int removedFencePosts = 0;
 
-        // Clear V3 state after removing trees. This is essential: an already-created
-        // persistent detour may still hold a direct reference to a Tree obstacle even
-        // after that obstacle has been removed from the list.
+        RemoveSoftObstacles(v3, ref removedTrees, ref removedFencePosts);
         ClearPrivateCollection(v3, "states");
 
         PrototypeBattlefieldNavigationV4 v4 =
             Object.FindAnyObjectByType<PrototypeBattlefieldNavigationV4>();
         if (v4 != null)
         {
-            removed += RemoveTreeObstacles(v4);
+            RemoveSoftObstacles(v4, ref removedTrees, ref removedFencePosts);
             ClearPrivateCollection(v4, "states");
         }
 
         PrototypeBattlefieldNavigationManager v1 =
             Object.FindAnyObjectByType<PrototypeBattlefieldNavigationManager>();
         if (v1 != null)
-            removed += RemoveTreeObstacles(v1);
+            RemoveSoftObstacles(v1, ref removedTrees, ref removedFencePosts);
 
         PrototypeNavigationRecoveryManager recovery =
             Object.FindAnyObjectByType<PrototypeNavigationRecoveryManager>();
         if (recovery != null)
-            removed += RemoveTreeObstacles(recovery);
+            RemoveSoftObstacles(recovery, ref removedTrees, ref removedFencePosts);
 
         applied = true;
         Debug.Log(string.Format(
-            "NAV-09B|Build=v00.00.09f|TreeRule=PassThrough|RemovedTreeObstacles={0}|V3StatesReset=True|BuildingsBlocked=True|FencesBlocked=True|RiverBlocked=True",
-            removed));
+            "NAV-SOFT-09H4|Build=v00.00.09h4|Trees=PassThrough|FencePosts=PassThrough|RemovedTrees={0}|RemovedFencePosts={1}|V3StatesReset=True|BuildingsBlocked=True|RiverBlocked=True",
+            removedTrees,
+            removedFencePosts));
     }
 
-    private static int RemoveTreeObstacles(object manager)
+    private static void RemoveSoftObstacles(
+        object manager,
+        ref int removedTrees,
+        ref int removedFencePosts)
     {
         if (manager == null)
-            return 0;
+            return;
 
         FieldInfo obstaclesField = manager.GetType().GetField(
             "obstacles",
             BindingFlags.Instance | BindingFlags.NonPublic);
 
         if (obstaclesField == null)
-            return 0;
+            return;
 
         IList list = obstaclesField.GetValue(manager) as IList;
         if (list == null)
-            return 0;
+            return;
 
-        int removed = 0;
         for (int i = list.Count - 1; i >= 0; i--)
         {
             object obstacle = list[i];
@@ -99,14 +97,17 @@ public sealed class PrototypeNavigation09BTreePassThrough : MonoBehaviour
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
             string name = nameField != null ? nameField.GetValue(obstacle) as string : null;
-            if (!string.Equals(name, "Tree", System.StringComparison.Ordinal))
-                continue;
-
-            list.RemoveAt(i);
-            removed++;
+            if (string.Equals(name, "Tree", System.StringComparison.Ordinal))
+            {
+                list.RemoveAt(i);
+                removedTrees++;
+            }
+            else if (string.Equals(name, "FencePost", System.StringComparison.Ordinal))
+            {
+                list.RemoveAt(i);
+                removedFencePosts++;
+            }
         }
-
-        return removed;
     }
 
     private static void ClearPrivateCollection(object owner, string fieldName)
