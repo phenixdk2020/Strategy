@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 [DefaultExecutionOrder(20000)]
 public sealed class CampaignBuildVersionOverlay : MonoBehaviour
 {
-    public const string CampaignVersion = "v00.00.13e";
-    public const string CampaignChannel = "DENMARK CLEAN RENDER DEV";
+    public const string CampaignVersion = "v00.00.13f";
+    public const string CampaignChannel = "DENMARK LANDMESH FIX DEV";
 
     private GUIStyle style;
 
@@ -19,7 +19,7 @@ public sealed class CampaignBuildVersionOverlay : MonoBehaviour
         if (UnityEngine.Object.FindAnyObjectByType<CampaignBuildVersionOverlay>() != null)
             return;
 
-        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013e");
+        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013f");
         root.AddComponent<CampaignBuildVersionOverlay>();
     }
 
@@ -37,7 +37,7 @@ public sealed class CampaignBuildVersionOverlay : MonoBehaviour
         }
 
         GUI.Label(
-            new Rect(12f, 10f, 650f, 24f),
+            new Rect(12f, 10f, 680f, 24f),
             "PROJECT 1864 CAMPAIGN | " + CampaignVersion + " " + CampaignChannel,
             style);
     }
