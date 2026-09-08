@@ -49,6 +49,7 @@ v00.00.13 planned final gate: B-469
 v00.00.13 activation rule: v00.00.12/B-409 must pass before v00.00.13 becomes active
 v00.00.13 DEV branch: work/v00.00.13-3d-campaign-map
 v00.00.13 DEV implementation: procedural 3D terrain, layer roots, terrain-conforming strategic links, 3D settlement miniatures, terrain-aware camera, campaign-time atmosphere/day-night, layer visibility UI and staged barracks/farm construction prototype
+v00.00.13 DEV compile-fix 2026-09-08: Unity 6.6 Object ambiguity and deprecated FindObjectsSortMode calls corrected; compile/runtime QA still pending local Unity verification
 v00.00.13 DEV QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA; branch is not promoted and does not bypass v00.00.12 gate
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route polylines
 3D layer rule: terrain, hydrology, land cover, infrastructure, settlements, strategic entities, living-world visuals, overlays, weather/atmosphere and UI share one geospatial coordinate contract
@@ -75,5 +76,5 @@ Multi-nation parity rule: every non-player nation uses the same legal campaign s
 International trade rule: trade contracts move real goods through real transport capacity and may be affected by route disruption/blockade/congestion
 Diplomacy/alliance rule: treaties do not grant perfect command or perfect shared intelligence; scope, communication delay and national ownership remain explicit
 Replay variation rule: historical scenario data defines the start and plausibility envelope, but country development, research, infrastructure and military buildup use bounded seed-based variation so repeated campaigns can diverge without becoming arbitrary
-Isolation rule: tactical AI is not changed by this campaign branch
+Isolation rule: tactical AI logic is not changed by this campaign branch; Unity 6.6 API-only object-query maintenance may touch inherited tactical source without altering navigation behavior
 QA state: campaign additions may be implemented in batches and remain IMPLEMENTERET / AFVENTER QA until Allan performs Unity compile/runtime testing; only B-369 can promote current v00.00.11
