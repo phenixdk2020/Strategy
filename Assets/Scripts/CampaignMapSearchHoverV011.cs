@@ -11,6 +11,7 @@ public sealed class CampaignMapSearchHoverV011 : MonoBehaviour
     private CampaignFormationState hoverFormation;
     private GUIStyle panelStyle;
     private GUIStyle smallStyle;
+    private bool showSearch;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -28,6 +29,9 @@ public sealed class CampaignMapSearchHoverV011 : MonoBehaviour
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F3))
+            showSearch = !showSearch;
+
         UpdateHoverFormation();
     }
 
@@ -78,7 +82,8 @@ public sealed class CampaignMapSearchHoverV011 : MonoBehaviour
     private void OnGUI()
     {
         EnsureStyles();
-        DrawSearchPanel();
+        if (showSearch)
+            DrawSearchPanel();
         DrawFormationHover();
     }
 
@@ -86,7 +91,7 @@ public sealed class CampaignMapSearchHoverV011 : MonoBehaviour
     {
         Rect box = new Rect(16f, 260f, 250f, 92f);
         GUI.Box(box, string.Empty, panelStyle);
-        GUI.Label(new Rect(box.x + 8f, box.y + 6f, 234f, 18f), "FIND PÅ CAMPAIGN-KORT", smallStyle);
+        GUI.Label(new Rect(box.x + 8f, box.y + 6f, 234f, 18f), "FIND PÅ CAMPAIGN-KORT  [F3 hide]", smallStyle);
 
         searchText = GUI.TextField(new Rect(box.x + 8f, box.y + 28f, 168f, 24f), searchText, 40);
         if (GUI.Button(new Rect(box.x + 181f, box.y + 28f, 61f, 24f), "FIND"))
