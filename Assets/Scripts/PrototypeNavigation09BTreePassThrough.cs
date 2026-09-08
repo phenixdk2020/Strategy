@@ -2,11 +2,11 @@ using System.Collections;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09b TEST simplification.
-// Individual decorative trees are NOT hard tactical obstacles. Regiments may pass
-// through them. Buildings, fences and river/water remain navigation obstacles.
-// This keeps prototype movement stable until proper forest/woodland terrain zones
-// are introduced later as area-based movement/cohesion/visibility modifiers.
+// v00.00.09f TEST tree pass-through compatibility layer.
+// Individual decorative trees are NOT hard tactical obstacles. Movement V3 remains
+// the sole steering owner; this component only removes Tree entries from navigation
+// obstacle collections and clears stale V3/V4 route state once so old tree detours
+// cannot persist after the rule is applied.
 [DefaultExecutionOrder(1900)]
 public sealed class PrototypeNavigation09BTreePassThrough : MonoBehaviour
 {
@@ -18,7 +18,7 @@ public sealed class PrototypeNavigation09BTreePassThrough : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeNavigation09BTreePassThrough>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeNavigation09BTreePassThrough_v000009b");
+        GameObject root = new GameObject("PrototypeNavigation09BTreePassThrough_v000009f");
         root.AddComponent<PrototypeNavigation09BTreePassThrough>();
     }
 
@@ -27,26 +27,33 @@ public sealed class PrototypeNavigation09BTreePassThrough : MonoBehaviour
         if (applied)
             return;
 
-        PrototypeBattlefieldNavigationV4 v4 =
-            Object.FindAnyObjectByType<PrototypeBattlefieldNavigationV4>();
-
-        if (v4 == null)
+        PrototypeBattlefieldNavigationV3 v3 =
+            Object.FindAnyObjectByType<PrototypeBattlefieldNavigationV3>();
+        if (v3 == null)
             return;
 
-        // Disable the 09a anti-tree snag layer completely. 09b deliberately allows
-        // passage through decorative trees instead of trying to steer around them.
+        // Keep the 09A anti-tree-snag layer completely disabled. Decorative trees
+        // are pass-through instead of obstacles requiring local avoidance.
         PrototypeNavigation09AHotfix hotfix09a =
             Object.FindAnyObjectByType<PrototypeNavigation09AHotfix>();
         if (hotfix09a != null)
             hotfix09a.enabled = false;
 
         int removed = 0;
-        removed += RemoveTreeObstacles(v4);
+        removed += RemoveTreeObstacles(v3);
 
-        PrototypeBattlefieldNavigationV3 v3 =
-            Object.FindAnyObjectByType<PrototypeBattlefieldNavigationV3>();
-        if (v3 != null)
-            removed += RemoveTreeObstacles(v3);
+        // Clear V3 state after removing trees. This is essential: an already-created
+        // persistent detour may still hold a direct reference to a Tree obstacle even
+        // after that obstacle has been removed from the list.
+        ClearPrivateCollection(v3, "states");
+
+        PrototypeBattlefieldNavigationV4 v4 =
+            Object.FindAnyObjectByType<PrototypeBattlefieldNavigationV4>();
+        if (v4 != null)
+        {
+            removed += RemoveTreeObstacles(v4);
+            ClearPrivateCollection(v4, "states");
+        }
 
         PrototypeBattlefieldNavigationManager v1 =
             Object.FindAnyObjectByType<PrototypeBattlefieldNavigationManager>();
@@ -58,14 +65,9 @@ public sealed class PrototypeNavigation09BTreePassThrough : MonoBehaviour
         if (recovery != null)
             removed += RemoveTreeObstacles(recovery);
 
-        // V4 may already have generated routes in the first frame while trees were
-        // still present. Clearing its private state forces a clean re-plan on the
-        // next frame using the new tree-pass-through obstacle set.
-        ClearPrivateCollection(v4, "states");
-
         applied = true;
         Debug.Log(string.Format(
-            "NAV-09B|Installed=True|TreeRule=PassThrough|RemovedTreeObstacles={0}|BuildingsBlocked=True|RiverBlocked=True",
+            "NAV-09B|Build=v00.00.09f|TreeRule=PassThrough|RemovedTreeObstacles={0}|V3StatesReset=True|BuildingsBlocked=True|FencesBlocked=True|RiverBlocked=True",
             removed));
     }
 

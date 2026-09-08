@@ -8,12 +8,14 @@ PROJECT 1864 udvikles nu i to uafhængige spor, så tactical stabilization ikke 
 
 - Branch: `test` / aktiv leveringskanal `channel-test`
 - Lokal standardmappe: `%USERPROFILE%\OneDrive\Strategy-Test`
-- Aktuel revisionsserie: `v00.00.09e`.
+- Aktuel revisionsserie: `v00.00.09f`.
 - Fokus: battlefield controls, formations, Officer AI, combat, melee, navigation, obstacles, river/bridge, UI og tactical QA.
-- `v00.00.09e` gør **Navigation V3** til eneste autoritative movement/steering-lag igen. V4 samt 09A/09B beholdes som sammenligningskode, men deaktiveres før deres første runtime-Update af `PrototypeNavigationV3Authority`.
-- Tactical obstacle-baseline følger igen V3: træer, bygninger og fence posts behandles som diskrete forhindringer, mens river/water fortsat er bridge-only.
-- `v00.00.09e` reducerer samtidig HUD-occlusion: range fans vises som tynde transparente ghost-linjer; selected-unit data samles i ét fast kompakt panel, og hover-info er kun en lille to-linjers label.
-- Primær QA: regimentet yderst/mod højre må ikke længere stoppe permanent, regiment nr. 2 fra højre må ikke lave gentagne unødige kurskorrektioner, og Console skal vise `NAV-AUTH|...|Authority=V3` efter start.
+- `v00.00.09f` beholder **Navigation V3** som eneste autoritative movement/steering-lag. V4 og 09A er runtime-deaktiverede.
+- `09B` er igen aktiv, men kun som en ikke-steerende kompatibilitetsregel der fjerner individuelle decorative trees fra navigation og nulstiller stale V3 tree-detour state.
+- Tactical obstacle-baseline: decorative trees er pass-through; bygninger og fence posts er diskrete forhindringer; river/water er fortsat bridge-only.
+- `v00.00.09f` korrigerer 09e-UI: den permanente `VALGT xN` selected-summary-boks skjules helt. Hover-info forbliver kort/transient og bottom command bar bevares.
+- Range fans vises fortsat kun på valgte enheder, men 09f undgår dobbelt alpha-multiplikation, så ghost-conen igen er tydeligt synlig uden at blive opak.
+- Primær QA: alle fire bevægende/angribende regimenter skal lave kontinuerlig fremdrift; Console må ikke længere spamme `NAV-V3|...|Obstacle=Tree`; V4/09A må ikke styre; range-conen skal være synlig; `VALGT xN`-panelet skal være væk.
 
 ## Track B — Campaign
 
