@@ -8,6 +8,7 @@
 - Geographic scope: Denmark, Sweden, Norway, Finland and Germany
 - Runtime node target: 50 canonical nodes
 - Active campaign backlog: B-280–B-359
+- Approved future living-world backlog: B-360–B-369
 - B-310–B-319 is an already occupied cross-layer regimental-standards namespace and is not redefined by the campaign expansion
 - Intermediate core gate: B-299
 - Final promotion gate: B-359
@@ -88,6 +89,18 @@ Manpower, recruitment policy, replacements, equipment stockpiles, production, re
 
 Versioned campaign save snapshots, restore/load, autosave hooks, deterministic QA seed, integrity validation, 100+ node stress test, formation-count stress test, campaign error overlay, full regression preset and final B-359 promotion gate.
 
+### B-360–B-369 — Living World & ambient animation
+
+Denne range er nu **designgodkendt**, men er ikke en blocking del af v00.00.11 promotion-gaten. Den kan implementeres i senere batches uden at ændre tactical AI.
+
+Retningen er state-drevet ambient visualisation: construction, tog, skibe/færger, civil/militær/supply-trafik, camps, couriers/scouts, sæsonlandbrug, dag/nat/vejr, battle aftermath og control-change visuals skal så vidt muligt afspejle reel campaign-state frem for kun dekorative loops.
+
+Construction følger den systemiske model med visuelle stages bundet til build progress, fx `SITE -> FOUNDATION -> FRAME/SCAFFOLD -> PARTIAL -> NEAR COMPLETE -> COMPLETE`.
+
+Living-world visuals bruger semantic animation LOD: far zoom viser kun billige/strategisk relevante tegn på aktivitet, medium zoom viser stages/trafik/camps, og near zoom kan vise workers, små køretøjer, dyr, kajaktivitet og lejrbål. Simulation state må aldrig afhænge af, om animationen renderer.
+
+Detaljer: `docs/backlog/B-360-CAMPAIGN-LIVING-WORLD.md`.
+
 ## Strategic link principle
 
 Link classification i første v00.00.11 implementation er et prototype-hook. `SeaFerry` bruges til kendte water-transfer legs i QA-nettet; links mellem rail-capable nodes kan klassificeres som rail candidates; øvrige links behandles som road/land links.
@@ -111,7 +124,8 @@ Prioriteten er operationel læsbarhed før kompleks simulation:
 5. movement/logistics state,
 6. OOB/command/intelligence,
 7. economy and world-state hooks,
-8. save/integrity/reproducible QA.
+8. save/integrity/reproducible QA,
+9. state-driven living-world animation and environmental feedback.
 
 ## Development isolation
 
@@ -123,4 +137,4 @@ Det er særligt vigtigt efter tactical navigation-regressionstest: campaign-udvi
 
 En feature må gerne være implementeret i GitHub uden at blive kaldt godkendt. Status er `IMPLEMENTERET / AFVENTER QA`, indtil den er kompileret og runtime-testet i Unity 6.6.
 
-B-359 er den endelige gate for at åbne `v00.00.12`. Opgaver som ikke er nødvendige for promotion kan eksplicit deferred til v00.00.12+ med dokumenteret begrundelse, men de må ikke forsvinde fra backloggen.
+B-359 er den endelige gate for at åbne `v00.00.12`. B-360–B-369 er godkendt design/fremtidigt work package og er ikke blocking for B-359, medmindre en senere versionsbeslutning eksplicit flytter dem ind i gaten. Opgaver som ikke er nødvendige for promotion kan eksplicit deferred til v00.00.12+ med dokumenteret begrundelse, men de må ikke forsvinde fra backloggen.
