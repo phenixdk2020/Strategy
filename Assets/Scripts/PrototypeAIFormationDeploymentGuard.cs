@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 // Tactical QA guard for v00.00.09/v00.00.13 integration.
-// Officer AI is allowed to use COLUMN while manoeuvring, but a regiment must not
-// remain stuck in COLUMN after the manoeuvre has ended and the officer is
-// assessing, defending, holding or engaging.
+// COLUMN is allowed while a regiment is manoeuvring. Once movement has actually
+// ended, the prototype's route contract expects the regiment to deploy back to
+// LINE. This guard covers both Officer AI and direct/manual control so a unit
+// cannot remain visually stuck in marching column after arrival.
 [DefaultExecutionOrder(1800)]
 public sealed class PrototypeAIFormationDeploymentGuard : MonoBehaviour
 {
@@ -15,10 +17,14 @@ public sealed class PrototypeAIFormationDeploymentGuard : MonoBehaviour
         public bool Initialized;
         public Vector3 LastPosition;
         public float StationarySeconds;
+        public bool MovedSinceLastDeployment;
     }
 
     private readonly Dictionary<Regiment, FormationState> states =
         new Dictionary<Regiment, FormationState>();
+
+    private static readonly FieldInfo HasDestinationField =
+        typeof(Regiment).GetField("hasDestination", BindingFlags.Instance | BindingFlags.NonPublic);
 
     private const float MovementEpsilon = 0.025f;
     private const float DeployDelaySeconds = 0.65f;
@@ -45,13 +51,10 @@ public sealed class PrototypeAIFormationDeploymentGuard : MonoBehaviour
 
         foreach (Regiment regiment in battle.Regiments)
         {
-            if (regiment == null)
-                continue;
-
-            OfficerAIController officerAI = regiment.GetComponent<OfficerAIController>();
-            if (officerAI == null || !officerAI.AIEnabled || regiment.IsRouted)
+            if (regiment == null || regiment.IsRouted)
             {
-                states.Remove(regiment);
+                if (regiment != null)
+                    states.Remove(regiment);
                 continue;
             }
 
@@ -69,6 +72,7 @@ public sealed class PrototypeAIFormationDeploymentGuard : MonoBehaviour
                 state.Initialized = true;
                 state.LastPosition = current;
                 state.StationarySeconds = 0f;
+                state.MovedSinceLastDeployment = false;
                 continue;
             }
 
@@ -76,9 +80,14 @@ public sealed class PrototypeAIFormationDeploymentGuard : MonoBehaviour
             state.LastPosition = current;
 
             if (moved > MovementEpsilon)
+            {
                 state.StationarySeconds = 0f;
+                state.MovedSinceLastDeployment = true;
+            }
             else
+            {
                 state.StationarySeconds += Time.deltaTime;
+            }
 
             if (regiment.Formation != RegimentFormation.Column)
                 continue;
@@ -86,21 +95,41 @@ public sealed class PrototypeAIFormationDeploymentGuard : MonoBehaviour
             if (state.StationarySeconds < DeployDelaySeconds)
                 continue;
 
-            if (!ShouldDeployToLine(officerAI))
+            OfficerAIController officerAI = regiment.GetComponent<OfficerAIController>();
+            bool aiEnabled = officerAI != null && officerAI.AIEnabled;
+
+            bool shouldDeploy = aiEnabled
+                ? ShouldDeployAIToLine(officerAI)
+                : ShouldDeployManualToLine(regiment, state);
+
+            if (!shouldDeploy)
                 continue;
 
             regiment.SetFormation(RegimentFormation.Line);
             state.StationarySeconds = 0f;
+            state.MovedSinceLastDeployment = false;
 
             Debug.Log(string.Format(
-                "FORMATION-GUARD|Unit={0}|ColumnToLine=True|Mission={1}|Task={2}|Reason=ManoeuvreEnded",
+                "FORMATION-GUARD|Unit={0}|ColumnToLine=True|Control={1}|Mission={2}|Task={3}|Reason=MovementEnded",
                 regiment.RegimentName,
-                officerAI.Mission,
-                officerAI.CurrentTask));
+                aiEnabled ? "AI" : "MANUAL",
+                officerAI != null ? officerAI.Mission.ToString() : "N/A",
+                officerAI != null ? officerAI.CurrentTask : "N/A"));
         }
     }
 
-    private static bool ShouldDeployToLine(OfficerAIController officerAI)
+    private static bool ShouldDeployManualToLine(Regiment regiment, FormationState state)
+    {
+        if (regiment == null || state == null || !state.MovedSinceLastDeployment)
+            return false;
+
+        // Do not override COLUMN while the regiment still has an active destination.
+        // This preserves temporary obstacle/bridge column movement. Once the route
+        // has ended, the player route contract's final formation is LINE.
+        return !HasActiveDestination(regiment);
+    }
+
+    private static bool ShouldDeployAIToLine(OfficerAIController officerAI)
     {
         if (officerAI == null)
             return false;
@@ -117,5 +146,14 @@ public sealed class PrototypeAIFormationDeploymentGuard : MonoBehaviour
                task.StartsWith("HOLD", StringComparison.OrdinalIgnoreCase) ||
                task.StartsWith("ENGAGE", StringComparison.OrdinalIgnoreCase) ||
                task.StartsWith("STABILISE", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasActiveDestination(Regiment regiment)
+    {
+        if (regiment == null || HasDestinationField == null)
+            return false;
+
+        object value = HasDestinationField.GetValue(regiment);
+        return value is bool active && active;
     }
 }
