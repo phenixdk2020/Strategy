@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 [DefaultExecutionOrder(20000)]
 public sealed class CampaignBuildVersionOverlay : MonoBehaviour
 {
-    public const string CampaignVersion = "v00.00.13";
-    public const string CampaignChannel = "3D DEV CLEAN";
+    public const string CampaignVersion = "v00.00.13a";
+    public const string CampaignChannel = "3D POLISH DEV";
 
     private GUIStyle style;
 
@@ -19,7 +19,7 @@ public sealed class CampaignBuildVersionOverlay : MonoBehaviour
         if (UnityEngine.Object.FindAnyObjectByType<CampaignBuildVersionOverlay>() != null)
             return;
 
-        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013_clean");
+        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013a");
         root.AddComponent<CampaignBuildVersionOverlay>();
     }
 
@@ -29,15 +29,15 @@ public sealed class CampaignBuildVersionOverlay : MonoBehaviour
         {
             style = new GUIStyle(GUI.skin.label)
             {
-                fontSize = 16,
+                fontSize = 14,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.UpperLeft
             };
-            style.normal.textColor = Color.white;
+            style.normal.textColor = new Color(0.96f, 0.96f, 0.92f);
         }
 
         GUI.Label(
-            new Rect(12f, 10f, 520f, 28f),
+            new Rect(12f, 10f, 480f, 26f),
             "PROJECT 1864 CAMPAIGN | " + CampaignVersion + " " + CampaignChannel,
             style);
     }
