@@ -17,6 +17,7 @@ Warfare/command backlog: docs/backlog/B-330-CAMPAIGN-V011-WAR-COMMAND.md
 World/economy backlog: docs/backlog/B-340-CAMPAIGN-V011-WORLD-ECONOMY.md
 Save/QA/polish backlog: docs/backlog/B-350-CAMPAIGN-V011-SAVE-QA-POLISH.md
 Construction/living-map backlog: docs/backlog/B-360-CAMPAIGN-V011-CONSTRUCTION-LIVING-MAP.md
+Living-world visual supplement: docs/backlog/B-360-CAMPAIGN-LIVING-WORLD.md
 Design supplement: docs/PROJECT-1864-Campaign-v00.00.11-Design-Supplement.md
 Implementation wave 1: CampaignMapUsabilityV011.cs adds validation, node info, political control markers, link classification, stacking offsets, ETA, focus/reset and diagnostics
 Implementation wave 2: CampaignMapSearchHoverV011.cs adds location/formation search, camera focus and formation hover/OOB summary
@@ -26,5 +27,11 @@ Intermediate core gate: B-299
 Systems/polish checkpoint: B-359
 Final promotion gate: B-369
 Next campaign version after final gate: v00.00.12
+Planned v00.00.12 work package: B-370-B-399
+v00.00.12 planning: docs/PROJECT-1864-Campaign-v00.00.12-Planning.md
+v00.00.12 infrastructure/settlements: docs/backlog/B-370-CAMPAIGN-V012-INFRASTRUCTURE-SETTLEMENTS.md
+v00.00.12 logistics/transport: docs/backlog/B-380-CAMPAIGN-V012-LOGISTICS-TRANSPORT.md
+v00.00.12 society/events/QA: docs/backlog/B-390-CAMPAIGN-V012-WORLD-EVENTS-QA.md
+v00.00.12 activation rule: planning may exist now, but v00.00.12 must not become active until B-369 passes
 Isolation rule: tactical AI is not changed by this campaign branch
 QA state: campaign additions may be implemented in batches and remain IMPLEMENTERET / AFVENTER QA until Allan performs Unity compile/runtime testing; only B-369 can promote v00.00.11
