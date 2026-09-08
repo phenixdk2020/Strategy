@@ -6,7 +6,7 @@ public sealed class CampaignMapCameraController : MonoBehaviour
     public float ZoomSpeed = 90f;
     public float RotateSpeed = 55f;
     public float PitchSpeed = 42f;
-    public float MinHeight = 70f;
+    public float MinHeight = 60f;
     public float MaxHeight = 520f;
     public float MinPitch = 32f;
     public float MaxPitch = 72f;
@@ -18,8 +18,15 @@ public sealed class CampaignMapCameraController : MonoBehaviour
     private void Awake()
     {
         cam = GetComponent<Camera>();
-        homePosition = transform.position;
-        homeRotation = transform.rotation;
+
+        // v13a starts over Denmark instead of the generic map centre.
+        // Geographic coordinates remain authoritative; this is presentation only.
+        Vector3 denmark = CampaignGeoProjection.Project3D(56.15, 10.20, 0f);
+        homePosition = new Vector3(denmark.x, 245f, denmark.z - 92f);
+        homeRotation = Quaternion.Euler(58f, 0f, 0f);
+
+        transform.position = homePosition;
+        transform.rotation = homeRotation;
     }
 
     private void Update()
