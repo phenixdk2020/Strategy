@@ -10,7 +10,9 @@ Purpose: campaign usability and strategic interaction milestone after the 50-nod
 Active work package: B-280-B-299
 Core backlog: docs/backlog/B-280-CAMPAIGN-MAP-V011.md
 Extended backlog: docs/backlog/B-290-CAMPAIGN-MAP-V011-EXTENDED.md
-Implementation wave: CampaignMapUsabilityV011.cs adds validation, node info, political control markers, stacking offsets, ETA, focus/reset and diagnostics
+Design supplement: docs/PROJECT-1864-Campaign-v00.00.11-Design-Supplement.md
+Implementation wave 1: CampaignMapUsabilityV011.cs adds validation, node info, political control markers, link classification, stacking offsets, ETA, focus/reset and diagnostics
+Implementation wave 2: CampaignMapSearchHoverV011.cs adds location/formation search, camera focus and formation hover/OOB summary
 Version rule: multiple backlog tasks and commits remain v00.00.11 until the shared final B-299 acceptance gate passes
 Next campaign version after gate: v00.00.12
 Isolation rule: tactical AI is not changed by this campaign branch
