@@ -74,5 +74,6 @@ v00.00.15 activation rule: v00.00.14/B-539 must pass before v00.00.15 becomes ac
 Multi-nation parity rule: every non-player nation uses the same legal campaign systems as the player; PlayerControl is a controller assignment, not a special nation type
 International trade rule: trade contracts move real goods through real transport capacity and may be affected by route disruption/blockade/congestion
 Diplomacy/alliance rule: treaties do not grant perfect command or perfect shared intelligence; scope, communication delay and national ownership remain explicit
+Replay variation rule: historical scenario data defines the start and plausibility envelope, but country development, research, infrastructure and military buildup use bounded seed-based variation so repeated campaigns can diverge without becoming arbitrary
 Isolation rule: tactical AI is not changed by this campaign branch
 QA state: campaign additions may be implemented in batches and remain IMPLEMENTERET / AFVENTER QA until Allan performs Unity compile/runtime testing; only B-369 can promote current v00.00.11
