@@ -1,18 +1,24 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-// Small always-visible build marker so screenshots immediately reveal
-// which PROJECT 1864 track/revision is running.
+// Tactical build marker only. CampaignMap owns its own campaign-version overlay.
+// This prevents the inherited tactical/10e marker from being drawn on top of
+// Campaign v11/v13 and looking like two campaign runtimes are active at once.
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
     public const string BuildVersion = "v00.00.10e";
-    public const string BuildChannel = "CAMPAIGN TEST";
+    public const string BuildChannel = "TACTICAL INHERITED";
 
     private GUIStyle style;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
+        Scene scene = SceneManager.GetActiveScene();
+        if (!string.Equals(scene.name, "PrototypeBattle", System.StringComparison.Ordinal))
+            return;
+
         if (UnityEngine.Object.FindAnyObjectByType<PrototypeBuildVersionOverlay>() != null)
             return;
 
