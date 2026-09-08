@@ -377,7 +377,7 @@ public sealed class CampaignTerrainV013 : MonoBehaviour
 
     private void UpgradeExistingMapLines()
     {
-        LineRenderer[] lines = UnityEngine.Object.FindObjectsByType<LineRenderer>(FindObjectsSortMode.None);
+        LineRenderer[] lines = UnityEngine.Object.FindObjectsByType<LineRenderer>();
         Transform infrastructure = GetOrCreateLayerRoot(RootInfrastructure).transform;
         Transform overlays = GetOrCreateLayerRoot(RootOverlays).transform;
 
@@ -434,7 +434,7 @@ public sealed class CampaignTerrainV013 : MonoBehaviour
 
     private void SnapExistingNodesAndFormations()
     {
-        CampaignNodeView[] nodes = UnityEngine.Object.FindObjectsByType<CampaignNodeView>(FindObjectsSortMode.None);
+        CampaignNodeView[] nodes = UnityEngine.Object.FindObjectsByType<CampaignNodeView>();
         foreach (CampaignNodeView view in nodes)
         {
             if (view == null)
@@ -444,7 +444,7 @@ public sealed class CampaignTerrainV013 : MonoBehaviour
             view.transform.position = p;
         }
 
-        CampaignFormationView[] formations = UnityEngine.Object.FindObjectsByType<CampaignFormationView>(FindObjectsSortMode.None);
+        CampaignFormationView[] formations = UnityEngine.Object.FindObjectsByType<CampaignFormationView>();
         foreach (CampaignFormationView view in formations)
         {
             if (view == null)
