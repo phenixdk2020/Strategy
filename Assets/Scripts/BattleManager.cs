@@ -13,7 +13,6 @@ public sealed class BattleManager : MonoBehaviour
     private const float GameMinutesPerSimulationSecond = 2.2f;
     private const float HoverInfoWidth = 200f;
     private const float HoverInfoHeight = 34f;
-    private const float SelectedInfoHeight = 68f;
 
     private readonly List<Regiment> regiments = new List<Regiment>();
     private float battleMinutes = 10f * 60f + 20f;
@@ -21,6 +20,8 @@ public sealed class BattleManager : MonoBehaviour
     private bool paused;
     private string resultMessage = string.Empty;
 
+    // selectedUnitStyle is retained for compatibility with the 09f visual cleanup
+    // component, but 09h never draws a persistent selected-unit summary panel.
     private GUIStyle selectedUnitStyle;
     private GUIStyle hoverStyle;
     private GUIStyle hitStyle;
@@ -102,6 +103,10 @@ public sealed class BattleManager : MonoBehaviour
         if (aiManager != null && aiManager.IsPointerOverControls(mousePosition))
             return true;
 
+        PrototypeUniformDesigner09H uniformDesigner = PrototypeUniformDesigner09H.Instance;
+        if (uniformDesigner != null && uniformDesigner.IsPointerOverControls(mousePosition))
+            return true;
+
         PrototypeCombatTuningManager tuning = PrototypeCombatTuningManager.Instance;
         return tuning != null && tuning.IsPointerOverControls(mousePosition);
     }
@@ -134,15 +139,12 @@ public sealed class BattleManager : MonoBehaviour
             x = screen.x - HoverInfoWidth - 16f;
 
         x = Mathf.Clamp(x, 12f, Mathf.Max(12f, Screen.width - HoverInfoWidth - 12f));
-        float y = Mathf.Clamp(anchorY - HoverInfoHeight - 12f, 102f, Mathf.Max(102f, Screen.height - HoverInfoHeight - 110f));
+        float y = Mathf.Clamp(
+            anchorY - HoverInfoHeight - 12f,
+            102f,
+            Mathf.Max(102f, Screen.height - HoverInfoHeight - 110f));
 
         return new Rect(x, y, HoverInfoWidth, HoverInfoHeight);
-    }
-
-    private static Rect GetSelectedInfoRect()
-    {
-        float width = Mathf.Min(430f, Mathf.Max(280f, Screen.width - 36f));
-        return new Rect(18f, 104f, width, SelectedInfoHeight);
     }
 
     private void EvaluateBattleResult()
@@ -226,7 +228,7 @@ public sealed class BattleManager : MonoBehaviour
         selectedUnitStyle.fontSize = 9;
         selectedUnitStyle.alignment = TextAnchor.MiddleLeft;
         selectedUnitStyle.padding = new RectOffset(8, 8, 4, 4);
-        selectedUnitStyle.normal.textColor = Color.white;
+        selectedUnitStyle.normal.textColor = Color.clear;
         selectedUnitStyle.wordWrap = true;
 
         hoverStyle = new GUIStyle(GUI.skin.box);
@@ -235,11 +237,13 @@ public sealed class BattleManager : MonoBehaviour
         hoverStyle.padding = new RectOffset(6, 6, 2, 2);
         hoverStyle.normal.textColor = new Color(1f, 1f, 1f, 0.92f);
 
-        hitStyle = new GUIStyle(GUI.skin.box);
-        hitStyle.fontSize = 14;
+        // 09h: combat feedback is text-only. The 09g video showed that the previous
+        // large black 'Ramte N' boxes hid soldiers during close combat.
+        hitStyle = new GUIStyle(GUI.skin.label);
+        hitStyle.fontSize = 10;
         hitStyle.fontStyle = FontStyle.Bold;
         hitStyle.alignment = TextAnchor.MiddleCenter;
-        hitStyle.normal.textColor = new Color(1f, 0.88f, 0.30f);
+        hitStyle.normal.textColor = new Color(1f, 0.86f, 0.22f, 0.94f);
 
         topStyle = new GUIStyle(GUI.skin.box);
         topStyle.fontSize = 12;
@@ -307,57 +311,6 @@ public sealed class BattleManager : MonoBehaviour
             SetSpeed(20f);
     }
 
-    private void DrawSelectedUnitPanel(
-        Regiment firstSelected,
-        int selectedCount,
-        int totalStrength,
-        int totalInitial,
-        float moraleSum,
-        float cohesionSum)
-    {
-        if (firstSelected == null || selectedCount <= 0)
-            return;
-
-        string label;
-
-        if (selectedCount > 1)
-        {
-            float avgMorale = moraleSum / selectedCount;
-            float avgCohesion = cohesionSum / selectedCount;
-            label =
-                $"VALGT x{selectedCount} | Styrke {totalStrength}/{totalInitial} | Mor {avgMorale:0} | Coh {avgCohesion:0}\n" +
-                "Fælles ordrer, doctrine, aggression og fire policy styres i command-bar'en nederst.";
-        }
-        else
-        {
-            string team = firstSelected.Team == BattleTeam.Denmark ? "DK" : "PR";
-            int losses = Mathf.Max(0, firstSelected.InitialStrength - firstSelected.CurrentStrength);
-            int ammo = PrototypeCombatStatusManager.GetAmmunitionRoundsPerMan(firstSelected);
-            int startAmmo = PrototypeCombatStatusManager.GetStartingAmmunitionRoundsPerMan(firstSelected);
-            string routed = firstSelected.IsRouted ? " | ROUTED" : string.Empty;
-
-            OfficerAIController ai = firstSelected.GetComponent<OfficerAIController>();
-            string aiLine = "AI installerer";
-            if (ai != null && ai.Officer != null)
-            {
-                aiLine = string.Format(
-                    "AI {0} | {1} | {2} | Agg {3:0} | {4}",
-                    ai.AIEnabled ? "ON" : "OFF",
-                    ai.Officer.OfficerName,
-                    ai.Doctrine,
-                    ai.OrderAggressiveness,
-                    ai.CurrentTask);
-            }
-
-            label =
-                $"VALGT {firstSelected.RegimentName} ({team}) | {firstSelected.CurrentStrength}/{firstSelected.InitialStrength} | Tab {losses} | Ammo {ammo}/{startAmmo}{routed}\n" +
-                $"{firstSelected.WeaponShortName} | {firstSelected.Formation} | Ild {firstSelected.GetFirePolicyLabel()} | Mor {firstSelected.Morale:0} | Coh {firstSelected.Cohesion:0} | Exp {firstSelected.Experience:0}\n" +
-                aiLine;
-        }
-
-        GUI.Box(GetSelectedInfoRect(), label, selectedUnitStyle);
-    }
-
     private void OnGUI()
     {
         EnsureStyles();
@@ -368,40 +321,18 @@ public sealed class BattleManager : MonoBehaviour
 
         DrawTimeControls(clock);
 
-        float helperWidth = Mathf.Min(650f, Mathf.Max(320f, Screen.width - 160f));
+        float helperWidth = Mathf.Min(820f, Mathf.Max(360f, Screen.width - 120f));
         GUI.Box(
             new Rect((Screen.width - helperWidth) * 0.5f, 74f, helperWidth, 22f),
-            "Ctrl/Shift multi | RMB: mål + træk = facing | Alt+RMB = waypoint | F/C formation | Z/X drej | F9 kamp-setup",
+            "LMB klik/vælg | LMB-træk: box select | Shift/Ctrl: add/toggle | RMB ordre | Alt+RMB waypoint | F/C formation | F9 kamp | F10 uniform",
             miniStyle);
 
         Camera mainCamera = Camera.main;
         Regiment hoveredRegiment = GetHoveredRegiment(mainCamera);
 
-        Regiment firstSelected = null;
-        int selectedCount = 0;
-        int totalStrength = 0;
-        int totalInitial = 0;
-        float moraleSum = 0f;
-        float cohesionSum = 0f;
-
         foreach (Regiment regiment in regiments)
         {
-            if (regiment == null)
-                continue;
-
-            if (regiment.IsSelected)
-            {
-                if (firstSelected == null)
-                    firstSelected = regiment;
-
-                selectedCount++;
-                totalStrength += regiment.CurrentStrength;
-                totalInitial += regiment.InitialStrength;
-                moraleSum += regiment.Morale;
-                cohesionSum += regiment.Cohesion;
-            }
-
-            if (mainCamera == null)
+            if (regiment == null || mainCamera == null)
                 continue;
 
             Vector3 screen = mainCamera.WorldToScreenPoint(regiment.transform.position + Vector3.up * 3f);
@@ -421,22 +352,16 @@ public sealed class BattleManager : MonoBehaviour
 
             if (PrototypeCombatStatusManager.TryGetVolleyFeedback(regiment, out int volleyHits))
             {
-                float hitY = Mathf.Max(102f, Screen.height - screen.y - 46f);
-
-                GUI.Box(
-                    new Rect(screen.x - 55f, hitY, 110f, 24f),
+                float hitY = Mathf.Max(102f, Screen.height - screen.y - 31f);
+                GUI.Label(
+                    new Rect(screen.x - 36f, hitY, 72f, 18f),
                     $"Ramte {volleyHits}",
                     hitStyle);
             }
         }
 
-        DrawSelectedUnitPanel(
-            firstSelected,
-            selectedCount,
-            totalStrength,
-            totalInitial,
-            moraleSum,
-            cohesionSum);
+        // 09h deliberately draws NO persistent selected-unit or multi-select summary
+        // panel. Selection is conveyed by formation markers, range fan and command bar.
 
         if (!string.IsNullOrEmpty(resultMessage))
         {
