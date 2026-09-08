@@ -10,7 +10,7 @@ Tactical AI er fortsat uden for scope på campaign-branchen.
 
 ## B-290 — Campaign search / find location
 
-**Status:** PLANLAGT
+**Status:** IMPLEMENTERET / AFVENTER QA
 
 Spilleren skal hurtigt kunne finde en kendt by eller formation på det store nordisk-tyske kort.
 
@@ -122,7 +122,7 @@ En spiller kan visuelt skelne fx havneby, rail-node og fæstning uden først at 
 
 ## B-296 — Formation hover/OOB summary
 
-**Status:** PLANLAGT
+**Status:** IMPLEMENTERET / AFVENTER QA
 
 Formation tokens skal give hurtig information uden altid at kræve fuldt selection-panel.
 
@@ -204,11 +204,12 @@ B-299 er den endelige gate for at afslutte v00.00.11 og åbne næste campaign-ve
 
 Når B-299 er bestået, kan `v00.00.12` oprettes.
 
-## Implementation status — first v00.00.11 usability wave
+## Implementation status — v00.00.11 usability waves
 
-Følgende er nu implementeret på work-branchen gennem `CampaignMapUsabilityV011.cs`, men kræver Unity runtime QA før status kan ændres til godkendt:
+Følgende er nu implementeret på work-branchen, men kræver Unity runtime QA før status kan ændres til godkendt:
 
 - B-281: 50-node runtime validation + broken-link diagnostics.
+- B-282: eksisterende CampaignMapController viser location labels; v00.00.11 QA skal validere læsbarhed/clutter.
 - B-283: første link-type classification (`Road`, `Rail`, `SeaFerry`) som prototype-data/diagnostik.
 - B-284: ETA-visning oven på eksisterende multi-leg route/pathfinding.
 - B-285: node selection + information panel.
@@ -216,5 +217,7 @@ Følgende er nu implementeret på work-branchen gennem `CampaignMapUsabilityV011
 - B-287: stationary formation stack offsets for multiple formations on same node.
 - B-288: `F` focus selected og `Home` reset camera.
 - B-289: udvidet runtime diagnostics panel/logging.
+- B-290: søgning på location/formation med partial match og camera focus.
+- B-296: formation hover/OOB summary.
 
 Disse punkter er **IMPLEMENTERET / AFVENTER QA**, ikke færdig-godkendte. Runtime-test i Unity er stadig promotion-gaten.
