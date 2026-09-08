@@ -426,7 +426,7 @@ public sealed class CampaignMapController : MonoBehaviour
     private void RefreshFormationViews()
     {
         formationViews.Clear();
-        CampaignFormationView[] views = Object.FindObjectsByType<CampaignFormationView>(FindObjectsSortMode.None);
+        CampaignFormationView[] views = UnityEngine.Object.FindObjectsByType<CampaignFormationView>();
         foreach (CampaignFormationView view in views)
         {
             if (view != null && !string.IsNullOrEmpty(view.FormationId))
