@@ -1,9 +1,9 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09d
+Prototype version: v00.00.09e
 Build status: TEST
-Build name: TACTICAL COMMAND TEST 09D
-Visible build marker: PROJECT 1864 | v00.00.09d TEST is shown permanently in the upper-left corner during Play mode
-TEST versioning rule: every delivered TEST revision receives a visible suffix bump (v00.00.09a, v00.00.09b, v00.00.09c, v00.00.09d...) so screenshots and test feedback can always be tied to the exact revision
+Build name: TACTICAL COMMAND TEST 09E
+Visible build marker: PROJECT 1864 | v00.00.09e TEST is shown permanently in the upper-left corner during Play mode
+TEST versioning rule: every delivered TEST revision receives a visible suffix bump (v00.00.09a, v00.00.09b, v00.00.09c, v00.00.09d, v00.00.09e...) so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
@@ -20,19 +20,16 @@ Attack frontage deconfliction: when several AI-controlled regiments converge on 
 Attack frontage V2: secondary frontage slots are scored against travel distance, blocked destinations, houses/fences, river crossings, line-to-target obstruction and friendly separation so later arrivals prefer a genuinely usable side of the engagement instead of parking behind a building or another regiment
 Attack frontage hold rule: a secondary regiment that reaches its assigned frontage slot holds that local position and faces the target instead of receiving a new centre-seeking OrderAttack that would recreate overlap
 Attack spacing telemetry: AI-SPACING-V2 logs unit, target, slot and final obstacle-aware slot position when frontage allocation activates
-Battlefield navigation TEST layer: farmhouse, barn and fence posts remain blocked tactical space; river/water remains bridge-only
-Navigation v00.00.09b tree rule: individual decorative trees are pass-through and are removed from active navigation obstacle sets; the v00.00.09a anti-tree snag layer is disabled
-Navigation v00.00.09b design intent: proper woods/forest terrain will later be represented as area-based movement/cohesion/visibility modifiers instead of each decorative tree acting as a hard collision obstacle
-Navigation V4: persistent A* routing remains active for buildings, fences and river/water; the original player/AI destination is preserved while V4 owns short-term steering points
-Navigation V4 obstacle rule: route planning uses a compact marching clearance and automatically changes a regiment to COLUMN when an intermediate A* route is required; the final destination is validated with LINE clearance so a deployed formation cannot finish on top of a building/fence/water obstacle
-Navigation V4 recovery: if a regiment starts or becomes trapped inside blocked tactical space, it is moved to the nearest legal escape point and the original route is replanned
-Navigation V4 stuck recovery: a regiment that makes effectively no progress for roughly 0.85 simulation seconds automatically replans its route and performs an emergency escape if no legal A* route can initially be generated
-Navigation V4 telemetry: NAV-V4 reports direct/A* route creation, route point counts, stuck replans, emergency unstick/escape and no-route failures
-Navigation 09B telemetry: NAV-09B reports tree pass-through activation and count of removed tree obstacles
-Navigation compatibility: V3 and previous active recovery steering layers remain in the TEST repository for reference/static queries but are disabled once Navigation V4 takes control; 09A is explicitly disabled by 09B
-Unity 6.6 compile fix v00.00.09d: PrototypeBattlefieldNavigationV4 now explicitly aliases Object to UnityEngine.Object, resolving CS0104 ambiguity introduced by System.Object/UnityEngine.Object name resolution
-Unity 6.6 API cleanup v00.00.09d: active Navigation V4 now uses the parameterless FindObjectsByType<T>() overload instead of deprecated FindObjectsSortMode
-River crossing rule: the stream is non-traversable terrain for infantry; A* movement can cross it only through the fixed bridge zone
+Battlefield navigation TEST layer: Movement V3 is restored as the single authoritative steering layer in v00.00.09e; farmhouse, barn, trees and fence posts are blocked tactical space and river/water remains bridge-only
+Navigation v00.00.09e authority: PrototypeNavigationV3Authority runs before tactical navigation Updates, explicitly enables Navigation V3 and disables Navigation V4 plus the 09A/09B hotfix experiments before they can write regiment steering state
+Navigation V3: persistent obstacle detours preserve the original player/AI destination until the active obstacle is cleared instead of recalculating one-frame tangent steering
+Navigation V3 formation passage: LINE formations narrow to COLUMN for discrete obstacle/bridge passage and restore their previous formation when the full-width path is clear
+Navigation V3 recovery: if a regiment centre is inside blocked space, emergency recovery moves it to the nearest legal column-clearance position without discarding the original movement intent
+Navigation V3 telemetry: NAV-V3 reports installation, persistent detours, emergency unstick, blocked-goal adjustments, bridge routes and route-waypoint corrections; NAV-AUTH reports the 09e authority takeover state
+Navigation V4 retention: the A* V4 experiment remains in the repository for later comparison/debugging but is runtime-disabled in v00.00.09e and is not allowed to own Regiment.destination or formation state
+Navigation 09A/09B retention: anti-tree-snag and tree-pass-through hotfix experiments remain in source history/reference but are runtime-disabled while V3 is authoritative
+Unity 6.6 compile fix v00.00.09d retained: PrototypeBattlefieldNavigationV4 explicitly aliases Object to UnityEngine.Object and uses the supported FindObjectsByType<T>() overload so the dormant comparison implementation still compiles
+River crossing rule: the stream is non-traversable terrain for infantry; movement can cross it only through the fixed bridge zone
 Bridge march rule: bridge/obstacle routes use COLUMN-sized movement clearance; pontoon construction remains reserved for later engineer capability
 Pontoon rule: no regiment may cross open water merely by moving through it; pontoon construction is reserved for a later engineer-attachment capability and is not available without engineer support
 Melee TEST layer: opposing infantry formations that physically contact each other and are not separated by water/solid obstacles enter bayonet/melee contact instead of walking through each other or continuing point-blank volley fire
@@ -41,7 +38,7 @@ Melee telemetry: MELEE-DIAG announces contact and MELEE-LOG records both units, 
 Battlefield: doubled from 180x120 to 360x240 with expanded camera bounds and greater starting separation
 Fire geometry: directional 120-degree forward fire fan follows regiment facing; no 360-degree firing ring
 Range bands: Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange
-Range fan visibility: Close/Medium arcs and outer Long fan are terrain-following, unlit, thicker and higher-contrast so no side disappears into uneven ground
+Range fan visibility v00.00.09e: Close/Medium/Long overlays are terrain-following ghost lines with substantially reduced width and alpha; transparent shader fallbacks are used so selected-unit range information no longer visually masks formations
 Fire policy: HOLD / CLOSE / MEDIUM / LONG determines when a regiment may open fire
 Accuracy: TEST tuning compensates the legacy kernel so Close/Medium/Long multipliers are applied exactly once instead of stacking on top of the old distance curve
 Combat tuning menu: F9 or KAMP F9 opens runtime sliders for base hit chance per firing man, Close/Medium/Long factors, firing fraction, morale/cohesion accuracy floors, starting ammunition rounds per man and losses per visible casualty body
@@ -59,7 +56,8 @@ Player delegation: I toggles AI UNIT ON/OFF for selected Danish regiment(s); A r
 Officer AI doctrine menu: DEFENSIVE / BALANCED / OFFENSIVE applies to selected Danish regiment(s)
 Commander aggression intent: 0-100 slider biases cautious/aggressive execution, while officer Aggressiveness remains dominant (70% officer / 30% order before doctrine bias)
 Fire discipline menu: HOLD / CLOSE / MEDIUM / LONG applies to selected Danish regiment(s)
-Battle HUD revision: selected/mouse-over info is compact and includes current/initial strength, Tab/losses, Ammo rounds per man, weapon/reload/formation, fire ranges, morale/cohesion and compact Officer AI state
+Battle HUD v00.00.09e: battlefield-following four-line selected-unit boxes are removed; one compact fixed selected-unit panel is shown below the top helper bar, while mouse-over uses only a small two-line label beside the hovered regiment
+Battle HUD multi-select: several selected regiments use one aggregate panel with total strength plus average morale/cohesion instead of one information box per formation
 Command UI safe-area revision: bottom command bar is two rows, 58 px high, inset 50 px horizontally and 42 px from the lower edge so it remains visible in slightly zoomed Unity Game view
 Time HUD safe-area revision: date/time plus PAUSE/x0.5/x1/x2/x5/x20 are centred 20 px below the upper edge; Space and 0/1/2/3/4 remain shortcuts
 UI input isolation: clicks inside time controls, combat tuning panel or bottom command bar do not issue battlefield selection/move/attack orders
@@ -70,7 +68,7 @@ Destination formation rule: movement may be executed in column, but the destinat
 Multi-unit move/facing revision: with several units selected, RMB-down location is the CENTER of the final group frontage; dragging points the common facing direction; regiment centres are distributed on a line perpendicular to that facing, so dragging right makes every selected regiment face right
 Multi-unit preview: a visible center marker anchors the RMB-down point; the yellow frontage preview is centred on it and a facing guide points in the common drag direction
 Waypoint routes: Alt+right-click appends a waypoint; for multiple selected regiments the waypoint point is the group centre and units retain a common frontage/facing relationship; Alt+right-drag sets explicit final facing
-Waypoint obedience revision: PlayerCommander executes after Officer AI and reasserts the active player route every frame; Navigation V4 preserves that original route goal while independently steering around tactical obstacles
+Waypoint obedience v00.00.09e: PlayerCommander continues to reassert active player routes; Navigation V3 sanitizes blocked waypoints and owns only short-term obstacle/bridge steering while preserving the route goal
 Order ghosts: route ghost follows the player-issued waypoints and the final destination footprint shows final LINE formation and facing; Z/X can rotate final ghost facing without cancelling movement
 Facing order: Z rotates selected regiment(s) 15 degrees left; X rotates 15 degrees right; matching compact buttons remain in the bottom command bar
 Casualty visuals: bodies accumulate at the actual formation position as losses occur even while units remain stationary and exchange fire; density is runtime-configurable, default one visible body per eight losses
@@ -80,4 +78,4 @@ Difficulty: F6 Easy, F7 Normal, F8 Hard; affects enemy AI reaction/decision nois
 AI telemetry: AI-DIAG exposes unit, officer, doctrine, order aggression, effective aggression, fire policy, mission, task and reason
 Pause semantics: AI, movement, waypoint movement, reload, combat and battle clock stop together; camera/UI remain usable
 Slow tactical mode: x0.5 gives twice the real-world reaction time per unit of simulation time without changing combat stats
-QA state: v00.00.09d TEST requires Unity 6000.6.0f1 compile + Play acceptance before it can be called runtime validated
+QA state: v00.00.09e TEST requires Unity 6000.6.0f1 compile + Play acceptance, with special attention to the previously stuck right-side regiment, the second-from-right route behaviour, V3-only NAV-AUTH/NAV-V3 telemetry, ghost range readability and reduced HUD occlusion

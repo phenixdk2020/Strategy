@@ -3,10 +3,9 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// P0A v00.00.09 TEST visual-only hardening for the infantry fire fan.
-/// The authoritative range/fire-arc logic remains in Regiment; this component
-/// only makes the already-existing Close/Medium/Long overlays terrain-following
-/// and readable from the tactical camera.
+/// P0A v00.00.09e TEST visual-only range overlay.
+/// Close/Medium/Long remain authoritative in Regiment; this component only renders
+/// them as thin translucent ghost lines so the overlay does not obscure formations.
 /// </summary>
 [DefaultExecutionOrder(1000)]
 public sealed class PrototypeRangeFanVisualEnhancer : MonoBehaviour
@@ -27,7 +26,7 @@ public sealed class PrototypeRangeFanVisualEnhancer : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeRangeFanVisualEnhancer>() != null)
             return;
 
-        GameObject managerObject = new GameObject("PrototypeRangeFanVisualEnhancer_v00.00.09");
+        GameObject managerObject = new GameObject("PrototypeRangeFanVisualEnhancer_v00.00.09e");
         managerObject.AddComponent<PrototypeRangeFanVisualEnhancer>();
     }
 
@@ -49,8 +48,6 @@ public sealed class PrototypeRangeFanVisualEnhancer : MonoBehaviour
             if (!fans.Prepared)
                 PrepareFans(fans);
 
-            // Only rebuild visible lines. This keeps the QA overlay cheap while
-            // still following facing, movement and the uneven terrain exactly.
             if (fans.Close != null && fans.Close.enabled)
                 UpdateArcOnly(regiment, fans.Close, regiment.CloseRange);
 
@@ -90,21 +87,21 @@ public sealed class PrototypeRangeFanVisualEnhancer : MonoBehaviour
     {
         PrepareLine(
             fans.Close,
-            0.22f,
-            new Color(1.00f, 0.94f, 0.18f),
-            "RangeClose_Unlit");
+            0.09f,
+            new Color(1.00f, 0.94f, 0.18f, 0.18f),
+            "RangeClose_Ghost");
 
         PrepareLine(
             fans.Medium,
-            0.28f,
-            new Color(1.00f, 0.58f, 0.06f),
-            "RangeMedium_Unlit");
+            0.11f,
+            new Color(1.00f, 0.58f, 0.06f, 0.21f),
+            "RangeMedium_Ghost");
 
         PrepareLine(
             fans.Long,
-            0.38f,
-            new Color(1.00f, 0.20f, 0.05f),
-            "RangeLong_Unlit");
+            0.14f,
+            new Color(1.00f, 0.20f, 0.05f, 0.24f),
+            "RangeLong_Ghost");
 
         fans.Prepared = true;
     }
@@ -117,8 +114,8 @@ public sealed class PrototypeRangeFanVisualEnhancer : MonoBehaviour
         line.useWorldSpace = true;
         line.loop = false;
         line.widthMultiplier = width;
-        line.numCapVertices = 2;
-        line.numCornerVertices = 2;
+        line.numCapVertices = 0;
+        line.numCornerVertices = 1;
         line.alignment = LineAlignment.View;
         line.textureMode = LineTextureMode.Stretch;
         line.shadowCastingMode = ShadowCastingMode.Off;
@@ -126,9 +123,11 @@ public sealed class PrototypeRangeFanVisualEnhancer : MonoBehaviour
         line.startColor = color;
         line.endColor = color;
 
-        Shader shader = Shader.Find("Unlit/Color");
+        Shader shader = Shader.Find("Sprites/Default");
         if (shader == null)
-            shader = Shader.Find("Sprites/Default");
+            shader = Shader.Find("Unlit/Transparent");
+        if (shader == null)
+            shader = Shader.Find("Unlit/Color");
 
         if (shader != null)
         {
@@ -218,7 +217,7 @@ public sealed class PrototypeRangeFanVisualEnhancer : MonoBehaviour
 
     private static Vector3 GroundVisiblePoint(Vector3 point)
     {
-        point.y = PrototypeBootstrap.SampleGroundHeight(point.x, point.z) + 0.34f;
+        point.y = PrototypeBootstrap.SampleGroundHeight(point.x, point.z) + 0.22f;
         return point;
     }
 }
