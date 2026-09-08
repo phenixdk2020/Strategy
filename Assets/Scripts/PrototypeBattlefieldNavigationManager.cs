@@ -120,7 +120,7 @@ public sealed class PrototypeBattlefieldNavigationManager : MonoBehaviour
     {
         obstacles.Clear();
 
-        Transform[] all = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        Transform[] all = UnityEngine.Object.FindObjectsByType<Transform>();
         foreach (Transform item in all)
         {
             if (item == null)
