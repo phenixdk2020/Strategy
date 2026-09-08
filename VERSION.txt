@@ -1,19 +1,21 @@
 PROJECT 1864 - Grand Campaign Prototype
 Prototype version: v00.00.13c
-Build status: DENMARK TERRAIN CLEANUP / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK CLEANUP V13C
+Build status: DENMARK CLEANUP HOTFIX / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK CLEANUP V13C HOTFIX
 Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c Denmark cleanup
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
-Denmark terrain: detailed Natural Earth Denmark geometry now drives the visible Denmark land footprint while legacy coarse Denmark polygon overshoot is carved back to water
-Relief cleanup: Denmark receives a gentler low-relief render profile with three smoothing passes; hidden seabed is raised close to the visible water plane to remove rectangular trench/cliff artifacts
-Settlement grounding: Danish nodes, settlement miniatures, formations, vegetation and construction QA projects are re-grounded to the cleaned terrain after legacy v13 helpers run
-Construction QA: Aalborg barracks and Aarhus farm remain staged campaign-time projects and receive level ground pads on the cleaned Denmark terrain
-Infrastructure: strategic links touching Denmark are re-draped to the cleaned terrain; ferry links stay above the water surface
-Denmark focus: Home/default camera remains centered on Denmark; detailed coast rendering is re-draped to the cleaned terrain
+Critical v13c hotfix: GrandCampaignBootstrap.CampaignModeEnabled is now scene-aware, so PrototypeBootstrap cannot auto-build BattleSystems/Battlefield Ground/PlayerCommander/regiments on top of CampaignMap; PrototypeBattle remains allowed when explicitly loaded
+Projection hotfix: detailed Natural Earth Denmark geometry is explicitly remapped from the legacy Denmark-local projection to the broad v11+ strategic projection before rendering
+Terrain hotfix: the first v13c destructive carve of the coarse global mesh is removed; Denmark-focus QA hides the coarse global terrain renderer instead of reshaping it into stepped cliffs
+Denmark relief: detailed Denmark land uses a low-amplitude presentation height function; simulation coordinates and route distance remain authoritative and unchanged
+Settlement grounding: Danish settlements are re-grounded to the same Denmark presentation surface and visually compacted so coastal towns do not hang far over water
+Construction QA: Aalborg barracks and Aarhus farm remain staged campaign-time projects, are repositioned near their nodes and visually scaled for the broad strategic map
+Infrastructure: only strategic links touching Denmark are shown in the Denmark-focus QA slice and are re-draped; ferry links stay at water level
+Denmark context: non-Danish settlement/node/control/formation 3D renderers are hidden for this Denmark-focus QA slice to remove floating visual context while Denmark is validated
 Gameplay isolation: no campaign movement, ETA, route-distance, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13c
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
-QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
+QA state: HOTFIX IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 QA owner: local Unity compile/runtime verification by Allan
