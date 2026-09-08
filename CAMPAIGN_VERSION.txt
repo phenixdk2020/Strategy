@@ -1,7 +1,8 @@
 Active campaign version: v00.00.11 WORK
 v00.00.13 state: PLANNED / DEV IMPLEMENTATION / CLEAN REBUILD
 v00.00.13a state: DEV VISUAL POLISH / CLEAN REBUILD
-Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 3D DEV -> v00.00.13a visual polish
+v00.00.13b state: DEV VISUAL POLISH PASS 1 / CLEAN CAMPAIGN LINEAGE
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 3D DEV -> v00.00.13a -> v00.00.13b visual polish
 v00.00.11 work package: B-280-B-369
 v00.00.11 final gate: B-369
 v00.00.12 state: PLANNED
@@ -14,12 +15,23 @@ v00.00.13a branch: work/v00.00.13a-campaign-visual-polish
 v00.00.13a layer cleanup: tactical v10e build overlay suppressed on CampaignMap; F9 overlays OFF by default; F5 layer panel collapsed by default; F3 search panel hidden by default
 v00.00.13a Denmark: initial/Home camera centers on Denmark; Natural Earth 1:50m Denmark land/coast geometry is draped over the v13 terrain surface as the detailed Denmark render layer
 v00.00.13a graphics: darker strategic terrain/sea palette, soft directional shadows, thinner strategic lines, clearer Denmark coast/land identity
-v00.00.13a simulation rule: visual polish does not change campaign movement, ETA, route distance, strategic state or tactical AI
-v00.00.13a QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
+v00.00.13b branch: work/v00.00.13b-campaign-visual-polish
+v00.00.13b scope: B-13b-01 through B-13b-10 visual/readability pass
+v00.00.13b terrain: naturalized grass/field land-cover patches on the strategic 3D surface
+v00.00.13b water: darker smoother strategic sea presentation and stronger land/water contrast
+v00.00.13b Denmark: Denmark-first Home framing retained; detailed Natural Earth Denmark geometry remains the primary high-detail area
+v00.00.13b infrastructure: road, rail, ferry and route-ghost styling differentiated and reduced in visual weight
+v00.00.13b settlements: city/port/station/depot/fort visual dressing added without changing node state
+v00.00.13b construction: Aalborg barracks and Aarhus farm keep staged campaign-time construction and receive worked earth, materials, carts, scaffold/detail props, worker heads/tools and richer completed-site dressing
+v00.00.13b vegetation: grouped deterministic tree clusters with varied silhouettes replace the uniform prototype look around Denmark nodes
+v00.00.13b atmosphere: softer shadows, warmer daylight, improved fog/ambient balance
+v00.00.13b UI: legacy tactical marker suppressed; overlays remain OFF by default; reduced line widths and existing collapsed panels retained
+v00.00.13b simulation rule: visual polish does not change campaign movement, ETA, route distance, strategic state or tactical AI/navigation
+v00.00.13b QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route geometry
 Projection rule: CampaignGeoProjection keeps v00.00.10e Denmark compatibility and v00.00.11+ broad-map/geodesic APIs in one shared contract
 Runtime isolation: CampaignMap is the campaign runtime; tactical PrototypeBattle is explicit-only and must not auto-open
-Tactical isolation: no tactical navigation/Officer-AI QA fixes from Strategy-Test are included in the v00.00.13a campaign rebuild
+Tactical isolation: no tactical navigation/Officer-AI QA fixes from Strategy-Test are included in the v00.00.13b campaign build
 Planned v00.00.14 milestone: GOVERNMENT, RESEARCH, DOCTRINE & STRATEGIC AI
 Planned v00.00.14 work package: B-470-B-539
 Planned v00.00.15 milestone: MULTI-NATION AI, TRADE, DIPLOMACY & ALLIANCES
