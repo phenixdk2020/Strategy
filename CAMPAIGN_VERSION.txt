@@ -49,5 +49,20 @@ v00.00.13 planned final gate: B-469
 v00.00.13 activation rule: v00.00.12/B-409 must pass before v00.00.13 becomes active
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route polylines
 3D layer rule: terrain, hydrology, land cover, infrastructure, settlements, strategic entities, living-world visuals, overlays, weather/atmosphere and UI share one geospatial coordinate contract
+Planned v00.00.14 milestone: GOVERNMENT, RESEARCH, DOCTRINE & STRATEGIC AI
+Planned v00.00.14 work package: B-470-B-539
+v00.00.14 planning: docs/PROJECT-1864-Campaign-v00.00.14-Planning.md
+v00.00.14 design supplement: docs/PROJECT-1864-Campaign-v00.00.14-Design-Supplement.md
+v00.00.14 government/ministers/delegation: docs/backlog/B-470-CAMPAIGN-V014-GOVERNMENT-MINISTERS-DELEGATION.md
+v00.00.14 research/technology: docs/backlog/B-480-CAMPAIGN-V014-RESEARCH-TECHNOLOGY.md
+v00.00.14 military doctrine/general staff: docs/backlog/B-490-CAMPAIGN-V014-MILITARY-DOCTRINE-GENERAL-STAFF.md
+v00.00.14 economy/development AI: docs/backlog/B-500-CAMPAIGN-V014-ECONOMIC-DEVELOPMENT-AI.md
+v00.00.14 military buildup/mobilization AI: docs/backlog/B-510-CAMPAIGN-V014-MILITARY-BUILDUP-MOBILIZATION-AI.md
+v00.00.14 strategic planning/theatre AI: docs/backlog/B-520-CAMPAIGN-V014-STRATEGIC-PLANNING-THEATRE-AI.md
+v00.00.14 AI explainability/historical research/QA: docs/backlog/B-530-CAMPAIGN-V014-AI-EXPLAINABILITY-RESEARCH-QA.md
+v00.00.14 planned final gate: B-539
+v00.00.14 activation rule: v00.00.13/B-469 must pass before v00.00.14 becomes active
+Delegation rule: MANUAL / ADVISORY / ASSISTED / AUTO per portfolio; AI uses the same resources, construction times, transport capacity and information constraints as the player
+Historical research rule: factual content can carry source/provenance, confidence and historical/estimated/QA-placeholder status
 Isolation rule: tactical AI is not changed by this campaign branch
 QA state: campaign additions may be implemented in batches and remain IMPLEMENTERET / AFVENTER QA until Allan performs Unity compile/runtime testing; only B-369 can promote current v00.00.11
