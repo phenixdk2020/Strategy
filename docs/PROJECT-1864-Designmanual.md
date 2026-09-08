@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.08**  
+**Aktuel designbaseline: v00.02.09**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
@@ -37,6 +37,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Backlog B-230–B-239 — battle supply, skumring/nat og overnight resupply](backlog/B-230-BATTLE-SUPPLY-NIGHT-OPERATIONS.md)
 - [Backlog B-240–B-249 — udvidet kavaleri- og dragonmodel](backlog/B-240-CAVALRY-DRAGOONS-EXPANDED.md)
 - [Backlog B-250–B-259 — fog of war, scouts og HQ command effectiveness](backlog/B-250-FOG-SCOUTS-COMMAND-EFFECTIVENESS.md)
+- [Backlog B-360–B-369 — levende campaign-kort, systemisk construction og state-drevne ambient-animationer](backlog/B-360-CAMPAIGN-LIVING-WORLD.md)
 
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
@@ -114,8 +115,33 @@ Dårlig command connectivity påvirker primært order delay, acknowledgement, re
 
 Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan beskytte HQ/courier/supply approaches, opdage enemy scouts tidligere og reducere modstanderens observation confidence uden nødvendigvis at skulle destruere hver enkelt scout fysisk.
 
+## Campaign-kort: levende verden og state-drevne ambient-animationer
+
+Campaign-kortet skal ikke opleves som et statisk strategibræt. Når tiden går, skal verden vise diskrete tegn på aktivitet, byggeri, transport, årstid, krig og økonomi. Den godkendte retning er **systemisk/state-drevet visualisering** frem for kun dekorative loops: hvor der findes en reel campaign-state, skal animationen afspejle den state.
+
+Eksempler på godkendt living-world retning:
+
+- kaserner, farms, depoter, veje, jernbaner og fortifications bygges visuelt i stages som `SITE -> FOUNDATION -> FRAME/SCAFFOLD -> PARTIAL -> NEAR COMPLETE -> COMPLETE`, bundet til faktisk build progress,
+- arbejdere, vogne og materialeaktivitet kan vises ved aktive bygge- og reparationsprojekter,
+- små tog kører på aktive rail-links og stopper, hvis linket er lukket, ødelagt eller utilgængeligt,
+- damp-/sejlskibe, færger og havneaktivitet kan afspejle gyldige port- og sea/ferry-links,
+- hestevogne, diligencer og forsyningsvogne kan afspejle civil trafik, militær trafik og supply-flow,
+- stationære formationer kan efter passende tid udvikle små lejre med telte, lejrbål, heste og aktivitet,
+- couriers, scouts og supply columns kan visualisere eksisterende command-, recon- og logistics-state uden at lække skjult fjendeinformation,
+- landbrug kan ændre sig med campaign-dato og sæson gennem pløjning, såning, voksende marker, høst og høstakke,
+- større byer, fabrikker, depoter og værksteder kan have diskret røg og aktivitet, som senere kan kobles til faktisk produktion/stockflow,
+- dag/nat, skyer, regn, tåge, senere sne samt fælles vindretning i flag/røg skal give tidslig og geografisk variation,
+- battle aftermath kan give midlertidig røg, ødelagte vogne, hospital/ambulanceaktivitet, skader og andre state-baserede spor,
+- kontrolskifte kan ændre flag, checkpoints og aktivitetsniveau,
+- civil trafik/flygtninge kan senere afspejle frontnærhed, besættelse og campaign events.
+
+Living-world visuals skal bruge **semantic animation LOD**. Ved langt zoom vises kun billige, vigtige tegn på aktivitet; ved mellemzoom kan construction stages, trafik, camps og større ambient aktivitet ses; ved tæt zoom kan workers, dyr, vogne, kajaktivitet, lejrbål og andre korte loops aktiveres. Off-screen og fjerne aktiviteter skal culles/pooles, og der må ikke opstå ubegrænset spawn accumulation.
+
+Simulation state må aldrig afhænge af, om en ambient-animation renderer. Living-world layeren skal kunne slås helt fra til performance/QA uden at ændre campaign-resultater. Rent dekorative loops er tilladt, men må ikke kommunikere en gameplay-state, der ikke er sand. Det detaljerede godkendte work package ligger i [B-360–B-369 — Campaign Living World](backlog/B-360-CAMPAIGN-LIVING-WORLD.md).
+
 ## Versionshistorik
 
+- **v00.02.09 — Campaign Living World design baseline** — Godkender state-drevne ambient-animationer på campaign-kortet: systemisk staged construction for kaserner/farms/roads/rail/depots/fortifications, workers og road/rail works, tog, skibe/færger, road/supply traffic, camps, couriers/scouts/supply columns, sæsonbaseret landbrug, dag/nat/vejr, battle aftermath og control-change visuals. Fastlægger semantic animation LOD og reglen om, at living-world visuals aldrig må være authoritative simulation state eller lække skjult information. Detaljer registreret som B-360–B-369.
 - **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile` på alle fire regimenter; `I` toggler player delegation; Defensive/Balanced/Offensive doctrine og 0–100 commander aggression intent; preussiske Officer AI-angribere med preferred-range/manoeuvre/stabilise adfærd; directional 120° infantry fire fan; HOLD/CLOSE/MEDIUM/LONG fire discipline; continuous closer-is-easier accuracy; battlefield 360x240; Pause/x0,5/x1/x2/x5/x20 og battle clock. v00.00.08 reload/0-hit/`Ramte N`/casualty-visual skal fortsat regressionsbestå. De senere besluttede systemer omfatter segmenteret fire eligibility, fysiske HQ-entities, semantic zoom, courier/order progress/interception, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model og fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
 - **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er terminalt pauset indtil restart, RTS-kamera timeScale-uafhængigt og defensive guards forbedret.
