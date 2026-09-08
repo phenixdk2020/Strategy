@@ -11,6 +11,10 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
         public bool HasSlot;
         public int SlotIndex;
         public Vector3 SlotPosition;
+        public Vector3 TargetPositionAtAssignment;
+        public float LastDistanceToSlot = float.PositiveInfinity;
+        public float LastProgressAt;
+        public int RecoveryCount;
     }
 
     private readonly Dictionary<Regiment, EngagementState> states =
@@ -24,13 +28,22 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
     private const float MinimumFriendlySeparation = 22f;
     private const float LateralSlotSpacing = 24f;
 
+    // v00.00.09h2 stability: once a secondary frontage slot is allocated it is
+    // sticky. We only reconsider it when the target has moved materially, the slot
+    // became blocked/conflicted, or the regiment has made no useful progress for a
+    // sustained interval. This prevents the old 0.25 s slot-flip/chase loop.
+    private const float ProgressEpsilon = 0.65f;
+    private const float StuckReplanSeconds = 3.5f;
+    private const float TargetMovementReplanDistance = 14f;
+    private const float TargetSwitchAdvantage = 1.18f;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
         if (Object.FindAnyObjectByType<PrototypeAttackFrontagePlannerV2>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeAttackFrontagePlannerV2_v009");
+        GameObject root = new GameObject("PrototypeAttackFrontagePlannerV2_v009h2");
         root.AddComponent<PrototypeAttackFrontagePlannerV2>();
     }
 
@@ -55,24 +68,19 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
             if (!IsAttackAI(attacker))
                 continue;
 
-            Regiment target = FindNearestEnemy(attacker, battle);
-            if (target == null)
-                continue;
-
             if (!states.TryGetValue(attacker, out EngagementState state))
             {
                 state = new EngagementState();
                 states[attacker] = state;
             }
 
+            Regiment nearest = FindNearestEnemy(attacker, battle);
+            Regiment target = ChooseStableTarget(attacker, state, nearest);
+            if (target == null)
+                continue;
+
             if (state.Target != target)
-            {
-                state.Target = target;
-                state.EnteredAt = Time.time;
-                state.HasSlot = false;
-                state.SlotIndex = 0;
-                state.SlotPosition = Vector3.zero;
-            }
+                ResetForTarget(state, target);
 
             float threshold = Mathf.Max(
                 attacker.EffectiveRange * 1.30f,
@@ -106,7 +114,7 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
         {
             legacy.enabled = false;
             legacyPlannerDisabled = true;
-            Debug.Log("AI-SPACING-V2|LegacyPlannerDisabled=True");
+            Debug.Log("AI-SPACING-V3|LegacyPlannerDisabled=True|Build=v00.00.09h2");
         }
     }
 
@@ -149,62 +157,192 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
             GetAttackRadius(primary) * 0.88f,
             GetAttackRadius(primary) * 1.12f);
 
-        HashSet<int> reservedSlots = new HashSet<int>();
-        reservedSlots.Add(0);
-
-        List<Vector3> reservedPositions = new List<Vector3>();
-        reservedPositions.Add(primary.transform.position);
+        HashSet<int> reservedSlots = new HashSet<int> { 0 };
+        List<Vector3> reservedPositions = new List<Vector3>
+        {
+            primary.transform.position
+        };
 
         for (int i = 1; i < attackers.Count; i++)
         {
             Regiment attacker = attackers[i];
             EngagementState state = states[attacker];
 
-            int slotIndex;
-            Vector3 slot;
-            ChooseBestSlot(
-                attacker,
-                target,
-                radial,
-                frontage,
-                primaryRadius,
-                reservedSlots,
-                reservedPositions,
-                out slotIndex,
-                out slot);
-
-            reservedSlots.Add(slotIndex);
-            reservedPositions.Add(slot);
-
-            if (!state.HasSlot ||
-                state.SlotIndex != slotIndex ||
-                PlanarDistance(state.SlotPosition, slot) > 3f)
+            string replanReason = GetReplanReason(attacker, target, state, reservedSlots);
+            if (!string.IsNullOrEmpty(replanReason))
             {
-                state.HasSlot = true;
-                state.SlotIndex = slotIndex;
-                state.SlotPosition = slot;
+                HashSet<int> choiceReserved = new HashSet<int>(reservedSlots);
+
+                // A genuine stall should try a different frontage slot instead of
+                // immediately selecting the exact same destination again.
+                if (state.HasSlot && replanReason == "NoProgress")
+                    choiceReserved.Add(state.SlotIndex);
+
+                int slotIndex;
+                Vector3 slot;
+                ChooseBestSlot(
+                    attacker,
+                    target,
+                    radial,
+                    frontage,
+                    primaryRadius,
+                    choiceReserved,
+                    reservedPositions,
+                    out slotIndex,
+                    out slot);
+
+                AssignSlot(state, target, slotIndex, slot);
+
+                if (replanReason == "NoProgress")
+                    state.RecoveryCount++;
 
                 Debug.Log(string.Format(
-                    "AI-SPACING-V2|Unit={0}|Target={1}|Slot={2}|Pos=({3:0.0},{4:0.0})|Reason=ObstacleAwareSharedFrontage",
+                    "AI-SPACING-V3|Unit={0}|Target={1}|Slot={2}|Pos=({3:0.0},{4:0.0})|Reason={5}|RecoveryCount={6}",
                     attacker.RegimentName,
                     target.RegimentName,
-                    slotIndex,
-                    slot.x,
-                    slot.z));
+                    state.SlotIndex,
+                    state.SlotPosition.x,
+                    state.SlotPosition.z,
+                    replanReason,
+                    state.RecoveryCount));
             }
+
+            if (!state.HasSlot)
+                continue;
+
+            reservedSlots.Add(state.SlotIndex);
+            reservedPositions.Add(state.SlotPosition);
 
             attacker.SetFormation(RegimentFormation.Line);
 
-            if (PlanarDistance(attacker.transform.position, slot) > SlotArrivalDistance)
+            float distanceToSlot =
+                PlanarDistance(attacker.transform.position, state.SlotPosition);
+            TrackProgress(state, distanceToSlot);
+
+            if (distanceToSlot > SlotArrivalDistance)
             {
-                attacker.OrderMove(slot);
+                attacker.OrderMove(state.SlotPosition);
             }
             else
             {
                 attacker.OrderHold();
                 FaceTarget(attacker, target);
+
+                state.LastDistanceToSlot = distanceToSlot;
+                state.LastProgressAt = Time.time;
             }
         }
+    }
+
+    private static Regiment ChooseStableTarget(
+        Regiment attacker,
+        EngagementState state,
+        Regiment nearest)
+    {
+        if (attacker == null)
+            return null;
+
+        Regiment current = state != null ? state.Target : null;
+        if (!IsValidEnemy(attacker, current))
+            return nearest;
+
+        if (nearest == null || nearest == current)
+            return current;
+
+        float currentDistance =
+            PlanarDistance(attacker.transform.position, current.transform.position);
+        float nearestDistance =
+            PlanarDistance(attacker.transform.position, nearest.transform.position);
+
+        // Do not churn between two nearly-equidistant enemies. A new nearest target
+        // must be materially closer before frontage ownership changes.
+        return currentDistance <= nearestDistance * TargetSwitchAdvantage
+            ? current
+            : nearest;
+    }
+
+    private static void ResetForTarget(EngagementState state, Regiment target)
+    {
+        state.Target = target;
+        state.EnteredAt = Time.time;
+        state.HasSlot = false;
+        state.SlotIndex = 0;
+        state.SlotPosition = Vector3.zero;
+        state.TargetPositionAtAssignment = target != null
+            ? target.transform.position
+            : Vector3.zero;
+        state.LastDistanceToSlot = float.PositiveInfinity;
+        state.LastProgressAt = Time.time;
+        state.RecoveryCount = 0;
+    }
+
+    private static string GetReplanReason(
+        Regiment attacker,
+        Regiment target,
+        EngagementState state,
+        HashSet<int> alreadyReserved)
+    {
+        if (!state.HasSlot)
+            return "InitialSlot";
+
+        if (alreadyReserved.Contains(state.SlotIndex))
+            return "SlotConflict";
+
+        if (PrototypeBattlefieldNavigationManager.IsBlockedDestination(
+                state.SlotPosition,
+                RegimentFormation.Line))
+        {
+            return "SlotBlocked";
+        }
+
+        if (target != null &&
+            PlanarDistance(target.transform.position, state.TargetPositionAtAssignment) >=
+            TargetMovementReplanDistance)
+        {
+            return "TargetMoved";
+        }
+
+        float distance = PlanarDistance(attacker.transform.position, state.SlotPosition);
+        if (distance <= SlotArrivalDistance + 1f)
+            return null;
+
+        if (state.LastProgressAt > 0f &&
+            Time.time - state.LastProgressAt >= StuckReplanSeconds)
+        {
+            return "NoProgress";
+        }
+
+        return null;
+    }
+
+    private static void AssignSlot(
+        EngagementState state,
+        Regiment target,
+        int slotIndex,
+        Vector3 slot)
+    {
+        state.HasSlot = true;
+        state.SlotIndex = slotIndex;
+        state.SlotPosition = slot;
+        state.TargetPositionAtAssignment = target != null
+            ? target.transform.position
+            : Vector3.zero;
+        state.LastDistanceToSlot = float.PositiveInfinity;
+        state.LastProgressAt = Time.time;
+    }
+
+    private static void TrackProgress(EngagementState state, float distanceToSlot)
+    {
+        if (float.IsInfinity(state.LastDistanceToSlot) ||
+            distanceToSlot <= state.LastDistanceToSlot - ProgressEpsilon)
+        {
+            state.LastDistanceToSlot = distanceToSlot;
+            state.LastProgressAt = Time.time;
+            return;
+        }
+
+        // Do not let tiny frame-to-frame noise increase the stored best distance.
+        // The elapsed LastProgressAt time is what triggers the controlled replan.
     }
 
     private static void ChooseBestSlot(
@@ -221,6 +359,7 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
         bestSlotIndex = 1;
         bestSlot = attacker.transform.position;
         float bestCost = float.PositiveInfinity;
+        bool found = false;
 
         for (int magnitude = 1; magnitude <= 5; magnitude++)
         {
@@ -260,8 +399,6 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
                     candidate,
                     RegimentFormation.Line);
 
-                // A house/tree between the final slot and the target is especially bad:
-                // the regiment would arrive but have poor frontage/line of fire.
                 float targetLinePenalty = PrototypeNavigationRecoveryManager.EstimatePathPenalty(
                     candidate,
                     target.transform.position,
@@ -293,10 +430,22 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
                 if (cost >= bestCost)
                     continue;
 
+                found = true;
                 bestCost = cost;
                 bestSlotIndex = slotIndex;
                 bestSlot = candidate;
             }
+        }
+
+        // Fallback should be rare, but never leave a secondary attacker with its
+        // current position as an accidental permanent frontage slot simply because
+        // all scored slots were reserved.
+        if (!found)
+        {
+            bestSlotIndex = 1;
+            bestSlot = target.transform.position + radial * radius + frontage * LateralSlotSpacing;
+            bestSlot.x = Mathf.Clamp(bestSlot.x, -170f, 170f);
+            bestSlot.z = Mathf.Clamp(bestSlot.z, -110f, 110f);
         }
 
         bestSlot.y = PrototypeBootstrap.SampleGroundHeight(bestSlot.x, bestSlot.z) + 0.10f;
@@ -327,6 +476,16 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
                controller.Mission == OfficerAIMission.AttackTarget;
     }
 
+    private static bool IsValidEnemy(Regiment attacker, Regiment candidate)
+    {
+        return attacker != null &&
+               candidate != null &&
+               candidate != attacker &&
+               candidate.Team != attacker.Team &&
+               !candidate.IsRouted &&
+               candidate.CurrentStrength > 0;
+    }
+
     private static Regiment FindNearestEnemy(Regiment attacker, BattleManager battle)
     {
         Regiment nearest = null;
@@ -334,13 +493,8 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
 
         foreach (Regiment candidate in battle.Regiments)
         {
-            if (candidate == null ||
-                candidate == attacker ||
-                candidate.Team == attacker.Team ||
-                candidate.IsRouted)
-            {
+            if (!IsValidEnemy(attacker, candidate))
                 continue;
-            }
 
             float distance = PlanarDistance(attacker.transform.position, candidate.transform.position);
             if (distance < best)
