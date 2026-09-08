@@ -1,7 +1,9 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.09**  
-**Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**
+**Aktuel designbaseline: v00.02.10**  
+**Aktuel tactical prototype baseline: P0A v00.00.09 TACTICAL COMMAND TEST**  
+**Aktuel aktive campaign-version: v00.00.11 WORK**  
+**Aktuel campaign 3D development branch: `work/v00.00.13-3d-campaign-map` — IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -38,6 +40,13 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Backlog B-240–B-249 — udvidet kavaleri- og dragonmodel](backlog/B-240-CAVALRY-DRAGOONS-EXPANDED.md)
 - [Backlog B-250–B-259 — fog of war, scouts og HQ command effectiveness](backlog/B-250-FOG-SCOUTS-COMMAND-EFFECTIVENESS.md)
 - [Backlog B-360–B-369 — levende campaign-kort, systemisk construction og state-drevne ambient-animationer](backlog/B-360-CAMPAIGN-LIVING-WORLD.md)
+- [Campaign v00.00.12 Planning — infrastruktur, logistics, transport, society/events og march/mobility](PROJECT-1864-Campaign-v00.00.12-Planning.md)
+- [Campaign v00.00.13 Planning — 3D Strategic World & Geospatial Foundation](PROJECT-1864-Campaign-v00.00.13-Planning.md)
+- [Campaign v00.00.13 — Layered 3D Map Architecture](PROJECT-1864-Campaign-v00.00.13-3D-Map-Architecture.md)
+- [Campaign v00.00.13 3D DEV — Implementation Notes](releases/CAMPAIGN-v00.00.13-3D-DEV-NOTES.md)
+- [Campaign v00.00.14 Planning — Government, Research, Doctrine & Strategic AI](PROJECT-1864-Campaign-v00.00.14-Planning.md)
+- [Campaign v00.00.14 Design Supplement](PROJECT-1864-Campaign-v00.00.14-Design-Supplement.md)
+- [Campaign v00.00.15 Planning — Multi-Nation AI, Trade, Diplomacy & Alliances](PROJECT-1864-Campaign-v00.00.15-Planning.md)
 
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
@@ -139,8 +148,121 @@ Living-world visuals skal bruge **semantic animation LOD**. Ved langt zoom vises
 
 Simulation state må aldrig afhænge af, om en ambient-animation renderer. Living-world layeren skal kunne slås helt fra til performance/QA uden at ændre campaign-resultater. Rent dekorative loops er tilladt, men må ikke kommunikere en gameplay-state, der ikke er sand. Det detaljerede godkendte work package ligger i [B-360–B-369 — Campaign Living World](backlog/B-360-CAMPAIGN-LIVING-WORLD.md).
 
+## Campaign strategic-world baseline — beslutninger efter v00.02.09
+
+### Infrastruktur, transport og rolling stock
+
+Campaign-verdenens infrastruktur er persistent gameplay-state. Veje, jernbaner, broer, depoter, stationer, havne, telegraph, kaserner, farms og fortifications skal kunne bygges, opgraderes, beskadiges og repareres gennem campaign-tid og senere økonomi/manpower/resources.
+
+Jernbaneinfrastruktur og rolling stock er separate ressourcer. En jernbane giver ikke ubegrænset transport. Nationer/regioner har begrænsede pools af lokomotiver, passagervogne, godsvogne, militære/specialvogne og relevant transportmateriel. Troppetransport og godstransport konkurrerer om kapaciteten. Rolling stock skal senere kunne produceres, importeres/købes, repareres, beskadiges, erobres og mistes.
+
+En formation, der flyttes med tog, gennemgår et faktisk lifecycle som `WAIT FOR STOCK -> ASSEMBLE TRAIN -> LOAD -> DEPART -> IN TRANSIT -> WAIT/STOP -> ARRIVE -> UNLOAD -> RELEASE STOCK`. Det visuelle troop train følger den samme authoritative route progress hele vejen station-til-station og må culles/LOD-reduceres uden at ændre simulationen.
+
+### Strategisk march, normal march og forced march
+
+Strategiske formationer må ikke have én vilkårlig fast map-speed. Hver nødvendig attached component får en data-drevet mobility profile, fx `Foot`, `Mounted`, `HorseDrawn`, `WagonTrain`, `RailEligible` og `SeaEligible`.
+
+Når enheder skal marchere samlet, gælder grundreglen:
+
+`FormationEffectiveSpeed = min(EffectiveSpeed(required attached components))`
+
+Den langsomste nødvendige component er bottleneck efter hensyn til heste, artilleri-/transportbyrde, vejklasse, terræn, vejr, fatigue, crossings og congestion. Mounted cavalry/HQ kan derfor ikke få samlet infanteri eller tungt artilleri til at bevæge sig med cavalry-fart. En langsom component kan kun ophøre med at være bottleneck, hvis den reelt detach'es og får separat movement/order state.
+
+`NORMAL MARCH` og `FORCED MARCH` er separate strategiske marchformer. Normal march søger bæredygtig dagsdistance og battle readiness gennem march-/hvilevinduer. Forced march øger primært marcharbejde/marchtimer og dermed dagsdistance, men giver større fatigue, straggling, horse-condition/tab-hooks og lavere readiness ved ankomst. Forced march kan ikke ophæve hårde begrænsninger som manglende trækheste, ødelagt bro eller impassable terrain. Night march kan senere være separat policy/order.
+
+ETA må ikke være simpel `distance / top speed`; den skal kunne medregne marchtimer pr. døgn, hvile, column length, passage delay, congestion, terrain/weather, bridge/ferry delay og forced-march konsekvenser. UI skal forklare både bottleneck og vigtigste modifiers.
+
+### Geospatial distance og kortets skala
+
+Unity world units er **aldrig authoritative kilometer**. Den nuværende prototypeprojektion dækker omtrent `47.0–71.5 N` og `4.0–32.5 E`, mens præsentationen er cirka `520 x 620` Unity units. Simulationen må derfor ikke bruge `Vector3.Distance` på render-objekter til marchtid, togtransport eller logistics ETA.
+
+Geografisk identitet lagres som latitude/longitude, mens vej-/rail-/ferry-ruter senere skal have eksplicit geografisk polyline-geometry. Autoritativ routedistance er:
+
+`RouteDistanceKm = sum(geodesic/polyline distance of traversed route geometry)`
+
+Den visuelle kortprojektion og Unity-skala kan derfor ændres uden at ændre campaign-resultater. Real elevation/slope data holdes separat fra visual vertical exaggeration; et visuelt overdrevet bjerg må ikke skabe en falsk movement-penalty.
+
+### Layered 3D strategic world
+
+Campaign-kortet udvikles til en fælles geospatial 3D-verden og ikke til en stak uafhængige flade planes. Den godkendte arkitekturstak er:
+
+1. geospatial reference/projection,
+2. elevation/terrain,
+3. hydrology/coast/water,
+4. land cover/vegetation/agriculture,
+5. infrastructure: roads/rail/bridges/ports/telegraph,
+6. settlements/facilities/fortifications,
+7. strategic entities: formations/trains/ships/convoys/projects,
+8. living-world visuals,
+9. political/logistics/intelligence overlays,
+10. weather/lighting/atmosphere,
+11. UI/labels/selection/debug/measurement.
+
+Disse er primært data-/renderlag. Kun de kategorier, der har konkret behov for raycast, culling, collision eller selection masks, skal bruge Unity `LayerMask` slots.
+
+Roads og rail skal på sigt være terrain-conforming 3D splines genereret fra geografiske route polylines. Samme route-definition skal drive kilometer, ETA, troop-train position, convoy position, bridge/crossing attachment, construction progress, congestion/interdiction og selected-route highlight.
+
+### Campaign v00.00.13 3D DEV — første implementerede slice
+
+På `work/v00.00.13-3d-campaign-map` findes nu en første implementeret 3D campaign-slice, som **afventer Unity compile/runtime QA og ikke er en promoveret campaign-version**. Den indeholder proceduralt campaign terrain, coarse land/sea mask, højere visuelt relief i Norge/Sverige end Danmark, layer roots `L1–L10`, terrain-conforming eksisterende strategic links, 3D settlement miniatures, station/depot/port/fortification miniatures, terrain-aware camera, campaign-time day/night/atmosphere samt map-layer visibility controls.
+
+Der findes også QA-prototyper på staged construction: en kaserne ved Aalborg og en farm ved Aarhus bygges gennem flere visuelle stages med simple worker loops. Construction progress og workers følger `CampaignSession.CurrentDateTime`, så campaign pause stopper progressionen. Det demonstrerer designreglen om state-drevne bygningsanimationer.
+
+DEV-begrænsningerne er eksplicitte: terrænet er endnu procedural/coarse og ikke DEM/GIS, coastlines er grove, strategic links er endnu node-to-node og ikke historiske route polylines, rail/road classification er foreløbig, construction QA-projekterne er endnu ikke koblet til fuld økonomi/resource queue, og production troop-train lifecycle, final land cover, final weather, chunk streaming/floating origin mangler stadig.
+
+### Government, ministre og granular AI-delegation
+
+Et senere nationalt decision layer gør det muligt at styre landet direkte eller delegere konkrete ressortområder til AI. Baseline modes er `MANUAL`, `ADVISORY`, `ASSISTED` og `AUTO`. Delegation er granular: spilleren kan eksempelvis automatisere economy/logistics, men selv styre General Staff plans, eller omvendt.
+
+Engine-roller er semantic portfolios, fordi historiske titler varierer mellem lande og år. Scenario-data leverer de konkrete historiske navne/titler. De planlagte kerneportfolios omfatter Head of Government/Cabinet, War Ministry, Chief of General Staff, Quartermaster, Finance, Public Works, Rail/Transport, Industry/Trade, Agriculture, Interior, Foreign Affairs og Intelligence/Reconnaissance.
+
+AI bruger samme lovlige campaign actions som spilleren og får ikke gratis penge, manpower, våben, heste, rolling stock, instant construction, transport capacity eller skjult intelligence. Spilleren kan definere guardrails som national posture, theatre priorities, minimum treasury reserve, spending/debt limits, recruitment severity, reserve manpower floor, infrastructure weights, protected resources, prohibited projects og risk tolerance. AUTO betyder delegation, ikke cheat-mode.
+
+Betydelige AI-beslutninger skal være forklarlige gennem audit/decision records med actor, positive/negative reason factors, constraints, cost, ETA og result. Spilleren skal kunne se hvorfor AI prioriterede fx en jernbane, depot, regiment, artilleriproduktion eller research project.
+
+### Research, teknologi og militær doctrine
+
+Research skal være capability-/institution-driven frem for primært et arcade tech tree med generiske procentbuffs. Research kan åbne eller forbedre equipment, procedures, institutions, staff work, logistics, railways, telegraph, medicine, industry, agriculture, weapons og doctrine. Research completion er ikke det samme som øjeblikkelig feltimplementering; prototype, adoption, procurement, production og deployment kan være separate livscycles.
+
+Militær doctrine opdeles i tre niveauer:
+
+- **Strategic doctrine** — national war posture, mobilization/concentration, fortress strategy, railway concentration, attrition/manoeuvre.
+- **Operational doctrine** — corps/division concentration, reserves, marches, screening, supply bases, crossings og pursuit.
+- **Tactical doctrine** — skirmisher use, artillery preparation, line/column transitions, flanking, defensive positions, counterattack reserves og cavalry roles.
+
+Doctrine ændrer planlægning, preferences og tilgængelige handlingsmønstre; den giver ikke hidden vision, gratis movement eller magiske damage-bonusser. General Staff AI skal planlægge ud fra reel geography, march/forced-march ETA, finite rail/rolling stock, depots, supply, mobilization og faktisk knowledge-state.
+
+Historisk data/research skal kunne markeres med source/provenance, confidence og status som `historical`, `estimated` eller `QA-placeholder`, så verificerede fakta ikke blandes sammen med balancetal eller midlertidige testdata.
+
+### Multi-nation AI parity
+
+Alle lande skal på sigt bruge samme nationale systemarkitektur. Et ikke-player land er ikke en statisk baggrund: det kan udvikle roads/rail/infrastructure, styre economy/transport, bygge og mobilisere militær, prioritere research/doctrine, allokere supply og reagere strategisk gennem de samme legal actions og resource/time constraints som spilleren.
+
+`PlayerControl` er en controller assignment, ikke en særlig nationstype. Dette gør det muligt senere at skifte spillernation uden at omskrive simulationen. AI-nationer må have forskellig competence, doctrines, personalities, goals og information, men ikke alternative regler eller gratis resources.
+
+### International handel, diplomati og alliancer
+
+International trade skal være **contract + physical flow**. En handelsaftale teleporterer ikke varer mellem nationale inventories. Food, raw materials, weapons, horses, rolling stock og andre goods skal flyttes gennem faktisk road/rail/port/sea transport capacity og kan påvirkes af delay, congestion, disruption, blockade, tariffs, embargo og shortages.
+
+Diplomati skal senere rumme bilateral relation, trade treaties, military access/transit rights, guarantees, influence/pressure, treaty duration/breach/consequences og explainable diplomatic AI. Relation må ikke reduceres til ét friendliness-tal; beslutninger skal kunne vægte national interests, commitments, military balance estimates, trade dependence, territorial goals, trust og kendt tidligere adfærd.
+
+Alliancer/coalitions skal kunne have call-to-arms, neutrality, war aims, negotiated peace/separate peace og militær/economic cooperation. En alliance giver ikke automatisk perfekt fælles command eller intelligence. Allied forces beholder national ownership/command, medmindre en eksplicit expeditionary/command arrangement ændrer det, og intelligence sharing følger treaty scope og communication delay.
+
+### Historisk plausibel replay variation
+
+Historien fastlægger scenarioets startbetingelser og plausibility envelope, men er **ikke et fast fremtidigt script**. Landenes udvikling og hærens opbygning skal have bounded, weighted og seed-baseret variation, så flere campaigns fra samme startdato ikke nødvendigvis udvikler sig ens.
+
+En national AI-beslutning kan konceptuelt vægte:
+
+`Need + Threat + Geography + Economy + Resources + Ministers + Doctrine + PriorEvents + SeededVariation`
+
+Variation må derfor ændre relative prioriteter mellem fx railways, fortifications, industry, artillery, cavalry, reserves, logistics, research og doctrine, men den må ikke tilsidesætte technology plausibility, manpower, resources, construction time, transport eller information constraints. Ministerpersonligheder og senere ministerudskiftninger kan skubbe et land i en anden retning midt i campaignen.
+
+Samme campaign seed skal kunne reproducere samme variation for QA/save-load. Det præcise player-facing niveau for historical-vs-alternate variation fastlægges senere; designmålet er mærkbar replay value uden at verden bliver ren random eller ophører med at ligne midten af 1800-tallet.
+
 ## Versionshistorik
 
+- **v00.02.10 — Strategic World, 3D Map, Government/AI & Multi-Nation baseline** — Konsoliderer beslutninger siden v00.02.09: persistent infrastructure, finite rolling stock og route-following troop trains; slowest-required-component mobility, normal/forced march og explainable ETA; geospatial distance contract hvor Unity units aldrig er authoritative km; layered 3D strategic world med terrain/hydrology/land cover/infrastructure/settlements/entities/living world/overlays/atmosphere/UI; første v00.00.13 3D DEV implementation med procedural terrain, 3D settlements, layer controls og campaign-time staged barracks/farm construction; government/ministers med MANUAL/ADVISORY/ASSISTED/AUTO, research/doctrine og explainable no-cheat strategic AI; multi-nation AI parity, fysisk international trade, diplomacy/alliance principles samt seed-baseret historisk plausibel replay variation.
 - **v00.02.09 — Campaign Living World design baseline** — Godkender state-drevne ambient-animationer på campaign-kortet: systemisk staged construction for kaserner/farms/roads/rail/depots/fortifications, workers og road/rail works, tog, skibe/færger, road/supply traffic, camps, couriers/scouts/supply columns, sæsonbaseret landbrug, dag/nat/vejr, battle aftermath og control-change visuals. Fastlægger semantic animation LOD og reglen om, at living-world visuals aldrig må være authoritative simulation state eller lække skjult information. Detaljer registreret som B-360–B-369.
 - **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile` på alle fire regimenter; `I` toggler player delegation; Defensive/Balanced/Offensive doctrine og 0–100 commander aggression intent; preussiske Officer AI-angribere med preferred-range/manoeuvre/stabilise adfærd; directional 120° infantry fire fan; HOLD/CLOSE/MEDIUM/LONG fire discipline; continuous closer-is-easier accuracy; battlefield 360x240; Pause/x0,5/x1/x2/x5/x20 og battle clock. v00.00.08 reload/0-hit/`Ramte N`/casualty-visual skal fortsat regressionsbestå. De senere besluttede systemer omfatter segmenteret fire eligibility, fysiske HQ-entities, semantic zoom, courier/order progress/interception, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model og fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
