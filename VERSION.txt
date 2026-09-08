@@ -1,21 +1,24 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13c
-Build status: DENMARK CLEANUP HOTFIX / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK CLEANUP V13C HOTFIX
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c Denmark cleanup
+Prototype version: v00.00.13d
+Build status: DENMARK MAP REBUILD DEV / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK MAP REBUILD V13D
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d Denmark map rebuild
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
-Critical v13c hotfix: GrandCampaignBootstrap.CampaignModeEnabled is now scene-aware, so PrototypeBootstrap cannot auto-build BattleSystems/Battlefield Ground/PlayerCommander/regiments on top of CampaignMap; PrototypeBattle remains allowed when explicitly loaded
-Projection hotfix: detailed Natural Earth Denmark geometry is explicitly remapped from the legacy Denmark-local projection to the broad v11+ strategic projection before rendering
-Terrain hotfix: the first v13c destructive carve of the coarse global mesh is removed; Denmark-focus QA hides the coarse global terrain renderer instead of reshaping it into stepped cliffs
-Denmark relief: detailed Denmark land uses a low-amplitude presentation height function; simulation coordinates and route distance remain authoritative and unchanged
-Settlement grounding: Danish settlements are re-grounded to the same Denmark presentation surface and visually compacted so coastal towns do not hang far over water
-Construction QA: Aalborg barracks and Aarhus farm remain staged campaign-time projects, are repositioned near their nodes and visually scaled for the broad strategic map
-Infrastructure: only strategic links touching Denmark are shown in the Denmark-focus QA slice and are re-draped; ferry links stay at water level
-Denmark context: non-Danish settlement/node/control/formation 3D renderers are hidden for this Denmark-focus QA slice to remove floating visual context while Denmark is validated
-Gameplay isolation: no campaign movement, ETA, route-distance, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13c
+Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
+v13d geography: Denmark is rebuilt directly from the Natural Earth Denmark lon/lat rings into CampaignGeoProjection.Project3D broad strategic coordinates; no legacy local-projection remap is used
+v13d terrain: coarse global CampaignTerrainSurface_v013 remains hidden during Denmark QA; old v13a/v13c Denmark roots are disabled/destroyed and replaced by GEO_Denmark_V013D_BROAD_DIRECT
+v13d relief: Denmark uses intentionally low visual relief only; this is not authoritative DEM/elevation data
+v13d cleanup: old v13b Denmark land-cover/vegetation patches are hidden during geography QA to prevent residual stretched/offset artifacts
+v13d labels: legacy 50-node labels are suppressed and replaced by Denmark-focus labels with simple overlap avoidance; V011 diagnostic/political/search UI is disabled during the Denmark rebuild QA slice
+v13d context: Denmark nodes plus Danish-controlled Flensburg/Schleswig context are rendered; non-Danish settlement/node/control/formation renderers remain hidden during this QA slice
+v13d settlements: Danish settlement miniatures are re-grounded to the same low-relief Denmark surface and scaled down for strategic-map readability
+v13d construction: Aalborg barracks and Aarhus farm remain staged campaign-time projects and are re-grounded/scaled close to their authoritative nodes
+v13d infrastructure: links touching the Denmark focus are rebuilt from authoritative endpoint lat/lon interpolation and re-draped; ferry links remain at water level
+v13d camera: existing Denmark-first Home camera remains authoritative; V011 generic Home handler is disabled with the V011 usability helper
+Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13d
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
-QA state: HOTFIX IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
+QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 QA owner: local Unity compile/runtime verification by Allan
