@@ -1,78 +1,71 @@
-# PROJECT 1864 — Campaign v00.00.13 3D DEV — Implementation Notes
-
-## Status
+# PROJECT 1864 — Campaign v00.00.13 3D DEV Notes
 
 **Branch:** `work/v00.00.13-3d-campaign-map`  
 **State:** `IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA`  
-**Promotion:** none. This development branch does not bypass the documented v00.00.12/B-409 dependency.
+**Promotion:** Ingen. Denne DEV-branch omgår ikke v00.00.12/B-409-afhængigheden.
 
-## Implemented in first 3D slice
+## Første implementerede 3D-slice
 
-- procedural campaign terrain mesh over the existing geospatial projection,
-- coarse land/sea mask based on the existing country-outline geometry,
-- stronger relief for Norway/Sweden and lower relief for Denmark/northern Germany,
-- hydrology root with the existing sea base,
-- architecture roots `L1` through `L10`,
-- existing strategic links resampled over the rendered terrain surface,
-- probable rail links visually separated from roads,
-- country outlines lifted onto the 3D surface,
-- node markers and moving formation tokens terrain-snapped in `LateUpdate`,
-- small 3D settlement miniatures around campaign nodes,
-- station/depot/port/fortification miniatures from existing node state,
-- terrain-aware campaign camera,
-- `PageUp/PageDown` camera pitch,
-- campaign-time driven sunlight, ambient light and fog,
-- layer visibility UI: F6 infrastructure, F7 settlements, F8 living world, F9 overlays, F10 hydrology,
-- staged barracks construction QA project near Aalborg,
-- staged farm construction QA project near Aarhus,
-- construction stages follow `CampaignSession.CurrentDateTime`,
-- two simple worker loops per active construction project,
-- version overlay changed to `PROJECT 1864 CAMPAIGN | v00.00.13 3D DEV`.
+- procedural campaign terrain mesh over den eksisterende geospatiale projection
+- coarse land/sea mask
+- stærkere relief i Norge/Sverige
+- hydrology-root med sea base
+- L1-L10 layer roots
+- eksisterende strategic links resampled over terrain
+- sandsynlige rail-links visuelt adskilt fra roads
+- country outlines løftet op på 3D-overfladen
+- node markers og moving formation tokens terrain-snapped
+- små 3D settlement-miniaturer
+- station/depot/port/fortification-miniaturer
+- terrain-aware campaign camera
+- PageUp/PageDown pitch
+- campaign-time sunlight, ambient light og fog
+- F6 infrastructure
+- F7 settlements
+- F8 living world
+- F9 overlays
+- F10 hydrology
+- staged barracks QA project near Aalborg
+- staged farm QA project near Aarhus
+- construction stages følger `CampaignSession.CurrentDateTime`
+- to simple worker loops per aktiv construction
+- overlay `PROJECT 1864 CAMPAIGN | v00.00.13 3D DEV`
 
-## Important prototype limits
+## Unity 6.6 compile-fix batch — 2026-09-08
 
-This is the first playable/renderable 3D slice, not the finished B-410–B-469 milestone.
+Efter første lokal compile-test er følgende API-kompatibilitetsrettelser implementeret:
 
-Not yet authoritative/final:
+- `CampaignMapController.cs`: `Object` er eksplicit kvalificeret som `UnityEngine.Object`, så `System.Object`/`UnityEngine.Object`-ambiguiteten fjernes.
+- `CampaignMapController.cs`: deprecated `FindObjectsSortMode.None` er fjernet og erstattet med Unity 6.6 parameterless `FindObjectsByType<T>()`.
+- `CampaignTerrainV013.cs`: tre deprecated `FindObjectsByType<T>(FindObjectsSortMode.None)`-kald er opdateret til Unity 6.6 API.
+- `PrototypeNavigationRecoveryManager.cs`: deprecated object-query API opdateret mekanisk; navigation logic er ikke ændret.
+- `PrototypeBattlefieldNavigationV3.cs`: deprecated object-query API opdateret mekanisk; navigation logic er ikke ændret.
+- `PrototypeBattlefieldNavigationManager.cs`: deprecated object-query API opdateret mekanisk; navigation logic er ikke ændret.
 
-- terrain is procedural/coarse, not imported DEM/GIS elevation,
-- coastlines use the existing coarse outline data,
-- strategic links still originate from the current node-to-node graph and are not yet historical route polylines,
-- road/rail classification is still partly inferred from endpoint data,
-- construction projects are explicit QA prototypes and are not yet connected to the full economy/resource construction queue,
-- no production troop-train lifecycle is implemented in this slice,
-- no chunk streaming/floating origin yet,
-- no final land-cover/forest/agriculture system yet,
-- no final weather simulation layer yet.
+Compile-fix er committed, men **Unity compile/runtime QA er stadig ikke markeret bestået**, før den er testet lokalt i Unity 6.6.
 
-## Unity QA checklist
+## Prototypebegrænsninger
 
-1. Close any older Unity instance using the project.
-2. Checkout `work/v00.00.13-3d-campaign-map` in the Strategy test working copy.
-3. Open the project in Unity 6.6.
-4. Confirm **0 blocking compiler errors** before entering Play mode.
-5. Open `CampaignMap` and press Play.
-6. Confirm the top-left overlay says `v00.00.13 3D DEV`.
-7. Confirm terrain has visible relief and Norway/Sweden are substantially more elevated than Denmark.
-8. Confirm sea remains below the land surface.
-9. Confirm node markers and formation tokens do not remain at the old flat Y level.
-10. Confirm roads/rail links follow terrain rather than cutting through hills.
-11. Confirm settlement miniatures appear around nodes.
-12. Confirm F6–F10 toggle the documented map layers without affecting simulation state.
-13. Confirm PageUp/PageDown changes camera pitch; Q/E still rotates and mouse wheel still zooms.
-14. Let campaign time advance and confirm the Aalborg barracks and Aarhus farm change construction stages over time.
-15. Pause campaign time and confirm construction stage progress and worker movement stop.
-16. Resume/x5/x20 and confirm progress follows campaign time.
-17. Confirm tactical battle scripts/Officer AI/navigation have not been modified by this branch.
+- terrain er procedural/coarse, ikke DEM/GIS
+- coastlines er coarse
+- strategic links bruger nuværende graph, ikke historiske route polylines
+- road/rail classification er delvist inferred
+- construction QA er ikke koblet til fuld economy/resource queue
+- ingen production troop-train lifecycle i denne slice
+- ingen chunk streaming/floating origin
+- ingen final land-cover/forest/agriculture system
+- ingen final weather simulation
 
-## Expected diagnostics
+## QA-checkliste
 
-`CAMPAIGN-V013|3DWorldBuilt=True|...`
-
-and stage changes such as:
-
-`CAMPAIGN-V013-CONSTRUCTION|Id=QA-BARRACKS-AALBORG|Type=Barracks|Progress=...|Stage=...`
-
-## QA rule
-
-Any compile/runtime defect found in this slice is fixed on the v00.00.13 3D development branch before it is treated as a candidate for a future campaign promotion. Visual success alone is not a promotion gate.
+1. Unity 6.6 compile med 0 errors.
+2. Bekræft terrain relief og sea under land.
+3. Bekræft nodes/formations snapper til terrain.
+4. Bekræft strategic links følger terrain.
+5. Bekræft 3D settlements vises.
+6. Test F6-F10 layer toggles.
+7. Test PageUp/PageDown camera pitch.
+8. Bekræft Aalborg/Aarhus construction stages ændres med campaign-time.
+9. Pause skal stoppe construction/worker movement.
+10. x5/x20 skal accelerere campaign-time construction progression.
+11. Bekræft at tactical navigation-adfærd ikke er ændret af compile-fix batchen.
