@@ -50,26 +50,28 @@ public sealed class PrototypeSpecialArms09K : MonoBehaviour
 
         CreateMaterials();
 
+        // The two full-scale infantry regiments per side occupy north/south lanes.
+        // Keep special arms in the centre gap and slightly behind the infantry front.
         CreateDragoonSquadron(
             "Danish Dragoon Squadron (QA)",
             BattleTeam.Denmark,
             160,
-            new Vector3(-142f, 0f, 92f),
-            Quaternion.Euler(0f, 70f, 0f));
+            new Vector3(-150f, 0f, -25f),
+            Quaternion.Euler(0f, 90f, 0f));
 
         CreateDragoonSquadron(
             "Prussian Dragoon Squadron (QA)",
             BattleTeam.Prussia,
             160,
-            new Vector3(142f, 0f, -92f),
-            Quaternion.Euler(0f, -110f, 0f));
+            new Vector3(150f, 0f, -25f),
+            Quaternion.Euler(0f, -90f, 0f));
 
         CreateFieldBattery(
             "Danish Field Battery (QA)",
             BattleTeam.Denmark,
             120,
             6,
-            new Vector3(-145f, 0f, 48f),
+            new Vector3(-150f, 0f, 25f),
             Quaternion.Euler(0f, 90f, 0f));
 
         CreateFieldBattery(
@@ -77,7 +79,7 @@ public sealed class PrototypeSpecialArms09K : MonoBehaviour
             BattleTeam.Prussia,
             120,
             6,
-            new Vector3(145f, 0f, 48f),
+            new Vector3(150f, 0f, 25f),
             Quaternion.Euler(0f, -90f, 0f));
 
         installed = true;
@@ -229,6 +231,6 @@ public sealed class PrototypeSpecialArms09K : MonoBehaviour
             renderer.sharedMaterial = material;
         Collider collider = part.GetComponent<Collider>();
         if (collider != null)
-            Destroy(collider);
+            Object.Destroy(collider);
     }
 }
