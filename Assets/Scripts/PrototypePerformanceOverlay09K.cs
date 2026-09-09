@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// v00.00.09k TEST - lightweight runtime scale telemetry for the 1:1 pilot.
+// v00.00.09l TEST - lightweight runtime scale telemetry for the 1:1 pilot.
 // This is intentionally not a replacement for Unity Profiler/GPU timing; it gives a
 // stable on-screen FPS/frame-ms/manpower reference for screenshots and quick QA.
 [DefaultExecutionOrder(20500)]
@@ -15,7 +15,7 @@ public sealed class PrototypePerformanceOverlay09K : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypePerformanceOverlay09K>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypePerformanceOverlay_v000009k");
+        GameObject root = new GameObject("PrototypePerformanceOverlay_v000009l");
         root.AddComponent<PrototypePerformanceOverlay09K>();
     }
 
@@ -62,12 +62,12 @@ public sealed class PrototypePerformanceOverlay09K : MonoBehaviour
         float fps = 1f / Mathf.Max(0.0001f, smoothedDelta);
         float ms = smoothedDelta * 1000f;
         string text =
-            "09K SCALE | FPS " + fps.ToString("0") +
+            "09L SCALE | FPS " + fps.ToString("0") +
             " | " + ms.ToString("0.0") + " ms" +
             " | Infantry " + infantry.ToString("N0") +
-            " | Dragoons 320 | Art.Crew 240 | Guns 12";
+            " | Cavalry 295 (275 mounted) | Art.Crew 310 | Guns 14";
 
-        float width = Mathf.Min(500f, Screen.width - 24f);
+        float width = Mathf.Min(590f, Screen.width - 24f);
         GUI.Box(new Rect(Screen.width - width - 10f, 8f, width, 24f), text, style);
     }
 }
