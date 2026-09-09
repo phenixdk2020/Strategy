@@ -1,23 +1,21 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13f
-Build status: DENMARK LANDMESH FIX DEV / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK LANDMESH FIX V13F
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f
+Prototype version: v00.00.13g
+Build status: DENMARK LABEL + ZOOM FIX DEV / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK LABEL + ZOOM FIX V13G
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
-v13f foundation: v13e clean sea/infrastructure/settlements are retained; only the defective Denmark landmesh/label presentation is replaced
-v13f winding fix: generated Denmark triangles are validated in Unity X/Z space and automatically reversed when their aggregate normal points downward
-v13f normal gate: every generated island contributes to AverageNormalY runtime validation; successful landmesh requires AverageNormalY > 0.05
-v13f land presentation: Denmark is visibly filled again with three restrained land-tone variants while retaining low visual relief and the clean coastline
-v13f labels: v13e label renderer is disabled after its Start pass; v13f owns a three-tier semantic label LOD with 2D collision avoidance
-v13f overview labels: Aalborg, Aarhus, Fredericia, Odense and Copenhagen are prioritised; regional/local names are progressively revealed when zooming in
-v13f southern context: Flensburg/Schleswig remain available at close zoom but are visually de-emphasised relative to Danish strategic centres
-v13f infrastructure: existing v13e road/rail/ferry lines are retained and receive a small clarity/width pass
-v13f camera: Denmark Home framing is slightly tightened while preserving the same broad campaign projection
-v13f construction: Aalborg barracks and Aarhus farm remain staged campaign-time projects and are re-grounded continuously
-Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13f
+v13g foundation: retains the corrected v13f Denmark landmesh and v13e clean sea/infrastructure/settlement foundation
+v13g legacy-label fix: CampaignMapController legacy all-Europe node labels are force-suppressed after its GUI styles are initialized, leaving v13f Denmark-only semantic labels as the single label owner
+v13g foreign-marker fix: non-focus legacy node/control/settlement renderers are kept hidden during Denmark QA
+v13g zoom fix: CampaignMapCameraController can now opt out of the hidden legacy CampaignTerrainV013 floor and use an independent clearance value
+v13g Denmark camera: legacy terrain floor is disabled; MinHeight=10 and TerrainClearance=6.5 enable materially closer inspection of cities, roads, construction and terrain
+v13g camera safety: the legacy terrain-floor behavior remains the default for other contexts; the lower floor is enabled only by the Denmark presentation pass
+v13g labels: v13f three-tier Denmark label LOD remains authoritative; Swedish/Norwegian/Finnish/German all-Europe labels must not appear in Denmark focus
+v13g construction: Aalborg barracks and Aarhus farm remain staged campaign-time projects
+Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13g
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
