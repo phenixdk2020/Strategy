@@ -1,12 +1,18 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09l
+Prototype version: v00.00.09l1
 Build status: TEST
-Build name: BRIGADE HQ + HISTORICAL OOB + RESERVE AI + DUAL STANDARDS TEST 09L
-Visible build marker: PROJECT 1864 | v00.00.09l TEST
+Build name: BRIGADE HQ + HISTORICAL OOB + RESERVE AI + DUAL STANDARDS TEST 09L1
+Visible build marker: PROJECT 1864 | v00.00.09l1 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08 + 09k/09l supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09l1 - Unity 6.6 compile compatibility fix
+- Fixes CS0104 in PrototypeFullScaleOOB09K.cs by explicitly aliasing Object to UnityEngine.Object where System and UnityEngine are both imported.
+- Fixes CS0619 in PrototypeDualStandards09L.cs by removing obsolete GetInstanceID() usage entirely.
+- Dual-standard wave phase is now derived deterministically from regiment starting position; no EntityId/object-instance identifier is required for this presentation-only value.
+- No Brigade AI, OOB strength, special-arms, 1:1 renderer, combat, navigation or movement behavior is changed by 09l1.
 
 v00.00.09l - Historical Danish brigade pilot
 - The Danish side now represents the historically documented 7. Brigade structure around 1 Feb 1864:
@@ -97,21 +103,23 @@ Retained 09k/09j/09i movement and combat baseline
 Known migration item
 - Unity Input Manager deprecation warning is non-blocking. Input System migration remains a separate controls revision because LMB/RMB, box-select, F10/F11 and keyboard shortcuts must move together.
 
-Primary 09l QA
+Primary 09l1 QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Build marker: PROJECT 1864 | v00.00.09l TEST.
-3. OOB-09L reports 1. Infanteri-Regiment 1540 and historical 11. Infanteri-Regiment 1584 on the Danish side.
-4. Danish 7. Brigade HQ appears with six mounted HQ/staff/courier figures.
-5. Prussian QA Brigade HQ appears separately.
-6. Each regiment shows two standards: national + regimental.
-7. Danish regimental flags show Roman identity and tradition labels; older single standards are hidden.
-8. Danish field battery visibly contains 8 guns and approximately 190 personnel.
-9. Danish cavalry telemetry reports Personnel=135, HorsesAvailable=120, MountedEffective=120.
-10. F11 toggles Danish Brigade AI; when OFF, manual regiment orders remain direct player control.
-11. With Brigade AI ON, one regiment begins committed while the second remains reserve.
-12. Under sufficient pressure/no-progress, Console logs BRIGADE-09L|CommitReserve=True and the reserve receives a support mission.
-13. Existing 1:1 infantry rendering, box selection, reload visuals and movement remain functional.
-14. Observe frame rate at close, medium and full-map zoom.
+2. No CS0104 Object ambiguity remains in PrototypeFullScaleOOB09K.cs.
+3. No CS0619 GetInstanceID error remains in PrototypeDualStandards09L.cs.
+4. Build marker: PROJECT 1864 | v00.00.09l1 TEST.
+5. OOB-09L reports 1. Infanteri-Regiment 1540 and historical 11. Infanteri-Regiment 1584 on the Danish side.
+6. Danish 7. Brigade HQ appears with six mounted HQ/staff/courier figures.
+7. Prussian QA Brigade HQ appears separately.
+8. Each regiment shows two standards: national + regimental.
+9. Danish regimental flags show Roman identity and tradition labels; older single standards are hidden.
+10. Danish field battery visibly contains 8 guns and approximately 190 personnel.
+11. Danish cavalry telemetry reports Personnel=135, HorsesAvailable=120, MountedEffective=120.
+12. F11 toggles Danish Brigade AI; when OFF, manual regiment orders remain direct player control.
+13. With Brigade AI ON, one regiment begins committed while the second remains reserve.
+14. Under sufficient pressure/no-progress, Console logs BRIGADE-09L|CommitReserve=True and the reserve receives a support mission.
+15. Existing 1:1 infantry rendering, box selection, reload visuals and movement remain functional.
+16. Observe frame rate at close, medium and full-map zoom.
 
 Design supplements:
 - docs/parts/part-09k-fullscale-oob-command-arms.md
