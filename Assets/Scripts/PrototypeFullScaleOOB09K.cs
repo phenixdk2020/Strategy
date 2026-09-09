@@ -159,6 +159,13 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
         ApplyStrength("8th Regiment", 2460);
         ApplyStrength("18th Regiment", 2440);
 
+        // Full-scale company blocks are much wider than the old 1:10 representatives.
+        // Give the two regiments on each side separate lanes across the scenic map.
+        SetPose("1. Regiment", new Vector3(-122f, 0f, -68f), Quaternion.Euler(0f, 90f, 0f));
+        SetPose("5. Regiment", new Vector3(-122f, 0f, 68f), Quaternion.Euler(0f, 90f, 0f));
+        SetPose("8th Regiment", new Vector3(122f, 0f, -68f), Quaternion.Euler(0f, -90f, 0f));
+        SetPose("18th Regiment", new Vector3(122f, 0f, 68f), Quaternion.Euler(0f, -90f, 0f));
+
         int configured = 0;
         foreach (Regiment regiment in battle.Regiments)
         {
@@ -182,7 +189,8 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
             Debug.Log(
                 "OOB-09K|Installed=True|Scenario=FourFullScaleRegiments|" +
                 "Denmark=2|Prussia=2|ApproxInfantry=8107|" +
-                "CommandLevel=Regiment|InternalLevels=Battalion+Company|OfficerObjectiveState=True");
+                "CommandLevel=Regiment|InternalLevels=Battalion+Company|OfficerObjectiveState=True|" +
+                "Layout=TwoFullScaleLanesPerSide");
         }
     }
 
@@ -194,8 +202,19 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
 
         initialStrengthField.SetValue(regiment, strength);
         currentStrengthField.SetValue(regiment, strength);
-
         Debug.Log("OOB-09K|Unit=" + unitName + "|FullStrengthApplied=" + strength);
+    }
+
+    private static void SetPose(string unitName, Vector3 position, Quaternion rotation)
+    {
+        Regiment regiment = FindRegiment(unitName);
+        if (regiment == null)
+            return;
+
+        position.y = PrototypeBootstrap.SampleGroundHeight(position.x, position.z) + 0.10f;
+        regiment.transform.position = position;
+        regiment.transform.rotation = rotation;
+        regiment.SetFormation(RegimentFormation.Line);
     }
 
     private static bool IsPilotRegiment(string name)
