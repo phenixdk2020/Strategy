@@ -1,93 +1,119 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09k
+Prototype version: v00.00.09l
 Build status: TEST
-Build name: FULL-SCALE OOB + 1:1 RENDER + HQ + SPECIAL ARMS TEST 09K
-Visible build marker: PROJECT 1864 | v00.00.09k TEST
+Build name: BRIGADE HQ + HISTORICAL OOB + RESERVE AI + DUAL STANDARDS TEST 09L
+Visible build marker: PROJECT 1864 | v00.00.09l TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09k supplement
+Design manual baseline: v00.02.08 + 09k/09l supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09k - Full-scale four-regiment pilot
-- The old expanded eight-regiment 570-620 man QA layout is disabled before it can add the extra four units.
-- Tactical pilot returns to the original four infantry regiments at realistic 1864-scale QA manpower:
-  * 1. Regiment (DK): 1,620
-  * 5. Regiment (DK): 1,587
-  * 8th Regiment (PR): 2,460
-  * 18th Regiment (PR): 2,440
-- Total full-scale infantry manpower: 8,107.
-- These are agreed QA scale values, not yet source-certified date-specific strengths for those exact named regiments.
+v00.00.09l - Historical Danish brigade pilot
+- The Danish side now represents the historically documented 7. Brigade structure around 1 Feb 1864:
+  * 1. Infanteri-Regiment: approx. 1,540 men.
+  * 11. Infanteri-Regiment: approx. 1,584 men.
+- The stable 09k technical renderer key for the second Danish slot remains "5. Regiment" internally in this prototype; OOB identity, Brigade HQ, dual standards and display metadata identify it as 11. Infanteri-Regiment.
+- This technical/display split is temporary until 09m introduces stable Unit IDs independent of display name.
+- The Prussian pair (8th + 18th) remains explicitly QA rather than being presented as a sourced historical brigade.
+- Total infantry in the pilot: 8,024.
 
-v00.00.09k - Battalion/company OOB
-- New PrototypeRegimentOOB09K attaches persistent structural OOB data to each regiment.
-- Danish regiment = 2 battalions x 4 companies = 8 companies.
-- Prussian regiment = 3 battalions x 4 companies = 12 companies; third battalion is labelled Füsilier-Bataillon.
-- Approximately 25 men are reserved as regimental staff; remaining manpower is distributed across companies so the OOB sums to the regiment strength.
-- Regiment remains the movement/combat/selection owner in 09k; battalion/company is the future officer allocation layer.
+v00.00.09l - Historical identity data
+- PrototypeRegimentOOB09K now carries:
+  * OfficialName1864
+  * TraditionalName
+  * HistoricalLineage
+  * RegimentalRomanNumeral
+  * AuthorizedStrength / PresentStrength
+- 1. Infanteri-Regiment carries the Danske Livregiment tradition.
+- 11. Infanteri-Regiment carries a Falstersk/Jysk lineage label based on the current historical working paper.
+- Reusable identity metadata remains defined for 5. Infanteri-Regiment / Sjællandske Livregiment for later OOB Designer scenarios.
+- Battalion/company structure remains 2x4 for Denmark and 3x4 for Prussia; company parent is explicit data and must not later be inferred from company number alone.
 
-v00.00.09k - 1:1 infantry renderer
-- New PrototypeFullScaleRenderer09K displays one visual infantryman per current manpower without creating one GameObject/MonoBehaviour/NavMeshAgent/collider per man.
-- Uses instanced body/head/headgear/rifle meshes in <=1023 instance batches.
-- Existing 09h/09i representative soldier renderers and 09j representative reload animator are disabled to prevent duplicate formations.
-- 1:1 rifle pose still follows the actual outgoing-volley/reload window from Regiment.nextFireTime.
-- Muzzle-loader and Dreyse receive different simplified reload rifle poses.
-- Company/battalion slots create large formation blocks; Column uses an eight-file march column.
-- Renderer writes no movement, combat, morale, cohesion, selection or Officer AI state.
-
-v00.00.09k - Mounted regimental HQ
-- Every infantry regiment gets a three-rider command group:
-  1. commander,
+v00.00.09l - Brigade HQ
+- One physical Brigade HQ is created per side.
+- Danish HQ: 7. Brigade.
+- Prussian HQ: Prussian Brigade (QA).
+- Brigade HQ is represented by six mounted staff figures:
+  1. brigade commander,
   2. adjutant,
-  3. orderly/staff rider.
-- The three riders replace three visual staff manpower slots rather than being added on top of regiment strength.
-- HQ is visual in 09k; later it becomes command origin for courier delay, officer casualties and command effectiveness.
+  3. staff officer,
+  4. staff officer,
+  5. courier,
+  6. courier.
+- Regimental three-rider HQ groups from 09k remain in place.
+- Brigade HQ is a separate command entity and does not replace the subordinate regiment HQs.
 
-v00.00.09k - Officer mission architecture
-- New PrototypeOfficerObjective09K stores explicit high-level mission state: None, DefendArea, AttackCaptureArea.
-- Stores objective centre, radius and requested reserve fraction.
-- This is intentionally a scaffold only in 09k: it does not fake battalion/company reserve decisions before subunits can move independently.
-- Intended command model: player gives an officer an objective; officer AI allocates subordinate battalions/companies between ENGAGED, SUPPORT and RESERVE and commits additional reserves as required.
+v00.00.09l - Brigade objective / reserve AI
+- Brigade missions in the first pilot: Hold, DefendArea, AttackCaptureArea.
+- Regiment roles: Reserve, Support, Engaged, Manoeuvre, Withdraw.
+- Danish Brigade AI starts OFF so player manual control remains the default.
+- F11 toggles Danish Brigade AI ON/OFF.
+- Prussian QA brigade starts Brigade AI ON.
+- The brigade initially commits one regiment and holds the second as reserve.
+- Reserve is committed automatically when the primary regiment routes, falls below approximately 72% strength, morale/cohesion deteriorates, or an attack shows no meaningful progress for about 12 seconds.
+- A committed reserve becomes SUPPORT and later ENGAGED near the objective.
+- Brigade command issues missions through OfficerAIController. It does not write Regiment.destination directly.
 
-v00.00.09k - Dragoons pilot
-- Adds one QA dragoon squadron per side, 160 mounted riders each.
-- Separate horse/rider/carbine visual identity; not an infantry reskin.
-- Mounted movement, dismount, horse holders, remount, fatigue/casualties and dragoon combat are future functional gates.
+v00.00.09l - Dual standards / flags
+- Every infantry regiment receives two visible standards:
+  1. national/army identity flag,
+  2. regimental identity flag.
+- Danish national flag is Dannebrog.
+- Danish regimental flag remains Dannebrog-based in the 1864 direction and shows the regiment Roman numeral.
+- Regiment/tradition identity is shown separately, for example Danske Livregiment, and the data model supports Sjællandske Livregiment for 5. Infanteri-Regiment in later scenarios.
+- Older single-standard prototype renderers are hidden rather than deleted.
+- The dual flags receive a subtle independent wave motion.
+- Historical caution remains: later traditions/mottoes must not be represented as official 1864 facts without source verification.
 
-v00.00.09k - Field artillery pilot
-- Adds one QA field battery per side.
-- Six guns + approximately 120 crew per battery.
-- Gun carriage, wheels, barrel and crews are rendered separately.
-- Limber/unlimber, horses, deployment, ammunition, LOS/fire arcs, counter-battery and capture/abandon remain future functional gates.
+v00.00.09l - Cavalry horse state
+- Cavalry manpower and serviceable horses are now separate values.
+- Danish cavalry pilot: approximately 135 personnel, 120 serviceable horses, 120 mounted effective; unmounted personnel are shown as a rear foot group.
+- Prussian dragoon squadron remains QA: 160 personnel, 155 serviceable horses/mounted effective.
+- MountedEffective is capped by both Personnel and HorsesAvailable.
+- Dismount/remount, horse holders, horse casualties, cavalry fatigue and combat remain later gates.
 
-Performance direction
-- 09k is the first architecture test for realistic 1:1 manpower rendering.
-- Immediate scenario load: 8,107 infantry + 12 mounted HQ riders + 320 dragoons + 240 artillery crew + 12 guns.
-- Future benchmark gates: 10k, 20k, 40k visible men, optional 60k stress test.
-- Measure FPS, main-thread ms, GPU ms, memory and draw calls at close, medium and full-battlefield zoom.
+v00.00.09l - Danish field artillery correction
+- Danish field battery is updated from the old 6-gun/120-man QA placeholder to the current historical working baseline:
+  * 8 guns,
+  * approximately 190 personnel.
+- Prussian battery remains QA at 6 guns / 120 personnel until the matching historical source is locked.
+- Artillery still has no full fire/limber/ammunition model in 09l.
 
-Retained movement/combat baseline
+Performance reference
+- Infantry: 8,024.
+- Cavalry personnel: 295 total, 275 currently mounted.
+- Artillery personnel: 310 total.
+- Guns: 14 total.
+- 1:1 infantry remains instanced; ordinary infantrymen still have no individual MonoBehaviour/NavMeshAgent/collider/AI.
+
+Retained 09k/09j/09i movement and combat baseline
 - Navigation V3 remains steering authority.
 - 09i1 Farmhouse/Barn continuation fix remains active.
 - 09h4 manual AI-OFF route recovery remains active.
 - Decorative trees/fence posts remain soft/pass-through; Farmhouse/Barn remain hard; river remains bridge-only.
-- 09j combat reload cadence is unchanged; 09k only replaces its representative visual layer with 1:1 rendering.
-- Fire policy, range cone, accuracy, casualties, morale/cohesion and Officer AI combat logic remain unchanged.
+- 09k 1:1 renderer and 09j-derived reload timing remain active.
+- Fire policy, range cone, accuracy, casualties, morale/cohesion and existing Officer AI combat logic remain unchanged except where Brigade AI explicitly enables/assigns subordinate Officer AI missions.
 
 Known migration item
-- Unity Input Manager deprecation warning is non-blocking. Input System migration remains a separate controls revision because LMB/RMB, box-select, F10 and keyboard shortcuts must move together.
+- Unity Input Manager deprecation warning is non-blocking. Input System migration remains a separate controls revision because LMB/RMB, box-select, F10/F11 and keyboard shortcuts must move together.
 
-Primary 09k QA
+Primary 09l QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Build marker: PROJECT 1864 | v00.00.09k TEST.
-3. BattleManager contains only the four original infantry regiments.
-4. OOB-09K logs full strengths and 2/8 DK vs 3/12 PR battalion/company structure.
-5. SCALE-09K logs VisualRatio=1:1 and PerSoldierGameObject=False.
-6. Approximately 8,107 infantrymen are visibly present without 8,107 soldier GameObjects.
-7. Each regiment has a visible three-rider HQ group.
-8. Both sides have one 160-man dragoon squadron.
-9. Both sides have one six-gun/120-crew field battery.
-10. Existing infantry movement, box selection, range cone and combat still function.
-11. Observe frame rate at close, medium and full-map zoom and report any obvious frame-time spikes.
-12. Full officer objective/reserve allocation is NOT an acceptance requirement for 09k; 09k only establishes the data/state needed for the next command gate.
+2. Build marker: PROJECT 1864 | v00.00.09l TEST.
+3. OOB-09L reports 1. Infanteri-Regiment 1540 and historical 11. Infanteri-Regiment 1584 on the Danish side.
+4. Danish 7. Brigade HQ appears with six mounted HQ/staff/courier figures.
+5. Prussian QA Brigade HQ appears separately.
+6. Each regiment shows two standards: national + regimental.
+7. Danish regimental flags show Roman identity and tradition labels; older single standards are hidden.
+8. Danish field battery visibly contains 8 guns and approximately 190 personnel.
+9. Danish cavalry telemetry reports Personnel=135, HorsesAvailable=120, MountedEffective=120.
+10. F11 toggles Danish Brigade AI; when OFF, manual regiment orders remain direct player control.
+11. With Brigade AI ON, one regiment begins committed while the second remains reserve.
+12. Under sufficient pressure/no-progress, Console logs BRIGADE-09L|CommitReserve=True and the reserve receives a support mission.
+13. Existing 1:1 infantry rendering, box selection, reload visuals and movement remain functional.
+14. Observe frame rate at close, medium and full-map zoom.
 
-Design supplement: docs/parts/part-09k-fullscale-oob-command-arms.md
+Design supplements:
+- docs/parts/part-09k-fullscale-oob-command-arms.md
+- docs/parts/part-09l-brigade-hq-historical-oob.md
+- docs/parts/part-09m-oob-designer-campaign.md
