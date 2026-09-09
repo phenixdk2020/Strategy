@@ -147,7 +147,9 @@ public sealed class PrototypeBrigadeCommand09L : MonoBehaviour
 
     private static bool Ready(Regiment regiment)
     {
-        return regiment != null && regiment.GetComponent<PrototypeRegimentOOB09K>() != null;
+        return regiment != null &&
+               regiment.GetComponent<PrototypeRegimentOOB09K>() != null &&
+               regiment.GetComponent<OfficerAIController>() != null;
     }
 
     private BrigadeState CreateBrigade(
