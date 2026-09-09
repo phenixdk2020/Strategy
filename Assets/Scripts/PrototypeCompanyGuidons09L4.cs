@@ -59,7 +59,7 @@ public sealed class PrototypeCompanyGuidons09L4 : MonoBehaviour
     {
         GameObject root = new GameObject("CompanyGuidons09L4");
         root.transform.SetParent(company.transform, false);
-        root.transform.localPosition = new Vector3(0f, 0f, 0f);
+        root.transform.localPosition = Vector3.zero;
 
         Regiment regiment = company.ParentRegiment;
         PrototypeRegimentOOB09K oob = company.ParentOOB;
@@ -75,33 +75,17 @@ public sealed class PrototypeCompanyGuidons09L4 : MonoBehaviour
 
         if (regiment.Team == BattleTeam.Denmark)
         {
-            nationalField = PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.76f, 0.045f, 0.06f),
-                "09L4_DK_National_" + company.CompanyId);
-            nationalDevice = PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.96f, 0.96f, 0.93f),
-                "09L4_DK_White_" + company.CompanyId);
-            companyField = PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.58f, 0.035f, 0.05f),
-                "09L4_DK_Company_" + company.CompanyId);
-            companyDevice = PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.94f, 0.76f, 0.20f),
-                "09L4_DK_Gold_" + company.CompanyId);
+            nationalField = PrototypeBootstrap.CreateSharedMaterial(new Color(0.76f, 0.045f, 0.06f), "09L4_DK_National_" + company.CompanyId);
+            nationalDevice = PrototypeBootstrap.CreateSharedMaterial(new Color(0.96f, 0.96f, 0.93f), "09L4_DK_White_" + company.CompanyId);
+            companyField = PrototypeBootstrap.CreateSharedMaterial(new Color(0.58f, 0.035f, 0.05f), "09L4_DK_Company_" + company.CompanyId);
+            companyDevice = PrototypeBootstrap.CreateSharedMaterial(new Color(0.94f, 0.76f, 0.20f), "09L4_DK_Gold_" + company.CompanyId);
         }
         else
         {
-            nationalField = PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.92f, 0.92f, 0.89f),
-                "09L4_PR_National_" + company.CompanyId);
-            nationalDevice = PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.05f, 0.05f, 0.06f),
-                "09L4_PR_Black_" + company.CompanyId);
-            companyField = PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.10f, 0.10f, 0.12f),
-                "09L4_PR_Company_" + company.CompanyId);
-            companyDevice = PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.90f, 0.90f, 0.84f),
-                "09L4_PR_Light_" + company.CompanyId);
+            nationalField = PrototypeBootstrap.CreateSharedMaterial(new Color(0.92f, 0.92f, 0.89f), "09L4_PR_National_" + company.CompanyId);
+            nationalDevice = PrototypeBootstrap.CreateSharedMaterial(new Color(0.05f, 0.05f, 0.06f), "09L4_PR_Black_" + company.CompanyId);
+            companyField = PrototypeBootstrap.CreateSharedMaterial(new Color(0.10f, 0.10f, 0.12f), "09L4_PR_Company_" + company.CompanyId);
+            companyDevice = PrototypeBootstrap.CreateSharedMaterial(new Color(0.90f, 0.90f, 0.84f), "09L4_PR_Light_" + company.CompanyId);
         }
 
         BuildSmallFlag(
@@ -118,7 +102,17 @@ public sealed class PrototypeCompanyGuidons09L4 : MonoBehaviour
         string regimentId = oob != null && !string.IsNullOrEmpty(oob.RegimentalRomanNumeral)
             ? oob.RegimentalRomanNumeral
             : regiment.RegimentName;
-        string marker = regimentId + "-" + (company.CompanyIndex + 1);
+
+        string companyNumber = (company.CompanyIndex + 1).ToString();
+        if (company.Company != null && !string.IsNullOrEmpty(company.Company.Name))
+        {
+            string name = company.Company.Name;
+            int dot = name.IndexOf('.');
+            if (dot > 0)
+                companyNumber = name.Substring(0, dot);
+        }
+
+        string marker = regimentId + "-" + companyNumber;
 
         BuildSmallFlag(
             root.transform,
@@ -149,23 +143,8 @@ public sealed class PrototypeCompanyGuidons09L4 : MonoBehaviour
         root.transform.SetParent(parent, false);
         root.transform.localPosition = offset;
 
-        CreatePart(
-            root.transform,
-            PrimitiveType.Cylinder,
-            "Pole",
-            new Vector3(0f, 1.65f, 0f),
-            new Vector3(0.025f, 1.65f, 0.025f),
-            Quaternion.identity,
-            poleMaterial);
-
-        CreatePart(
-            root.transform,
-            PrimitiveType.Cube,
-            "Cloth",
-            new Vector3(0.62f, 2.78f, 0f),
-            new Vector3(1.22f, 0.68f, 0.035f),
-            Quaternion.identity,
-            fieldMaterial);
+        CreatePart(root.transform, PrimitiveType.Cylinder, "Pole", new Vector3(0f, 1.65f, 0f), new Vector3(0.025f, 1.65f, 0.025f), Quaternion.identity, poleMaterial);
+        CreatePart(root.transform, PrimitiveType.Cube, "Cloth", new Vector3(0.62f, 2.78f, 0f), new Vector3(1.22f, 0.68f, 0.035f), Quaternion.identity, fieldMaterial);
 
         if (national && team == BattleTeam.Denmark)
         {
