@@ -8,8 +8,8 @@ PROJECT 1864 udvikles nu i to uafhængige spor, så tactical stabilization ikke 
 
 - Branch: `test` / aktiv leveringskanal `channel-test`
 - Lokal standardmappe: `%USERPROFILE%\OneDrive\Strategy-Test`
-- Aktuel revisionsserie: `v00.00.09k`.
-- Fokus: battlefield controls, formations, Officer AI, combat, melee, navigation, obstacles, river/bridge, UI, tactical visuals, full-scale OOB og tactical QA.
+- Aktuel revisionsserie: `v00.00.09l`.
+- Fokus: battlefield controls, formations, Officer AI, combat, melee, navigation, obstacles, river/bridge, UI, tactical visuals, full-scale OOB, brigade command og tactical QA.
 - `v00.00.09f` beholder **Navigation V3** som autoritativ movement/steering-owner. V4 og 09A er runtime-deaktiverede.
 - `09B/09h4` fungerer som compatibility/soft-terrain policy: decorative trees og individuelle fence posts er pass-through; Farmhouse/Barn er hard obstacles; river/water er bridge-only.
 - `v00.00.09g` leverer scenic battlefield og extended camera zoom.
@@ -17,17 +17,22 @@ PROJECT 1864 udvikles nu i to uafhængige spor, så tactical stabilization ikke 
 - `v00.00.09h2` stabiliserer AI attack frontage; `09h3` march/deployment policy; `09h4` manual AI-OFF route recovery.
 - `v00.00.09i`–`09i3` leverer Big Graphics Buff, procedural standards, medium-zoom readability, Farmhouse detour continuation og Unity 6.6 compatibility cleanup.
 - `v00.00.09j` leverer fire/reload visual state baseret på faktisk udgående volley og weapon-specific reload cadence.
-- `v00.00.09k` er **Full-Scale OOB + 1:1 Render + Mounted HQ + Special Arms Pilot**.
-- 09k går tilbage til de oprindelige fire infantry-regimenter og sætter QA full-scale manpower til ca. 1.6k pr. dansk regiment og ca. 2.45k pr. preussisk regiment, i alt 8.107 infantry.
-- 09k tilføjer intern Battalion/Company OOB: DK 2 bataljoner/8 kompagnier, PR 3 bataljoner/12 kompagnier.
-- 09k renderer én synlig infantryman pr. current manpower via instancing, ikke én GameObject/MonoBehaviour/NavMeshAgent/collider pr. mand.
-- Existing 09h/09i representative soldier layers deaktiveres for at undgå dobbelte formationer; 1:1 rifle-pose afspejler stadig faktisk reload state.
-- Hvert regiment får mounted HQ på 3 ryttere: commander, adjutant, orderly. De tre erstatter tre stabsslots visuelt.
-- 09k etablerer `DefendArea` og `AttackCaptureArea` som eksplicit officer mission-data plus requested reserve fraction. Fuldt battalion/company allocation-system kommer i næste command-gate, hvor underenheder fordeles mellem ENGAGED/SUPPORT/RESERVE.
-- 09k tilføjer én QA dragoon squadron pr. side (160 mounted) samt ét QA field battery pr. side (6 guns + ca. 120 crew). De er egne special-arm pilots og ikke infantry reskins.
-- Designmanual supplement: `docs/parts/part-09k-fullscale-oob-command-arms.md`.
-- Unity Input Manager deprecation er non-blocking. Migration til det nye Input System sker som separat control-platform revision, fordi LMB/RMB, box-select, keyboard hotkeys og UI pointer guards skal migreres samlet.
-- Primær 09k QA: compile uden røde errors; kun fire infantry-regimenter; OOB-09K korrekt; SCALE-09K VisualRatio=1:1; mounted HQ synlige; dragoner og seks-kanoners batterier synlige; frame rate observeres ved close/medium/full map; eksisterende infantry movement/combat/box select må ikke regressere.
+- `v00.00.09k` etablerer **Full-Scale OOB + 1:1 Render + Mounted Regimental HQ + Special Arms Pilot**.
+- `v00.00.09l` er **Brigade HQ + Historical Danish OOB + Reserve AI + Dual Standards**.
+- 09l bruger den dokumenterede danske **7. Brigade: 1. + 11. Infanteri-Regiment**, med ca. 1.540 og 1.584 mand i den aktuelle historiske arbejdsreference. Den preussiske 8th+18th formation forbliver tydeligt mærket QA indtil en tilsvarende date-specific brigade-OOB er kildevalideret.
+- 09l bevarer den stabile 09k-renderer key for den anden danske slot internt, men OOB/display-identitet er 11. Infanteri-Regiment. 09m erstatter denne midlertidige bridge med stabile Unit IDs uafhængigt af displaynavn.
+- Hvert regiment beholder 09k regimental HQ på 3 ryttere. Hver brigade får separat **Brigade HQ på 6 ryttere**: commander, adjutant, 2 staff officers og 2 couriers.
+- Brigade missions: Hold / Defend Area / Attack-Capture Area. Regiment roles: Reserve / Support / Engaged / Manoeuvre / Withdraw.
+- Dansk Brigade AI starter OFF og kan toggles med F11. Preussisk QA Brigade AI starter ON.
+- Brigade AI committer ét regiment først og holder det andet i reserve. Reserve kan committes ved rout, væsentligt strength/morale/cohesion-pres eller manglende angrebsfremgang. Brigade-laget udsteder missioner via OfficerAIController og skriver ikke direkte til Regiment.destination.
+- 09l tilføjer **dual standards** pr. regiment: national/hærfane + regimentsfane. Dansk regimentsfane følger Dannebrog/romertal-retningen, mens tradition er separat metadata/label. Fx understøtter datamodellen `5. Infanteri-Regiment — tradition: Sjællandske Livregiment` uden at gøre et senere traditionsnavn til det officielle 1864-navn.
+- Cavalry manpower og serviceable horses er separate i 09l. Dansk cavalry pilot: ca. 135 personnel, 120 serviceable horses, 120 mounted effective. Prussian dragoon squadron remains QA.
+- Dansk field battery er korrigeret til **8 guns / ca. 190 personnel** efter den aktuelle historiske arbejdsreference. Prussian battery forbliver QA 6 guns / 120 personnel indtil kildevalidering.
+- Performance overlay i 09l viser ca. 8.024 infantry + 295 cavalry personnel + 310 artillery personnel + 14 guns.
+- `docs/parts/part-09l-brigade-hq-historical-oob.md` er den autoritative 09l-supplementsspecifikation.
+- `docs/parts/part-09m-oob-designer-campaign.md` definerer næste OOB Designer-gate: organisatorisk drag/drop i træet og movement orders ved drag/drop på campaign-kortet.
+- Unity Input Manager deprecation er non-blocking. Migration til det nye Input System sker som separat control-platform revision, fordi LMB/RMB, box-select, F10/F11, keyboard hotkeys og UI pointer guards skal migreres samlet.
+- Primær 09l QA: compile uden røde errors; OOB-09L korrekte DK-identiteter/styrker; 2 Brigade HQ synlige; dual flags pr. regiment; DK 8-gun battery; horse/manpower telemetry; F11 Brigade AI toggle; reserve commit telemetry; eksisterende infantry 1:1-render/movement/combat/box select må ikke regressere.
 
 ## Track B — Campaign
 
@@ -35,6 +40,7 @@ PROJECT 1864 udvikles nu i to uafhængige spor, så tactical stabilization ikke 
 - Lokal standardmappe: `%USERPROFILE%\OneDrive\Strategy-Campaign`
 - Aktuel revisionsserie starter ved `v00.00.10a`.
 - Fokus: campaign scene/map, strategic formations, movement/time, battle trigger, tactical handoff og state return.
+- OOB Designer-arbejdet i 09m skal dele stable Unit IDs og hierarchy-data med campaign-sporet, så tactical og campaign ikke bygger parallelle OOB-modeller.
 - Campaign-kode/scener skal så vidt muligt ligge separat fra tactical navigation/combat-filer for at minimere merge-konflikter.
 
 ## Stable
