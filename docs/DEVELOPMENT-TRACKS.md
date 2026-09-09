@@ -8,29 +8,26 @@ PROJECT 1864 udvikles nu i to uafhængige spor, så tactical stabilization ikke 
 
 - Branch: `test` / aktiv leveringskanal `channel-test`
 - Lokal standardmappe: `%USERPROFILE%\OneDrive\Strategy-Test`
-- Aktuel revisionsserie: `v00.00.09j`.
-- Fokus: battlefield controls, formations, Officer AI, combat, melee, navigation, obstacles, river/bridge, UI, tactical visuals og tactical QA.
+- Aktuel revisionsserie: `v00.00.09k`.
+- Fokus: battlefield controls, formations, Officer AI, combat, melee, navigation, obstacles, river/bridge, UI, tactical visuals, full-scale OOB og tactical QA.
 - `v00.00.09f` beholder **Navigation V3** som autoritativ movement/steering-owner. V4 og 09A er runtime-deaktiverede.
 - `09B/09h4` fungerer som compatibility/soft-terrain policy: decorative trees og individuelle fence posts er pass-through; Farmhouse/Barn er hard obstacles; river/water er bridge-only.
 - `v00.00.09g` leverer scenic battlefield og extended camera zoom.
 - `v00.00.09h` leverer Soldier Visual Pass 1, Uniform Designer, RTS box selection, compact combat feedback og soft black-powder smoke.
-- `v00.00.09h2` stabiliserer AI attack frontage; dette gælder AI-angreb, ikke manual AI-OFF movement.
-- `v00.00.09h3` giver AI-regimenter march Column og deployment til Line nær kontakt.
-- `v00.00.09h4` retter manual PlayerCommander movement: Column på march, soft fence posts og bounded no-progress bypass recovery.
-- `v00.00.09i` er **Soldier Visual Pass 2 / Big Graphics Buff**: articulated procedural infantry, tydeligere faction headgear, rifle/equipment, officer/standard-bearer og animated procedural regimental standards.
-- `v00.00.09i1` retter den QA-bekræftede V3 Farmhouse/Barn detour-repeat med et valideret continuation-point efter første detour-leg.
-- `v00.00.09i2` øger grafisk læsbarhed ved normal tactical zoom: soldier details beholdes til ca. 285 m, render-rigs får bounded distance-based readability scale, og 09i standards bliver tydeligere ved medium/long zoom.
-- `v00.00.09i3` retter 09i compile compatibility og migrerer de fire viste navigation/reference scripts væk fra deprecated Unity 6.6 `FindObjectsSortMode` overloads.
-- `v00.00.09j` er **Fire & Reload Animation Pass**. En faktisk udgående volley registreres via den eksisterende `Regiment.nextFireTime` cadence i stedet for det fejlagtige `HasHitFeedback` visual-signal.
-- 09j visual state: actual volley -> fire pose -> weapon-specific reload -> ready. Muzzle-loader får længere load/ram sekvens; Dreyse får kortere bolt/cartridge sekvens. Animationen følger den eksisterende faktiske reload-window og skriver ikke combat state.
-- 09j overtager kun riflemen arms/rifle posing efter 09i; 09i beholder legs/body/LOD/uniform/equipment. Standard-bearer uden aktiv rifle reload-animeres ikke.
-- Designmanual supplement for 09i visual baseline: `docs/parts/part-09i-soldier-visual-pass-2.md`.
-- Designmanual supplement for 09i1 detour continuation: `docs/parts/part-09i1-v3-detour-continuation.md`.
-- Designmanual supplement for 09j fire/reload: `docs/parts/part-09j-fire-reload-animation.md`.
-- QA-video `Optagelse 3(1).mp4`: movement er markant bedre og den gamle totale Farmhouse-stall reproduceres ikke. Der ses stadig lejlighedsvis skarp turn/reforming omkring bridge-routing og tæt multi-regiment contact, især med AI ON; dette forbliver separat movement/AI QA og blandes ikke ind i reload-laget.
+- `v00.00.09h2` stabiliserer AI attack frontage; `09h3` march/deployment policy; `09h4` manual AI-OFF route recovery.
+- `v00.00.09i`–`09i3` leverer Big Graphics Buff, procedural standards, medium-zoom readability, Farmhouse detour continuation og Unity 6.6 compatibility cleanup.
+- `v00.00.09j` leverer fire/reload visual state baseret på faktisk udgående volley og weapon-specific reload cadence.
+- `v00.00.09k` er **Full-Scale OOB + 1:1 Render + Mounted HQ + Special Arms Pilot**.
+- 09k går tilbage til de oprindelige fire infantry-regimenter og sætter QA full-scale manpower til ca. 1.6k pr. dansk regiment og ca. 2.45k pr. preussisk regiment, i alt 8.107 infantry.
+- 09k tilføjer intern Battalion/Company OOB: DK 2 bataljoner/8 kompagnier, PR 3 bataljoner/12 kompagnier.
+- 09k renderer én synlig infantryman pr. current manpower via instancing, ikke én GameObject/MonoBehaviour/NavMeshAgent/collider pr. mand.
+- Existing 09h/09i representative soldier layers deaktiveres for at undgå dobbelte formationer; 1:1 rifle-pose afspejler stadig faktisk reload state.
+- Hvert regiment får mounted HQ på 3 ryttere: commander, adjutant, orderly. De tre erstatter tre stabsslots visuelt.
+- 09k etablerer `DefendArea` og `AttackCaptureArea` som eksplicit officer mission-data plus requested reserve fraction. Fuldt battalion/company allocation-system kommer i næste command-gate, hvor underenheder fordeles mellem ENGAGED/SUPPORT/RESERVE.
+- 09k tilføjer én QA dragoon squadron pr. side (160 mounted) samt ét QA field battery pr. side (6 guns + ca. 120 crew). De er egne special-arm pilots og ikke infantry reskins.
+- Designmanual supplement: `docs/parts/part-09k-fullscale-oob-command-arms.md`.
 - Unity Input Manager deprecation er non-blocking. Migration til det nye Input System sker som separat control-platform revision, fordi LMB/RMB, box-select, keyboard hotkeys og UI pointer guards skal migreres samlet.
-- **Næste større tactical unit-types efter visual/stability-gaten:** dragoner/kavaleri og feltartilleri som egne unit-types/states, ikke infantry reskins.
-- Primær 09j QA: compile uden røde errors; `RELOAD-09J` telemetry; shooter og ikke target skal trigge fire pose; dansk muzzle-loader og preussisk Dreyse skal have tydeligt forskellige reload-sekvenser; samme movement test skal fortsat være stabil.
+- Primær 09k QA: compile uden røde errors; kun fire infantry-regimenter; OOB-09K korrekt; SCALE-09K VisualRatio=1:1; mounted HQ synlige; dragoner og seks-kanoners batterier synlige; frame rate observeres ved close/medium/full map; eksisterende infantry movement/combat/box select må ikke regressere.
 
 ## Track B — Campaign
 
