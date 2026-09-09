@@ -35,7 +35,7 @@ public sealed class CampaignDenmarkV013DLegacyGate : MonoBehaviour
 
     private static void DisableByTypeName(string typeName)
     {
-        MonoBehaviour[] behaviours = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        MonoBehaviour[] behaviours = UnityEngine.Object.FindObjectsByType<MonoBehaviour>();
         foreach (MonoBehaviour behaviour in behaviours)
         {
             if (behaviour != null && string.Equals(behaviour.GetType().Name, typeName, StringComparison.Ordinal))
