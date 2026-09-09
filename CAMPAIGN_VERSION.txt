@@ -9,8 +9,9 @@ v00.00.13f state: DEV DENMARK LANDMESH FIX / CLEAN CAMPAIGN LINEAGE
 v00.00.13g state: DEV DENMARK-ONLY LABEL + CLOSE ZOOM FIX / CLEAN CAMPAIGN LINEAGE
 v00.00.13h state: DEV DENMARK PREMIUM VISUAL PASS / CLEAN CAMPAIGN LINEAGE
 v00.00.13h1 state: DEV MAP-ONLY GATE / BATTLE TEMPORARILY DISABLED / CLEAN CAMPAIGN LINEAGE
-v00.00.13i state: DEV DENMARK GIS TERRAIN FOUNDATION / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
-Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 3D DEV -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i
+v00.00.13i state: DEV GIS TERRAIN FOUNDATION / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
+v00.00.13i1 state: DEV UNITY 6.6 WARNING CLEANUP / GIS FOUNDATION / MAP-ONLY
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1
 v00.00.11 work package: B-280-B-369
 v00.00.11 final gate: B-369
 v00.00.12 state: PLANNED
@@ -19,20 +20,12 @@ v00.00.12 final gate: B-409
 v00.00.13 work package: B-410-B-469
 v00.00.13 planned final gate: B-469
 v00.00.13i branch: work/v00.00.13i-denmark-gis-foundation
-v00.00.13i map foundation rule: old polygon/presentation stacks are disabled for rendering and replaced by V013I_DENMARK_GIS_FOUNDATION.
-v00.00.13i DEM rule: Mapzen Terrain Tiles Terrarium PNG elevation data from the AWS public terrain dataset is used at runtime and cached locally; deterministic low-relief fallback is allowed when offline.
-v00.00.13i simulation rule: lat/lon, geodesic distance and strategic state remain authoritative; DEM changes presentation Y only and cannot alter ETA or route distance.
-v00.00.13i coastline rule: Natural Earth 1:50m DNK coastline scaffold remains the initial land mask while higher-resolution GeoDanmark coastline/hydrology import is prepared.
-v00.00.13i hydrology pilot: Limfjorden plus selected fjords/water corridors are explicit render/mask features so Aalborg and other harbour/fjord cities are no longer placed on a solid green land sheet.
-v00.00.13i Aalborg rule: Aalborg is explicitly a Limfjord harbour city with quay/warehouse/boat presentation and decorative Nørresundby context; no modern bridge is invented.
-v00.00.13i infrastructure rule: generic all-node graph links stay hidden. Denmark-only pilot roads/ferries are explicitly rendered; Roskilde-Fredericia straight land-over-water rendering is forbidden. Nyborg-Korsør and Fredericia-Middelfart are ferry presentation legs.
-v00.00.13i rail rule: generic HasRail flags are not promoted to visible rail in this GIS pilot until 1864 historical route validation is completed.
-v00.00.13i Denmark-only rule: only Danish settlements/labels/infrastructure are visible in the current QA slice; foreign data remains simulation-only.
-v00.00.13i construction rule: Aalborg barracks and Aarhus farm authoritative staged projects remain in CampaignConstructionV013; new GIS presentation may dress/ground them but may not bypass campaign-time progression.
-v00.00.13h1 map-only rule: CampaignMapController remains temporarily disabled during map QA so QA enemy orders, formation movement, hostile contact panels and PrototypeBattle transition cannot run.
-v00.00.13h1 clock rule: CampaignSession.AdvanceHours remains available via map-only pause/x1/x5/x20 so staged construction can still be tested.
-v00.00.13i QA gate: Unity compile without errors; terrain tiles load from cache/network or fallback; Limfjorden visibly cuts the terrain; Aalborg reads as harbour city; no foreign labels; no duplicate labels; no Roskilde-Fredericia water-crossing road; camera remains usable; map-only combat gate remains active.
-v00.00.13i QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
+v00.00.13i map rule: Denmark presentation uses the GIS-first foundation while strategic simulation remains lat/lon/geodesic authoritative.
+v00.00.13i MAP-ONLY rule: strategic formation movement/contact/battle remains temporarily disabled while map presentation is under QA.
+v00.00.13i1 warning cleanup: active Unity 6.6 code paths no longer pass deprecated FindObjectsSortMode.None to FindObjectsByType<T>().
+v00.00.13i1 legacy policy: CS0618 is temporarily suppressed for disabled compatibility presentation layers still carried in the campaign branch; suppression must be removed when legacy layers are retired/migrated.
+v00.00.13i1 QA gate: no shown CS0618 FindObjectsSortMode warnings, no new compile errors, GIS terrain/map-only behavior unchanged.
+v00.00.13i1 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route geometry
 Projection rule: CampaignGeoProjection broad-map/geodesic APIs are authoritative for v11+ campaign content; legacy local projection exists only for backward compatibility and must not be used by new strategic presentation layers
 Runtime isolation: CampaignMap is the campaign runtime; tactical PrototypeBattle is explicit-only and must not auto-open or auto-bootstrap on CampaignMap
