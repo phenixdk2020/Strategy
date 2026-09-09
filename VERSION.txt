@@ -1,14 +1,20 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09i2
+Prototype version: v00.00.09i3
 Build status: TEST
-Build name: BIG GRAPHICS BUFF READABILITY + V3 DETOUR FIX TEST 09I2
-Visible build marker: PROJECT 1864 | v00.00.09i2 TEST is shown permanently in the upper-left corner during Play mode
+Build name: 09I2 GRAPHICS + DETOUR + COMPILE COMPATIBILITY TEST 09I3
+Visible build marker: PROJECT 1864 | v00.00.09i3 TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
+
+v00.00.09i3 - Compile / Unity 6.6 compatibility fix
+- Fixes CS0117 in PrototypeSoldierVisualPass09I where CreateDenmarkDefault() and CreatePrussiaDefault() were referenced but not defined by PrototypeUniformProfile09H.
+- PrototypeUniformProfile09H now exposes CreateDenmarkDefault() and CreatePrussiaDefault() as thin compatibility wrappers over the existing CreateFactionDefault(BattleTeam) implementation, so faction defaults remain centralized and cannot drift.
+- PrototypeNavigationRecoveryManager now uses Unity 6.6 Object.FindObjectsByType<Transform>() instead of the deprecated FindObjectsSortMode overload.
+- No movement parameters, combat rules, route semantics, visual sizing, uniform colours or AI behaviour are changed by 09i3.
 
 v00.00.09i2 - Tactical readability pass
 - QA screenshot showed that the first 09i graphics pass was not visually strong enough at ordinary tactical zoom: infantry still read as dark sticks and standards were too small to carry regiment identity.
@@ -69,7 +75,8 @@ Retained tactical UI/control features
 - Range cone remains selected-unit ghost overlay.
 
 Known warnings / non-blocking migration items
-- Yellow CS0618 FindObjectsByType/FindObjectsSortMode warnings are Unity 6.6 API deprecation warnings. They do not cause the movement stall and remain scheduled for compatibility cleanup.
+- PrototypeNavigationRecoveryManager CS0618 FindObjectsSortMode warning is removed in 09i3.
+- The same Unity 6.6 FindObjectsSortMode deprecation pattern can still exist in older dormant/reference navigation scripts until those files are migrated individually; these warnings are non-blocking and do not cause the Farmhouse movement stall.
 - Unity Input Manager deprecation message is non-blocking and will be handled in a later input-platform migration.
 
 Future tactical unit gate
@@ -77,16 +84,16 @@ Future tactical unit gate
 - Dragoon baseline: mounted/dismounted, horse fatigue/casualties, horse-holder state and timed remount.
 - Artillery baseline: batteries/pieces, crews, horses/limbers, deploy/unlimber, ammunition, LOS/fire arcs, counter-battery and capture/abandon states.
 
-Primary 09i2 QA
+Primary 09i3 QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Visible build marker is PROJECT 1864 | v00.00.09i2 TEST.
-3. Startup Console should include SOLDIER-09I2, STANDARD-09I and VIS-09I2.
-4. At ordinary tactical zoom infantry should read more clearly as people, not thin dark sticks; close zoom should reveal the full articulated/equipment pass.
-5. Regimental standards should be noticeably easier to identify from medium/long tactical zoom.
-6. Repeat the AI-OFF four-regiment manual group move through the Farmhouse area.
-7. 1. Regiment must not park indefinitely at the first Farmhouse detour point.
-8. If needed, Console should show NAV-V3-09I1 Continuation=True with a different NextVia point.
-9. Thousands of identical Farmhouse + Via detour messages are a failure.
-10. Buildings/barns remain hard obstacles; river remains bridge-only.
-11. F10 Uniform Designer and RTS box selection remain functional.
-12. Yellow CS0618 and Input Manager deprecation warnings may remain; they are not gate failures.
+2. Visible build marker is PROJECT 1864 | v00.00.09i3 TEST.
+3. No CS0117 CreateDenmarkDefault/CreatePrussiaDefault errors appear.
+4. Startup Console should include SOLDIER-09I2, STANDARD-09I and VIS-09I2.
+5. At ordinary tactical zoom infantry should read more clearly as people, not thin dark sticks; close zoom should reveal the full articulated/equipment pass.
+6. Regimental standards should be noticeably easier to identify from medium/long tactical zoom.
+7. Repeat the AI-OFF four-regiment manual group move through the Farmhouse area.
+8. 1. Regiment must not park indefinitely at the first Farmhouse detour point.
+9. If needed, Console should show NAV-V3-09I1 Continuation=True with a different NextVia point.
+10. Thousands of identical Farmhouse + Via detour messages are a failure.
+11. Buildings/barns remain hard obstacles; river remains bridge-only.
+12. F10 Uniform Designer and RTS box selection remain functional.
