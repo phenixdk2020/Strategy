@@ -90,7 +90,7 @@ public sealed class CampaignMapOnlyModeV013H1 : MonoBehaviour
 
     private static void HideFormationPresentation()
     {
-        CampaignFormationView[] views = UnityEngine.Object.FindObjectsByType<CampaignFormationView>(FindObjectsSortMode.None);
+        CampaignFormationView[] views = UnityEngine.Object.FindObjectsByType<CampaignFormationView>();
         foreach (CampaignFormationView view in views)
         {
             if (view == null)
