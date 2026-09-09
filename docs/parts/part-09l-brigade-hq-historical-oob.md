@@ -140,9 +140,15 @@ Future state must also include horses, limbers, ammunition wagons, operational g
 
 ## 1:1 rendering rule
 
-09l retains 09k's 1:1 visual target but does not simulate every soldier as an independent actor. Ordinary infantry soldiers are GPU/instanced visual entities under company/regiment state; no individual MonoBehaviour, NavMeshAgent, collider or autonomous combat AI is required.
+From 09k/09l onward, **1:1 is the preferred tactical visual standard** for battles in the expected PROJECT 1864 scale. This supersedes the older design-manual assumption that 1:10 was the standard target.
+
+The simulation still does **not** treat every visible soldier as an independent tactical agent. Ordinary infantry soldiers are GPU/instanced visual entities under company/battalion/regiment state; no individual MonoBehaviour, NavMeshAgent, collider or autonomous combat AI is required.
 
 Company/Battalion/Regiment remain the authoritative simulation and command layers.
+
+A reduced render ratio such as 1:2, 1:5 or 1:10 may remain available as a hardware/performance fallback or distant semantic LOD, but it must not change authoritative manpower, casualties or combat outcomes.
+
+Performance gates should be measured progressively at approximately 10k, 20k and 40k visible humans. Most tactical encounters are expected to be far below the 40k stress target.
 
 ## Relationship to 09m OOB Designer
 
