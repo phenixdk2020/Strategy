@@ -1,8 +1,8 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09i1
+Prototype version: v00.00.09i2
 Build status: TEST
-Build name: SOLDIER VISUAL PASS 2 + V3 DETOUR CONTINUATION TEST 09I1
-Visible build marker: PROJECT 1864 | v00.00.09i1 TEST is shown permanently in the upper-left corner during Play mode
+Build name: BIG GRAPHICS BUFF READABILITY + V3 DETOUR FIX TEST 09I2
+Visible build marker: PROJECT 1864 | v00.00.09i2 TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
@@ -10,46 +10,52 @@ Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 
+v00.00.09i2 - Tactical readability pass
+- QA screenshot showed that the first 09i graphics pass was not visually strong enough at ordinary tactical zoom: infantry still read as dark sticks and standards were too small to carry regiment identity.
+- PrototypeSoldierVisualPass09I remains presentation-only but increases base torso/limb/head/rifle silhouette size without changing any Regiment formation slot or BoxCollider footprint.
+- Small uniform/equipment details remain visible out to approximately 285 m instead of disappearing around 135 m.
+- Soldier render rigs receive bounded distance-based visual scaling from about 1.04x close to about 1.24x at long tactical distance. This scales each render rig around its existing formation slot only; unit spacing, destination and collision remain unchanged.
+- Headgear, rifles/bayonets, hands, boots, straps, cartridge boxes and packs receive modest readability increases.
+- New PrototypeVisualReadability09I2 dynamically enlarges the procedural 09i regimental standard from roughly 1.18x at close range up to roughly 1.52x at long tactical range.
+- VIS-09I2 telemetry explicitly reports whether each procedural 09i standard is found. This makes a failed visual-layer install obvious instead of silently falling back to the 09g look.
+- Expected startup telemetry: SOLDIER-09I2, STANDARD-09I and VIS-09I2.
+- 09i2 remains rendering-only and does not alter movement, combat, morale, cohesion, Officer AI, player routes or selection.
+
 v00.00.09i1 - V3 hard-obstacle detour continuation fix
 - QA log from a direct player-controlled AI-OFF group move confirmed 1. Regiment can enter a repeat loop around a Farmhouse.
 - The captured log contains thousands of repeated NAV-V3 Detour=True entries for the same Farmhouse centre and the same detour point.
 - Root cause: after reaching the first detour point, the same hard obstacle can still block the final route. Base V3 finishes the reached detour leg and can immediately select the same/near-identical point again instead of continuing around the obstacle.
 - 09h4 manual route recovery correctly detected no progress and inserted a bypass, but V3 route sanitisation/goal adjustment could move that bypass and the base detour loop could resume.
-- New PrototypeNavigationV3DetourContinuation09I1 runs immediately after base V3 and only acts when V3 is already in a Farmhouse/Barn detour and the current detour point has effectively been reached while the real goal is still distant.
+- PrototypeNavigationV3DetourContinuation09I1 runs immediately after base V3 and only acts when V3 is already in a Farmhouse/Barn detour and the current detour point has effectively been reached while the real goal is still distant.
 - The layer chooses a new safe continuation point around the SAME active hard obstacle, validates the local leg with V3 Column navigation/path penalties, rejects local river-crossing candidates, and writes the continuation back into V3's existing NavigationState.
-- Navigation V3 remains the steering owner. 09i1 does not move/teleport the regiment and does not create a second pathfinding authority.
+- Navigation V3 remains the steering owner. The continuation layer does not teleport the regiment and does not create an independent pathfinding authority.
 - Continuation legs are bounded to 10 per active obstacle and emit explicit NAV-V3-09I1 telemetry.
 - Expected success telemetry: NAV-V3-09I1|Unit=...|Continuation=True|Obstacle=Farmhouse|FromVia=...|NextVia=...
 - This fix applies to Farmhouse and Barn hard obstacles; decorative trees and individual FencePosts remain soft/pass-through from 09h4.
 
 v00.00.09i - Soldier Visual Pass 2 / Big Graphics Buff
-- New PrototypeSoldierVisualPass09I is presentation-only and overlays the retained 09h uniform-data system.
-- Legacy primitive soldier renderers are hidden at runtime; Regiment simulation objects, formation slots and colliders remain authoritative and unchanged.
-- Representative infantry use lightweight articulated procedural rigs with improved human proportions: tapered torso, coat skirts, separate legs, boots, arms, hands, neck/head and faction-specific headgear.
-- Danish infantry receive a distinct cap/visor/band silhouette; Prussian infantry receive a stronger Pickelhaube dome/band/spike/visor silhouette.
-- Equipment pass adds backpack, crossed straps, cartridge box, optional canteen variants, improved rifle stock/barrel/bayonet and metal/wood material separation.
+- PrototypeSoldierVisualPass09I hides legacy primitive soldier renderers and rebuilds each representative infantry figure as a lightweight articulated procedural rig.
+- Improved human proportions: tapered torso, coat skirts, separate legs, boots, arms, hands, neck/head and faction-specific headgear.
+- Danish infantry receive cap/visor/band silhouette; Prussian infantry receive Pickelhaube dome/band/spike/visor silhouette.
+- Equipment: backpack, crossed straps, cartridge box, optional canteen, improved rifle stock/barrel/bayonet and metal/wood material separation.
 - Officer representative receives sash, shoulder boards and sword.
 - Standard-bearer representative receives sash/pole grip and carries no rifle.
-- Six deterministic visual variants subtly alter scale/equipment so the formation does not read as exact cloned figures.
-- Simple visual posing is added without animation-controller dependencies: march arm/leg swing, stationary ready pose and brief firing pose driven only from already-existing visual/combat state.
-- Close-detail LOD hides small equipment details beyond approximately 135 m camera distance while retaining readable body/head/rifle silhouettes.
-- Uniform Designer remains authoritative for coat, trousers, headgear, trim, straps, equipment and skin colours; 09i materials re-sync live to the existing per-regiment profile.
-- No movement, destination, combat, morale, cohesion, selection or Officer AI state is written by the 09i graphics layer.
+- Six deterministic visual variants reduce exact cloned appearance.
+- Cosmetic march arm/leg swing, ready pose and brief firing pose are driven from existing state only.
+- Uniform Designer remains authoritative for per-regiment colours.
 
 v00.00.09i - Regimental Standard Visual Pass 2
-- PrototypeRegimentalStandards09I hides the old 09g QA standard renderers while retaining the underlying system as rollback/reference code.
-- Each regiment receives a larger procedural two-sided cloth mesh with animated wind deformation.
-- Standard includes improved wooden pole, ferrule, spear-style finial, cords, two animated ribbons and fringe detail.
-- Danish and Prussian standards retain distinct national prototype devices and synchronize flag primary/secondary plus ribbon colours with the Uniform Designer profile.
-- Flag animation is presentation-only and has no morale/combat effect.
-- Historical regimental flag art remains a later source-validation task; 09i is a visual-quality prototype, not final historical artwork.
+- PrototypeRegimentalStandards09I hides the old 09g QA standard renderers while retaining the underlying rollback/reference code.
+- Each regiment receives a procedural two-sided cloth mesh with wind deformation, pole, ferrule, spear finial, cords, animated ribbons and fringe.
+- Danish and Prussian standards use different prototype national devices and follow Uniform Designer flag/ribbon colours live.
+- Standards remain presentation-only with no morale/combat effect.
 
 Retained movement/control baseline
 - v00.00.09h4 manual movement correction remains active.
-- Manual PlayerCommander routes use Column while travelling, bounded no-progress bypass recovery and the 09h4 soft FencePost pass-through policy.
+- Manual PlayerCommander routes use Column while travelling, bounded no-progress bypass recovery and soft FencePost pass-through.
 - Navigation V3 remains the sole local steering owner.
 - Navigation V4 and 09A remain runtime-disabled.
-- Decorative trees and individual fence posts are pass-through soft terrain; buildings/barns remain hard obstacles; river remains bridge-only.
+- Decorative trees and individual fence posts are pass-through soft terrain; Farmhouse/Barn remain hard obstacles; river remains bridge-only.
 - 09h3 AI march-column/deployment policy remains AI-only.
 - 09h2 sticky AI frontage remains available for AI-controlled multi-regiment attacks.
 
@@ -63,24 +69,24 @@ Retained tactical UI/control features
 - Range cone remains selected-unit ghost overlay.
 
 Known warnings / non-blocking migration items
-- Existing yellow CS0618 FindObjectsByType/FindObjectsSortMode warnings are Unity 6.6 API deprecation warnings. They do not cause the movement stall and remain scheduled for a separate compatibility cleanup.
-- Unity's Input Manager deprecation message is also non-blocking. Input System migration is a later control-platform task and is intentionally not mixed into this movement fix.
+- Yellow CS0618 FindObjectsByType/FindObjectsSortMode warnings are Unity 6.6 API deprecation warnings. They do not cause the movement stall and remain scheduled for compatibility cleanup.
+- Unity Input Manager deprecation message is non-blocking and will be handled in a later input-platform migration.
 
 Future tactical unit gate
-- Dragoons/cavalry and field artillery remain the next major non-infantry tactical unit types after visual/stability acceptance.
+- Dragoons/cavalry and field artillery remain next after visual/stability acceptance.
 - Dragoon baseline: mounted/dismounted, horse fatigue/casualties, horse-holder state and timed remount.
 - Artillery baseline: batteries/pieces, crews, horses/limbers, deploy/unlimber, ammunition, LOS/fire arcs, counter-battery and capture/abandon states.
 
-Primary 09i1 QA
+Primary 09i2 QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Visible build marker is PROJECT 1864 | v00.00.09i1 TEST.
-3. Startup Console should include SOLDIER-09I and STANDARD-09I, proving the Big Graphics Buff layer is actually running.
-4. Repeat the direct AI-OFF four-regiment group move shown in the failed test.
-5. 1. Regiment should not remain parked at the Farmhouse detour point.
-6. If the first detour point is reached while the Farmhouse still blocks the route, Console should show NAV-V3-09I1 Continuation=True with a different NextVia point.
-7. The same Farmhouse + identical Via combination must not repeat thousands of times.
-8. 09h4 MANUAL-ROUTE recovery remains available as a higher-level fallback but should normally not be required for this first-building-corner case.
-9. Buildings/barns remain hard obstacles and may not simply be crossed; river remains bridge-only.
-10. Close zoom should retain the 09i articulated soldiers, officer/standard-bearer distinction and animated procedural standards.
+2. Visible build marker is PROJECT 1864 | v00.00.09i2 TEST.
+3. Startup Console should include SOLDIER-09I2, STANDARD-09I and VIS-09I2.
+4. At ordinary tactical zoom infantry should read more clearly as people, not thin dark sticks; close zoom should reveal the full articulated/equipment pass.
+5. Regimental standards should be noticeably easier to identify from medium/long tactical zoom.
+6. Repeat the AI-OFF four-regiment manual group move through the Farmhouse area.
+7. 1. Regiment must not park indefinitely at the first Farmhouse detour point.
+8. If needed, Console should show NAV-V3-09I1 Continuation=True with a different NextVia point.
+9. Thousands of identical Farmhouse + Via detour messages are a failure.
+10. Buildings/barns remain hard obstacles; river remains bridge-only.
 11. F10 Uniform Designer and RTS box selection remain functional.
-12. Yellow CS0618 and Input Manager deprecation warnings may still appear; they are not failures for this gate.
+12. Yellow CS0618 and Input Manager deprecation warnings may remain; they are not gate failures.
