@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// v00.00.09l TEST - two visible identity standards per infantry regiment.
+// v00.00.09l1 TEST - two visible identity standards per infantry regiment.
 // Standard A = national/army identity. Standard B = regiment identity using the 1864
 // OOB metadata (Roman numeral + official/traditional name). Older single-standard
 // prototype renderers are hidden, not deleted, so rollback remains safe.
@@ -26,7 +26,7 @@ public sealed class PrototypeDualStandards09L : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeDualStandards09L>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeDualStandards_v000009l");
+        GameObject root = new GameObject("PrototypeDualStandards_v000009l1");
         root.AddComponent<PrototypeDualStandards09L>();
     }
 
@@ -60,7 +60,7 @@ public sealed class PrototypeDualStandards09L : MonoBehaviour
         {
             announced = true;
             Debug.Log(
-                "STANDARD-09L|Installed=True|Mode=Dual|NationalFlag=True|RegimentalFlag=True|" +
+                "STANDARD-09L1|Installed=True|Mode=Dual|NationalFlag=True|RegimentalFlag=True|" +
                 "RomanNumerals=True|TraditionLabels=True|LegacySingleStandardsHidden=True");
         }
     }
@@ -127,7 +127,7 @@ public sealed class PrototypeDualStandards09L : MonoBehaviour
             brass);
 
         Debug.Log(
-            "STANDARD-09L|Unit=" + oob.OfficialName1864 +
+            "STANDARD-09L1|Unit=" + oob.OfficialName1864 +
             "|Tradition=" + (string.IsNullOrEmpty(oob.TraditionalName) ? "None" : oob.TraditionalName) +
             "|National=True|Regimental=True|Roman=" + oob.RegimentalRomanNumeral);
 
@@ -136,7 +136,9 @@ public sealed class PrototypeDualStandards09L : MonoBehaviour
             Regiment = regiment,
             NationalCloth = national,
             RegimentalCloth = regimental,
-            Phase = Mathf.Abs(regiment.GetInstanceID() % 1000) * 0.013f
+            // Unity 6.6 obsoletes GetInstanceID(). A stable visual phase does not need an
+            // engine object identifier, so derive it from the regiment's starting position.
+            Phase = Mathf.Abs(regiment.transform.position.x * 0.017f + regiment.transform.position.z * 0.013f)
         };
     }
 
@@ -180,7 +182,7 @@ public sealed class PrototypeDualStandards09L : MonoBehaviour
         clothRoot.transform.SetParent(flag.transform, false);
         clothRoot.transform.localPosition = new Vector3(0f, 0f, 0f);
 
-        GameObject cloth = CreatePart(
+        CreatePart(
             clothRoot.transform,
             PrimitiveType.Cube,
             "Cloth",
