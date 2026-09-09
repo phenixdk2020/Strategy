@@ -1,9 +1,9 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.10**  
+**Aktuel designbaseline: v00.02.11**  
 **Aktuel tactical prototype baseline: P0A v00.00.09 TACTICAL COMMAND TEST**  
 **Aktuel aktive campaign-version: v00.00.11 WORK**  
-**Aktuel campaign 3D development branch: `work/v00.00.13-3d-campaign-map` — IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA**
+**Aktuel campaign 3D development branch: `work/v00.00.13h-denmark-premium-visual-pass` — IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -44,6 +44,8 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Campaign v00.00.13 Planning — 3D Strategic World & Geospatial Foundation](PROJECT-1864-Campaign-v00.00.13-Planning.md)
 - [Campaign v00.00.13 — Layered 3D Map Architecture](PROJECT-1864-Campaign-v00.00.13-3D-Map-Architecture.md)
 - [Campaign v00.00.13 3D DEV — Implementation Notes](releases/CAMPAIGN-v00.00.13-3D-DEV-NOTES.md)
+- [Campaign v00.00.13h — Denmark Premium Visual Pass](PROJECT-1864-Campaign-v00.00.13h-Premium-Visual-Pass.md)
+- [Designmanual addendum v00.02.11 — Premium Visual Baseline](PROJECT-1864-Designmanual-v00.02.11-Premium-Visual-Addendum.md)
 - [Campaign v00.00.14 Planning — Government, Research, Doctrine & Strategic AI](PROJECT-1864-Campaign-v00.00.14-Planning.md)
 - [Campaign v00.00.14 Design Supplement](PROJECT-1864-Campaign-v00.00.14-Design-Supplement.md)
 - [Campaign v00.00.15 Planning — Multi-Nation AI, Trade, Diplomacy & Alliances](PROJECT-1864-Campaign-v00.00.15-Planning.md)
@@ -210,6 +212,16 @@ Der findes også QA-prototyper på staged construction: en kaserne ved Aalborg o
 
 DEV-begrænsningerne er eksplicitte: terrænet er endnu procedural/coarse og ikke DEM/GIS, coastlines er grove, strategic links er endnu node-to-node og ikke historiske route polylines, rail/road classification er foreløbig, construction QA-projekterne er endnu ikke koblet til fuld økonomi/resource queue, og production troop-train lifecycle, final land cover, final weather, chunk streaming/floating origin mangler stadig.
 
+### Campaign v00.00.13h — Premium visual baseline
+
+Den visuelle retning for campaign-kortet er nu **Historic Miniature Grand Strategy Diorama**: historisk, seriøs, læsbar og stemningsfuld 3D-miniaturepræsentation, uden cartoon-look og uden krav om fotorealisme. v13h er den første build, hvor grafisk kvalitet er et selvstændigt acceptance-mål frem for alene teknisk geometri/QA.
+
+Danmark-first-reglen fastholdes under denne milestone: kun noder med `CampaignMapRegion.Denmark` må vises som settlements, labels, formationsmarkører og presentation-links. Sverige, Norge, Finland og Tyskland bevares i simulationen, men skjules visuelt indtil Denmark-baselinen er godkendt.
+
+Premium-laget må tilføre dæmpede terrain-materialer, deterministic fields/hedgerows/woodland clusters, mørkere og glattere vand, richer settlement-miniatures, tydelig road/rail/ferry-hierarki, construction-site dressing, warm light, soft shadows, restrained fog samt elegant semantic label rendering. Alt dette er **presentation-only** og må ikke ændre route distance, ETA, movement, campaign time, logistics, AI eller battle state.
+
+Aalborg-kasernen og Aarhus-farmen bevarer deres eksisterende staged campaign-time construction som authoritative state. Premium dressing må gøre sites visuelt rigere, men må ikke vise et projekt som færdigt før dets build progress tillader det. Den detaljerede version-/QA-spec ligger i [Campaign v00.00.13h — Denmark Premium Visual Pass](PROJECT-1864-Campaign-v00.00.13h-Premium-Visual-Pass.md).
+
 ### Government, ministre og granular AI-delegation
 
 Et senere nationalt decision layer gør det muligt at styre landet direkte eller delegere konkrete ressortområder til AI. Baseline modes er `MANUAL`, `ADVISORY`, `ASSISTED` og `AUTO`. Delegation er granular: spilleren kan eksempelvis automatisere economy/logistics, men selv styre General Staff plans, eller omvendt.
@@ -262,6 +274,7 @@ Samme campaign seed skal kunne reproducere samme variation for QA/save-load. Det
 
 ## Versionshistorik
 
+- **v00.02.11 — Denmark Premium Visual Baseline** — Fastlægger `Historic Miniature Grand Strategy Diorama` som campaign-kortets visuelle retning og gør Denmark-first premium presentation til en eksplicit quality gate. Godkender premium terrain palette, deterministic fields/hedgerows/woodland dressing, premium water, richer settlement miniatures, road/rail/ferry visual hierarchy, construction dressing, warm light/soft shadows/fog, elegant Denmark-only semantic labels og tættere kamera. Hele laget er presentation-only og må ikke ændre simulation state, ETA, route distance eller AI.
 - **v00.02.10 — Strategic World, 3D Map, Government/AI & Multi-Nation baseline** — Konsoliderer beslutninger siden v00.02.09: persistent infrastructure, finite rolling stock og route-following troop trains; slowest-required-component mobility, normal/forced march og explainable ETA; geospatial distance contract hvor Unity units aldrig er authoritative km; layered 3D strategic world med terrain/hydrology/land cover/infrastructure/settlements/entities/living world/overlays/atmosphere/UI; første v00.00.13 3D DEV implementation med procedural terrain, 3D settlements, layer controls og campaign-time staged barracks/farm construction; government/ministers med MANUAL/ADVISORY/ASSISTED/AUTO, research/doctrine og explainable no-cheat strategic AI; multi-nation AI parity, fysisk international trade, diplomacy/alliance principles samt seed-baseret historisk plausibel replay variation.
 - **v00.02.09 — Campaign Living World design baseline** — Godkender state-drevne ambient-animationer på campaign-kortet: systemisk staged construction for kaserner/farms/roads/rail/depots/fortifications, workers og road/rail works, tog, skibe/færger, road/supply traffic, camps, couriers/scouts/supply columns, sæsonbaseret landbrug, dag/nat/vejr, battle aftermath og control-change visuals. Fastlægger semantic animation LOD og reglen om, at living-world visuals aldrig må være authoritative simulation state eller lække skjult information. Detaljer registreret som B-360–B-369.
 - **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile` på alle fire regimenter; `I` toggler player delegation; Defensive/Balanced/Offensive doctrine og 0–100 commander aggression intent; preussiske Officer AI-angribere med preferred-range/manoeuvre/stabilise adfærd; directional 120° infantry fire fan; HOLD/CLOSE/MEDIUM/LONG fire discipline; continuous closer-is-easier accuracy; battlefield 360x240; Pause/x0,5/x1/x2/x5/x20 og battle clock. v00.00.08 reload/0-hit/`Ramte N`/casualty-visual skal fortsat regressionsbestå. De senere besluttede systemer omfatter segmenteret fire eligibility, fysiske HQ-entities, semantic zoom, courier/order progress/interception, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model og fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
