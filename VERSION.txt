@@ -1,30 +1,27 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13i2
-Build status: DENMARK GIS TERRAIN FOUNDATION DEV / MAP-ONLY / UNITY MODULE FIX / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK GIS TERRAIN FOUNDATION V13I2
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2
+Prototype version: v00.00.13j
+Build status: HISTORICAL 3D MAP FOUNDATION DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN HISTORICAL 3D MAP FOUNDATION V13J
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
-v13i map foundation: previous hand-built Denmark presentation layers are disabled and replaced by a clean GIS-backed runtime root V013I_DENMARK_GIS_FOUNDATION
-v13i DEM: elevation is loaded from Mapzen/Terrain Tiles Terrarium PNG tiles hosted in the AWS public dataset at zoom 8; downloaded tiles are cached under Application.persistentDataPath/PROJECT1864/TerrainCache
-v13i offline rule: if a DEM tile cannot be downloaded or read from cache, a deterministic low-relief fallback is used so CampaignMap still renders and can be QA tested
-v13i geospatial rule: latitude/longitude and geodesic route state remain authoritative; downloaded elevation affects only Unity presentation Y and never ETA or strategic distance
-v13i coastline: Denmark land mask continues to use the Natural Earth 1:50m DNK coastline scaffold already tracked in CampaignDenmarkGeography
-v13i hydrology pilot: Limfjorden, Mariager Fjord, Randers Fjord, Horsens Fjord, Vejle Fjord, Kolding Fjord, Odense Fjord, Roskilde Fjord, Isefjord, Ringkøbing Fjord and Nissum Fjord are rendered/cut as explicit water corridors in the Denmark GIS pilot
-v13i Aalborg: Aalborg is rendered deliberately as a Limfjord harbour city with quays, warehouses, small boats/ferry and a decorative Nørresundby north-bank settlement; no modern Limfjord bridge is fabricated
-v13i barracks: Aalborg receives a clearly visible construction/barracks compound dressing while CampaignConstructionV013 remains authoritative for staged project progression
-v13i infrastructure: generic graph-edge rendering is hidden; Denmark pilot roads/ferries are rebuilt explicitly so no straight Roskilde-Fredericia land line crosses open water; Nyborg-Korsør and Fredericia-Middelfart are rendered as ferry crossings
-v13i rail rule: rail is not promoted visually from generic node flags in this pilot; historical 1864 rail validation is deferred instead of drawing modern/future connections as fact
-v13i settlements: only Danish strategic settlements are rendered, with lightweight 3D town dioramas and semantic labels
-v13i visual direction: Historic Miniature Grand Strategy Diorama remains the target, but terrain and water now come from a GIS/elevation foundation rather than the old polygon-only presentation
-v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition are temporarily disabled while Denmark map visuals are rebuilt
-v13h1 clock rule remains active: campaign clock and construction progression continue through pause/x1/x5/x20/reset
-v13i1 warning cleanup: active CampaignMapOnlyModeV013H1 and CampaignDenmarkV013DLegacyGate calls use the Unity 6.6 FindObjectsByType<T>() API without obsolete FindObjectsSortMode parameters
-v13i1 legacy warning policy: CS0618 is temporarily suppressed at compiler response level for disabled legacy presentation layers that are retained only for compatibility while the GIS foundation replaces them; this is not a permanent substitute for retiring/migrating legacy files
-v13i2 module fix: Packages/manifest.json explicitly enables com.unity.modules.imageconversion, com.unity.modules.unitywebrequest and com.unity.modules.unitywebrequesttexture required by GIS PNG terrain tile loading and cache decode in Unity 6.6
+v13j map foundation: waits for the v13i Terrarium cache, then rebuilds mainland Denmark as one smooth 520x340 terrain mesh instead of visible 40x40 per-tile terrain blocks
+v13j terrain rule: DEM elevation is bilinear sampled from cached Terrarium PNG tiles; missing tiles use deterministic fallback elevation; vertical exaggeration is reduced for more believable Danish relief
+v13j mesh rule: one global mesh + one shared cartographic material removes alternating tile colours and visible tile seams from the previous GIS pilot
+v13j cartography rule: UVs cover the full Denmark map envelope. If Application.persistentDataPath/PROJECT1864/HistoricalMap/denmark_1864.png exists it is draped over the 3D terrain; otherwise a seamless procedural cartographic texture is used as development fallback
+v13j historical-data rule: the procedural fallback is presentation only and is not claimed to be an authentic 1864 map. Final historical raster/vector data remains a separate source layer
+v13j hydrology rule: Limfjorden and the existing v13i fjord pilot continue to cut the terrain mask and render as water context
+v13j settlement rule: oversized v13i city dioramas are hidden and replaced with much smaller 3D town miniatures; only Danish campaign nodes render
+v13j Aalborg rule: Aalborg remains a Limfjord harbour city, but harbour, quays, warehouses and barracks are rescaled to local-detail size rather than strategic-map blocks
+v13j farm rule: Aarhus receives a small farm compound; legacy oversized QA farm/barracks renderers are hidden while authoritative construction state is preserved
+v13j infrastructure rule: corrected v13i road/ferry network is retained with thinner map-scale rendering; the invalid straight Roskilde-Fredericia over-water road remains excluded
+v13j camera rule: campaign camera supports cursor-centric scroll zoom, close GIS terrain clearance, near clip 0.02 and middle-mouse panning for a Google-Maps-like inspection workflow
+v13j label rule: v13j owns Denmark-only semantic labels after the v13i presentation component is disabled
+v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition remain temporarily disabled while map presentation is under QA
+Input warning: legacy Input Manager remains temporarily enabled because tactical and older campaign controls still use UnityEngine.Input. The Unity deprecation warning is accepted until a dedicated project-wide Input System migration is performed; v13j does not risk breaking tactical controls merely to hide the warning
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
-QA state: IMPLEMENTERET / AFVENTER UNITY PACKAGE RESOLVE + COMPILE + RUNTIME QA
+QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 QA owner: local Unity compile/runtime verification by Allan
