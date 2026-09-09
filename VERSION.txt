@@ -1,26 +1,27 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13j
-Build status: HISTORICAL 3D MAP FOUNDATION DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN HISTORICAL 3D MAP FOUNDATION V13J
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j
+Prototype version: v00.00.13k
+Build status: LIVE CARTOGRAPHIC 3D DRAPE DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN LIVE CARTOGRAPHIC 3D DRAPE V13K
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
-v13j map foundation: waits for the v13i Terrarium cache, then rebuilds mainland Denmark as one smooth 520x340 terrain mesh instead of visible 40x40 per-tile terrain blocks
-v13j terrain rule: DEM elevation is bilinear sampled from cached Terrarium PNG tiles; missing tiles use deterministic fallback elevation; vertical exaggeration is reduced for more believable Danish relief
-v13j mesh rule: one global mesh + one shared cartographic material removes alternating tile colours and visible tile seams from the previous GIS pilot
-v13j cartography rule: UVs cover the full Denmark map envelope. If Application.persistentDataPath/PROJECT1864/HistoricalMap/denmark_1864.png exists it is draped over the 3D terrain; otherwise a seamless procedural cartographic texture is used as development fallback
-v13j historical-data rule: the procedural fallback is presentation only and is not claimed to be an authentic 1864 map. Final historical raster/vector data remains a separate source layer
-v13j hydrology rule: Limfjorden and the existing v13i fjord pilot continue to cut the terrain mask and render as water context
-v13j settlement rule: oversized v13i city dioramas are hidden and replaced with much smaller 3D town miniatures; only Danish campaign nodes render
-v13j Aalborg rule: Aalborg remains a Limfjord harbour city, but harbour, quays, warehouses and barracks are rescaled to local-detail size rather than strategic-map blocks
-v13j farm rule: Aarhus receives a small farm compound; legacy oversized QA farm/barracks renderers are hidden while authoritative construction state is preserved
-v13j infrastructure rule: corrected v13i road/ferry network is retained with thinner map-scale rendering; the invalid straight Roskilde-Fredericia over-water road remains excluded
-v13j camera rule: campaign camera supports cursor-centric scroll zoom, close GIS terrain clearance, near clip 0.02 and middle-mouse panning for a Google-Maps-like inspection workflow
-v13j label rule: v13j owns Denmark-only semantic labels after the v13i presentation component is disabled
-v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition remain temporarily disabled while map presentation is under QA
-Input warning: legacy Input Manager remains temporarily enabled because tactical and older campaign controls still use UnityEngine.Input. The Unity deprecation warning is accepted until a dedicated project-wide Input System migration is performed; v13j does not risk breaking tactical controls merely to hide the warning
+v13k map rule: a real cartographic tile layer is draped over the smooth v13j 3D terrain instead of relying on generated green terrain colours as the primary visual map.
+v13k live provider rule: default DEV provider is OpenStreetMap Standard using viewport-only interactive requests. The client requests only a 3x3 tile set around the current camera target and never prefetches the full country or multiple zoom stacks.
+v13k cache rule: tiles already viewed are cached locally for 14 days under Application.persistentDataPath/PROJECT1864/MapCache/interactive and reused during normal revisits.
+v13k provider override: Application.persistentDataPath/PROJECT1864/MapProvider/provider.json may override URL template, attribution and User-Agent without a code change.
+v13k local historical rule: if Application.persistentDataPath/PROJECT1864/HistoricalMap/denmark_1864.png exists, v13j uses that full historical raster and v13k skips live tiles entirely.
+v13k 3D drape rule: each visible map tile is converted to a subdivided conforming mesh, sampled against V013J_SmoothTerrain, and is placed slightly above terrain/water to retain the 3D relief while displaying actual map cartography.
+v13k route presentation rule: prototype GIS_Road_/GIS_Ferry_ renderers are hidden while the cartographic map is active. Campaign route/simulation data is preserved; this removes visually invalid straight lines over water from the map QA view.
+v13k settlement presentation rule: prototype city dioramas and v13j semantic labels are hidden while live map cartography is active to avoid duplicate city names and city blocks floating in water. Cartographic city geometry/labels become the temporary visual reference.
+v13k Aalborg rule: a separate compact Aalborg Kaserne QA landmark is snapped to the nearest valid terrain surface on the south side of Limfjorden and appears only at close zoom.
+v13k Aarhus rule: a compact Aarhus Farm QA landmark is likewise terrain-anchored and close-zoom only.
+v13k camera rule: near clip 0.005, minimum height 0.22, low terrain clearance and zoom-dependent map tile levels z7-z11 allow significantly closer Google-Maps-like inspection than earlier campaign prototypes.
+v13k attribution rule: when live OpenStreetMap tiles are active, visible OpenStreetMap attribution is always rendered on-screen.
+v13k historical-accuracy rule: OpenStreetMap Standard is a present-day development basemap only and must not be treated as authoritative 1864 road/building history. Final historical cartography is expected to use a licensed/local historical raster or another approved provider.
+v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition remain temporarily disabled while map presentation is under QA.
+Input warning: legacy Input Manager remains temporarily enabled because tactical and older campaign controls still use UnityEngine.Input. A dedicated project-wide Input System migration remains separate work.
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
