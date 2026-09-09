@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 // v00.00.09k TEST - company/battalion OOB attached to each full-scale regiment.
@@ -107,10 +108,12 @@ public sealed class PrototypeRegimentOOB09K : MonoBehaviour
     }
 }
 
-[DefaultExecutionOrder(-10500)]
+[DefaultExecutionOrder(-12000)]
 public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
 {
     private bool installed;
+    private FieldInfo initialStrengthField;
+    private FieldInfo currentStrengthField;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -122,27 +125,95 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
         root.AddComponent<PrototypeFullScaleOOBManager09K>();
     }
 
+    private void Awake()
+    {
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        initialStrengthField = typeof(Regiment).GetField("<InitialStrength>k__BackingField", flags);
+        currentStrengthField = typeof(Regiment).GetField("<CurrentStrength>k__BackingField", flags);
+
+        if (initialStrengthField == null || currentStrengthField == null)
+        {
+            Debug.LogError("OOB-09K|Installed=False|Reason=RegimentStrengthBackingFieldsNotFound");
+            enabled = false;
+        }
+    }
+
     private void Update()
     {
         if (installed)
             return;
 
+        // 09k returns the tactical scenario to the original four regiments. The old
+        // expanded OOB manager would otherwise add four more 570-600 man QA regiments
+        // before the full-scale pilot can establish the new baseline.
+        PrototypeExpandedOOBManager expanded = Object.FindAnyObjectByType<PrototypeExpandedOOBManager>();
+        if (expanded != null && expanded.enabled)
+            expanded.enabled = false;
+
         BattleManager battle = BattleManager.Instance;
         if (battle == null || battle.Regiments == null || battle.Regiments.Count < 4)
             return;
 
+        ApplyStrength("1. Regiment", 1620);
+        ApplyStrength("5. Regiment", 1587);
+        ApplyStrength("8th Regiment", 2460);
+        ApplyStrength("18th Regiment", 2440);
+
+        int configured = 0;
         foreach (Regiment regiment in battle.Regiments)
         {
-            if (regiment == null)
+            if (regiment == null || !IsPilotRegiment(regiment.RegimentName))
                 continue;
 
             PrototypeRegimentOOB09K oob = regiment.GetComponent<PrototypeRegimentOOB09K>();
             if (oob == null)
                 oob = regiment.gameObject.AddComponent<PrototypeRegimentOOB09K>();
             oob.Build(regiment);
+            configured++;
         }
 
-        installed = true;
-        Debug.Log("OOB-09K|Installed=True|Scale=FullStrength|CommandLevel=Regiment|InternalLevels=Battalion+Company");
+        installed = configured == 4;
+        if (installed)
+        {
+            Debug.Log(
+                "OOB-09K|Installed=True|Scenario=FourFullScaleRegiments|" +
+                "Denmark=2|Prussia=2|ApproxInfantry=8107|" +
+                "CommandLevel=Regiment|InternalLevels=Battalion+Company");
+        }
+    }
+
+    private void ApplyStrength(string unitName, int strength)
+    {
+        Regiment regiment = FindRegiment(unitName);
+        if (regiment == null)
+            return;
+
+        initialStrengthField.SetValue(regiment, strength);
+        currentStrengthField.SetValue(regiment, strength);
+
+        Debug.Log("OOB-09K|Unit=" + unitName + "|FullStrengthApplied=" + strength);
+    }
+
+    private static bool IsPilotRegiment(string name)
+    {
+        return name == "1. Regiment" ||
+               name == "5. Regiment" ||
+               name == "8th Regiment" ||
+               name == "18th Regiment";
+    }
+
+    private static Regiment FindRegiment(string unitName)
+    {
+        BattleManager battle = BattleManager.Instance;
+        if (battle == null || battle.Regiments == null)
+            return null;
+
+        foreach (Regiment regiment in battle.Regiments)
+        {
+            if (regiment != null && regiment.RegimentName == unitName)
+                return regiment;
+        }
+
+        return null;
     }
 }
