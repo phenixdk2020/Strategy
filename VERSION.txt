@@ -86,4 +86,5 @@ Design supplements:
 - docs/parts/part-09l2-company-tactical-control.md
 - docs/parts/part-09l3-reduced-qa-battle.md
 - docs/parts/part-09l4-company-authority-guidons.md
+- docs/parts/part-09l5-independent-company-movement.md
 - docs/parts/part-09m-oob-designer-campaign.md
