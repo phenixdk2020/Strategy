@@ -1,20 +1,21 @@
 PROJECT 1864 - Grand Campaign Prototype
 Prototype version: v00.00.13g
-Build status: DENMARK LABEL + ZOOM FIX DEV / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK LABEL + ZOOM FIX V13G
+Build status: DENMARK-ONLY LABEL + CLOSE ZOOM FIX DEV / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK-ONLY LABEL + CLOSE ZOOM FIX V13G
 Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
 v13g foundation: retains the corrected v13f Denmark landmesh and v13e clean sea/infrastructure/settlement foundation
-v13g legacy-label fix: CampaignMapController legacy all-Europe node labels are force-suppressed after its GUI styles are initialized, leaving v13f Denmark-only semantic labels as the single label owner
-v13g foreign-marker fix: non-focus legacy node/control/settlement renderers are kept hidden during Denmark QA
-v13g zoom fix: CampaignMapCameraController can now opt out of the hidden legacy CampaignTerrainV013 floor and use an independent clearance value
-v13g Denmark camera: legacy terrain floor is disabled; MinHeight=10 and TerrainClearance=6.5 enable materially closer inspection of cities, roads, construction and terrain
-v13g camera safety: the legacy terrain-floor behavior remains the default for other contexts; the lower floor is enabled only by the Denmark presentation pass
-v13g labels: v13f three-tier Denmark label LOD remains authoritative; Swedish/Norwegian/Finnish/German all-Europe labels must not appear in Denmark focus
-v13g construction: Aalborg barracks and Aarhus farm remain staged campaign-time projects
+v13g single-label fix: CampaignMapController all-Europe labels are suppressed and v13f GUI is disabled after its landmesh is built; v13g is the single visible label owner
+v13g Denmark-only presentation: only nodes whose authoritative Region is CampaignMapRegion.Denmark may show labels, settlement renderers, legacy markers and formation markers in the current QA view
+v13g Germany/Scandinavia rule: Sweden, Norway, Finland and Germany remain in simulation data but are visually hidden for this Denmark-first milestone; this includes Flensburg and Schleswig for now
+v13g link filtering: v13e clean strategic links are visible only when both endpoints are Danish-region nodes
+v13g zoom fix: CampaignMapCameraController can opt out of the hidden legacy CampaignTerrainV013 floor and use an independent presentation clearance
+v13g Denmark camera: UseLegacyTerrainFloor=false, MinHeight=8 and TerrainClearance=5.5 enable materially closer inspection of cities, roads, construction and terrain
+v13g camera safety: legacy terrain-floor behavior remains the default outside the Denmark clean presentation
+v13g construction: Aalborg barracks and Aarhus farm remain staged campaign-time projects and continue to be grounded
 Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13g
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
