@@ -1,22 +1,24 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13g
-Build status: DENMARK-ONLY LABEL + CLOSE ZOOM FIX DEV / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK-ONLY LABEL + CLOSE ZOOM FIX V13G
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g
+Prototype version: v00.00.13h
+Build status: DENMARK PREMIUM VISUAL DEV / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK PREMIUM VISUAL V13H
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
-v13g foundation: retains the corrected v13f Denmark landmesh and v13e clean sea/infrastructure/settlement foundation
-v13g single-label fix: CampaignMapController all-Europe labels are suppressed and v13f GUI is disabled after its landmesh is built; v13g is the single visible label owner
-v13g Denmark-only presentation: only nodes whose authoritative Region is CampaignMapRegion.Denmark may show labels, settlement renderers, legacy markers and formation markers in the current QA view
-v13g Germany/Scandinavia rule: Sweden, Norway, Finland and Germany remain in simulation data but are visually hidden for this Denmark-first milestone; this includes Flensburg and Schleswig for now
-v13g link filtering: v13e clean strategic links are visible only when both endpoints are Danish-region nodes
-v13g zoom fix: CampaignMapCameraController can opt out of the hidden legacy CampaignTerrainV013 floor and use an independent presentation clearance
-v13g Denmark camera: UseLegacyTerrainFloor=false, MinHeight=8 and TerrainClearance=5.5 enable materially closer inspection of cities, roads, construction and terrain
-v13g camera safety: legacy terrain-floor behavior remains the default outside the Denmark clean presentation
-v13g construction: Aalborg barracks and Aarhus farm remain staged campaign-time projects and continue to be grounded
-Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13g
+v13h visual direction: Historic Miniature Grand Strategy Diorama — serious, historical, readable, premium 3D miniature presentation; not cartoon and not photorealistic
+v13h foundation: retains corrected v13f Denmark landmesh, v13e clean sea/infrastructure base and v13g Denmark-only presentation/close-zoom rules
+v13h terrain: corrected Denmark landmesh receives restrained grass/meadow/heath materials plus deterministic field patches and hedgerows; low-relief presentation remains non-authoritative
+v13h water: clean sea receives darker blue premium material, high smoothness and subtle time-based colour breathing; water remains presentation-only
+v13h vegetation: deterministic Danish woodland clusters use compact trunk/crown miniatures and avoid major city centres
+v13h settlements: old Denmark settlement miniatures are hidden and replaced with richer city dioramas with houses, church/tower, station/platform when rail is present and small port piers when port is present
+v13h infrastructure: Denmark-only road/rail/ferry renderers are retained but retuned with separate visual materials and clearer hierarchy; foreign links stay hidden
+v13h construction: Aalborg barracks and Aarhus farm staged simulation projects remain authoritative; premium perimeter/fence/material/field dressing is added without changing build progress
+v13h atmosphere: warm directional light, soft shadows, restrained linear fog and tighter Denmark composition
+v13h labels: v13h becomes sole visible label owner, uses shadowed text without heavy black boxes, semantic zoom and Denmark-only region filtering
+v13h camera: Home framing tightened to Denmark; close zoom remains available with hidden legacy terrain floor disabled
+Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13h
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
