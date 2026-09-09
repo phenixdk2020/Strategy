@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 [DefaultExecutionOrder(20000)]
 public sealed class CampaignBuildVersionOverlay : MonoBehaviour
 {
-    public const string CampaignVersion = "v00.00.13i1";
-    public const string CampaignChannel = "DENMARK GIS + UNITY 6.6 WARNING CLEANUP DEV";
+    public const string CampaignVersion = "v00.00.13i2";
+    public const string CampaignChannel = "DENMARK GIS + UNITY MODULE FIX DEV";
 
     private GUIStyle style;
 
@@ -19,7 +19,7 @@ public sealed class CampaignBuildVersionOverlay : MonoBehaviour
         if (UnityEngine.Object.FindAnyObjectByType<CampaignBuildVersionOverlay>() != null)
             return;
 
-        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013i1");
+        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013i2");
         root.AddComponent<CampaignBuildVersionOverlay>();
     }
 
