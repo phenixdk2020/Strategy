@@ -1,0 +1,8 @@
+PROJECT 1864 CAMPAIGN v00.00.13i2
+
+- Added com.unity.modules.imageconversion 1.0.0.
+- Added com.unity.modules.unitywebrequest 1.0.0.
+- Added com.unity.modules.unitywebrequesttexture 1.0.0.
+- Fix target: Texture2D.LoadImage, UnityWebRequest, UnityWebRequestTexture and DownloadHandlerTexture compile errors in CampaignDenmarkGisFoundationV013I.cs.
+- No tactical code changes.
+- MAP-ONLY remains enabled.
