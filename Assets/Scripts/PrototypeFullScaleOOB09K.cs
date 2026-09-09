@@ -39,13 +39,13 @@ public sealed class PrototypeRegimentOOB09K : MonoBehaviour
     public int RegimentalStaffStrength { get; private set; }
     public int CompanyCount { get; private set; }
 
-    // Historical/data identity used by 09l flags and later OOB Designer.
     public string OfficialName1864 { get; private set; }
     public string TraditionalName { get; private set; }
     public string HistoricalLineage { get; private set; }
     public string RegimentalRomanNumeral { get; private set; }
     public int AuthorizedStrength { get; private set; }
     public int PresentStrength => Regiment != null ? Regiment.CurrentStrength : 0;
+    public string DisplayName => string.IsNullOrEmpty(OfficialName1864) ? (Regiment != null ? Regiment.RegimentName : name) : OfficialName1864;
 
     private readonly List<BattalionState> battalions = new List<BattalionState>();
 
@@ -97,12 +97,33 @@ public sealed class PrototypeRegimentOOB09K : MonoBehaviour
             battalions.Add(battalion);
         }
 
+        LogIdentity();
+    }
+
+    public void OverrideHistoricalIdentity(
+        string officialName1864,
+        string traditionalName,
+        string lineage,
+        string romanNumeral)
+    {
+        OfficialName1864 = officialName1864;
+        TraditionalName = traditionalName;
+        HistoricalLineage = lineage;
+        RegimentalRomanNumeral = romanNumeral;
+        LogIdentity();
+    }
+
+    private void LogIdentity()
+    {
+        if (Regiment == null)
+            return;
+
         Debug.Log(
-            "OOB-09L|Unit=" + regiment.RegimentName +
+            "OOB-09L|Technical=" + Regiment.RegimentName +
             "|Official=" + OfficialName1864 +
             "|Tradition=" + (string.IsNullOrEmpty(TraditionalName) ? "None" : TraditionalName) +
-            "|Strength=" + regiment.InitialStrength +
-            "|Battalions=" + battalionCount +
+            "|Strength=" + Regiment.InitialStrength +
+            "|Battalions=" + battalions.Count +
             "|Companies=" + CompanyCount +
             "|Staff=" + RegimentalStaffStrength +
             "|CompanyData=True");
@@ -124,18 +145,10 @@ public sealed class PrototypeRegimentOOB09K : MonoBehaviour
                 RegimentalRomanNumeral = "I";
                 break;
             case "5. Regiment":
-                // Kept as reusable historical identity for OOB Designer even though
-                // the active 09l brigade pilot uses 1. + 11. Regiment.
                 OfficialName1864 = "5. Infanteri-Regiment";
                 TraditionalName = "Sjællandske Livregiment";
                 HistoricalLineage = "Sjællandske Regiment -> Kronprinsens Regiment -> Kongens Regiment";
                 RegimentalRomanNumeral = "V";
-                break;
-            case "11. Regiment":
-                OfficialName1864 = "11. Infanteri-Regiment";
-                TraditionalName = "Falstersk/Jysk tradition";
-                HistoricalLineage = "Falsterske Regiment -> Aalborgske Infanteriregiment -> 3. Jyske Infanteriregiment";
-                RegimentalRomanNumeral = "XI";
                 break;
             case "8th Regiment":
                 OfficialName1864 = "8th Regiment (Prussia QA)";
@@ -166,7 +179,6 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
     private bool installed;
     private FieldInfo initialStrengthField;
     private FieldInfo currentStrengthField;
-    private FieldInfo regimentNameField;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -183,11 +195,10 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         initialStrengthField = typeof(Regiment).GetField("<InitialStrength>k__BackingField", flags);
         currentStrengthField = typeof(Regiment).GetField("<CurrentStrength>k__BackingField", flags);
-        regimentNameField = typeof(Regiment).GetField("<RegimentName>k__BackingField", flags);
 
-        if (initialStrengthField == null || currentStrengthField == null || regimentNameField == null)
+        if (initialStrengthField == null || currentStrengthField == null)
         {
-            Debug.LogError("OOB-09L|Installed=False|Reason=RegimentBackingFieldsNotFound");
+            Debug.LogError("OOB-09L|Installed=False|Reason=RegimentStrengthBackingFieldsNotFound");
             enabled = false;
         }
     }
@@ -205,22 +216,15 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
         if (battle == null || battle.Regiments == null || battle.Regiments.Count < 4)
             return;
 
-        // The old bootstrap creates 5. Regiment. 09l repurposes that second Danish
-        // slot before Officer AI installs so the pilot is the historically documented
-        // 7. Brigade: 1. + 11. Regiment. This avoids rebuilding the stable battlefield
-        // bootstrap while keeping every later system on the correct public identity.
-        RenameRegiment("5. Regiment", "11. Regiment");
-
-        // Approximate strengths around 1 Feb 1864 from the current historical working paper.
+        // The technical 09k slot remains named 5. Regiment so the stable 1:1 renderer
+        // keeps working. OOB identity overrides it to historical 11. Infanteri-Regiment.
         ApplyStrength("1. Regiment", 1540);
-        ApplyStrength("11. Regiment", 1584);
-
-        // Preussian pair remains explicitly QA until a date-specific brigade source is locked.
+        ApplyStrength("5. Regiment", 1584);
         ApplyStrength("8th Regiment", 2460);
         ApplyStrength("18th Regiment", 2440);
 
         SetPose("1. Regiment", new Vector3(-122f, 0f, -68f), Quaternion.Euler(0f, 90f, 0f));
-        SetPose("11. Regiment", new Vector3(-122f, 0f, 68f), Quaternion.Euler(0f, 90f, 0f));
+        SetPose("5. Regiment", new Vector3(-122f, 0f, 68f), Quaternion.Euler(0f, 90f, 0f));
         SetPose("8th Regiment", new Vector3(122f, 0f, -68f), Quaternion.Euler(0f, -90f, 0f));
         SetPose("18th Regiment", new Vector3(122f, 0f, 68f), Quaternion.Euler(0f, -90f, 0f));
 
@@ -235,6 +239,15 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
                 oob = regiment.gameObject.AddComponent<PrototypeRegimentOOB09K>();
             oob.Build(regiment);
 
+            if (regiment.RegimentName == "5. Regiment")
+            {
+                oob.OverrideHistoricalIdentity(
+                    "11. Infanteri-Regiment",
+                    "Falstersk/Jysk tradition",
+                    "Falsterske Regiment -> Aalborgske Infanteriregiment -> 3. Jyske Infanteriregiment",
+                    "XI");
+            }
+
             if (regiment.GetComponent<PrototypeOfficerObjective09K>() == null)
                 regiment.gameObject.AddComponent<PrototypeOfficerObjective09K>();
 
@@ -246,20 +259,10 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
         {
             Debug.Log(
                 "OOB-09L|Installed=True|Scenario=HistoricalDanish7BrigadeVsPrussianQABrigade|" +
-                "Denmark=1.Regiment(1540)+11.Regiment(1584)|Prussia=8th(2460)+18th(2440)|" +
-                "InfantryTotal=8024|InternalLevels=Battalion+Company|HistoricalIdentity=True");
+                "Denmark=1.Infanteri-Regiment(1540)+11.Infanteri-Regiment(1584)|" +
+                "Prussia=8th(2460)+18th(2440)|InfantryTotal=8024|" +
+                "InternalLevels=Battalion+Company|StableTechnicalKeys=True");
         }
-    }
-
-    private void RenameRegiment(string oldName, string newName)
-    {
-        Regiment regiment = FindRegiment(oldName);
-        if (regiment == null || FindRegiment(newName) != null)
-            return;
-
-        regimentNameField.SetValue(regiment, newName);
-        regiment.gameObject.name = newName;
-        Debug.Log("OOB-09L|Rename=" + oldName + "->" + newName + "|Reason=Historical7BrigadePilot");
     }
 
     private void ApplyStrength(string unitName, int strength)
@@ -270,7 +273,7 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
 
         initialStrengthField.SetValue(regiment, strength);
         currentStrengthField.SetValue(regiment, strength);
-        Debug.Log("OOB-09L|Unit=" + unitName + "|FullStrengthApplied=" + strength);
+        Debug.Log("OOB-09L|TechnicalUnit=" + unitName + "|FullStrengthApplied=" + strength);
     }
 
     private static void SetPose(string unitName, Vector3 position, Quaternion rotation)
@@ -288,7 +291,7 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
     private static bool IsPilotRegiment(string name)
     {
         return name == "1. Regiment" ||
-               name == "11. Regiment" ||
+               name == "5. Regiment" ||
                name == "8th Regiment" ||
                name == "18th Regiment";
     }
