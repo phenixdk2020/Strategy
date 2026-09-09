@@ -1,13 +1,21 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.08**  
-**Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**
+**Aktuel designbaseline: v00.02.09**  
+**Aktuel tactical status: v00.00.09l5 FROZEN QA — CLEAN COMPANY REBUILD REQUIRED**
 
-Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
+Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. GitHub-Markdown er den løbende designmæssige source of truth.
+
+## Current consolidated reference
+
+Efter 09l5-company-QA er den aktuelle tværgående arkitektur konsolideret i Strategy Tools:
+
+- [Current consolidated design manual](../tools/strategy-tools/PROJECT-1864-CURRENT-DESIGN-MANUAL.md)
+- [1864 Army / OOB working reference](../tools/strategy-tools/ARMY-1864-OOB-REFERENCE.md)
+- [09l5 Company architecture review and recovery](parts/part-09l5-company-rebuild-recovery.md)
+
+**Vigtig designbeslutning:** Company forbliver den mindste normale uafhængigt kontrollerbare infanteriformation. Det er 09l2–09l5 runtime-layeringen oven på en Regiment-centreret arkitektur, der er forkastet. Der må ikke lægges flere compatibility-/authority-lag oven på 09l5; næste tactical company implementation skal bygges rent med stable Unit IDs, uafhængige company world entities, én steering owner og company-owned combat.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
-
-Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00.00.09**, officerstats, AI difficulty, skydning/fire policy, tactical command-menu, kendte begrænsninger og den fulde Unity acceptance-test ligger i [P0A v00.00.09 Release Notes](releases/P0A-v00.00.09-RELEASE-NOTES.md).
 
 ## Indhold
 
@@ -24,6 +32,8 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 6: 29–36 — Milepæle, immediate prototype sequence, vertical slice, risici, datarelationer, historisk grounding og designbeslutninger](parts/part-06-29-36.md)
 - [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
+- [09l5 — Company architecture review and recovery](parts/part-09l5-company-rebuild-recovery.md)
+- [09m — OOB Designer and campaign integration](parts/part-09m-oob-designer-campaign.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -38,88 +48,205 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Backlog B-240–B-249 — udvidet kavaleri- og dragonmodel](backlog/B-240-CAVALRY-DRAGOONS-EXPANDED.md)
 - [Backlog B-250–B-259 — fog of war, scouts og HQ command effectiveness](backlog/B-250-FOG-SCOUTS-COMMAND-EFFECTIVENESS.md)
 
-## v00.00.09 Tactical Command Test — implementeringsstatus
+## Tactical command baseline retained from v00.00.09
 
-P0A v00.00.09 på arbejdsbranchen implementerer den første sammenhængende tactical-command slice oven på v00.00.08. Danske testregimenter er **forsvarere**, mens de preussiske testregimenter er **angribere**. Battlefield er udvidet fra 180x120 til **360x240**, startafstanden er forøget, og kameraets bounds/zoom er udvidet, så spilleren har reel tid og plads til at pause, inspicere, udstede ordrer og manøvrere før kontakt.
+Den tidlige v00.00.09-serie etablerede en brugbar tactical-command slice. Danske testregimenter var forsvarere, mens de preussiske testregimenter var angribere. Battlefield blev udvidet, kameraets bounds/zoom blev øget, og spilleren fik reel tid og plads til at pause, inspicere, udstede ordrer og manøvrere før kontakt.
 
-Alle fire regimenter får `OfficerProfile` + `OfficerAIController`. Danske regimenter starter AI OFF, mens preussiske regimenter starter AI ON gennem samme shared decision core. Officerprofilen består af Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution og Composure/Nerve samt separat Officer Experience. Composure påvirker stress-relateret reaction delay og decision noise; alle profiler i v00.00.09 er QA-data og ikke historiske ratings.
+Officerprofilen består af Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution og Composure/Nerve samt separat Officer Experience. Composure påvirker stress-relateret reaction delay og decision noise; QA-profiler er ikke historiske ratings.
 
-Valgte danske regimenter kan toggles med **`I` = AI UNIT ON/OFF**; `A` er fortsat kamera-left i WASD. En contextual command-menu giver `DEFENSIVE / BALANCED / OFFENSIVE` doctrine, en 0–100 commander `forsigtig ↔ aggressiv` intent og fire policy `HOLD / CLOSE / MEDIUM / LONG`. Commander intent biaser execution, men officerens egen Aggressiveness er fortsat dominerende i første model. Højreklik går direkte til Regiment, når AI er OFF, og bliver Officer AI Move/Attack mission, når AI er ON.
+En contextual command-model bruger `DEFENSIVE / BALANCED / OFFENSIVE` doctrine, commander aggression intent og fire policy `HOLD / CLOSE / MEDIUM / LONG`. Commander intent biaser execution, mens officerens egne stats fortsat er afgørende.
 
-Fjendens Officer AI må ikke blot løbe frem. Preussiske angribere starter Offensive med OrderAgg 65 og Medium fire policy. AI beregner preferred engagement range ud fra officer/order/doctrine, kan bruge column på længere approach, deployer til line ved engagement, kan stabilisere under morale pressure og lukker nu faktisk til sin beregnede preferred range i stedet for at blive maskeret af den gamle `OrderAttack` stopafstand. 18th Regiment har desuden et flank/approach waypoint før det reassesserer angrebet.
+Difficulty må ikke ændre weapon accuracy, reload, range, movement, morale, cohesion, casualties, officer stats eller skjult viden. Difficulty må primært påvirke computer-AI reaction/noise/decision quality.
 
-Easy/Normal/Hard påvirker kun den computerstyrede preussiske sides ekstra reaction/noise layer. Difficulty må ikke ændre weapon accuracy, reload, range, movement, morale, cohesion, casualties, officer stats eller skjult viden. Player-delegerede danske officerer bruger deres faktiske QA-profil på referenceindstillinger uanset enemy difficulty.
-
-v00.00.09 har en fælles simulation time-control bar med **PAUSE / x0,5 / PLAY x1 / x2 / x5 / x20** og synligt dato/klokkeslæt. x0,5 er slow tactical mode til ordreafgivelse og observation under pres. Pause stopper AI, movement, reload/fire progression og battle clock samlet, mens kamera/UI fortsat er brugbart.
+Simulation time-control retningen omfatter **PAUSE / x0,5 / x1 / x2 / x5 / x20** med synligt dato/klokkeslæt. Pause stopper AI, movement, reload/fire progression og battle clock samlet, mens kamera/UI fortsat er brugbart.
 
 ## Directional fire, fire discipline og accuracy
 
-Den gamle 360° infantry range-ring er erstattet af en **120° fremadrettet fire fan (±60°)**, som følger regimentets facing og åbner ud fra formationens frontage. Det repræsenterer, at soldater i en linje kan traverse våbnet til siderne, men at regimentet ikke kan skyde lige effektivt bagud uden at vende/reformere.
+Infantry fire er fremadrettet og skal følge formationens facing frem for at være en 360° ring. Working baseline bruger en 120° fire fan (±60°).
 
-Ved valgt regiment vises tre nested grænser:
+Fire policy:
 
-- **Close:** op til 50 % af `EffectiveRange`.
-- **Medium:** op til `EffectiveRange`.
-- **Long:** op til `MaximumRange`.
+- **HOLD**
+- **CLOSE**
+- **MEDIUM**
+- **LONG**
 
-Fire policy bestemmer **hvornår** enheden må åbne ild: `HOLD`, `CLOSE`, `MEDIUM` eller `LONG`. Et mål skal både være inden for fire-policy-afstanden og inden for den forward fire arc. Close/Medium/Long er ordre-/UI-grænser; den underliggende accuracy er en **kontinuerlig distancekurve**, så tættere mål gradvist bliver lettere at ramme uden kunstige hit-chance spring ved band-grænserne. Weapon-profile reload, Experience-reload, 0-hit og positiv `Ramte N` feedback fra v00.00.08 bevares.
+Close/Medium/Long er ordre-/UI-grænser; underliggende accuracy skal være kontinuerlig med afstand frem for kunstige spring ved band-grænserne.
 
-Næste combat-fase udbygger samme retning med formation-segmenteret `eligibleFiringFraction`, LOS, friendly obstruction, terrain/smoke og target exposure, så kun den del af regimentets frontage der reelt kan skyde bidrager til salven.
+I den endelige Company-first arkitektur flyttes fire authority fra Regiment til Company. Hvert company skal eje ammo, target, fire eligibility, reload og casualties. Regimental HQ må ikke være den fysiske affyringskilde for alle underenheder.
 
-## Command-visualisation efter v00.00.09
+Næste combat-fase beregner `eligibleFiringFraction` ud fra fire arc, LOS, range, friendly obstruction, terrain/smoke og target exposure.
 
-Efter v00.00.09 runtime-gaten fortsætter command-UI-retningen med fysiske HQ-entities, command-links, courier/order lifecycle, fog-of-war reports og semantic zoom. Valg af et HQ viser relationer til direkte underenheder. Ved udzoomning skifter enheder via semantic zoom fra 3D-formationer til forenklet formation display og derefter NATO/APP-6-lignende taktiske symboler uden at ændre simulation state.
+## Command-visualisation
 
-Ordrer transporteres senere gennem et egentligt courier/order-lifecycle-system. En aktiv ordre kan vises som en stiplet route fra afsender-HQ til modtager med en bevægelig courier-markør, hvis position svarer til faktisk simulation progress. Command relationship lines og konkrete order routes er to separate overlays, og de vises primært ved valgt HQ/enhed eller aktiv Command Overlay for at undgå visuelt rod.
+Command-UI-retningen omfatter fysiske HQ-entities, command-links, courier/order lifecycle, fog-of-war reports og semantic zoom. Valg af et HQ kan vise relationer til direkte underenheder.
 
-Courier-interception håndteres primært som **område-/risikomodel**, ikke som manuel jagt på en enkelt lille rytter. Enemy presence, cavalry/scouts, screening, roads, terrain, mørke og command quality kan føre til reroute, delay, searching eller i sjældnere tilfælde lost/intercepted. Fjendens couriers er selv underlagt fog of war, så courier-markører ikke bliver en skjult radar til enemy HQ.
+Ved udzoomning skifter enheder via semantic zoom fra 3D-formationer til forenklet formation display og senere taktiske symboler uden at ændre simulation state.
 
-## Fire eligibility og højere formationer efter v00.00.09
+Ordrer transporteres senere gennem courier/order lifecycle. Command relationship lines og konkrete order routes er separate overlays og vises primært ved valgt HQ/enhed eller aktiv Command Overlay for at undgå visuelt rod.
 
-Combat resolution skal senere beregne **hvor stor en del af formationens frontage der faktisk kan skyde på målet**. En fjende inden for range betyder derfor ikke automatisk, at hele regimentet deltager. Formationens frontage opdeles i et begrænset antal fire groups/segmenter, som testes mod fire arc, LOS, range, friendly obstruction, terrain/smoke og target exposure. Resultatet bliver en `eligibleFiringFraction` mellem 0 og 1, der indgår i salveberegningen sammen med den kontinuerlige accuracy-by-range-kurve.
+Courier-interception håndteres primært som område-/risikomodel. Enemy presence, cavalry/scouts, screening, roads, terrain, mørke og command quality kan føre til reroute, delay, searching eller lost/intercepted. Fjendens couriers er underlagt fog of war.
 
-Højere HQ'er skal samtidig kunne opstille deres underenheder efter data-drevne formation templates, fx **4 abreast**, **3 + 1 reserve**, **2 + 2**, echelon, march column og kombinationer med artilleri i centre/wing/rear-high-ground slots. Reserve er en faktisk rolle/state, og Officer AI skal senere kunne vælge og tilpasse template ud fra mission, terræn, frontage, artilleri, flanker, reservebehov og officerens stats. Templates giver målpositioner; terrain fitting må justere dem til brugbart terræn uden at bryde enhedsidentitet eller command relation.
+## Higher formation templates and reserves
+
+Højere HQ'er opstiller uafhængige underenheder efter data-drevne templates, fx:
+
+- 4 abreast
+- 3 + 1 reserve
+- 2 + 2
+- echelon
+- march column
+- kombinationer med artilleri og cavalry attachments
+
+Reserve er en faktisk rolle/state. Officer AI vælger og tilpasser template ud fra mission, terræn, frontage, artilleri, flanker, reservebehov og officerstats.
+
+**Permanent regel efter 09l5:** templates giver target centres til uafhængige company entities; templates må ikke implementeres ved at transform-parente alle companies under et regiment og flytte dem som ét rigid body.
 
 ## Battle supply, nat og flerdagsslag
 
-Forsyning under et taktisk slag skal være fysisk og begrænset. Enheder forbruger konkret ammunition og kan kun genforsynes fra kompatible wagons/caissons/field trains/depots med reel beholdning, transportkapacitet og en brugbar rute. Resupply under aktiv kamp er muligt, men kan være langsomt, delvist eller blokeret af enemy fire, terrain, manglende wagons/horses eller afskårne forbindelser.
+Forsyning under taktisk slag er fysisk og begrænset. Enheder forbruger konkret ammunition og kan kun genforsynes fra kompatible wagons/caissons/field trains/depots med reel beholdning, transportkapacitet og brugbar rute.
 
-Skumring skal være en **phase transition**, ikke et universelt hard battle stop. Battle state kan fortsætte som `DAYLIGHT -> DUSK -> NIGHT -> DAWN`. Normal organiseret formation combat reduceres kraftigt i mørke, mens hold, withdrawal, reorganisation, casualty collection, fieldworks, patrols, courier traffic og resupply fortsat kan ske. Begrænset night fighting er muligt, men skal være risikabelt og afhænge af mission/officer/doctrine.
+Battle state kan fortsætte `DAYLIGHT -> DUSK -> NIGHT -> DAWN`. Normal formation combat reduceres kraftigt i mørke, mens hold, withdrawal, reorganisation, casualty collection, fieldworks, patrols, courier traffic og resupply kan fortsætte.
 
-Natten bliver et naturligt resupply-vindue. En formation får dog kun overnight resupply, hvis den stadig har eller kan genetablere en fysisk supply route tilbage til egne lines/field train, og der faktisk findes stock og transportkapacitet. **Afskårne enheder får ingen automatisk ammunition om natten.** Flerdagsslag fortsætter med persistent casualties, ammo, fatigue, positions, fieldworks, officer/equipment state og supply connectivity.
-
-Sunrise/sunset/dusk skal senere beregnes ud fra dato, geografisk position og relevant weather/light state. UI kan auto-pause ved skumring/daggry og give command-valg som `Hold positions`, `Withdraw`, `Continue night operations`, `Reorganize/resupply` eller `Prepare dawn attack`.
+Afskårne enheder får ingen automatisk overnight ammunition. Flerdagsslag fortsætter med persistent casualties, ammo, fatigue, positions, fieldworks, officer/equipment state og supply connectivity.
 
 ## Kavaleri og dragoner
 
-Kavaleri skal være langt mere end en charge-knap. Det får roller inden for **reconnaissance, screening/counter-recon, flank security, courier support/escort, pursuit, raids mod supply/courier/telegraph routes og exploitation**.
+Kavaleri har roller inden for reconnaissance, screening/counter-recon, flank security, courier support/escort, pursuit, raids mod supply/courier routes og exploitation.
 
-Dragoner kan bevæge sig mounted og sidde af til sustained fire/combat. Ved dismount efterlades horses og horse holders som en faktisk tactical state; remount tager tid og kan reduceres eller mislykkes, hvis heste/holdere er tabt eller spredt. Mounted mobility påvirkes af horse fatigue, casualties og terrain.
+Dragoner kan bevæge sig mounted og sidde af til sustained combat. Dismount efterlader horses og horse holders som tactical state; remount tager tid og påvirkes af tabte/spredte heste.
 
-Charge-resultater skal afhænge af target formation/state, facing, terrain, surprise, cavalry cohesion/fatigue/momentum og officer quality. Et frontalt charge mod steady formed infantry med god fire discipline skal være meget risikabelt, mens cavalry kan være særdeles effektivt mod routed/disordered infantry, exposed skirmishers, retreating artillery/transport og isolerede rear-area targets.
+Cavalry manpower og horse availability er separate værdier. Charge-resultater afhænger af target formation/state, facing, terrain, surprise, cohesion/fatigue/momentum og officer quality.
 
-Cavalry raids kobles direkte til supply- og command-systemet: en cavalry formation kan true eller skære en supply/courier route uden at erobre hele regionen. Det kan dermed forhindre overnight resupply og øge command delay.
+## Artillery
+
+Dansk working 1864 field-battery baseline:
+
+- **8 guns**
+- **4 gun divisions/sections × 2 guns**
+- approximately **190 personnel**
+
+Artillery state skal skelne mellem guns, crews, ammunition, horses, drivers, caissons/wagons og limbered/unlimbered state. Preussisk battery structure forbliver data-driven/working indtil date-specific source lock.
 
 ## Fog of war, scouts og command effectiveness
 
-Fog of war er en **knowledge-state model**, ikke blot skjult grafik. En fjendtlig formation kan være `Unknown`, `Suspected`, `Contact`, `Identified`, `Fresh observation` eller `Stale`. Når kontakt mistes, kan last known position blive stående med faldende confidence i stedet for perfekt live-tracking.
+Fog of war er en knowledge-state model, ikke blot skjult grafik. En fjendtlig formation kan være `Unknown`, `Suspected`, `Contact`, `Identified`, `Fresh` eller `Stale`.
 
-Reconnaissance kommer fra faktiske kilder som cavalry patrols, dragoner, skirmishers/scout detachments, line units, HQ, observation points og senere civilians/telegraph/naval reports. Spotting og identification påvirkes bl.a. af afstand, terrain, vegetation, elevation, daylight/night, weather, smoke, target size/movement, firing signature, scout quality og enemy screening.
+Recon kommer fra cavalry patrols, dragoner, skirmishers/scouts, line units, HQ, observation points og senere øvrige rapportkilder. Spotting påvirkes af afstand, terrain, vegetation, elevation, daylight/night, weather, smoke, target size/movement og enemy screening.
 
-Information skal **rapporteres gennem command-nettet**. En scout kan derfor se en fjende før Division HQ ved det. Reports kan forsinkes eller gå tabt efter samme grundprincipper som couriers/orders. En lokal Officer AI kan reagere på frisk lokal information, mens overordnet HQ stadig arbejder med ældre knowledge state.
+Information rapporteres gennem command-nettet. Lokal Officer AI kan reagere på frisk lokal information, mens højere HQ stadig arbejder med ældre knowledge state.
 
-HQ får et visuelt **command effectiveness envelope**, men ikke en hård magisk radius. Første niveauer er `Command Core -> Supported -> Extended -> Detached -> Isolated`. Command effectiveness falder gradvist med afstand, terrain og communication quality og følger den hierarkiske chain `Division HQ -> Brigade HQ -> Regiment/Battalion`.
+Command effectiveness skal være gradvis, ikke en hård magisk radius. Dårlig command connectivity påvirker primært order delay, acknowledgement, reporting, coordination og reserve/support reaction — ikke vilkårlig direkte accuracy/damage.
 
-Dårlig command connectivity påvirker primært order delay, acknowledgement, reporting, coordination, reserve/support reaction og hvor meget formationen må stole på lokal Initiative/Tactical Skill/Composure. Den giver **ikke** en vilkårlig direkte accuracy- eller damage-penalty. Roads og gode courier routes kan senere udvide den effektive command reach, mens woods, rivers uden crossings, svært terræn og enemy interdiction kan skabe svage sektorer i envelope-visningen.
+## Company-first tactical architecture — v00.02.09 decision
 
-Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan beskytte HQ/courier/supply approaches, opdage enemy scouts tidligere og reducere modstanderens observation confidence uden nødvendigvis at skulle destruere hver enkelt scout fysisk.
+Den ønskede tactical hierarchy er:
+
+```text
+Brigade HQ
+→ Regiment HQ
+→ Battalion
+→ Company tactical entity
+→ 1:1 GPU-instanced soldiers
+```
+
+Company er den mindste normale direkte kontrollerbare infanteriformation.
+
+### Stable identity
+
+Hver formation skal have stable `UnitID`. Display name må ikke være technical identity.
+
+### OOB parent vs transform parent
+
+`ParentFormationID` er data. Et company må ikke være afhængig af `Regiment.transform` for world position. Regimental HQ er command-parent, ikke movement-body.
+
+### Movement ownership
+
+Company ejer company movement state. Én tactical entity har én authoritative steering writer ad gangen. AI vælger mission/goal; navigation løser bevægelse; højere HQ må ikke overskrive subordinate transforms direkte.
+
+### Combat ownership
+
+Company ejer company combat state: ammo, target, fire policy, LOS, reload, casualties og local morale/cohesion. Regiment summerer og kommanderer, men er ikke den fysiske salveenhed.
+
+### 1:1 rendering
+
+Ordinary soldiers er renderer instances, ikke heavy GameObjects. 1 real soldier kan vises som 1 visual soldier, men simulationen er echelon-based.
+
+## 09l2–09l5 architecture review
+
+09l2–09l5 demonstrerede ønsket om company-level control, men implementeringen blev ustabil, fordi company-lag blev lagt oven på en Regiment-centreret runtime.
+
+Observerede konflikter:
+
+- companies parentet under `Regiment.transform`
+- parent rotation/movement trak companies som én rigid enhed
+- group orders kunne blive én gigantisk lang linje
+- Regiment forblev combat authority
+- mounted HQ kunne fremstå som salveenhed
+- selection blev fordelt mellem colliders, GPU instances og screen-space patches
+- successive authority scripts maskede ownership-konflikter
+
+### Freeze
+
+`v00.00.09l5` er frosset som failed QA architecture. Den videre tactical implementation må ikke fortsætte med flere compatibility authority scripts oven på samme struktur.
+
+Clean rebuild order:
+
+1. stable Unit IDs + OOB data
+2. 1 dansk + 1 preussisk regiment
+3. independent Company world entities
+4. 1:1 renderer driven by Company state
+5. company movement with one steering owner
+6. company combat
+7. Battalion/Regiment AI
+8. Brigade AI + second regiment
+9. OOB Designer + campaign handoff
+
+Se [09l5 recovery supplement](parts/part-09l5-company-rebuild-recovery.md) og [consolidated current design manual](../tools/strategy-tools/PROJECT-1864-CURRENT-DESIGN-MANUAL.md).
+
+## OOB Designer
+
+OOB Designer er et core campaign tool.
+
+- drag/drop i OOB tree ændrer organisatorisk parent
+- drag/drop på campaign map opretter movement/march order
+- organisatorisk reassignment teleporterer ikke enheden
+- map movement ændrer ikke automatisk OOB-parent
+- stable Unit IDs forbinder campaign og tactical state
+
+OOB hierarchy understøtter Army → Corps → Division → Brigade → Regiment → Battalion → Company samt attached artillery/cavalry/support.
+
+## 1864 historical working baseline
+
+Se [Army/OOB reference](../tools/strategy-tools/ARMY-1864-OOB-REFERENCE.md).
+
+Working baseline:
+
+### Denmark
+
+- company ~180–220
+- battalion 4 companies
+- regiment 2 battalions / 8 companies
+- regiment ~1,500–1,700
+
+### Prussia
+
+- company ~190–210
+- battalion 4 companies
+- regiment 3 battalions / 12 companies
+- campaign regiment ~2,400–2,500
+
+Historisk dansk working brigadepilot: **7. Brigade = 1. + 11. Infanteri-Regiment**.
+
+Historical records support confidence states such as `SOURCE_LOCKED`, `WORKING`, `QA_PLACEHOLDER`, `INFERRED` and `UNKNOWN` so prototype values cannot silently become canon.
 
 ## Versionshistorik
 
-- **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile` på alle fire regimenter; `I` toggler player delegation; Defensive/Balanced/Offensive doctrine og 0–100 commander aggression intent; preussiske Officer AI-angribere med preferred-range/manoeuvre/stabilise adfærd; directional 120° infantry fire fan; HOLD/CLOSE/MEDIUM/LONG fire discipline; continuous closer-is-easier accuracy; battlefield 360x240; Pause/x0,5/x1/x2/x5/x20 og battle clock. v00.00.08 reload/0-hit/`Ramte N`/casualty-visual skal fortsat regressionsbestå. De senere besluttede systemer omfatter segmenteret fire eligibility, fysiske HQ-entities, semantic zoom, courier/order progress/interception, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model og fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
-- **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
-- **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er terminalt pauset indtil restart, RTS-kamera timeScale-uafhængigt og defensive guards forbedret.
-- **v00.02.06** — Unity compile-gate: `CS0136` rettet, obsolete object lookup erstattet og unused state fjernet.
+- **v00.02.09 / post-09l5 architecture consolidation** — Company-first design fastholdes, men 09l2–09l5 runtime-layering fryses som failed QA architecture. Stable Unit IDs, data-only OOB-parenting, independent Company world entities, one steering owner og company-owned combat gøres til permanente arkitekturregler. Strategy Tools får konsolideret current design manual og 1864 Army/OOB working reference.
+- **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared Officer AI/profile, doctrine/aggression, directional fire, fire policy, time controls og senere command/courier/fog/supply/cavalry systems.
+- **v00.02.08 / P0A v00.00.08** — Weapon-profile reload, Experience reload modifier, volley feedback, casualty visual og udvidet systems baseline.
+- **v00.02.07** — P0A v00.00.07 static Unity QA hardening.
+- **v00.02.06** — Unity compile-gate cleanup.
 - **v00.02.05** — Built-in IMGUI, Particle System, Physics og Audio moduler aktiveret.
 - **v00.02.04** — Unity baseline flyttet til 6000.6.0f1.
 - **v00.02.03** — Repository-roden fastlåst som Unity project root.
@@ -130,4 +257,4 @@ Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan besky
 
 ## Projektregel
 
-Designmanualen skal opdateres både som layoutet Word-master og her i GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere udgaver af Markdown-delene. Nye beslutninger og idéer registreres desuden i backloggen. Hver testbuild skal have tydelig release-dokumentation, der adskiller **implementeret nu** fra **besluttet senere**.
+Designmanualen skal opdateres i GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere udgaver. Nye beslutninger og idéer registreres desuden i backloggen. Hver testbuild skal have tydelig release-dokumentation, der adskiller **implementeret nu** fra **besluttet senere**.
