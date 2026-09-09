@@ -20,8 +20,6 @@ public sealed class BattleManager : MonoBehaviour
     private bool paused;
     private string resultMessage = string.Empty;
 
-    // selectedUnitStyle is retained for compatibility with the 09f visual cleanup
-    // component, but 09h never draws a persistent selected-unit summary panel.
     private GUIStyle selectedUnitStyle;
     private GUIStyle hoverStyle;
     private GUIStyle hitStyle;
@@ -147,6 +145,15 @@ public sealed class BattleManager : MonoBehaviour
         return new Rect(x, y, HoverInfoWidth, HoverInfoHeight);
     }
 
+    private static string GetUnitDisplayName(Regiment regiment)
+    {
+        if (regiment == null)
+            return string.Empty;
+
+        PrototypeRegimentOOB09K oob = regiment.GetComponent<PrototypeRegimentOOB09K>();
+        return oob != null ? oob.DisplayName : regiment.RegimentName;
+    }
+
     private void EvaluateBattleResult()
     {
         if (!string.IsNullOrEmpty(resultMessage) || regiments.Count < 4)
@@ -237,8 +244,6 @@ public sealed class BattleManager : MonoBehaviour
         hoverStyle.padding = new RectOffset(6, 6, 2, 2);
         hoverStyle.normal.textColor = new Color(1f, 1f, 1f, 0.92f);
 
-        // 09h: combat feedback is text-only. The 09g video showed that the previous
-        // large black 'Ramte N' boxes hid soldiers during close combat.
         hitStyle = new GUIStyle(GUI.skin.label);
         hitStyle.fontSize = 10;
         hitStyle.fontStyle = FontStyle.Bold;
@@ -321,10 +326,10 @@ public sealed class BattleManager : MonoBehaviour
 
         DrawTimeControls(clock);
 
-        float helperWidth = Mathf.Min(820f, Mathf.Max(360f, Screen.width - 120f));
+        float helperWidth = Mathf.Min(900f, Mathf.Max(360f, Screen.width - 120f));
         GUI.Box(
             new Rect((Screen.width - helperWidth) * 0.5f, 74f, helperWidth, 22f),
-            "LMB klik/vælg | LMB-træk: box select | Shift/Ctrl: add/toggle | RMB ordre | Alt+RMB waypoint | F/C formation | F9 kamp | F10 uniform",
+            "LMB klik/vælg | LMB-træk box | Shift/Ctrl add/toggle | RMB ordre | Alt+RMB waypoint | F/C formation | F10 uniform | F11 Brigade AI",
             miniStyle);
 
         Camera mainCamera = Camera.main;
@@ -344,7 +349,7 @@ public sealed class BattleManager : MonoBehaviour
                 string team = regiment.Team == BattleTeam.Denmark ? "DK" : "PR";
                 string routed = regiment.IsRouted ? " | ROUTED" : string.Empty;
                 string hoverLabel =
-                    $"{regiment.RegimentName} ({team}) | {regiment.CurrentStrength}/{regiment.InitialStrength}{routed}\n" +
+                    $"{GetUnitDisplayName(regiment)} ({team}) | {regiment.CurrentStrength}/{regiment.InitialStrength}{routed}\n" +
                     $"Mor {regiment.Morale:0} | Coh {regiment.Cohesion:0} | {regiment.Formation}";
 
                 GUI.Box(GetHoverInfoRect(screen), hoverLabel, hoverStyle);
@@ -359,9 +364,6 @@ public sealed class BattleManager : MonoBehaviour
                     hitStyle);
             }
         }
-
-        // 09h deliberately draws NO persistent selected-unit or multi-select summary
-        // panel. Selection is conveyed by formation markers, range fan and command bar.
 
         if (!string.IsNullOrEmpty(resultMessage))
         {
