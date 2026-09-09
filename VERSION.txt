@@ -1,8 +1,8 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13i
-Build status: DENMARK GIS TERRAIN FOUNDATION DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK GIS TERRAIN FOUNDATION V13I
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i
+Prototype version: v00.00.13i1
+Build status: DENMARK GIS TERRAIN FOUNDATION DEV / MAP-ONLY / UNITY 6.6 WARNING CLEANUP / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK GIS TERRAIN FOUNDATION V13I1
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
@@ -21,6 +21,8 @@ v13i settlements: only Danish strategic settlements are rendered, with lightweig
 v13i visual direction: Historic Miniature Grand Strategy Diorama remains the target, but terrain and water now come from a GIS/elevation foundation rather than the old polygon-only presentation
 v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition are temporarily disabled while Denmark map visuals are rebuilt
 v13h1 clock rule remains active: campaign clock and construction progression continue through pause/x1/x5/x20/reset
+v13i1 warning cleanup: active CampaignMapOnlyModeV013H1 and CampaignDenmarkV013DLegacyGate calls use the Unity 6.6 FindObjectsByType<T>() API without obsolete FindObjectsSortMode parameters
+v13i1 legacy warning policy: CS0618 is temporarily suppressed at compiler response level for disabled legacy presentation layers that are retained only for compatibility while the GIS foundation replaces them; this is not a permanent substitute for retiring/migrating legacy files
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
