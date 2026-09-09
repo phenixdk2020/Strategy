@@ -11,6 +11,11 @@ public sealed class CampaignMapCameraController : MonoBehaviour
     public float MinPitch = 32f;
     public float MaxPitch = 72f;
 
+    // v13g: clean Denmark render can opt out of the hidden legacy terrain floor.
+    // Default remains legacy-safe for other scenes / future tactical transitions.
+    public bool UseLegacyTerrainFloor = true;
+    public float TerrainClearance = 42f;
+
     private Camera cam;
     private Vector3 homePosition;
     private Quaternion homeRotation;
@@ -91,7 +96,10 @@ public sealed class CampaignMapCameraController : MonoBehaviour
         clamped.x = Mathf.Clamp(clamped.x, -CampaignGeoProjection.MapWidth * 0.62f, CampaignGeoProjection.MapWidth * 0.62f);
         clamped.z = Mathf.Clamp(clamped.z, -CampaignGeoProjection.MapDepth * 0.62f, CampaignGeoProjection.MapDepth * 0.62f);
 
-        float terrainFloor = CampaignTerrainV013.SampleSurfaceY(clamped.x, clamped.z) + 42f;
+        float surfaceY = UseLegacyTerrainFloor
+            ? CampaignTerrainV013.SampleSurfaceY(clamped.x, clamped.z)
+            : 0f;
+        float terrainFloor = surfaceY + Mathf.Max(0f, TerrainClearance);
         clamped.y = Mathf.Clamp(clamped.y, Mathf.Max(MinHeight, terrainFloor), MaxHeight);
         transform.position = clamped;
     }
