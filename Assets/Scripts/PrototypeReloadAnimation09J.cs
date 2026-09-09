@@ -3,9 +3,9 @@ using System.Reflection;
 using UnityEngine;
 
 // v00.00.09j TEST - Fire & Reload Animation Pass.
-// Presentation-only. Watches Regiment.nextFireTime to detect an actual outgoing volley,
-// then drives the 09i articulated arms/rifle through a weapon-specific reload sequence.
-// It does not change reload duration, fire cadence, ammo, hit calculation or movement.
+// Presentation-only. Detects actual outgoing volleys from Regiment.nextFireTime and
+// drives the 09i articulated arms/rifle through fire, reload, march and ready poses.
+// It never changes reload duration, fire cadence, ammo, hit calculation or movement.
 [DefaultExecutionOrder(11400)]
 public sealed class PrototypeReloadAnimation09J : MonoBehaviour
 {
@@ -14,6 +14,7 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         public Transform LeftArm;
         public Transform RightArm;
         public Transform RifleRoot;
+        public float Phase;
     }
 
     private sealed class UnitState
@@ -26,11 +27,13 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         public float FirePoseUntil;
         public bool ReloadActive;
         public bool AnnouncedReload;
+        public Vector3 LastPosition;
+        public bool Moving;
     }
 
     private readonly Dictionary<Regiment, UnitState> units = new Dictionary<Regiment, UnitState>();
-
     private FieldInfo nextFireTimeField;
+    private const float MoveEpsilon = 0.0025f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -57,7 +60,7 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
 
         Debug.Log(
             "RELOAD-09J|Installed=True|ActualVolleyDetection=True|" +
-            "MuzzleLoaderSequence=True|DreyseSequence=True|CombatWrites=False");
+            "MuzzleLoaderSequence=True|DreyseSequence=True|MarchPreserved=True|CombatWrites=False");
     }
 
     private void Update()
@@ -79,6 +82,7 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
             }
 
             RefreshRigReferencesIfNeeded(state);
+            UpdateMovementState(state);
             UpdateVolleyDetection(state);
             AnimateUnit(state);
         }
@@ -88,11 +92,11 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
 
     private UnitState CreateState(Regiment regiment)
     {
-        float nextFire = ReadNextFireTime(regiment);
         UnitState state = new UnitState
         {
             Regiment = regiment,
-            LastObservedNextFireTime = nextFire
+            LastObservedNextFireTime = ReadNextFireTime(regiment),
+            LastPosition = regiment.transform.position
         };
 
         RefreshRigReferences(state);
@@ -105,6 +109,18 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         return value is float ? (float)value : 0f;
     }
 
+    private static void UpdateMovementState(UnitState state)
+    {
+        if (state == null || state.Regiment == null)
+            return;
+
+        Vector3 current = state.Regiment.transform.position;
+        Vector3 delta = current - state.LastPosition;
+        delta.y = 0f;
+        state.Moving = delta.sqrMagnitude > MoveEpsilon;
+        state.LastPosition = current;
+    }
+
     private void UpdateVolleyDetection(UnitState state)
     {
         Regiment regiment = state.Regiment;
@@ -112,10 +128,6 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
             return;
 
         float nextFireTime = ReadNextFireTime(regiment);
-
-        // FireVolley moves nextFireTime from the old value to a new future timestamp.
-        // Detecting that edge means this regiment actually fired; receiving hits cannot
-        // trigger this state, unlike the older HasHitFeedback visual shortcut.
         bool newVolley =
             nextFireTime > Time.time + 0.05f &&
             nextFireTime > state.LastObservedNextFireTime + 0.10f;
@@ -153,8 +165,8 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
 
         bool firePose = Time.time < state.FirePoseUntil;
         bool reload = state.ReloadActive && !firePose;
-
         float reloadProgress = 1f;
+
         if (reload)
         {
             float duration = Mathf.Max(0.05f, state.ReloadEndTime - state.ReloadStartTime);
@@ -179,6 +191,8 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
                 ApplyFirePose(rig);
             else if (reload)
                 ApplyReloadPose(rig, regiment.WeaponType, reloadProgress, i);
+            else if (state.Moving)
+                ApplyMarchPose(rig, Time.time);
             else
                 ApplyReadyPose(rig);
         }
@@ -186,24 +200,33 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
 
     private static void ApplyFirePose(SoldierPoseRig rig)
     {
-        ApplyPose(
-            rig,
+        ApplyPose(rig,
             Quaternion.Euler(-68f, 8f, -8f),
             Quaternion.Euler(-60f, -8f, 12f),
             Quaternion.Euler(-5f, 0f, 0f),
-            new Vector3(0.08f, 1.08f, 0.48f),
-            15f);
+            new Vector3(0.08f, 1.08f, 0.48f), 15f);
     }
 
     private static void ApplyReadyPose(SoldierPoseRig rig)
     {
-        ApplyPose(
-            rig,
+        ApplyPose(rig,
             Quaternion.Euler(-42f, 8f, -5f),
             Quaternion.Euler(-30f, -6f, 7f),
             Quaternion.Euler(2f, 0f, 4f),
-            new Vector3(0.18f, 1.00f, 0.25f),
-            8f);
+            new Vector3(0.18f, 1.00f, 0.25f), 8f);
+    }
+
+    private static void ApplyMarchPose(SoldierPoseRig rig, float time)
+    {
+        float phase = time * 7.4f + rig.Phase;
+        float swing = Mathf.Sin(phase);
+        float opposite = Mathf.Sin(phase + Mathf.PI);
+
+        ApplyPose(rig,
+            Quaternion.Euler(swing * 18f - 8f, 0f, -4f),
+            Quaternion.Euler(opposite * 18f - 8f, 0f, 5f),
+            Quaternion.Euler(5f, 0f, 8f),
+            new Vector3(0.22f, 0.96f, 0.10f), 10f);
     }
 
     private static void ApplyReloadPose(
@@ -212,8 +235,6 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         float progress,
         int soldierIndex)
     {
-        // Slight deterministic stagger keeps a volley regiment coordinated without
-        // making every representative soldier move as a perfect clone.
         float stagger = Mathf.Sin(soldierIndex * 1.73f) * 0.025f;
         float p = Mathf.Clamp01(progress + stagger);
 
@@ -225,13 +246,10 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
 
     private static void ApplyMuzzleLoaderReload(SoldierPoseRig rig, float p)
     {
-        // Approximate 1864 muzzle-loader sequence:
-        // lower/vertical rifle -> cartridge/charge -> ram -> recover to ready.
         if (p < 0.18f)
         {
             float t = Smooth01(p / 0.18f);
-            BlendPose(
-                rig, t,
+            BlendPose(rig, t,
                 Quaternion.Euler(-42f, 8f, -5f), Quaternion.Euler(-30f, -6f, 7f),
                 Quaternion.Euler(-16f, 0f, -2f), Quaternion.Euler(-24f, 0f, 8f),
                 Quaternion.Euler(2f, 0f, 4f), Quaternion.Euler(-72f, 0f, 0f),
@@ -240,8 +258,7 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         else if (p < 0.42f)
         {
             float t = Smooth01((p - 0.18f) / 0.24f);
-            BlendPose(
-                rig, t,
+            BlendPose(rig, t,
                 Quaternion.Euler(-16f, 0f, -2f), Quaternion.Euler(-24f, 0f, 8f),
                 Quaternion.Euler(-54f, 18f, -18f), Quaternion.Euler(-70f, -12f, 18f),
                 Quaternion.Euler(-72f, 0f, 0f), Quaternion.Euler(-83f, 0f, 0f),
@@ -249,22 +266,18 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         }
         else if (p < 0.72f)
         {
-            // Ramrod / loading motion gets a small visible vertical pulse.
             float t = (p - 0.42f) / 0.30f;
             float ram = Mathf.Sin(t * Mathf.PI * 3f);
-            ApplyPose(
-                rig,
+            ApplyPose(rig,
                 Quaternion.Euler(-70f + ram * 8f, 15f, -15f),
                 Quaternion.Euler(-78f - ram * 10f, -10f, 15f),
                 Quaternion.Euler(-86f + ram * 3f, 0f, 0f),
-                new Vector3(0.04f, 0.82f + ram * 0.035f, 0.10f),
-                14f);
+                new Vector3(0.04f, 0.82f + ram * 0.035f, 0.10f), 14f);
         }
         else
         {
             float t = Smooth01((p - 0.72f) / 0.28f);
-            BlendPose(
-                rig, t,
+            BlendPose(rig, t,
                 Quaternion.Euler(-62f, 12f, -12f), Quaternion.Euler(-68f, -8f, 14f),
                 Quaternion.Euler(-42f, 8f, -5f), Quaternion.Euler(-30f, -6f, 7f),
                 Quaternion.Euler(-82f, 0f, 0f), Quaternion.Euler(2f, 0f, 4f),
@@ -274,12 +287,10 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
 
     private static void ApplyDreyseReload(SoldierPoseRig rig, float p)
     {
-        // Approximate Dreyse sequence: lower rifle -> open bolt / cartridge -> close -> ready.
         if (p < 0.22f)
         {
             float t = Smooth01(p / 0.22f);
-            BlendPose(
-                rig, t,
+            BlendPose(rig, t,
                 Quaternion.Euler(-42f, 8f, -5f), Quaternion.Euler(-30f, -6f, 7f),
                 Quaternion.Euler(-30f, 12f, -10f), Quaternion.Euler(-58f, -18f, 20f),
                 Quaternion.Euler(2f, 0f, 4f), Quaternion.Euler(20f, 0f, 4f),
@@ -289,19 +300,16 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         {
             float t = (p - 0.22f) / 0.40f;
             float bolt = Mathf.Sin(t * Mathf.PI * 2f);
-            ApplyPose(
-                rig,
+            ApplyPose(rig,
                 Quaternion.Euler(-38f, 12f, -10f),
                 Quaternion.Euler(-72f + bolt * 16f, -18f, 20f),
                 Quaternion.Euler(20f + bolt * 5f, 0f, 4f),
-                new Vector3(0.15f, 0.86f, 0.20f),
-                15f);
+                new Vector3(0.15f, 0.86f, 0.20f), 15f);
         }
         else
         {
             float t = Smooth01((p - 0.62f) / 0.38f);
-            BlendPose(
-                rig, t,
+            BlendPose(rig, t,
                 Quaternion.Euler(-38f, 12f, -10f), Quaternion.Euler(-62f, -15f, 18f),
                 Quaternion.Euler(-42f, 8f, -5f), Quaternion.Euler(-30f, -6f, 7f),
                 Quaternion.Euler(20f, 0f, 4f), Quaternion.Euler(2f, 0f, 4f),
@@ -310,22 +318,17 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
     }
 
     private static void BlendPose(
-        SoldierPoseRig rig,
-        float t,
-        Quaternion leftFrom,
-        Quaternion rightFrom,
-        Quaternion leftTo,
-        Quaternion rightTo,
-        Quaternion rifleFrom,
-        Quaternion rifleTo,
-        Vector3 riflePosFrom,
-        Vector3 riflePosTo)
+        SoldierPoseRig rig, float t,
+        Quaternion leftFrom, Quaternion rightFrom,
+        Quaternion leftTo, Quaternion rightTo,
+        Quaternion rifleFrom, Quaternion rifleTo,
+        Vector3 riflePosFrom, Vector3 riflePosTo)
     {
-        Quaternion left = Quaternion.Slerp(leftFrom, leftTo, t);
-        Quaternion right = Quaternion.Slerp(rightFrom, rightTo, t);
-        Quaternion rifle = Quaternion.Slerp(rifleFrom, rifleTo, t);
-        Vector3 riflePos = Vector3.Lerp(riflePosFrom, riflePosTo, t);
-        ApplyPose(rig, left, right, rifle, riflePos, 14f);
+        ApplyPose(rig,
+            Quaternion.Slerp(leftFrom, leftTo, t),
+            Quaternion.Slerp(rightFrom, rightTo, t),
+            Quaternion.Slerp(rifleFrom, rifleTo, t),
+            Vector3.Lerp(riflePosFrom, riflePosTo, t), 14f);
     }
 
     private static void ApplyPose(
@@ -337,7 +340,6 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         float blendSpeed)
     {
         float blend = Mathf.Clamp01(Time.deltaTime * blendSpeed);
-
         if (rig.LeftArm != null)
             rig.LeftArm.localRotation = Quaternion.Slerp(rig.LeftArm.localRotation, leftArm, blend);
         if (rig.RightArm != null)
@@ -355,22 +357,20 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
         return t * t * (3f - 2f * t);
     }
 
-    private void RefreshRigReferencesIfNeeded(UnitState state)
+    private static void RefreshRigReferencesIfNeeded(UnitState state)
     {
-        if (state == null || state.Regiment == null)
-            return;
-
-        if (state.Soldiers.Count == 0)
+        if (state != null && state.Regiment != null && state.Soldiers.Count == 0)
             RefreshRigReferences(state);
     }
 
-    private void RefreshRigReferences(UnitState state)
+    private static void RefreshRigReferences(UnitState state)
     {
         state.Soldiers.Clear();
         Regiment regiment = state.Regiment;
         if (regiment == null)
             return;
 
+        int poseIndex = 0;
         for (int i = 0; i < regiment.transform.childCount; i++)
         {
             Transform soldier = regiment.transform.GetChild(i);
@@ -381,16 +381,14 @@ public sealed class PrototypeReloadAnimation09J : MonoBehaviour
             if (visual == null)
                 continue;
 
-            Transform rifle = visual.Find("RifleRig");
-            Transform leftArm = visual.Find("Arm_Left");
-            Transform rightArm = visual.Find("Arm_Right");
-
             state.Soldiers.Add(new SoldierPoseRig
             {
-                LeftArm = leftArm,
-                RightArm = rightArm,
-                RifleRoot = rifle
+                LeftArm = visual.Find("Arm_Left"),
+                RightArm = visual.Find("Arm_Right"),
+                RifleRoot = visual.Find("RifleRig"),
+                Phase = poseIndex * 0.73f
             });
+            poseIndex++;
         }
     }
 
