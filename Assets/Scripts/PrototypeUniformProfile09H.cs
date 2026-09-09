@@ -66,6 +66,18 @@ public sealed class PrototypeUniformProfile09H
         };
     }
 
+    // Compatibility helpers used by the 09i visual pass. Keep faction colour
+    // definitions centralized in CreateFactionDefault so defaults cannot drift.
+    public static PrototypeUniformProfile09H CreateDenmarkDefault()
+    {
+        return CreateFactionDefault(BattleTeam.Denmark);
+    }
+
+    public static PrototypeUniformProfile09H CreatePrussiaDefault()
+    {
+        return CreateFactionDefault(BattleTeam.Prussia);
+    }
+
     public static PrototypeUniformProfile09H CreateRegimentDefault(Regiment regiment)
     {
         PrototypeUniformProfile09H profile = CreateFactionDefault(regiment.Team);
