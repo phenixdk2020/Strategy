@@ -16,29 +16,25 @@ v00.00.13j state: DEV HISTORICAL 3D MAP FOUNDATION / SMOOTH CARTOGRAPHIC TERRAIN
 v00.00.13k state: DEV LIVE CARTOGRAPHIC 3D DRAPE / VIEWPORT TILES / MAP-ONLY
 v00.00.13k1 state: DEV PROVIDER CONFIG COMPILE HOTFIX / LIVE CARTOGRAPHIC 3D DRAPE / MAP-ONLY
 v00.00.13l state: DEV PREMIUM CARTOGRAPHIC VISUAL / CLOSE DETAIL / MAP-ONLY
-Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l
+v00.00.13m state: DEV UNIFIED DENMARK 3D MAP / SINGLE VISIBLE MAP STACK / MAP-ONLY
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m
 v00.00.11 work package: B-280-B-369
 v00.00.11 final gate: B-369
-v00.00.13l branch: work/v00.00.13l-premium-cartographic-visual
-v00.00.13l overview rule: v13k remains the live overview cartography over v13j DEM terrain.
-v00.00.13l close-detail rule: v13l adds z12/z13 real map tiles only when close to the terrain. Requests remain viewport-only 3x3 with no country prefetch.
-v00.00.13l mesh rule: close-detail tiles use a 32x32 conforming mesh sampled against V013J_SmoothTerrain for smoother 3D drape and less faceting.
-v00.00.13l texture rule: close cartography uses trilinear filtering and anisotropic filtering; base v13k tile filtering/materials are retuned toward a cleaner neutral map presentation.
-v00.00.13l atmosphere rule: restrained warm directional light, soft shadows, flat ambient light and long-range linear fog add depth without hiding map information.
-v00.00.13l camera rule: minimum height 0.14, terrain clearance 0.09, near clip 0.003 and FOV 44 improve Google-maps-like close inspection.
-v00.00.13l route presentation rule: old GIS_Road_/GIS_Ferry_ prototype lines remain suppressed; map cartography is the visual road/water reference, so invalid straight prototype roads across water are not shown.
-v00.00.13l settlement rule: prototype city blocks remain suppressed; real map city geometry/labels are the base visual reference.
-v00.00.13l Aalborg rule: old v13k landmark presentation is hidden and replaced by a smaller premium Aalborg Kaserne compound with pitched roofs, parade ground, fence, trees and Dannebrog, terrain-anchored south of Limfjorden.
-v00.00.13l Aarhus rule: Aarhus Gård receives the same small close-zoom landmark treatment with field, farmhouse, barn, fence and trees.
-v00.00.13l landmark LOD rule: custom 3D landmarks are visible only below camera height 3.1 so they do not become oversized strategic-map blocks.
-v00.00.13l provider isolation rule: if a local historical raster or custom provider.json exists, the v13l high-detail OpenStreetMap overlay is disabled to prevent mixing providers. The configured/local source remains authoritative for presentation.
-v00.00.13l cache rule: premium high-detail tiles cache for 14 days under Application.persistentDataPath/PROJECT1864/MapCache/premium.
-v00.00.13k1 provider config fix remains active: no UnityEngine.JsonUtility dependency.
-v00.00.13h1 MAP-ONLY rule remains active: strategic formation movement/contact/battle is disabled while map presentation is under QA.
-Input migration rule: Unity legacy Input Manager remains temporarily because older campaign/tactical controls still use UnityEngine.Input; migration remains separate cross-project work.
+v00.00.13m branch: work/v00.00.13m-unified-denmark-3d-map
+v00.00.13m architecture rule: v13m is the sole visible Denmark map owner after initialization. v13j/v13k/v13l components/renderers/status overlays are disabled; only the v13j MeshCollider remains as the elevation reference.
+v00.00.13m full-map rule: a single continuous 520x340 mesh covers the complete validated Denmark campaign envelope with terrain relief on land and flat sea level on water.
+v00.00.13m atlas rule: z8 provider tiles for the full envelope are stitched into one overview atlas using Web-Mercator-correct UVs. The atlas remains visible at every zoom, eliminating exposed old green terrain and disconnected rectangular live-map islands.
+v00.00.13m detail rule: z10/z11/z12/z13 5x5 viewport detail overlays are allowed at progressively closer camera heights. They sit above the permanent overview atlas and therefore cannot create holes during loading/panning.
+v00.00.13m cache rule: unified tiles reuse eligible interactive/premium caches and write to Application.persistentDataPath/PROJECT1864/MapCache/unified with a 14-day age rule.
+v00.00.13m camera rule: minimum height 0.12, terrain clearance 0.08, near clip 0.003, FOV 45.
+v00.00.13m landmark rule: Aalborg Kaserne and Aarhus Gård are compact close-zoom landmarks, independently terrain-anchored by nearest valid v13j land collider hit.
+v00.00.13m cleanup rule: old GIS road/ferry lines, old city blocks and previous v13k/v13l landmarks remain visually suppressed.
+v00.00.13m provider rule: OpenStreetMap Standard remains a temporary present-day development basemap with attribution; it is not authoritative 1864 infrastructure or settlement history.
+v00.00.13h1 MAP-ONLY rule remains active: strategic formation movement/contact/battle remains disabled until map presentation passes QA.
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route geometry.
 Projection rule: CampaignGeoProjection broad-map/geodesic APIs remain authoritative for campaign content.
 Runtime isolation: CampaignMap is the campaign runtime; tactical PrototypeBattle remains explicit-only and must not auto-open or auto-bootstrap on CampaignMap.
+Input migration rule: Unity legacy Input Manager remains temporarily because older campaign/tactical controls still use UnityEngine.Input; migration remains separate cross-project work.
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied.
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 QA rule: local Unity compile/runtime verification is performed by Allan; DEV implementation does not bypass formal gates.
