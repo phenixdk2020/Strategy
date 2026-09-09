@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 // v00.00.09l TEST - company/battalion OOB plus historical identity metadata.
 // Regiment remains the tactical movement/combat owner. Battalion/company state is the
