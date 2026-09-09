@@ -1,103 +1,93 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09j
+Prototype version: v00.00.09k
 Build status: TEST
-Build name: FIRE + RELOAD ANIMATION TEST 09J
-Visible build marker: PROJECT 1864 | v00.00.09j TEST is shown permanently in the upper-left corner during Play mode
+Build name: FULL-SCALE OOB + 1:1 RENDER + HQ + SPECIAL ARMS TEST 09K
+Visible build marker: PROJECT 1864 | v00.00.09k TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08
+Design manual baseline: v00.02.08 + 09k supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
-Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
-Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 
-v00.00.09j - Fire & Reload Animation Pass
-- New PrototypeReloadAnimation09J is presentation-only and runs after the 09i articulated soldier pass.
-- It detects an ACTUAL outgoing volley by observing Regiment.nextFireTime move to a new future timestamp. This fixes the previous visual shortcut where 09i used HasHitFeedback, which means the regiment had been hit rather than that it had fired.
-- Actual volley -> short shoulder/fire pose -> weapon-specific reload animation -> ready pose.
-- Danish Rifled Muzzle-Loader representatives use a longer approximate lower/vertical rifle, cartridge/charge, ramrod/loading and recover sequence.
-- Prussian Dreyse representatives use a shorter lower-rifle, bolt/cartridge, close/recover sequence.
-- Reload animation duration follows the existing real combat reload window, including weapon profile, experience multiplier and the existing volley randomisation. 09j does not set or modify nextFireTime.
-- A small deterministic per-soldier stagger prevents perfect clone motion while keeping the regiment visually coordinated.
-- Standard-bearers without an active rifle are excluded from rifle reload posing.
-- 09j takes presentation ownership of riflemen arms/rifle only after 09i has run: fire/reload/march/ready arms are therefore based on correct outgoing-fire state while 09i continues to own legs, body, LOD, uniforms and equipment visuals.
-- Expected telemetry: RELOAD-09J|Installed=True, VolleyDetected=True, ReloadAnimation=True and ReloadComplete=True.
-- No movement, destination, formation, accuracy, hit, ammo, morale, cohesion, Officer AI or PlayerCommander logic is changed.
-- Design supplement: docs/parts/part-09j-fire-reload-animation.md.
+v00.00.09k - Full-scale four-regiment pilot
+- The old expanded eight-regiment 570-620 man QA layout is disabled before it can add the extra four units.
+- Tactical pilot returns to the original four infantry regiments at realistic 1864-scale QA manpower:
+  * 1. Regiment (DK): 1,620
+  * 5. Regiment (DK): 1,587
+  * 8th Regiment (PR): 2,460
+  * 18th Regiment (PR): 2,440
+- Total full-scale infantry manpower: 8,107.
+- These are agreed QA scale values, not yet source-certified date-specific strengths for those exact named regiments.
 
-QA observation from Optagelse 3(1).mp4
-- Overall movement is materially improved and the previous total Farmhouse stall is not reproduced in the supplied recording.
-- Remaining odd behaviour is intermittent sharp turning/reforming around bridge routing and dense multi-regiment contact, especially after AI is enabled. This remains a separate movement/AI QA item and is intentionally not mixed into 09j.
+v00.00.09k - Battalion/company OOB
+- New PrototypeRegimentOOB09K attaches persistent structural OOB data to each regiment.
+- Danish regiment = 2 battalions x 4 companies = 8 companies.
+- Prussian regiment = 3 battalions x 4 companies = 12 companies; third battalion is labelled Füsilier-Bataillon.
+- Approximately 25 men are reserved as regimental staff; remaining manpower is distributed across companies so the OOB sums to the regiment strength.
+- Regiment remains the movement/combat/selection owner in 09k; battalion/company is the future officer allocation layer.
 
-v00.00.09i3 - Compile / Unity 6.6 compatibility fix
-- Fixes CS0117 in PrototypeSoldierVisualPass09I where CreateDenmarkDefault() and CreatePrussiaDefault() were referenced but not defined by PrototypeUniformProfile09H.
-- PrototypeUniformProfile09H exposes CreateDenmarkDefault() and CreatePrussiaDefault() as compatibility wrappers over CreateFactionDefault(BattleTeam).
-- PrototypeNavigationRecoveryManager, PrototypeBattlefieldNavigationV3, PrototypeBattlefieldNavigationManager and PrototypeNavigation09AHotfix use Unity 6.6 Object.FindObjectsByType<Transform>() instead of the deprecated FindObjectsSortMode overload.
-- The eight CS0618 warnings shown in the 09i2 QA log are removed at source rather than suppressed.
-- No movement parameters, obstacle radii, combat rules, route semantics, visual sizing, uniform colours or AI behaviour are changed by this API cleanup.
+v00.00.09k - 1:1 infantry renderer
+- New PrototypeFullScaleRenderer09K displays one visual infantryman per current manpower without creating one GameObject/MonoBehaviour/NavMeshAgent/collider per man.
+- Uses instanced body/head/headgear/rifle meshes in <=1023 instance batches.
+- Existing 09h/09i representative soldier renderers and 09j representative reload animator are disabled to prevent duplicate formations.
+- 1:1 rifle pose still follows the actual outgoing-volley/reload window from Regiment.nextFireTime.
+- Muzzle-loader and Dreyse receive different simplified reload rifle poses.
+- Company/battalion slots create large formation blocks; Column uses an eight-file march column.
+- Renderer writes no movement, combat, morale, cohesion, selection or Officer AI state.
 
-v00.00.09i2 - Tactical readability pass
-- Infantry silhouettes are presentation-scaled for better medium/long tactical readability without changing formation slots or colliders.
-- Small equipment details remain visible to approximately 285 m.
-- PrototypeVisualReadability09I2 enlarges the procedural regimental standard at tactical distance and logs whether it is found.
-- Expected startup telemetry: SOLDIER-09I2, STANDARD-09I and VIS-09I2.
+v00.00.09k - Mounted regimental HQ
+- Every infantry regiment gets a three-rider command group:
+  1. commander,
+  2. adjutant,
+  3. orderly/staff rider.
+- The three riders replace three visual staff manpower slots rather than being added on top of regiment strength.
+- HQ is visual in 09k; later it becomes command origin for courier delay, officer casualties and command effectiveness.
 
-v00.00.09i1 - V3 hard-obstacle detour continuation fix
-- Direct AI-OFF QA confirmed 1. Regiment could enter a repeat loop around a Farmhouse.
-- PrototypeNavigationV3DetourContinuation09I1 continues around the same Farmhouse/Barn after the first detour leg instead of allowing the same via point to repeat indefinitely.
-- Navigation V3 remains the steering owner; the continuation layer does not teleport the regiment or create independent pathfinding authority.
-- Expected telemetry: NAV-V3-09I1|Unit=...|Continuation=True|Obstacle=Farmhouse|FromVia=...|NextVia=...
+v00.00.09k - Officer mission architecture
+- New PrototypeOfficerObjective09K stores explicit high-level mission state: None, DefendArea, AttackCaptureArea.
+- Stores objective centre, radius and requested reserve fraction.
+- This is intentionally a scaffold only in 09k: it does not fake battalion/company reserve decisions before subunits can move independently.
+- Intended command model: player gives an officer an objective; officer AI allocates subordinate battalions/companies between ENGAGED, SUPPORT and RESERVE and commits additional reserves as required.
 
-v00.00.09i - Soldier Visual Pass 2 / Big Graphics Buff
-- PrototypeSoldierVisualPass09I hides legacy primitive soldier renderers and rebuilds each representative infantry figure as a lightweight articulated procedural rig.
-- Human proportions: tapered torso, coat skirts, separate legs, boots, arms, hands, neck/head and faction-specific headgear.
-- Danish cap/visor/band and Prussian Pickelhaube silhouettes.
-- Backpack, crossed straps, cartridge box, optional canteen, rifle stock/barrel/bayonet and metal/wood material separation.
-- Officer receives sash, shoulder boards and sword; standard-bearer gets separate visual treatment.
-- Six deterministic visual variants reduce exact cloned appearance.
-- Uniform Designer remains authoritative for per-regiment colours.
+v00.00.09k - Dragoons pilot
+- Adds one QA dragoon squadron per side, 160 mounted riders each.
+- Separate horse/rider/carbine visual identity; not an infantry reskin.
+- Mounted movement, dismount, horse holders, remount, fatigue/casualties and dragoon combat are future functional gates.
 
-v00.00.09i - Regimental Standard Visual Pass 2
-- Procedural two-sided cloth mesh with wind deformation, pole, ferrule, spear finial, cords, animated ribbons and fringe.
-- Danish and Prussian prototype devices follow Uniform Designer flag/ribbon colours live.
-- Standards are presentation-only with no morale/combat effect.
+v00.00.09k - Field artillery pilot
+- Adds one QA field battery per side.
+- Six guns + approximately 120 crew per battery.
+- Gun carriage, wheels, barrel and crews are rendered separately.
+- Limber/unlimber, horses, deployment, ammunition, LOS/fire arcs, counter-battery and capture/abandon remain future functional gates.
 
-Retained movement/control baseline
-- v00.00.09h4 manual movement correction remains active.
-- Manual PlayerCommander routes use Column while travelling, bounded no-progress bypass recovery and soft FencePost pass-through.
-- Navigation V3 remains the sole local steering owner.
-- Navigation V4 and 09A remain runtime-disabled.
-- Decorative trees and individual fence posts are pass-through soft terrain; Farmhouse/Barn remain hard obstacles; river remains bridge-only.
-- 09h3 AI march-column/deployment policy remains AI-only.
-- 09h2 sticky AI frontage remains available for AI-controlled multi-regiment attacks.
+Performance direction
+- 09k is the first architecture test for realistic 1:1 manpower rendering.
+- Immediate scenario load: 8,107 infantry + 12 mounted HQ riders + 320 dragoons + 240 artillery crew + 12 guns.
+- Future benchmark gates: 10k, 20k, 40k visible men, optional 60k stress test.
+- Measure FPS, main-thread ms, GPU ms, memory and draw calls at close, medium and full-battlefield zoom.
 
-Retained tactical UI/control features
-- v00.00.09g scenic battlefield and extended camera zoom are retained.
-- F10 Uniform Designer Save/Load/Reset remains active.
-- RTS box selection remains active: LMB drag replace, Shift add, Ctrl toggle.
-- Persistent VALGT/VALGT xN summary panel remains removed.
-- Ramte N remains compact text-only feedback.
-- Black-powder smoke keeps the soft-alpha 09h visual fix.
-- Range cone remains selected-unit ghost overlay.
+Retained movement/combat baseline
+- Navigation V3 remains steering authority.
+- 09i1 Farmhouse/Barn continuation fix remains active.
+- 09h4 manual AI-OFF route recovery remains active.
+- Decorative trees/fence posts remain soft/pass-through; Farmhouse/Barn remain hard; river remains bridge-only.
+- 09j combat reload cadence is unchanged; 09k only replaces its representative visual layer with 1:1 rendering.
+- Fire policy, range cone, accuracy, casualties, morale/cohesion and Officer AI combat logic remain unchanged.
 
-Known warnings / migration items
-- The supplied FindObjectsSortMode CS0618 warnings are removed in 09i3.
-- Unity Input Manager deprecation message is non-blocking. Migration to the new Input System is a separate control-platform revision because all LMB/RMB, box-select, keyboard hotkeys and UI pointer guards must be migrated and QA-tested together.
+Known migration item
+- Unity Input Manager deprecation warning is non-blocking. Input System migration remains a separate controls revision because LMB/RMB, box-select, F10 and keyboard shortcuts must move together.
 
-Future tactical unit gate
-- Dragoons/cavalry and field artillery remain next after visual/stability acceptance.
-- Dragoon baseline: mounted/dismounted, horse fatigue/casualties, horse-holder state and timed remount.
-- Artillery baseline: batteries/pieces, crews, horses/limbers, deploy/unlimber, ammunition, LOS/fire arcs, counter-battery and capture/abandon states.
-
-Primary 09j QA
+Primary 09k QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Visible build marker is PROJECT 1864 | v00.00.09j TEST.
-3. Console shows RELOAD-09J|Installed=True.
-4. When a regiment fires, that shooting regiment logs VolleyDetected=True and enters fire/reload animation.
-5. A regiment merely receiving hits must not falsely enter the fire pose because of HasHitFeedback.
-6. Danish muzzle-loader reload is visibly longer and includes a ramming/loading phase.
-7. Prussian Dreyse reload is visibly shorter/different and reads as bolt/cartridge work.
-8. Reload animation completes with the existing combat reload timing and then returns to ready.
-9. March animation remains visible while moving outside fire/reload states.
-10. Standard-bearer does not perform rifle reload when its rifle rig is inactive.
-11. Re-run the same bridge/contact battle and report if sharp turns/reforming remain reproducible at the same place.
-12. F10 Uniform Designer, RTS box selection, range cone, flags and 09i graphics remain functional.
+2. Build marker: PROJECT 1864 | v00.00.09k TEST.
+3. BattleManager contains only the four original infantry regiments.
+4. OOB-09K logs full strengths and 2/8 DK vs 3/12 PR battalion/company structure.
+5. SCALE-09K logs VisualRatio=1:1 and PerSoldierGameObject=False.
+6. Approximately 8,107 infantrymen are visibly present without 8,107 soldier GameObjects.
+7. Each regiment has a visible three-rider HQ group.
+8. Both sides have one 160-man dragoon squadron.
+9. Both sides have one six-gun/120-crew field battery.
+10. Existing infantry movement, box selection, range cone and combat still function.
+11. Observe frame rate at close, medium and full-map zoom and report any obvious frame-time spikes.
+12. Full officer objective/reserve allocation is NOT an acceptance requirement for 09k; 09k only establishes the data/state needed for the next command gate.
+
+Design supplement: docs/parts/part-09k-fullscale-oob-command-arms.md
