@@ -1,101 +1,84 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09l4
+Prototype version: v00.00.09l5
 Build status: TEST
-Build name: COMPANY SELECTION + COMBAT AUTHORITY + GUIDONS TEST 09L4
-Visible build marker: PROJECT 1864 | v00.00.09l4 TEST
+Build name: INDEPENDENT COMPANY MOVEMENT + GROUP ORDER FIX TEST 09L5
+Visible build marker: PROJECT 1864 | v00.00.09l5 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4 supplements
+Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4/09l5 supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09l4 - Company screen-space selection
+v00.00.09l5 - Independent company movement authority
+- Root cause from the 09l4 video: company tactical centres were still parented under Regiment.transform, so parent movement/rotation physically dragged all companies as one rigid body.
+- Active company tactical centres are now detached into an independent world-space tactical root while retaining their OOB ParentRegiment relationship in data.
+- Regimental HQ remains the command parent, but it is no longer the transform parent of the company formations.
+- Parent OfficerAI movement is suppressed in this focused company-control QA gate and the parent Regiment pivot is held in place.
+- Whole-regiment selection is converted to selecting all subordinate Danish companies, so a regiment order becomes a group of company orders instead of moving one giant pivot.
+
+v00.00.09l5 - Group order geometry fix
+- 09l2 multi-company RMB orders previously sorted every selected company laterally and rebuilt the selection as one giant continuous line.
+- 09l5 overrides that group destination in the same mouse-up frame.
+- Multi-company orders now preserve the selected companies' relative world-space offsets around their group centroid.
+- Normal RMB translates the company group while retaining its internal spacing and each company's existing facing.
+- RMB drag may rotate the relative offsets as a group around the order anchor and set a common explicit facing.
+- Each company still receives its own independent destination and moves through its own tactical centre.
+- Single-company RMB orders remain unchanged.
+- Console marker: COMPANY-AUTH-09L5|Installed=True|TransformParent=IndependentWorldSpace|GroupOrders=PreserveRelativeCompanyOffsets.
+
+Retained v00.00.09l4 - Company selection / combat authority / guidons
 - 1:1 ordinary soldiers remain GPU-instanced and have no individual colliders.
-- A new screen-space company hit test projects each company tactical footprint into the camera view.
-- A short LMB click anywhere inside the visible company footprint selects that company even if the ray never hits the lightweight company collider.
-- Shift and Ctrl semantics remain add/toggle.
-- 09l2 remains owner of LMB drag/box selection; 09l4 only corrects short-click selection after the ordinary 09l2 click path.
-- Whole-regiment PlayerCommander selection remains available through the existing regiment/HQ path.
-- Console marker: SELECT-09L4|Installed=True|Mode=ScreenSpaceCompanyFootprint.
-
-v00.00.09l4 - Company combat authority
-- The old Regiment object is no longer allowed to fire a regiment-wide volley from the mounted HQ/pivot while companies are the visible tactical formations.
-- Active company-parent regiments are forced to HoldFire in this QA gate.
-- Parent regiment range cones are hidden in company-control mode.
-- This is intentionally a safe interim state: company-level fire/LOS/ammo/casualty resolution is not faked before it is implemented properly.
-- Existing combat code is not deleted or rewritten; its previous fire policy is retained for restoration when the authority layer is removed.
-- Console marker: COMBAT-AUTH-09L4|Installed=True|ParentRegimentFire=False.
-
-v00.00.09l4 - Company guidons / identity markers
-- The full historical national/regimental standards remain at Regimental HQ.
-- Every active company receives two smaller tactical guidons attached to its company tactical centre:
-  1. national identity marker,
-  2. regiment/company identity marker.
-- Danish company national marker uses Dannebrog colours; the company marker carries regiment Roman identity plus company number.
-- Prussian QA companies receive equivalent national/regiment-company markers.
-- These are tactical readability markers, not a claim that every historical company carried a full regimental colour.
-- Guidons move and rotate with the company tactical centre.
-- Console marker: GUIDON-09L4|Installed=True|PerCompany=2.
+- Screen-space company hit testing selects the visible company footprint rather than only HQ/collider geometry.
+- Active company-parent regiments remain forced to HoldFire in this QA gate; mounted HQ does not fire the regiment volley.
+- Parent regiment range cones remain hidden while company combat is not yet implemented.
+- Full historical national/regimental standards remain at Regimental HQ.
+- Every active company retains two smaller tactical guidons: national identity + regiment/company identity.
 
 Retained v00.00.09l3 - Reduced QA battle
-- Temporary scale-down while company selection, movement and formation geometry are stabilized.
-- Active infantry:
-  * Denmark: 1. Infanteri-Regiment, approximately 1,540 men, 8 companies.
-  * Prussia: 8th Regiment (QA), approximately 2,460 men, 12 companies.
-- Active infantry total: approximately 4,000 men.
-- Active company tactical centres: 20 total.
-- 11. Infanteri-Regiment and 18th Regiment remain defined in the OOB model but hidden from the active QA battle.
-- Brigade reserve/commit AI remains paused in this two-regiment QA gate.
+- Active infantry remains intentionally reduced to two regiments while company architecture is stabilized.
+- Denmark: 1. Infanteri-Regiment, approximately 1,540 men, 8 companies.
+- Prussia: 8th Regiment (QA), approximately 2,460 men, 12 companies.
+- Active infantry total: approximately 4,000 men / 20 company tactical centres.
+- 11. Infanteri-Regiment and 18th Regiment remain in the OOB data model but hidden from active QA.
+- Brigade reserve/commit AI remains paused in this gate.
 
-Retained v00.00.09l2 - Company tactical control
-- Every company has a lightweight tactical centre; ordinary soldiers remain GPU-instanced.
-- LMB click/Shift/Ctrl and LMB box-select support Danish company selection.
-- RMB moves selected companies; Alt+RMB appends a waypoint; RMB drag sets final facing.
-- F = Line, C = Column, H = Hold, Z/X rotate company facing.
-- Double-clicking a company returns to whole-regiment selection.
-- Manual company orders clear the parent regiment route, switch parent Officer AI OFF and set the parent regiment Hold.
-
-Retained formation geometry
-- 1:1 infantry is anchored to individual company tactical centres rather than one regiment-wide pivot.
+Retained company formation geometry
+- Ordinary soldiers remain 1:1 GPU-instanced around company tactical centres.
 - Company Line = 3 ranks, approximately 0.52 m file spacing / 0.76 m rank spacing.
 - Company Column = 8 files across.
-- Four companies form a battalion line; battalions occupy separate template rows.
-- Company casualty slots remain deterministically distributed to prevent artificial tail/L-shaped losses.
+- Company casualty slots remain deterministically distributed.
 
-Retained OOB / HQ / standards / arms baseline
+Retained OOB / HQ / arms baseline
 - Historical Danish working OOB remains 7. Brigade: 1. + 11. Infanteri-Regiment in the data model.
-- Prussian 8th + 18th pair remains explicitly QA pending source lock.
+- Prussian 8th + 18th pair remains QA pending source lock.
 - Regimental HQ = 3 mounted staff figures; Brigade HQ = 6 mounted staff figures.
-- Full dual standards remain national/army flag + regimental identity flag at Regimental HQ.
 - Danish battery baseline = 8 guns / approximately 190 personnel.
 - Cavalry manpower, serviceable horses and mounted effective remain separate values.
 
 Retained movement baseline
-- Navigation V3 remains whole-regiment steering authority.
+- Navigation V3 remains the accepted whole-regiment steering implementation for the older regiment mode.
 - 09i1 Farmhouse/Barn detour continuation remains active.
 - 09h4 manual AI-OFF regiment route recovery remains active.
 - Trees/fence posts remain soft/pass-through; Farmhouse/Barn hard; river bridge-only.
-- Company movement remains lightweight direct movement without independent V3 obstacle routing in this QA gate.
+- Independent companies still use lightweight direct company movement without individual obstacle/path navigation in 09l5.
 
 Known transition constraints
-- Parent regiment fire is intentionally suppressed in 09l4 until proper company-level fire resolution is implemented.
-- Company-level LOS, fire eligibility, ammo and casualty targeting remain the next combat architecture gate.
+- 09l5 deliberately prioritizes independent company transforms and group geometry before company-level obstacle navigation and combat AI.
+- Company-level LOS, fire eligibility, ammo, casualty targeting and autonomous officer behaviour remain later gates.
 - Unity Input Manager deprecation warning remains non-blocking; Input System migration remains separate.
 
-Primary 09l4 QA
+Primary 09l5 QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Build marker: PROJECT 1864 | v00.00.09l4 TEST.
-3. QA-SCALE-09L3 still reports ActiveRegiments=2 and ActiveCompanies=20.
-4. SELECT-09L4 reports Installed=True.
-5. Clicking anywhere on a visible Danish company line selects that company, not only the HQ/officer.
-6. Company click selection does not require individual soldier colliders.
-7. LMB drag box selection still works through 09l2.
-8. GUIDON-09L4 reports one national + one regiment/company marker per active company.
-9. All active company blocks visibly carry their tactical identity markers.
-10. Large historical dual standards remain at Regimental HQ.
-11. COMBAT-AUTH-09L4 reports ParentRegimentFire=False.
-12. No regiment-wide volley or range cone originates from mounted Regimental HQ while company mode is active.
-13. Company RMB movement and Line/Column controls remain functional.
-14. 1:1 infantry and mounted HQ rendering remain intact.
+2. Build marker: PROJECT 1864 | v00.00.09l5 TEST.
+3. QA-SCALE-09L3 still reports ActiveRegiments=2 / ActiveCompanies=20.
+4. COMPANY-AUTH-09L5 reports IndependentWorldSpace and PreserveRelativeCompanyOffsets.
+5. Moving/rotating the Regimental HQ pivot does not drag company formations with it.
+6. Selecting one company and RMB-moving it affects only that company.
+7. Selecting several companies and RMB-moving them preserves their relative spacing instead of rebuilding one giant continuous line.
+8. RMB-drag rotates the selected company group around its centroid while companies retain separate tactical centres.
+9. Selecting the whole Danish regiment resolves to all subordinate company entities rather than moving one rigid Regiment transform.
+10. 09l4 screen-space selection and company guidons remain visible and functional.
+11. Parent HQ remains HoldFire and does not display regiment range cones.
+12. Observe whether companies now read and move as 8/12 smaller formations rather than one monolithic regiment.
 
 Design supplements:
 - docs/parts/part-09k-fullscale-oob-command-arms.md
