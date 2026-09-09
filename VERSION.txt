@@ -1,28 +1,26 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13h1
-Build status: DENMARK PREMIUM MAP-ONLY DEV / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK PREMIUM VISUAL V13H1 MAP-ONLY
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1
+Prototype version: v00.00.13i
+Build status: DENMARK GIS TERRAIN FOUNDATION DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK GIS TERRAIN FOUNDATION V13I
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
-v13h visual direction: Historic Miniature Grand Strategy Diorama — serious, historical, readable, premium 3D miniature presentation; not cartoon and not photorealistic
-v13h1 MAP-ONLY rule: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition are temporarily disabled while Denmark map visuals are rebuilt
-v13h1 clock rule: campaign clock and construction progression remain available through a dedicated map-only time controller with pause/x1/x5/x20/reset
-v13h1 presentation cleanup: legacy CampaignMapController labels/panels, v11 usability diagnostics/search UI and formation markers are disabled for map-visual QA
-v13h1 Denmark-only rule: foreign node/control/settlement presentation remains hidden; Sweden/Norway/Finland/Germany stay in simulation data only
-v13h foundation: retains corrected v13f Denmark landmesh, v13e clean sea/infrastructure base and v13g Denmark-only presentation/close-zoom rules
-v13h terrain: corrected Denmark landmesh receives restrained grass/meadow/heath materials plus deterministic field patches and hedgerows; low-relief presentation remains non-authoritative
-v13h water: clean sea receives darker blue premium material, high smoothness and subtle time-based colour breathing; water remains presentation-only
-v13h vegetation: deterministic Danish woodland clusters use compact trunk/crown miniatures and avoid major city centres
-v13h settlements: old Denmark settlement miniatures are hidden and replaced with richer city dioramas with houses, church/tower, station/platform when rail is present and small port piers when port is present
-v13h infrastructure: Denmark-only road/rail/ferry renderers are retained but retuned with separate visual materials and clearer hierarchy; foreign links stay hidden
-v13h construction: Aalborg barracks and Aarhus farm staged simulation projects remain authoritative; premium perimeter/fence/material/field dressing is added without changing build progress
-v13h atmosphere: warm directional light, soft shadows, restrained linear fog and tighter Denmark composition
-v13h labels: v13h becomes sole visible label owner, uses shadowed text without heavy black boxes, semantic zoom and Denmark-only region filtering
-v13h camera: Home framing tightened to Denmark; close zoom remains available with hidden legacy terrain floor disabled
-Gameplay isolation: v00.00.13h1 intentionally suspends campaign formation movement/contact/battle only for map development; campaign strategic data is preserved and no tactical AI/navigation code is changed
+v13i map foundation: previous hand-built Denmark presentation layers are disabled and replaced by a clean GIS-backed runtime root V013I_DENMARK_GIS_FOUNDATION
+v13i DEM: elevation is loaded from Mapzen/Terrain Tiles Terrarium PNG tiles hosted in the AWS public dataset at zoom 8; downloaded tiles are cached under Application.persistentDataPath/PROJECT1864/TerrainCache
+v13i offline rule: if a DEM tile cannot be downloaded or read from cache, a deterministic low-relief fallback is used so CampaignMap still renders and can be QA tested
+v13i geospatial rule: latitude/longitude and geodesic route state remain authoritative; downloaded elevation affects only Unity presentation Y and never ETA or strategic distance
+v13i coastline: Denmark land mask continues to use the Natural Earth 1:50m DNK coastline scaffold already tracked in CampaignDenmarkGeography
+v13i hydrology pilot: Limfjorden, Mariager Fjord, Randers Fjord, Horsens Fjord, Vejle Fjord, Kolding Fjord, Odense Fjord, Roskilde Fjord, Isefjord, Ringkøbing Fjord and Nissum Fjord are rendered/cut as explicit water corridors in the Denmark GIS pilot
+v13i Aalborg: Aalborg is rendered deliberately as a Limfjord harbour city with quays, warehouses, small boats/ferry and a decorative Nørresundby north-bank settlement; no modern Limfjord bridge is fabricated
+v13i barracks: Aalborg receives a clearly visible construction/barracks compound dressing while CampaignConstructionV013 remains authoritative for staged project progression
+v13i infrastructure: generic graph-edge rendering is hidden; Denmark pilot roads/ferries are rebuilt explicitly so no straight Roskilde-Fredericia land line crosses open water; Nyborg-Korsør and Fredericia-Middelfart are rendered as ferry crossings
+v13i rail rule: rail is not promoted visually from generic node flags in this pilot; historical 1864 rail validation is deferred instead of drawing modern/future connections as fact
+v13i settlements: only Danish strategic settlements are rendered, with lightweight 3D town dioramas and semantic labels
+v13i visual direction: Historic Miniature Grand Strategy Diorama remains the target, but terrain and water now come from a GIS/elevation foundation rather than the old polygon-only presentation
+v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition are temporarily disabled while Denmark map visuals are rebuilt
+v13h1 clock rule remains active: campaign clock and construction progression continue through pause/x1/x5/x20/reset
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
