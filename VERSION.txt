@@ -13,8 +13,9 @@ Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 v00.00.09i3 - Compile / Unity 6.6 compatibility fix
 - Fixes CS0117 in PrototypeSoldierVisualPass09I where CreateDenmarkDefault() and CreatePrussiaDefault() were referenced but not defined by PrototypeUniformProfile09H.
 - PrototypeUniformProfile09H now exposes CreateDenmarkDefault() and CreatePrussiaDefault() as thin compatibility wrappers over the existing CreateFactionDefault(BattleTeam) implementation, so faction defaults remain centralized and cannot drift.
-- PrototypeNavigationRecoveryManager now uses Unity 6.6 Object.FindObjectsByType<Transform>() instead of the deprecated FindObjectsSortMode overload.
-- No movement parameters, combat rules, route semantics, visual sizing, uniform colours or AI behaviour are changed by 09i3.
+- PrototypeNavigationRecoveryManager, PrototypeBattlefieldNavigationV3, PrototypeBattlefieldNavigationManager and PrototypeNavigation09AHotfix now use Unity 6.6 Object.FindObjectsByType<Transform>() instead of the deprecated FindObjectsSortMode overload.
+- The eight CS0618 warnings shown in the 09i2 QA log are therefore removed at source rather than suppressed.
+- No movement parameters, obstacle radii, combat rules, route semantics, visual sizing, uniform colours or AI behaviour are changed by this API cleanup.
 
 v00.00.09i2 - Tactical readability pass
 - QA screenshot showed that the first 09i graphics pass was not visually strong enough at ordinary tactical zoom: infantry still read as dark sticks and standards were too small to carry regiment identity.
@@ -75,9 +76,8 @@ Retained tactical UI/control features
 - Range cone remains selected-unit ghost overlay.
 
 Known warnings / non-blocking migration items
-- PrototypeNavigationRecoveryManager CS0618 FindObjectsSortMode warning is removed in 09i3.
-- The same Unity 6.6 FindObjectsSortMode deprecation pattern can still exist in older dormant/reference navigation scripts until those files are migrated individually; these warnings are non-blocking and do not cause the Farmhouse movement stall.
-- Unity Input Manager deprecation message is non-blocking and will be handled in a later input-platform migration.
+- The eight CS0618 FindObjectsSortMode warnings shown in the supplied 09i2 Console output are removed in 09i3.
+- Unity Input Manager deprecation message is still non-blocking and will be handled in a later input-platform migration.
 
 Future tactical unit gate
 - Dragoons/cavalry and field artillery remain next after visual/stability acceptance.
@@ -88,12 +88,13 @@ Primary 09i3 QA
 1. Unity 6000.6.0f1 compiles without red errors.
 2. Visible build marker is PROJECT 1864 | v00.00.09i3 TEST.
 3. No CS0117 CreateDenmarkDefault/CreatePrussiaDefault errors appear.
-4. Startup Console should include SOLDIER-09I2, STANDARD-09I and VIS-09I2.
-5. At ordinary tactical zoom infantry should read more clearly as people, not thin dark sticks; close zoom should reveal the full articulated/equipment pass.
-6. Regimental standards should be noticeably easier to identify from medium/long tactical zoom.
-7. Repeat the AI-OFF four-regiment manual group move through the Farmhouse area.
-8. 1. Regiment must not park indefinitely at the first Farmhouse detour point.
-9. If needed, Console should show NAV-V3-09I1 Continuation=True with a different NextVia point.
-10. Thousands of identical Farmhouse + Via detour messages are a failure.
-11. Buildings/barns remain hard obstacles; river remains bridge-only.
-12. F10 Uniform Designer and RTS box selection remain functional.
+4. The eight supplied FindObjectsSortMode CS0618 warnings should no longer appear.
+5. Startup Console should include SOLDIER-09I2, STANDARD-09I and VIS-09I2.
+6. At ordinary tactical zoom infantry should read more clearly as people, not thin dark sticks; close zoom should reveal the full articulated/equipment pass.
+7. Regimental standards should be noticeably easier to identify from medium/long tactical zoom.
+8. Repeat the AI-OFF four-regiment manual group move through the Farmhouse area.
+9. 1. Regiment must not park indefinitely at the first Farmhouse detour point.
+10. If needed, Console should show NAV-V3-09I1 Continuation=True with a different NextVia point.
+11. Thousands of identical Farmhouse + Via detour messages are a failure.
+12. Buildings/barns remain hard obstacles; river remains bridge-only.
+13. F10 Uniform Designer and RTS box selection remain functional.
