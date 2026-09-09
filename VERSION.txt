@@ -1,8 +1,8 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09i3
+Prototype version: v00.00.09j
 Build status: TEST
-Build name: 09I2 GRAPHICS + DETOUR + COMPILE COMPATIBILITY TEST 09I3
-Visible build marker: PROJECT 1864 | v00.00.09i3 TEST is shown permanently in the upper-left corner during Play mode
+Build name: FIRE + RELOAD ANIMATION TEST 09J
+Visible build marker: PROJECT 1864 | v00.00.09j TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
@@ -10,52 +10,56 @@ Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 
+v00.00.09j - Fire & Reload Animation Pass
+- New PrototypeReloadAnimation09J is presentation-only and runs after the 09i articulated soldier pass.
+- It detects an ACTUAL outgoing volley by observing Regiment.nextFireTime move to a new future timestamp. This fixes the previous visual shortcut where 09i used HasHitFeedback, which means the regiment had been hit rather than that it had fired.
+- Actual volley -> short shoulder/fire pose -> weapon-specific reload animation -> ready pose.
+- Danish Rifled Muzzle-Loader representatives use a longer approximate lower/vertical rifle, cartridge/charge, ramrod/loading and recover sequence.
+- Prussian Dreyse representatives use a shorter lower-rifle, bolt/cartridge, close/recover sequence.
+- Reload animation duration follows the existing real combat reload window, including weapon profile, experience multiplier and the existing volley randomisation. 09j does not set or modify nextFireTime.
+- A small deterministic per-soldier stagger prevents perfect clone motion while keeping the regiment visually coordinated.
+- Standard-bearers without an active rifle are excluded from rifle reload posing.
+- 09j takes presentation ownership of riflemen arms/rifle only after 09i has run: fire/reload/march/ready arms are therefore based on correct outgoing-fire state while 09i continues to own legs, body, LOD, uniforms and equipment visuals.
+- Expected telemetry: RELOAD-09J|Installed=True, VolleyDetected=True, ReloadAnimation=True and ReloadComplete=True.
+- No movement, destination, formation, accuracy, hit, ammo, morale, cohesion, Officer AI or PlayerCommander logic is changed.
+- Design supplement: docs/parts/part-09j-fire-reload-animation.md.
+
+QA observation from Optagelse 3(1).mp4
+- Overall movement is materially improved and the previous total Farmhouse stall is not reproduced in the supplied recording.
+- Remaining odd behaviour is intermittent sharp turning/reforming around bridge routing and dense multi-regiment contact, especially after AI is enabled. This remains a separate movement/AI QA item and is intentionally not mixed into 09j.
+
 v00.00.09i3 - Compile / Unity 6.6 compatibility fix
 - Fixes CS0117 in PrototypeSoldierVisualPass09I where CreateDenmarkDefault() and CreatePrussiaDefault() were referenced but not defined by PrototypeUniformProfile09H.
-- PrototypeUniformProfile09H now exposes CreateDenmarkDefault() and CreatePrussiaDefault() as thin compatibility wrappers over the existing CreateFactionDefault(BattleTeam) implementation, so faction defaults remain centralized and cannot drift.
-- PrototypeNavigationRecoveryManager, PrototypeBattlefieldNavigationV3, PrototypeBattlefieldNavigationManager and PrototypeNavigation09AHotfix now use Unity 6.6 Object.FindObjectsByType<Transform>() instead of the deprecated FindObjectsSortMode overload.
-- The eight CS0618 warnings shown in the 09i2 QA log are therefore removed at source rather than suppressed.
+- PrototypeUniformProfile09H exposes CreateDenmarkDefault() and CreatePrussiaDefault() as compatibility wrappers over CreateFactionDefault(BattleTeam).
+- PrototypeNavigationRecoveryManager, PrototypeBattlefieldNavigationV3, PrototypeBattlefieldNavigationManager and PrototypeNavigation09AHotfix use Unity 6.6 Object.FindObjectsByType<Transform>() instead of the deprecated FindObjectsSortMode overload.
+- The eight CS0618 warnings shown in the 09i2 QA log are removed at source rather than suppressed.
 - No movement parameters, obstacle radii, combat rules, route semantics, visual sizing, uniform colours or AI behaviour are changed by this API cleanup.
 
 v00.00.09i2 - Tactical readability pass
-- QA screenshot showed that the first 09i graphics pass was not visually strong enough at ordinary tactical zoom: infantry still read as dark sticks and standards were too small to carry regiment identity.
-- PrototypeSoldierVisualPass09I remains presentation-only but increases base torso/limb/head/rifle silhouette size without changing any Regiment formation slot or BoxCollider footprint.
-- Small uniform/equipment details remain visible out to approximately 285 m instead of disappearing around 135 m.
-- Soldier render rigs receive bounded distance-based visual scaling from about 1.04x close to about 1.24x at long tactical distance. This scales each render rig around its existing formation slot only; unit spacing, destination and collision remain unchanged.
-- Headgear, rifles/bayonets, hands, boots, straps, cartridge boxes and packs receive modest readability increases.
-- New PrototypeVisualReadability09I2 dynamically enlarges the procedural 09i regimental standard from roughly 1.18x at close range up to roughly 1.52x at long tactical range.
-- VIS-09I2 telemetry explicitly reports whether each procedural 09i standard is found. This makes a failed visual-layer install obvious instead of silently falling back to the 09g look.
+- Infantry silhouettes are presentation-scaled for better medium/long tactical readability without changing formation slots or colliders.
+- Small equipment details remain visible to approximately 285 m.
+- PrototypeVisualReadability09I2 enlarges the procedural regimental standard at tactical distance and logs whether it is found.
 - Expected startup telemetry: SOLDIER-09I2, STANDARD-09I and VIS-09I2.
-- 09i2 remains rendering-only and does not alter movement, combat, morale, cohesion, Officer AI, player routes or selection.
 
 v00.00.09i1 - V3 hard-obstacle detour continuation fix
-- QA log from a direct player-controlled AI-OFF group move confirmed 1. Regiment can enter a repeat loop around a Farmhouse.
-- The captured log contains thousands of repeated NAV-V3 Detour=True entries for the same Farmhouse centre and the same detour point.
-- Root cause: after reaching the first detour point, the same hard obstacle can still block the final route. Base V3 finishes the reached detour leg and can immediately select the same/near-identical point again instead of continuing around the obstacle.
-- 09h4 manual route recovery correctly detected no progress and inserted a bypass, but V3 route sanitisation/goal adjustment could move that bypass and the base detour loop could resume.
-- PrototypeNavigationV3DetourContinuation09I1 runs immediately after base V3 and only acts when V3 is already in a Farmhouse/Barn detour and the current detour point has effectively been reached while the real goal is still distant.
-- The layer chooses a new safe continuation point around the SAME active hard obstacle, validates the local leg with V3 Column navigation/path penalties, rejects local river-crossing candidates, and writes the continuation back into V3's existing NavigationState.
-- Navigation V3 remains the steering owner. The continuation layer does not teleport the regiment and does not create an independent pathfinding authority.
-- Continuation legs are bounded to 10 per active obstacle and emit explicit NAV-V3-09I1 telemetry.
-- Expected success telemetry: NAV-V3-09I1|Unit=...|Continuation=True|Obstacle=Farmhouse|FromVia=...|NextVia=...
-- This fix applies to Farmhouse and Barn hard obstacles; decorative trees and individual FencePosts remain soft/pass-through from 09h4.
+- Direct AI-OFF QA confirmed 1. Regiment could enter a repeat loop around a Farmhouse.
+- PrototypeNavigationV3DetourContinuation09I1 continues around the same Farmhouse/Barn after the first detour leg instead of allowing the same via point to repeat indefinitely.
+- Navigation V3 remains the steering owner; the continuation layer does not teleport the regiment or create independent pathfinding authority.
+- Expected telemetry: NAV-V3-09I1|Unit=...|Continuation=True|Obstacle=Farmhouse|FromVia=...|NextVia=...
 
 v00.00.09i - Soldier Visual Pass 2 / Big Graphics Buff
 - PrototypeSoldierVisualPass09I hides legacy primitive soldier renderers and rebuilds each representative infantry figure as a lightweight articulated procedural rig.
-- Improved human proportions: tapered torso, coat skirts, separate legs, boots, arms, hands, neck/head and faction-specific headgear.
-- Danish infantry receive cap/visor/band silhouette; Prussian infantry receive Pickelhaube dome/band/spike/visor silhouette.
-- Equipment: backpack, crossed straps, cartridge box, optional canteen, improved rifle stock/barrel/bayonet and metal/wood material separation.
-- Officer representative receives sash, shoulder boards and sword.
-- Standard-bearer representative receives sash/pole grip and carries no rifle.
+- Human proportions: tapered torso, coat skirts, separate legs, boots, arms, hands, neck/head and faction-specific headgear.
+- Danish cap/visor/band and Prussian Pickelhaube silhouettes.
+- Backpack, crossed straps, cartridge box, optional canteen, rifle stock/barrel/bayonet and metal/wood material separation.
+- Officer receives sash, shoulder boards and sword; standard-bearer gets separate visual treatment.
 - Six deterministic visual variants reduce exact cloned appearance.
-- Cosmetic march arm/leg swing, ready pose and brief firing pose are driven from existing state only.
 - Uniform Designer remains authoritative for per-regiment colours.
 
 v00.00.09i - Regimental Standard Visual Pass 2
-- PrototypeRegimentalStandards09I hides the old 09g QA standard renderers while retaining the underlying rollback/reference code.
-- Each regiment receives a procedural two-sided cloth mesh with wind deformation, pole, ferrule, spear finial, cords, animated ribbons and fringe.
-- Danish and Prussian standards use different prototype national devices and follow Uniform Designer flag/ribbon colours live.
-- Standards remain presentation-only with no morale/combat effect.
+- Procedural two-sided cloth mesh with wind deformation, pole, ferrule, spear finial, cords, animated ribbons and fringe.
+- Danish and Prussian prototype devices follow Uniform Designer flag/ribbon colours live.
+- Standards are presentation-only with no morale/combat effect.
 
 Retained movement/control baseline
 - v00.00.09h4 manual movement correction remains active.
@@ -75,26 +79,25 @@ Retained tactical UI/control features
 - Black-powder smoke keeps the soft-alpha 09h visual fix.
 - Range cone remains selected-unit ghost overlay.
 
-Known warnings / non-blocking migration items
-- The eight CS0618 FindObjectsSortMode warnings shown in the supplied 09i2 Console output are removed in 09i3.
-- Unity Input Manager deprecation message is still non-blocking and will be handled in a later input-platform migration.
+Known warnings / migration items
+- The supplied FindObjectsSortMode CS0618 warnings are removed in 09i3.
+- Unity Input Manager deprecation message is non-blocking. Migration to the new Input System is a separate control-platform revision because all LMB/RMB, box-select, keyboard hotkeys and UI pointer guards must be migrated and QA-tested together.
 
 Future tactical unit gate
 - Dragoons/cavalry and field artillery remain next after visual/stability acceptance.
 - Dragoon baseline: mounted/dismounted, horse fatigue/casualties, horse-holder state and timed remount.
 - Artillery baseline: batteries/pieces, crews, horses/limbers, deploy/unlimber, ammunition, LOS/fire arcs, counter-battery and capture/abandon states.
 
-Primary 09i3 QA
+Primary 09j QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Visible build marker is PROJECT 1864 | v00.00.09i3 TEST.
-3. No CS0117 CreateDenmarkDefault/CreatePrussiaDefault errors appear.
-4. The eight supplied FindObjectsSortMode CS0618 warnings should no longer appear.
-5. Startup Console should include SOLDIER-09I2, STANDARD-09I and VIS-09I2.
-6. At ordinary tactical zoom infantry should read more clearly as people, not thin dark sticks; close zoom should reveal the full articulated/equipment pass.
-7. Regimental standards should be noticeably easier to identify from medium/long tactical zoom.
-8. Repeat the AI-OFF four-regiment manual group move through the Farmhouse area.
-9. 1. Regiment must not park indefinitely at the first Farmhouse detour point.
-10. If needed, Console should show NAV-V3-09I1 Continuation=True with a different NextVia point.
-11. Thousands of identical Farmhouse + Via detour messages are a failure.
-12. Buildings/barns remain hard obstacles; river remains bridge-only.
-13. F10 Uniform Designer and RTS box selection remain functional.
+2. Visible build marker is PROJECT 1864 | v00.00.09j TEST.
+3. Console shows RELOAD-09J|Installed=True.
+4. When a regiment fires, that shooting regiment logs VolleyDetected=True and enters fire/reload animation.
+5. A regiment merely receiving hits must not falsely enter the fire pose because of HasHitFeedback.
+6. Danish muzzle-loader reload is visibly longer and includes a ramming/loading phase.
+7. Prussian Dreyse reload is visibly shorter/different and reads as bolt/cartridge work.
+8. Reload animation completes with the existing combat reload timing and then returns to ready.
+9. March animation remains visible while moving outside fire/reload states.
+10. Standard-bearer does not perform rifle reload when its rifle rig is inactive.
+11. Re-run the same bridge/contact battle and report if sharp turns/reforming remain reproducible at the same place.
+12. F10 Uniform Designer, RTS box selection, range cone, flags and 09i graphics remain functional.
