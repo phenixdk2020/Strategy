@@ -8,7 +8,7 @@ PROJECT 1864 udvikles i to uafhængige spor, så tactical stabilization ikke blo
 
 - Branch: `test` / aktiv leveringskanal `channel-test`
 - Lokal standardmappe: `%USERPROFILE%\OneDrive\Strategy-Test`
-- Aktuel revisionsserie: `v00.00.09l4`.
+- Aktuel revisionsserie: `v00.00.09l5`.
 - Fokus: battlefield controls, formations, Officer AI, combat, navigation, obstacles, river/bridge, UI, tactical visuals, full-scale OOB, brigade command, company tactical control og tactical QA.
 - `v00.00.09f` beholder **Navigation V3** som autoritativ whole-regiment movement/steering-owner. V4 og 09A er runtime-deaktiverede.
 - `09B/09h4` fungerer som compatibility/soft-terrain policy: decorative trees og individuelle fence posts er pass-through; Farmhouse/Barn er hard obstacles; river/water er bridge-only.
@@ -21,20 +21,29 @@ PROJECT 1864 udvikles i to uafhængige spor, så tactical stabilization ikke blo
 - `v00.00.09l/09l1` etablerer **Brigade HQ + Historical Danish OOB + Reserve AI + Dual Standards** og Unity 6.6 compile compatibility.
 - `v00.00.09l2` etablerer **Company Tactical Control + Full-Scale Formation Geometry**.
 - `v00.00.09l3` reducerer QA-slaget til 1 dansk + 1 preussisk regiment for at stabilisere company-control.
-- `v00.00.09l4` er **Company Selection + Combat Authority + Company Guidons**.
+- `v00.00.09l4` etablerer **Company Selection + Combat Authority + Company Guidons**.
+- `v00.00.09l5` etablerer **Independent Company Movement + Group Order Geometry Fix**.
+
+### v00.00.09l5 independent company movement gate
+
+- Root cause fra 09l4-videoen: company tactical centres var stadig transform-children under `Regiment.transform`, så enhver parent-rotation eller movement mekanisk trak alle companies med som én rigid enhed.
+- Active company tactical centres flyttes nu til en selvstændig world-space tactical root. `ParentRegiment` bevares som OOB-/command-relation i data, men er ikke længere fysisk transform-parent.
+- Regimental HQ er dermed command-parent, ikke movement-body for underenhederne.
+- Parent Officer AI movement slås midlertidigt fra i denne company-QA-gate, og Regiment-pivot holdes, så der ikke er konkurrerende movement-writers.
+- Whole-regiment selection konverteres til selection af alle underlagte danske companies; en regimentordre er dermed en gruppe company-orders frem for movement af én gigantisk pivot.
+- Multi-company RMB bevarer de valgte companies' relative offsets omkring selection-centroid. De bliver ikke længere sorteret og lagt ud som én ny sammenhængende lang linje.
+- RMB-drag kan rotere den relative company-layout omkring gruppens centroid og sætte fælles final facing, men hvert company beholder eget tactical centre og egen destination.
+- Single-company RMB movement ændres ikke.
+- Autoritativ supplement: `docs/parts/part-09l5-independent-company-movement.md`.
 
 ### v00.00.09l4 company authority gate
 
 - GPU-instanced ordinary soldiers kræver fortsat ingen individuelle colliders.
-- Company short-click bruger nu et screen-space hit-test af den synlige company footprint. Dermed kan spilleren klikke direkte på formationens mænd og vælge kompagniet, selv om raycast ikke rammer et fysisk soldier-object.
-- Shift/Ctrl semantics bevares; 09l2 forbliver owner af LMB drag/box-selection.
-- Mounted Regimental HQ er kun command entity. Parent `Regiment` må ikke længere affyre en regiment-wide volley fra HQ/pivot, mens companies er den synlige tactical formation.
+- Company short-click bruger et screen-space hit-test af den synlige company footprint, så man kan klikke direkte på formationens mænd.
+- Mounted Regimental HQ er command entity og må ikke affyre regiment-wide volley fra HQ/pivot, mens companies er synlige tactical formations.
 - Parent regiment fire policy tvinges derfor midlertidigt til HoldFire i company-QA-mode, og parent range cone skjules.
-- Company-level fire/LOS/ammo/casualty resolution implementeres som separat næste combat gate i stedet for at fake eksisterende regiment-fire gennem HQ'et.
 - Store historiske national-/regimentsfaner forbliver ved Regimental HQ.
-- Hvert aktivt company får to mindre tactical guidons: national identitet + regiment/company-identitet. De er readability markers, ikke historiske full regimental colours.
-- Dansk company marker bruger Dannebrog-farver og regiment Roman identity + company number. Prussian QA company får tilsvarende markers.
-- Autoritativ supplement: `docs/parts/part-09l4-company-authority-guidons.md`.
+- Hvert aktivt company har to mindre tactical guidons: national identitet + regiment/company-identitet.
 
 ### v00.00.09l3 reduced QA gate
 
@@ -52,11 +61,9 @@ PROJECT 1864 udvikles i to uafhængige spor, så tactical stabilization ikke blo
 - Company er den mindste direkte kontrollerbare infanteriformation.
 - Ordinary 1:1 soldiers forbliver GPU-instanced; der oprettes ikke GameObject/MonoBehaviour/collider/NavMeshAgent/AI pr. soldat.
 - Dansk company-control: enkeltklik vælger company; Shift add; Ctrl toggle; LMB drag box-select; RMB move; Alt+RMB append waypoint; RMB drag final facing; F/C Line/Column; H Hold; Z/X facing.
-- Double-click på company skifter tilbage til whole-regiment selection, hvor eksisterende PlayerCommander/V3-kæde fortsat bruges.
-- Company manual movement rydder parent regimentets aktive PlayerCommander-route, slår aktiv parent OfficerAIController OFF og sætter parent Regiment Hold for at undgå competing movement writes.
 - 09l2 bruger company-anchored 1:1 rendering. Company Line bruger 3 ranks; Column bruger 8 files. Companies danner separate blocks under Battalion.
 - Casualty changes på Regiment.CurrentStrength synkroniseres til company CurrentStrength; rendering fordeler visuelle gaps gennem company-blokken.
-- Company-level ammo, LOS, fire eligibility og casualty targeting er stadig næste combat architecture gate.
+- Company-level ammo, LOS, fire eligibility og casualty targeting er fortsat en senere combat architecture gate.
 
 ### Historical/OOB baseline retained
 
