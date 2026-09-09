@@ -1,27 +1,25 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13l
-Build status: PREMIUM CARTOGRAPHIC VISUAL DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN PREMIUM CARTOGRAPHIC VISUAL V13L
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l
+Prototype version: v00.00.13m
+Build status: UNIFIED DENMARK 3D MAP DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN UNIFIED DENMARK 3D MAP V13M
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
-v13l premium map rule: v13k remains the overview basemap while v13l adds a dedicated high-detail cartographic layer at close zoom.
-v13l close-detail rule: z12 tiles are used below camera height 5.6 and z13 below 1.55. Only the current 3x3 viewport is requested; no country prefetch is performed.
-v13l mesh rule: each close-detail tile uses a 32x32 conforming mesh so roads/coast/cartography follow the v13j terrain more smoothly than the 16x16 v13k development drape.
-v13l visual quality rule: trilinear filtering, anisotropic filtering, neutral cartographic colour, soft directional shadows, restrained atmospheric fog and lower camera clearance improve close inspection without changing simulation.
-v13l camera rule: minimum camera height 0.14, terrain clearance 0.09, near clip 0.003 and FOV 44 allow materially closer map inspection.
-v13l legacy cleanup rule: old GIS road/ferry lines and prototype city blocks remain suppressed; the actual cartographic map is the visible road/water reference so invalid direct roads over water are not drawn by prototype presentation.
-v13l landmark rule: the previous v13k landmark root is hidden and replaced with smaller premium Aalborg Kaserne and Aarhus Gård compounds with pitched roofs, fences, trees and terrain anchoring.
-v13l Aalborg rule: Aalborg Kaserne is anchored south of Limfjorden and only appears at close zoom; Aalborg city itself is represented by the real map instead of a floating prototype city block.
-v13l provider rule: high-detail live tiles use the same default OpenStreetMap Standard development source as v13k. If a local historical raster or custom provider.json is present, the v13l high-detail OSM layer is disabled to avoid visual/provider conflicts.
-v13l cache rule: viewed high-detail tiles are cached for 14 days under Application.persistentDataPath/PROJECT1864/MapCache/premium.
-v13k1 compile fix retained: optional provider.json parsing remains independent of UnityEngine.JsonUtility.
+v13m architecture rule: only one visible map stack may own the Denmark campaign presentation. Once v13m is ready, v13j/v13k/v13l renderers and their OnGUI/status layers are disabled while the v13j MeshCollider is retained as elevation reference.
+v13m base-map rule: the full Denmark campaign envelope uses one continuous 520x340 visual mesh containing elevated land and flat water, rather than disconnected viewport rectangles over visible legacy terrain.
+v13m atlas rule: a complete z8 overview atlas is stitched from the map provider into one texture and mapped across the full Denmark mesh using Web-Mercator-correct UVs. Missing tiles receive a neutral fallback instead of exposing old green terrain.
+v13m no-hole rule: the country atlas always remains underneath close detail, so panning/zooming cannot reveal raw v13j terrain between live tile patches.
+v13m detail rule: viewport-only 5x5 z10-z13 tiles may overlay the base atlas at medium/close zoom for road/place-name detail while the unified country surface remains continuously visible below.
+v13m cache rule: map tiles reuse existing interactive/premium caches where possible and write new tiles under Application.persistentDataPath/PROJECT1864/MapCache/unified. Cache retention remains 14 days.
+v13m camera rule: minimum height 0.12, terrain clearance 0.08, near clip 0.003 and FOV 45 preserve close map inspection.
+v13m landmark rule: Aalborg Kaserne and Aarhus Gård are rebuilt as compact terrain-anchored close-zoom landmarks owned by v13m; old v13k/v13l landmark renderers remain hidden.
+v13m route/settlement presentation rule: prototype GIS_Road_/GIS_Ferry_ lines, old city blocks and duplicate legacy map renderers remain suppressed. Cartographic data is the temporary road/water/place-name visual reference.
+v13m provider rule: default development cartography remains OpenStreetMap Standard with visible attribution. It is a present-day development basemap only, not authoritative 1864 infrastructure/history.
 v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition remain temporarily disabled while map presentation is under QA.
-Simulation isolation: strategic lat/lon, route distance, ETA, campaign time, logistics and tactical AI/navigation are unchanged by v13l.
-Historical accuracy: OpenStreetMap remains a present-day development basemap only. It must not be treated as authoritative 1864 infrastructure/history; the long-term target remains licensed historical cartography plus 3D terrain.
-Input warning: legacy Input Manager remains temporarily enabled because tactical and older campaign controls still use UnityEngine.Input. A dedicated project-wide Input System migration remains separate work.
+Simulation isolation: strategic lat/lon, route distance, ETA, campaign time, logistics and tactical AI/navigation are unchanged by v13m.
+Input warning: legacy Input Manager remains temporarily enabled because tactical and older campaign controls still use UnityEngine.Input. Project-wide Input System migration remains separate work.
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
