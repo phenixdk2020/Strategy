@@ -1,8 +1,8 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13k
-Build status: LIVE CARTOGRAPHIC 3D DRAPE DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN LIVE CARTOGRAPHIC 3D DRAPE V13K
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k
+Prototype version: v00.00.13k1
+Build status: LIVE CARTOGRAPHIC 3D DRAPE HOTFIX DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN LIVE CARTOGRAPHIC 3D DRAPE V13K1
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
@@ -11,6 +11,7 @@ v13k map rule: a real cartographic tile layer is draped over the smooth v13j 3D 
 v13k live provider rule: default DEV provider is OpenStreetMap Standard using viewport-only interactive requests. The client requests only a 3x3 tile set around the current camera target and never prefetches the full country or multiple zoom stacks.
 v13k cache rule: tiles already viewed are cached locally for 14 days under Application.persistentDataPath/PROJECT1864/MapCache/interactive and reused during normal revisits.
 v13k provider override: Application.persistentDataPath/PROJECT1864/MapProvider/provider.json may override URL template, attribution and User-Agent without a code change.
+v13k1 compile fix: optional provider.json parsing no longer depends on UnityEngine.JsonUtility. A small local compatibility reader handles the three string fields needed by ProviderConfig, removing CS0103 when the JsonUtility module is unavailable.
 v13k local historical rule: if Application.persistentDataPath/PROJECT1864/HistoricalMap/denmark_1864.png exists, v13j uses that full historical raster and v13k skips live tiles entirely.
 v13k 3D drape rule: each visible map tile is converted to a subdivided conforming mesh, sampled against V013J_SmoothTerrain, and is placed slightly above terrain/water to retain the 3D relief while displaying actual map cartography.
 v13k route presentation rule: prototype GIS_Road_/GIS_Ferry_ renderers are hidden while the cartographic map is active. Campaign route/simulation data is preserved; this removes visually invalid straight lines over water from the map QA view.
