@@ -1,8 +1,8 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09h4
+Prototype version: v00.00.09i
 Build status: TEST
-Build name: MANUAL MOVEMENT + SOLDIER VISUAL + UNIFORM + BOX SELECT TEST 09H4
-Visible build marker: PROJECT 1864 | v00.00.09h4 TEST is shown permanently in the upper-left corner during Play mode
+Build name: SOLDIER VISUAL PASS 2 - BIG GRAPHICS BUFF TEST 09I
+Visible build marker: PROJECT 1864 | v00.00.09i TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
@@ -10,92 +10,61 @@ Unity changeset: f7f8ed4d1e24
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 
-v00.00.09h4 - Manual movement correction
-- User clarified the stuck regiment was under direct player control with Officer AI disabled. Therefore the earlier AI frontage diagnosis does NOT explain that specific stuck observation.
-- Manual movement path is treated separately from AI frontage: PlayerCommander route -> Regiment OrderMove -> Navigation V3 steering.
-- PrototypeManualRouteRecovery09H4 monitors active PlayerCommander routes only when Officer AI is OFF.
-- Manual routes march in Column while more than 14 m from the current route waypoint and deploy to the route's final formation near destination.
-- If a manual route makes less than 0.45 m useful movement for 3.5 seconds while still more than 5 m from the waypoint, a controlled bypass waypoint is inserted into the existing PlayerCommander route.
-- Bypass candidates are evaluated with Navigation V3 column validity/path penalty; river-crossing bypasses are rejected.
-- Recovery is bounded to four inserted bypass waypoints per active route and has a 4-second cooldown to avoid oscillation.
-- New telemetry: MANUAL-ROUTE-09H4 and MANUAL-FORMATION-09H4.
-- Navigation V3 remains the sole local steering owner. 09h4 changes higher-level route waypoints/formation only when a manual route is demonstrably stalled.
+v00.00.09i - Soldier Visual Pass 2 / Big Graphics Buff
+- New PrototypeSoldierVisualPass09I is presentation-only and overlays the retained 09h uniform-data system.
+- Legacy primitive soldier renderers are hidden at runtime; Regiment simulation objects, formation slots and colliders remain authoritative and unchanged.
+- Representative infantry now use lightweight articulated procedural rigs with improved human proportions: tapered torso, coat skirts, separate legs, boots, arms, hands, neck/head and faction-specific headgear.
+- Danish infantry receive a distinct cap/visor/band silhouette; Prussian infantry receive a stronger Pickelhaube dome/band/spike/visor silhouette.
+- Equipment pass adds backpack, crossed straps, cartridge box, optional canteen variants, improved rifle stock/barrel/bayonet and metal/wood material separation.
+- Officer representative receives sash, shoulder boards and sword.
+- Standard-bearer representative receives sash/pole grip and carries no rifle.
+- Six deterministic visual variants subtly alter scale/equipment so the formation does not read as exact cloned figures.
+- Simple visual posing is added without animation-controller dependencies: march arm/leg swing, stationary ready pose and brief firing pose driven only from already-existing visual/combat state.
+- Close-detail LOD hides small equipment details beyond approximately 135 m camera distance while retaining readable body/head/rifle silhouettes.
+- Uniform Designer remains authoritative for coat, trousers, headgear, trim, straps, equipment and skin colours; 09i materials re-sync live to the existing per-regiment profile.
+- No movement, destination, combat, morale, cohesion, selection or Officer AI state is written by 09i.
 
-v00.00.09h4 - Fence soft-pass-through correction
-- Screenshot geometry showed manual order paths intersecting rows of visual FencePost objects.
-- Previous V3 obstacle semantics treated every FencePost as a hard circular obstacle. Closely spaced posts could therefore combine into an effectively continuous invisible wall for a formation centre/clearance.
-- Individual FencePost objects are now soft/pass-through in the current prototype, matching the existing decorative-tree pass-through rule.
-- Buildings/barns remain hard discrete obstacles; river/water remains bridge-only.
-- Fence effects can later return as area/segment-based movement/cohesion penalties rather than one hard navigation circle per visual post.
-- Soft-obstacle telemetry: NAV-SOFT-09H4.
+v00.00.09i - Regimental Standard Visual Pass 2
+- New PrototypeRegimentalStandards09I hides the old 09g QA standard renderers while retaining the underlying system as rollback/reference code.
+- Each regiment receives a larger procedural two-sided cloth mesh with animated wind deformation.
+- Standard includes improved wooden pole, ferrule, spear-style finial, cords, two animated ribbons and fringe detail.
+- Danish and Prussian standards retain distinct national prototype devices and synchronize flag primary/secondary plus ribbon colours with the Uniform Designer profile.
+- Flag animation is presentation-only and has no morale/combat effect.
+- Historical regimental flag art remains a later source-validation task; 09i is a visual-quality prototype, not final historical artwork.
 
-v00.00.09h3 - March column / deployment formation fix
-- 09h3 addresses AI-controlled approach formation only.
-- PrototypeApproachFormationPolicy09H3 executes only when Officer AI is enabled.
-- AI regiments with an active destination march in Column while outside the deployment zone.
-- For attack missions the deployment zone begins at approximately EffectiveRange + 12 m from the nearest enemy.
-- For MoveToPoint missions the unit remains in Column while destination distance is greater than 16 m and the nearest enemy is still outside effective range.
-- Once inside the deployment zone the policy stops overriding formation, allowing Officer AI/frontage to deploy the regiment to Line.
-- Player-controlled/manual units with Officer AI disabled are intentionally not handled by 09h3; 09h4 now provides the manual route formation policy.
-- New telemetry prefix: FORMATION-09H3.
-- AI-SPACING-V3 LegacyPlannerDisabled=True is expected and is not an error.
-
-v00.00.09h2 - Attack frontage stability fix
-- 09h2 remains valid for AI-controlled multi-regiment attacks, but it is not the explanation for the later clarified manual AI-OFF stuck case.
-- Frontage slots are sticky once allocated.
-- A slot is reconsidered only when blocked/conflicted, target moved materially, or an AI frontage regiment makes no meaningful progress for 3.5 seconds.
-- No-progress recovery tries an alternate slot instead of reissuing the same failed destination.
-- Attack target selection uses hysteresis to reduce target churn.
-- Telemetry prefix: AI-SPACING-V3.
-- PrototypeMovementStallDiagnostics09H2 remains passive/read-only and reports sustained active-destination stalls through STALL-09H2.
-
-v00.00.09h1 - Compile fix
-- Removed JsonUtility dependency from PrototypeSoldierVisualPass09H.
-- Uniform persistence uses PlayerPrefs float channels plus a saved marker per regiment.
-- Uniform Designer Save/Load behavior is preserved.
-
-Previous accepted/retained layers
-- v00.00.09f Movement V3 authority remains the tactical steering baseline.
+Retained movement/control baseline
+- v00.00.09h4 manual movement correction remains unchanged by 09i.
+- Manual PlayerCommander routes use Column while travelling, bounded no-progress bypass recovery and the 09h4 soft FencePost pass-through policy.
+- Navigation V3 remains the sole local steering owner.
 - Navigation V4 and 09A remain runtime-disabled.
-- Decorative trees and, from 09h4, individual fence posts are pass-through soft terrain.
-- Buildings/barns remain hard obstacles; river remains bridge-only.
-- v00.00.09g scenic battlefield, larger camera range and enhanced regimental standards are retained.
-- Scenic outer battlefield remains presentation-only; central 360x240 tactical core remains authoritative until movement bounds are widened separately.
+- Decorative trees and individual fence posts are pass-through soft terrain; buildings/barns remain hard obstacles; river remains bridge-only.
+- 09h3 AI march-column/deployment policy remains AI-only.
+- 09h2 sticky AI frontage remains available for AI-controlled multi-regiment attacks.
 
-v00.00.09h - Soldier Visual Pass 1
-- Representative infantry visuals receive separate trousers/legs, head, belt/straps, pack/equipment, bayonet and clearer Danish/Prussian headgear silhouettes.
-- Officer and standard-bearer representatives receive additional visual details.
-- Soldier visual pass never writes movement/combat/AI state.
-
-v00.00.09h - Per-regiment uniform profiles and designer
-- Uniform profile controls coat, trousers, headgear, trim, straps, equipment, skin, flag primary/secondary and ribbon colours.
-- F10 opens/closes the Uniform Designer for exactly one selected regiment.
-- GEM/INDLÆS and regiment/faction reset are retained.
-- Uniform colours remain presentation-only.
-
-v00.00.09h - RTS box selection
-- LMB drag beyond 9 pixels shows a translucent marquee rectangle.
-- Normal drag replaces selection; Shift adds; Ctrl toggles.
-- Only non-routed Danish regiment centres are selectable through box selection.
-- Box selection changes selection only and never issues movement/combat orders.
-
-v00.00.09h - Video/UI fixes
-- Persistent VALGT/VALGT xN summary panel is removed.
-- Ramte N is compact text-only feedback.
-- Black-powder smoke uses soft-alpha runtime particles to remove square particle edges.
+Retained tactical UI/control features
+- v00.00.09g scenic battlefield and extended camera zoom are retained.
+- F10 Uniform Designer Save/Load/Reset remains active.
+- RTS box selection remains active: LMB drag replace, Shift add, Ctrl toggle.
+- Persistent VALGT/VALGT xN summary panel remains removed.
+- Ramte N remains compact text-only feedback.
+- Black-powder smoke keeps the soft-alpha 09h visual fix.
+- Range cone remains selected-unit ghost overlay.
 
 Future tactical unit gate
 - Dragoons/cavalry and field artillery remain the next major non-infantry tactical unit types after visual/stability acceptance.
 - Dragoon baseline: mounted/dismounted, horse fatigue/casualties, horse-holder state and timed remount.
 - Artillery baseline: batteries/pieces, crews, horses/limbers, deploy/unlimber, ammunition, LOS/fire arcs, counter-battery and capture/abandon states.
 
-Primary 09h4 QA
+Primary 09i QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Visible build marker is PROJECT 1864 | v00.00.09h4 TEST.
-3. Repeat the same direct player-controlled group move with Officer AI OFF.
-4. Manual moving regiments should use Column while travelling and deploy near their final route positions.
-5. Manual routes crossing visual fence-post rows should no longer treat every post as a hard wall.
-6. If a manual unit makes no progress for 3.5 seconds, Console should show MANUAL-ROUTE-09H4 with Recovery=True and an inserted bypass waypoint, or a precise bounded failure reason.
-7. V3 remains the only steering owner and buildings/river remain blocked according to existing rules.
-8. F10 Uniform Designer, box selection, range cone and close-up visuals remain functional.
-9. Existing yellow CS0618 FindObjectsByType/FindObjectsSortMode warnings may still appear; they are legacy Unity 6.6 deprecation warnings, not runtime movement failures.
+2. Visible build marker is PROJECT 1864 | v00.00.09i TEST.
+3. Close zoom should show clearly more human-looking infantry rather than capsule-dominated placeholders.
+4. Danish and Prussian soldiers should be visually distinguishable by headgear and uniform profile.
+5. Officer and standard-bearer representatives should be visibly distinct.
+6. Marching formations should show lightweight arm/leg motion; stopped units should settle into ready poses.
+7. Volley feedback should briefly push representative non-standard-bearers into firing pose.
+8. Regimental flags should visibly wave and retain correct per-regiment Uniform Designer colours.
+9. Uniform Designer colour changes should propagate live to 09i soldier materials and the new 09i standard.
+10. At long camera distance small close-detail equipment may hide, while basic formation silhouettes remain visible.
+11. Repeat the 09h4 manual AI-OFF movement test and confirm the graphics pass does not change route/movement behavior.
+12. Existing yellow CS0618 FindObjectsByType/FindObjectsSortMode warnings may still appear; they are legacy Unity 6.6 deprecation warnings and are not part of 09i.
