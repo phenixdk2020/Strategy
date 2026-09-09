@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// v00.00.09i TEST - Soldier Visual Pass 2 / Big Graphics Buff.
+// v00.00.09i2 TEST - Soldier Visual Pass 2 / Big Graphics Buff.
 // Presentation-only. Rebuilds representative infantry as lightweight articulated
 // procedural soldier rigs with better human proportions, faction silhouettes,
 // equipment, officer/standard-bearer distinctions and simple march/fire posing.
+// 09i2 increases tactical readability at medium zoom without changing simulation footprint.
 // No Regiment movement, combat, morale, cohesion, selection or Officer AI state is written.
 [DefaultExecutionOrder(11200)]
 public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
@@ -18,6 +19,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
         public Transform LeftLeg;
         public Transform RightLeg;
         public Transform RifleRoot;
+        public Vector3 BaseScale;
         public float Phase;
         public bool IsOfficer;
         public bool IsStandardBearer;
@@ -43,6 +45,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
         public float NextLodRefresh;
         public bool Moving;
         public bool DetailsVisible = true;
+        public float CurrentReadabilityScale = 1f;
     }
 
     private readonly Dictionary<Regiment, UnitVisual> units =
@@ -50,7 +53,15 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
 
     private Camera mainCamera;
 
-    private const float DetailDistance = 135f;
+    // 09i originally hid detailed equipment beyond 135 m. At ordinary tactical zoom
+    // that made the visual pass collapse back toward the old stick/primitives look.
+    // Keep equipment readable much farther out and use a bounded presentation-only
+    // silhouette scale to preserve human readability. Formation slots/colliders are unchanged.
+    private const float DetailDistance = 285f;
+    private const float ReadabilityNearDistance = 70f;
+    private const float ReadabilityFarDistance = 260f;
+    private const float ReadabilityNearScale = 1.04f;
+    private const float ReadabilityFarScale = 1.24f;
     private const float MoveEpsilon = 0.0025f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -59,7 +70,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeSoldierVisualPass09I>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeSoldierVisualPass_v000009i");
+        GameObject root = new GameObject("PrototypeSoldierVisualPass_v000009i2");
         root.AddComponent<PrototypeSoldierVisualPass09I>();
     }
 
@@ -67,8 +78,9 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
     {
         mainCamera = Camera.main;
         Debug.Log(
-            "SOLDIER-09I|Installed=True|Pass=Visual2|ProceduralRig=True|" +
-            "MarchPose=True|FirePose=True|CloseDetailLOD=True|MovementWrites=False");
+            "SOLDIER-09I2|Installed=True|Pass=Visual2|ProceduralRig=True|" +
+            "MarchPose=True|FirePose=True|DetailDistance=285|MediumZoomScale=True|" +
+            "MovementWrites=False");
     }
 
     private void Update()
@@ -143,7 +155,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
         units[regiment] = visual;
 
         Debug.Log(
-            "SOLDIER-09I|Unit=" + regiment.RegimentName +
+            "SOLDIER-09I2|Unit=" + regiment.RegimentName +
             "|Team=" + regiment.Team +
             "|Representatives=" + visual.Soldiers.Count +
             "|OfficerIndex=" + officerIndex +
@@ -172,8 +184,8 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
 
         if (Time.unscaledTime >= visual.NextLodRefresh)
         {
-            visual.NextLodRefresh = Time.unscaledTime + 0.35f;
-            UpdateDetailLod(visual);
+            visual.NextLodRefresh = Time.unscaledTime + 0.25f;
+            UpdateDetailLodAndReadability(visual);
         }
 
         bool firing = regiment.HasHitFeedback;
@@ -182,7 +194,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             AnimateSoldier(visual.Soldiers[i], visual.Moving, firing, time);
     }
 
-    private void UpdateDetailLod(UnitVisual visual)
+    private void UpdateDetailLodAndReadability(UnitVisual visual)
     {
         if (mainCamera == null || visual.Regiment == null)
             return;
@@ -190,16 +202,37 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
         float distance = Vector3.Distance(
             mainCamera.transform.position,
             visual.Regiment.transform.position);
-        bool show = distance <= DetailDistance;
-        if (show == visual.DetailsVisible)
+
+        bool showDetails = distance <= DetailDistance;
+        if (showDetails != visual.DetailsVisible)
+        {
+            visual.DetailsVisible = showDetails;
+            for (int i = 0; i < visual.Soldiers.Count; i++)
+            {
+                Transform detail = visual.Soldiers[i].DetailRoot;
+                if (detail != null)
+                    detail.gameObject.SetActive(showDetails);
+            }
+        }
+
+        float t = Mathf.InverseLerp(ReadabilityNearDistance, ReadabilityFarDistance, distance);
+        float readabilityScale = Mathf.Lerp(ReadabilityNearScale, ReadabilityFarScale, t);
+        if (Mathf.Abs(readabilityScale - visual.CurrentReadabilityScale) < 0.015f)
             return;
 
-        visual.DetailsVisible = show;
+        visual.CurrentReadabilityScale = readabilityScale;
         for (int i = 0; i < visual.Soldiers.Count; i++)
         {
-            Transform detail = visual.Soldiers[i].DetailRoot;
-            if (detail != null)
-                detail.gameObject.SetActive(show);
+            SoldierRig rig = visual.Soldiers[i];
+            if (rig == null || rig.Root == null)
+                continue;
+
+            // Visual-only exaggeration around each existing formation slot. It does not
+            // move the slot itself and does not alter Regiment/BoxCollider dimensions.
+            rig.Root.localScale = new Vector3(
+                rig.BaseScale.x * readabilityScale,
+                rig.BaseScale.y * readabilityScale,
+                rig.BaseScale.z * readabilityScale);
         }
     }
 
@@ -290,21 +323,22 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
         Transform root = rootObject.transform;
 
         int variant = index % 6;
-        float heightScale = 0.96f + variant * 0.015f;
-        root.localScale = new Vector3(
-            0.98f + (variant % 3) * 0.012f,
+        float heightScale = 1.03f + variant * 0.015f;
+        Vector3 baseScale = new Vector3(
+            1.08f + (variant % 3) * 0.014f,
             heightScale,
-            0.98f + ((variant + 1) % 3) * 0.010f);
+            1.08f + ((variant + 1) % 3) * 0.012f);
+        root.localScale = baseScale;
 
         CreateTaperedBox(
             root,
             "Coat_Torso",
             new Vector3(0f, 0.94f, 0f),
             0.58f,
-            0.40f,
-            0.33f,
-            0.22f,
-            0.25f,
+            0.43f,
+            0.35f,
+            0.24f,
+            0.27f,
             visual.Coat);
 
         CreateTaperedBox(
@@ -312,10 +346,10 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             "Coat_Skirts",
             new Vector3(0f, 0.62f, 0f),
             0.34f,
-            0.32f,
-            0.42f,
-            0.24f,
-            0.29f,
+            0.34f,
+            0.45f,
+            0.25f,
+            0.31f,
             visual.CoatShadow);
 
         CreatePrimitivePart(
@@ -323,55 +357,55 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             PrimitiveType.Cube,
             "Waist_Belt",
             new Vector3(0f, 0.74f, 0.005f),
-            new Vector3(0.37f, 0.055f, 0.27f),
+            new Vector3(0.39f, 0.06f, 0.29f),
             Quaternion.identity,
             visual.Straps);
 
         Transform leftLeg = CreateLimb(
             root,
             "Leg_Left",
-            new Vector3(-0.105f, 0.52f, 0f),
-            0.48f,
-            0.072f,
+            new Vector3(-0.112f, 0.52f, 0f),
+            0.49f,
+            0.078f,
             visual.Trousers);
         Transform rightLeg = CreateLimb(
             root,
             "Leg_Right",
-            new Vector3(0.105f, 0.52f, 0f),
-            0.48f,
-            0.072f,
+            new Vector3(0.112f, 0.52f, 0f),
+            0.49f,
+            0.078f,
             visual.Trousers);
 
         CreatePrimitivePart(
             leftLeg,
             PrimitiveType.Cube,
             "Boot_Left",
-            new Vector3(0f, -0.50f, 0.055f),
-            new Vector3(0.13f, 0.20f, 0.20f),
-            Quaternion.Euler(0f, 0f, 0f),
+            new Vector3(0f, -0.50f, 0.06f),
+            new Vector3(0.14f, 0.21f, 0.22f),
+            Quaternion.identity,
             visual.Equipment);
         CreatePrimitivePart(
             rightLeg,
             PrimitiveType.Cube,
             "Boot_Right",
-            new Vector3(0f, -0.50f, 0.055f),
-            new Vector3(0.13f, 0.20f, 0.20f),
-            Quaternion.Euler(0f, 0f, 0f),
+            new Vector3(0f, -0.50f, 0.06f),
+            new Vector3(0.14f, 0.21f, 0.22f),
+            Quaternion.identity,
             visual.Equipment);
 
         Transform leftArm = CreateLimb(
             root,
             "Arm_Left",
-            new Vector3(-0.265f, 1.13f, 0f),
-            0.42f,
-            0.060f,
+            new Vector3(-0.285f, 1.13f, 0f),
+            0.43f,
+            0.067f,
             visual.Coat);
         Transform rightArm = CreateLimb(
             root,
             "Arm_Right",
-            new Vector3(0.265f, 1.13f, 0f),
-            0.42f,
-            0.060f,
+            new Vector3(0.285f, 1.13f, 0f),
+            0.43f,
+            0.067f,
             visual.Coat);
 
         CreatePrimitivePart(
@@ -379,7 +413,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             PrimitiveType.Sphere,
             "Hand_Left",
             new Vector3(0f, -0.43f, 0f),
-            new Vector3(0.085f, 0.085f, 0.085f),
+            new Vector3(0.09f, 0.09f, 0.09f),
             Quaternion.identity,
             visual.Skin);
         CreatePrimitivePart(
@@ -387,7 +421,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             PrimitiveType.Sphere,
             "Hand_Right",
             new Vector3(0f, -0.43f, 0f),
-            new Vector3(0.085f, 0.085f, 0.085f),
+            new Vector3(0.09f, 0.09f, 0.09f),
             Quaternion.identity,
             visual.Skin);
 
@@ -396,7 +430,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             PrimitiveType.Cylinder,
             "Neck",
             new Vector3(0f, 1.28f, 0f),
-            new Vector3(0.075f, 0.07f, 0.075f),
+            new Vector3(0.08f, 0.075f, 0.08f),
             Quaternion.identity,
             visual.Skin);
 
@@ -404,8 +438,8 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             root,
             PrimitiveType.Sphere,
             "Head",
-            new Vector3(0f, 1.43f, 0.015f),
-            new Vector3(0.18f, 0.205f, 0.17f),
+            new Vector3(0f, 1.44f, 0.02f),
+            new Vector3(0.19f, 0.215f, 0.18f),
             Quaternion.identity,
             visual.Skin);
 
@@ -419,8 +453,8 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             detailRoot,
             PrimitiveType.Cube,
             "Pack",
-            new Vector3(0f, 0.93f, -0.19f),
-            new Vector3(0.29f + (variant % 2) * 0.025f, 0.34f, 0.12f),
+            new Vector3(0f, 0.93f, -0.20f),
+            new Vector3(0.31f + (variant % 2) * 0.028f, 0.36f, 0.13f),
             Quaternion.identity,
             visual.Equipment);
 
@@ -428,16 +462,16 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             detailRoot,
             PrimitiveType.Cube,
             "CrossStrap_A",
-            new Vector3(-0.035f, 0.98f, 0.135f),
-            new Vector3(0.055f, 0.58f, 0.025f),
+            new Vector3(-0.038f, 0.98f, 0.15f),
+            new Vector3(0.06f, 0.60f, 0.028f),
             Quaternion.Euler(0f, 0f, -24f),
             visual.Straps);
         CreatePrimitivePart(
             detailRoot,
             PrimitiveType.Cube,
             "CrossStrap_B",
-            new Vector3(0.035f, 0.98f, 0.142f),
-            new Vector3(0.045f, 0.52f, 0.022f),
+            new Vector3(0.038f, 0.98f, 0.155f),
+            new Vector3(0.05f, 0.54f, 0.026f),
             Quaternion.Euler(0f, 0f, 25f),
             visual.Straps);
 
@@ -445,8 +479,8 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             detailRoot,
             PrimitiveType.Cube,
             "CartridgeBox",
-            new Vector3(0.21f, 0.67f, 0.09f),
-            new Vector3(0.17f, 0.16f, 0.08f),
+            new Vector3(0.225f, 0.67f, 0.10f),
+            new Vector3(0.19f, 0.17f, 0.09f),
             Quaternion.identity,
             visual.Equipment);
 
@@ -456,8 +490,8 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
                 detailRoot,
                 PrimitiveType.Cylinder,
                 "Canteen",
-                new Vector3(-0.24f, 0.66f, 0.03f),
-                new Vector3(0.08f, 0.045f, 0.08f),
+                new Vector3(-0.25f, 0.66f, 0.03f),
+                new Vector3(0.085f, 0.05f, 0.085f),
                 Quaternion.Euler(90f, 0f, 0f),
                 visual.Metal);
         }
@@ -478,6 +512,7 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             LeftLeg = leftLeg,
             RightLeg = rightLeg,
             RifleRoot = rifleRoot,
+            BaseScale = baseScale,
             Phase = index * 0.73f,
             IsOfficer = officer,
             IsStandardBearer = standardBearer
@@ -496,32 +531,32 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
                 root,
                 PrimitiveType.Sphere,
                 "Pickelhaube_Dome",
-                new Vector3(0f, 1.61f, 0f),
-                new Vector3(0.195f, 0.13f, 0.19f),
+                new Vector3(0f, 1.62f, 0f),
+                new Vector3(0.215f, 0.145f, 0.21f),
                 Quaternion.identity,
                 visual.Headgear);
             CreatePrimitivePart(
                 root,
                 PrimitiveType.Cylinder,
                 "Pickelhaube_Band",
-                new Vector3(0f, 1.55f, 0f),
-                new Vector3(0.19f, 0.035f, 0.19f),
+                new Vector3(0f, 1.56f, 0f),
+                new Vector3(0.205f, 0.04f, 0.205f),
                 Quaternion.identity,
                 visual.Headgear);
             CreatePrimitivePart(
                 root,
                 PrimitiveType.Cylinder,
                 "Pickelhaube_Spike",
-                new Vector3(0f, 1.78f, 0f),
-                new Vector3(0.035f, 0.12f + variant * 0.002f, 0.035f),
+                new Vector3(0f, 1.81f, 0f),
+                new Vector3(0.04f, 0.14f + variant * 0.002f, 0.04f),
                 Quaternion.identity,
                 visual.Metal);
             CreatePrimitivePart(
                 root,
                 PrimitiveType.Cube,
                 "Pickelhaube_Visor",
-                new Vector3(0f, 1.56f, 0.15f),
-                new Vector3(0.24f, 0.025f, 0.12f),
+                new Vector3(0f, 1.57f, 0.17f),
+                new Vector3(0.27f, 0.03f, 0.13f),
                 Quaternion.Euler(-8f, 0f, 0f),
                 visual.Headgear);
         }
@@ -531,24 +566,24 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
                 root,
                 PrimitiveType.Cylinder,
                 "DanishCap_Crown",
-                new Vector3(0f, 1.61f, 0f),
-                new Vector3(0.19f, 0.075f, 0.19f),
+                new Vector3(0f, 1.62f, 0f),
+                new Vector3(0.21f, 0.085f, 0.21f),
                 Quaternion.identity,
                 visual.Headgear);
             CreatePrimitivePart(
                 root,
                 PrimitiveType.Cube,
                 "DanishCap_Visor",
-                new Vector3(0f, 1.56f, 0.15f),
-                new Vector3(0.24f, 0.026f, 0.13f),
+                new Vector3(0f, 1.57f, 0.17f),
+                new Vector3(0.27f, 0.03f, 0.14f),
                 Quaternion.Euler(-8f, 0f, 0f),
                 visual.Headgear);
             CreatePrimitivePart(
                 root,
                 PrimitiveType.Cube,
                 "DanishCap_Band",
-                new Vector3(0f, 1.57f, 0.085f),
-                new Vector3(0.31f, 0.045f, 0.045f),
+                new Vector3(0f, 1.58f, 0.095f),
+                new Vector3(0.34f, 0.05f, 0.05f),
                 Quaternion.identity,
                 visual.Trim);
         }
@@ -566,23 +601,23 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             PrimitiveType.Cube,
             "Rifle_Stock",
             new Vector3(0f, 0f, 0.10f),
-            new Vector3(0.095f, 0.105f, 0.34f),
+            new Vector3(0.11f, 0.12f, 0.38f),
             Quaternion.identity,
             visual.Wood);
         CreatePrimitivePart(
             rifleRoot,
             PrimitiveType.Cube,
             "Rifle_Barrel",
-            new Vector3(0f, 0.02f, 0.61f),
-            new Vector3(0.030f, 0.030f, 0.78f),
+            new Vector3(0f, 0.02f, 0.64f),
+            new Vector3(0.034f, 0.034f, 0.84f),
             Quaternion.identity,
             visual.Metal);
         CreatePrimitivePart(
             rifleRoot,
             PrimitiveType.Cube,
             "Rifle_Bayonet",
-            new Vector3(0f, 0.02f, 1.10f),
-            new Vector3(0.014f, 0.014f, 0.23f),
+            new Vector3(0f, 0.02f, 1.16f),
+            new Vector3(0.017f, 0.017f, 0.27f),
             Quaternion.identity,
             visual.Metal);
 
@@ -598,47 +633,34 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             detailRoot,
             PrimitiveType.Cube,
             "Officer_Sash",
-            new Vector3(0f, 0.96f, 0.155f),
-            new Vector3(0.055f, 0.58f, 0.025f),
+            new Vector3(0f, 0.96f, 0.165f),
+            new Vector3(0.065f, 0.62f, 0.03f),
             Quaternion.Euler(0f, 0f, -30f),
             visual.Trim);
         CreatePrimitivePart(
             detailRoot,
             PrimitiveType.Cube,
             "Officer_ShoulderBoard_L",
-            new Vector3(-0.22f, 1.19f, 0.02f),
-            new Vector3(0.13f, 0.035f, 0.10f),
+            new Vector3(-0.23f, 1.20f, 0.025f),
+            new Vector3(0.15f, 0.04f, 0.11f),
             Quaternion.identity,
             visual.Metal);
         CreatePrimitivePart(
             detailRoot,
             PrimitiveType.Cube,
             "Officer_ShoulderBoard_R",
-            new Vector3(0.22f, 1.19f, 0.02f),
-            new Vector3(0.13f, 0.035f, 0.10f),
+            new Vector3(0.23f, 1.20f, 0.025f),
+            new Vector3(0.15f, 0.04f, 0.11f),
             Quaternion.identity,
             visual.Metal);
 
-        GameObject swordRootObject = new GameObject("Officer_SwordRig");
-        swordRootObject.transform.SetParent(root, false);
-        Transform swordRoot = swordRootObject.transform;
-        swordRoot.localPosition = new Vector3(-0.29f, 0.72f, 0.03f);
-        swordRoot.localRotation = Quaternion.Euler(0f, 0f, -12f);
         CreatePrimitivePart(
-            swordRoot,
+            root,
             PrimitiveType.Cube,
-            "Sword_Blade",
-            new Vector3(0f, -0.34f, 0f),
-            new Vector3(0.018f, 0.62f, 0.018f),
-            Quaternion.identity,
-            visual.Metal);
-        CreatePrimitivePart(
-            swordRoot,
-            PrimitiveType.Cube,
-            "Sword_Hilt",
-            new Vector3(0f, -0.01f, 0f),
-            new Vector3(0.11f, 0.025f, 0.025f),
-            Quaternion.identity,
+            "Officer_Sword",
+            new Vector3(0.34f, 0.60f, 0.03f),
+            new Vector3(0.025f, 0.70f, 0.025f),
+            Quaternion.Euler(0f, 0f, -8f),
             visual.Metal);
     }
 
@@ -655,36 +677,37 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             detailRoot,
             PrimitiveType.Cube,
             "StandardBearer_Sash",
-            new Vector3(0f, 0.96f, 0.155f),
-            new Vector3(0.055f, 0.58f, 0.025f),
-            Quaternion.Euler(0f, 0f, 30f),
+            new Vector3(0f, 0.97f, 0.165f),
+            new Vector3(0.07f, 0.64f, 0.03f),
+            Quaternion.Euler(0f, 0f, 31f),
             visual.Trim);
+
         CreatePrimitivePart(
             root,
             PrimitiveType.Cylinder,
             "StandardBearer_PoleGrip",
-            new Vector3(0.20f, 0.93f, 0.10f),
-            new Vector3(0.028f, 0.58f, 0.028f),
-            Quaternion.Euler(4f, 0f, 3f),
+            new Vector3(0.30f, 0.98f, 0.05f),
+            new Vector3(0.045f, 0.20f, 0.045f),
+            Quaternion.Euler(0f, 0f, 6f),
             visual.Wood);
     }
 
     private static Transform CreateLimb(
         Transform parent,
         string name,
-        Vector3 pivotPosition,
+        Vector3 position,
         float length,
         float radius,
         Material material)
     {
         GameObject pivotObject = new GameObject(name + "_Pivot");
         pivotObject.transform.SetParent(parent, false);
-        pivotObject.transform.localPosition = pivotPosition;
+        pivotObject.transform.localPosition = position;
         Transform pivot = pivotObject.transform;
 
         CreatePrimitivePart(
             pivot,
-            PrimitiveType.Cylinder,
+            PrimitiveType.Capsule,
             name,
             new Vector3(0f, -length * 0.5f, 0f),
             new Vector3(radius, length * 0.5f, radius),
@@ -694,37 +717,10 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
         return pivot;
     }
 
-    private static GameObject CreatePrimitivePart(
-        Transform parent,
-        PrimitiveType primitive,
-        string name,
-        Vector3 localPosition,
-        Vector3 localScale,
-        Quaternion localRotation,
-        Material material)
-    {
-        GameObject part = GameObject.CreatePrimitive(primitive);
-        part.name = name;
-        part.transform.SetParent(parent, false);
-        part.transform.localPosition = localPosition;
-        part.transform.localScale = localScale;
-        part.transform.localRotation = localRotation;
-
-        Collider collider = part.GetComponent<Collider>();
-        if (collider != null)
-            Object.Destroy(collider);
-
-        Renderer renderer = part.GetComponent<Renderer>();
-        if (renderer != null)
-            renderer.sharedMaterial = material;
-
-        return part;
-    }
-
-    private static GameObject CreateTaperedBox(
+    private static void CreateTaperedBox(
         Transform parent,
         string name,
-        Vector3 localPosition,
+        Vector3 center,
         float height,
         float topWidth,
         float bottomWidth,
@@ -734,31 +730,31 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
     {
         GameObject obj = new GameObject(name);
         obj.transform.SetParent(parent, false);
-        obj.transform.localPosition = localPosition;
+        obj.transform.localPosition = center;
 
-        Mesh mesh = new Mesh();
-        mesh.name = name + "_Mesh";
+        MeshFilter filter = obj.AddComponent<MeshFilter>();
+        MeshRenderer renderer = obj.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = material;
 
-        float y0 = -height * 0.5f;
-        float y1 = height * 0.5f;
-        float bw = bottomWidth * 0.5f;
+        float hh = height * 0.5f;
         float tw = topWidth * 0.5f;
-        float bd = bottomDepth * 0.5f;
+        float bw = bottomWidth * 0.5f;
         float td = topDepth * 0.5f;
+        float bd = bottomDepth * 0.5f;
 
-        mesh.vertices = new[]
+        Vector3[] vertices =
         {
-            new Vector3(-bw, y0, -bd),
-            new Vector3(bw, y0, -bd),
-            new Vector3(bw, y0, bd),
-            new Vector3(-bw, y0, bd),
-            new Vector3(-tw, y1, -td),
-            new Vector3(tw, y1, -td),
-            new Vector3(tw, y1, td),
-            new Vector3(-tw, y1, td)
+            new Vector3(-bw, -hh, -bd),
+            new Vector3( bw, -hh, -bd),
+            new Vector3( bw, -hh,  bd),
+            new Vector3(-bw, -hh,  bd),
+            new Vector3(-tw,  hh, -td),
+            new Vector3( tw,  hh, -td),
+            new Vector3( tw,  hh,  td),
+            new Vector3(-tw,  hh,  td)
         };
 
-        mesh.triangles = new[]
+        int[] triangles =
         {
             0, 2, 1, 0, 3, 2,
             4, 5, 6, 4, 6, 7,
@@ -767,21 +763,72 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
             2, 3, 7, 2, 7, 6,
             3, 0, 4, 3, 4, 7
         };
+
+        Mesh mesh = new Mesh();
+        mesh.name = name + "Mesh";
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
-
-        MeshFilter filter = obj.AddComponent<MeshFilter>();
         filter.sharedMesh = mesh;
-        MeshRenderer renderer = obj.AddComponent<MeshRenderer>();
-        renderer.sharedMaterial = material;
-        return obj;
+    }
+
+    private static GameObject CreatePrimitivePart(
+        Transform parent,
+        PrimitiveType type,
+        string name,
+        Vector3 localPosition,
+        Vector3 localScale,
+        Quaternion localRotation,
+        Material material)
+    {
+        GameObject part = GameObject.CreatePrimitive(type);
+        part.name = name;
+        part.transform.SetParent(parent, false);
+        part.transform.localPosition = localPosition;
+        part.transform.localScale = localScale;
+        part.transform.localRotation = localRotation;
+        Renderer renderer = part.GetComponent<Renderer>();
+        if (renderer != null)
+            renderer.sharedMaterial = material;
+        Collider collider = part.GetComponent<Collider>();
+        if (collider != null)
+            Object.Destroy(collider);
+        return part;
     }
 
     private static void HideLegacySoldierRenderers(Transform soldier)
     {
+        if (soldier == null)
+            return;
+
         Renderer[] renderers = soldier.GetComponentsInChildren<Renderer>(true);
         for (int i = 0; i < renderers.Length; i++)
-            renderers[i].enabled = false;
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null)
+                continue;
+
+            // Never hide the new rig if Play mode is rebuilding after a script reload.
+            if (renderer.transform.IsChildOf(soldier) &&
+                renderer.transform.root == soldier.root)
+            {
+                Transform cursor = renderer.transform;
+                bool insideNewRig = false;
+                while (cursor != null && cursor != soldier)
+                {
+                    if (cursor.name == "Visual09I")
+                    {
+                        insideNewRig = true;
+                        break;
+                    }
+                    cursor = cursor.parent;
+                }
+
+                if (!insideNewRig)
+                    renderer.enabled = false;
+            }
+        }
     }
 
     private static PrototypeUniformProfile09H GetCurrentProfile(Regiment regiment)
@@ -794,46 +841,48 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
                 return profile;
         }
 
-        return PrototypeUniformProfile09H.CreateRegimentDefault(regiment);
+        return regiment.Team == BattleTeam.Denmark
+            ? PrototypeUniformProfile09H.CreateDenmarkDefault()
+            : PrototypeUniformProfile09H.CreatePrussiaDefault();
     }
 
     private static void CreateMaterials(Regiment regiment, UnitVisual visual)
     {
-        string safeName = string.IsNullOrEmpty(regiment.RegimentName)
-            ? "Unit"
-            : regiment.RegimentName.Replace(" ", "_");
-        string prefix = "09I_" + safeName + "_";
-
-        visual.Coat = PrototypeBootstrap.CreateSharedMaterial(visual.Profile.CoatColor, prefix + "Coat");
-        visual.CoatShadow = PrototypeBootstrap.CreateSharedMaterial(Darken(visual.Profile.CoatColor, 0.78f), prefix + "CoatShadow");
-        visual.Trousers = PrototypeBootstrap.CreateSharedMaterial(visual.Profile.TrouserColor, prefix + "Trousers");
-        visual.Headgear = PrototypeBootstrap.CreateSharedMaterial(visual.Profile.HeadgearColor, prefix + "Headgear");
-        visual.Trim = PrototypeBootstrap.CreateSharedMaterial(visual.Profile.TrimColor, prefix + "Trim");
-        visual.Straps = PrototypeBootstrap.CreateSharedMaterial(visual.Profile.StrapColor, prefix + "Straps");
-        visual.Equipment = PrototypeBootstrap.CreateSharedMaterial(visual.Profile.EquipmentColor, prefix + "Equipment");
-        visual.Skin = PrototypeBootstrap.CreateSharedMaterial(visual.Profile.SkinColor, prefix + "Skin");
-        visual.Wood = PrototypeBootstrap.CreateSharedMaterial(new Color(0.26f, 0.16f, 0.075f), prefix + "Wood");
-        visual.Metal = PrototypeBootstrap.CreateSharedMaterial(new Color(0.30f, 0.31f, 0.30f), prefix + "Metal");
+        PrototypeUniformProfile09H profile = visual.Profile;
+        visual.Coat = PrototypeBootstrap.CreateSharedMaterial(profile.CoatColor, "09I_Coat_" + regiment.RegimentName);
+        visual.CoatShadow = PrototypeBootstrap.CreateSharedMaterial(profile.CoatColor * 0.78f, "09I_CoatShadow_" + regiment.RegimentName);
+        visual.Trousers = PrototypeBootstrap.CreateSharedMaterial(profile.TrouserColor, "09I_Trousers_" + regiment.RegimentName);
+        visual.Headgear = PrototypeBootstrap.CreateSharedMaterial(profile.HeadgearColor, "09I_Headgear_" + regiment.RegimentName);
+        visual.Trim = PrototypeBootstrap.CreateSharedMaterial(profile.TrimColor, "09I_Trim_" + regiment.RegimentName);
+        visual.Straps = PrototypeBootstrap.CreateSharedMaterial(profile.StrapColor, "09I_Straps_" + regiment.RegimentName);
+        visual.Equipment = PrototypeBootstrap.CreateSharedMaterial(profile.EquipmentColor, "09I_Equipment_" + regiment.RegimentName);
+        visual.Skin = PrototypeBootstrap.CreateSharedMaterial(profile.SkinColor, "09I_Skin_" + regiment.RegimentName);
+        visual.Wood = PrototypeBootstrap.CreateSharedMaterial(new Color(0.21f, 0.10f, 0.035f), "09I_RifleWood_" + regiment.RegimentName);
+        visual.Metal = PrototypeBootstrap.CreateSharedMaterial(new Color(0.16f, 0.17f, 0.18f), "09I_Metal_" + regiment.RegimentName);
     }
 
     private static void ApplyProfileColors(UnitVisual visual)
     {
-        if (visual == null || visual.Profile == null)
+        PrototypeUniformProfile09H profile = visual.Profile;
+        if (profile == null)
             return;
 
-        if (visual.Coat != null) visual.Coat.color = visual.Profile.CoatColor;
-        if (visual.CoatShadow != null) visual.CoatShadow.color = Darken(visual.Profile.CoatColor, 0.78f);
-        if (visual.Trousers != null) visual.Trousers.color = visual.Profile.TrouserColor;
-        if (visual.Headgear != null) visual.Headgear.color = visual.Profile.HeadgearColor;
-        if (visual.Trim != null) visual.Trim.color = visual.Profile.TrimColor;
-        if (visual.Straps != null) visual.Straps.color = visual.Profile.StrapColor;
-        if (visual.Equipment != null) visual.Equipment.color = visual.Profile.EquipmentColor;
-        if (visual.Skin != null) visual.Skin.color = visual.Profile.SkinColor;
-    }
-
-    private static Color Darken(Color color, float factor)
-    {
-        return new Color(color.r * factor, color.g * factor, color.b * factor, color.a);
+        if (visual.Coat != null)
+            visual.Coat.color = profile.CoatColor;
+        if (visual.CoatShadow != null)
+            visual.CoatShadow.color = profile.CoatColor * 0.78f;
+        if (visual.Trousers != null)
+            visual.Trousers.color = profile.TrouserColor;
+        if (visual.Headgear != null)
+            visual.Headgear.color = profile.HeadgearColor;
+        if (visual.Trim != null)
+            visual.Trim.color = profile.TrimColor;
+        if (visual.Straps != null)
+            visual.Straps.color = profile.StrapColor;
+        if (visual.Equipment != null)
+            visual.Equipment.color = profile.EquipmentColor;
+        if (visual.Skin != null)
+            visual.Skin.color = profile.SkinColor;
     }
 
     private void CleanupDestroyedRegiments()
@@ -846,7 +895,6 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
         {
             if (pair.Key != null)
                 continue;
-
             if (stale == null)
                 stale = new List<Regiment>();
             stale.Add(pair.Key);
@@ -854,7 +902,6 @@ public sealed class PrototypeSoldierVisualPass09I : MonoBehaviour
 
         if (stale == null)
             return;
-
         for (int i = 0; i < stale.Count; i++)
             units.Remove(stale[i]);
     }
