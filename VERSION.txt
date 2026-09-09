@@ -1,8 +1,8 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13i1
-Build status: DENMARK GIS TERRAIN FOUNDATION DEV / MAP-ONLY / UNITY 6.6 WARNING CLEANUP / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK GIS TERRAIN FOUNDATION V13I1
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1
+Prototype version: v00.00.13i2
+Build status: DENMARK GIS TERRAIN FOUNDATION DEV / MAP-ONLY / UNITY MODULE FIX / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK GIS TERRAIN FOUNDATION V13I2
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
@@ -23,7 +23,8 @@ v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy m
 v13h1 clock rule remains active: campaign clock and construction progression continue through pause/x1/x5/x20/reset
 v13i1 warning cleanup: active CampaignMapOnlyModeV013H1 and CampaignDenmarkV013DLegacyGate calls use the Unity 6.6 FindObjectsByType<T>() API without obsolete FindObjectsSortMode parameters
 v13i1 legacy warning policy: CS0618 is temporarily suppressed at compiler response level for disabled legacy presentation layers that are retained only for compatibility while the GIS foundation replaces them; this is not a permanent substitute for retiring/migrating legacy files
+v13i2 module fix: Packages/manifest.json explicitly enables com.unity.modules.imageconversion, com.unity.modules.unitywebrequest and com.unity.modules.unitywebrequesttexture required by GIS PNG terrain tile loading and cache decode in Unity 6.6
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
-QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
+QA state: IMPLEMENTERET / AFVENTER UNITY PACKAGE RESOLVE + COMPILE + RUNTIME QA
 QA owner: local Unity compile/runtime verification by Allan
