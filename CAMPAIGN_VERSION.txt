@@ -7,7 +7,8 @@ v00.00.13d state: DEV DENMARK MAP REBUILD / CLEAN CAMPAIGN LINEAGE
 v00.00.13e state: DEV DENMARK CLEAN RENDER FOUNDATION / CLEAN CAMPAIGN LINEAGE
 v00.00.13f state: DEV DENMARK LANDMESH FIX / CLEAN CAMPAIGN LINEAGE
 v00.00.13g state: DEV DENMARK-ONLY LABEL + CLOSE ZOOM FIX / CLEAN CAMPAIGN LINEAGE
-Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 3D DEV -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g
+v00.00.13h state: DEV DENMARK PREMIUM VISUAL PASS / CLEAN CAMPAIGN LINEAGE
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 3D DEV -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h
 v00.00.11 work package: B-280-B-369
 v00.00.11 final gate: B-369
 v00.00.12 state: PLANNED
@@ -15,20 +16,21 @@ v00.00.12 work package: B-370-B-409
 v00.00.12 final gate: B-409
 v00.00.13 work package: B-410-B-469
 v00.00.13 planned final gate: B-469
-v00.00.13 3D implementation: procedural terrain, L1-L10 layer roots, terrain-conforming strategic links, 3D settlement miniatures, terrain-aware camera, campaign-time atmosphere/day-night, layer visibility and staged construction prototypes
-v00.00.13e branch: work/v00.00.13e-denmark-clean-render
-v00.00.13f branch: work/v00.00.13f-denmark-landmesh-fix
-v00.00.13g branch: work/v00.00.13g-denmark-label-zoom-fix
-v00.00.13f foundation rule: keep the clean v13e sea/infrastructure/settlement hierarchy and corrected filled Denmark landmesh.
-v00.00.13g label ownership rule: CampaignMapController legacy all-Europe labels and v13f label GUI are both suppressed; v13g is the single visible label owner.
-v00.00.13g Denmark-only rule: current visual QA renders labels, settlements, legacy markers, formation markers and clean strategic links only when their authoritative node Region is CampaignMapRegion.Denmark.
-v00.00.13g foreign-context rule: Sweden, Norway, Finland and Germany remain in strategic simulation data but are presentation-hidden for the current Denmark-first milestone. Flensburg and Schleswig are therefore also hidden until the map expands beyond Denmark.
-v00.00.13g zoom rule: the clean Denmark camera must not clamp against hidden CampaignTerrainV013 geometry. Camera controller supports UseLegacyTerrainFloor=false for this presentation.
-v00.00.13g close-inspection rule: Denmark QA uses MinHeight=8 and TerrainClearance=5.5 so cities, infrastructure, formations, Aalborg barracks and Aarhus farm can be inspected materially closer than v13f.
-v00.00.13g camera safety rule: legacy terrain-floor behavior remains default outside the Denmark clean presentation.
-v00.00.13g simulation rule: no campaign movement, ETA, route distance, strategic state, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed.
-v00.00.13g QA gate: exactly one visible label system; only Danish-region city labels at all zoom levels; no Swedish/Norwegian/Finnish/German city presentation; close zoom reaches near-map inspection scale; corrected filled Denmark landmesh remains visible; barracks/farm retained; Unity compiles without errors.
-v00.00.13g QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
+v00.00.13h branch: work/v00.00.13h-denmark-premium-visual-pass
+v00.00.13h design direction: Historic Miniature Grand Strategy Diorama — historical, serious, readable and premium; no cartoon styling and no photorealistic terrain requirement.
+v00.00.13h Denmark-only rule: only CampaignMapRegion.Denmark may render settlements, labels, formations and clean strategic links in the current premium QA slice; Sweden/Norway/Finland/Germany remain simulation data only.
+v00.00.13h terrain rule: corrected v13f Denmark landmesh remains authoritative presentation surface and receives restrained grass/meadow/heath materials plus deterministic field/hedgerow dressing. Presentation relief/materials never alter strategic distance or ETA.
+v00.00.13h water rule: clean sea receives a premium dark-blue high-smoothness presentation with subtle time-based colour breathing only; it is not simulation state.
+v00.00.13h settlement rule: legacy Denmark settlement miniatures are hidden; new premium city dioramas use scale by strategic importance plus houses, church/tower, station/platform for rail nodes and small piers for port nodes.
+v00.00.13h vegetation rule: deterministic compact woodland clusters are allowed as visual land-cover dressing but must avoid major city centres and must not reveal hidden gameplay information.
+v00.00.13h infrastructure rule: Denmark-only road, rail and ferry links receive separate materials/width hierarchy; non-Danish links remain hidden.
+v00.00.13h construction rule: Aalborg barracks and Aarhus farm retain their staged campaign-time construction state. Premium site dressing may add fences, material stacks and adjacent field detail but must not bypass progression or resource/timing logic.
+v00.00.13h atmosphere rule: warm directional light, soft shadows and restrained linear fog may enhance depth; atmosphere remains presentation-only.
+v00.00.13h label rule: v13h is the sole visible label owner. Labels use light text + subtle shadow rather than heavy black boxes, retain semantic zoom and remain Denmark-only.
+v00.00.13h camera rule: Home composition is tightened around Denmark while close inspection remains enabled with UseLegacyTerrainFloor=false.
+v00.00.13h simulation rule: no campaign movement, ETA, route distance, strategic state, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed.
+v00.00.13h QA gate: Denmark visually coherent and immediately readable; no foreign labels/settlements; no duplicate labels; field/vegetation dressing stays on land; city miniatures are readable at close zoom; road/rail/ferry hierarchy is distinct; barracks/farm remain present; Unity compiles without errors.
+v00.00.13h QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route geometry
 Projection rule: CampaignGeoProjection broad-map/geodesic APIs are authoritative for v11+ campaign content; legacy local projection exists only for backward compatibility and must not be used by new strategic presentation layers
 Runtime isolation: CampaignMap is the campaign runtime; tactical PrototypeBattle is explicit-only and must not auto-open or auto-bootstrap on CampaignMap
