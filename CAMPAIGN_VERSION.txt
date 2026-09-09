@@ -14,15 +14,17 @@ v00.00.13i1 state: DEV UNITY 6.6 WARNING CLEANUP / GIS FOUNDATION / MAP-ONLY
 v00.00.13i2 state: DEV UNITY MODULE FIX / GIS FOUNDATION / MAP-ONLY
 v00.00.13j state: DEV HISTORICAL 3D MAP FOUNDATION / SMOOTH CARTOGRAPHIC TERRAIN / MAP-ONLY
 v00.00.13k state: DEV LIVE CARTOGRAPHIC 3D DRAPE / VIEWPORT TILES / MAP-ONLY
-Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k
+v00.00.13k1 state: DEV PROVIDER CONFIG COMPILE HOTFIX / LIVE CARTOGRAPHIC 3D DRAPE / MAP-ONLY
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1
 v00.00.11 work package: B-280-B-369
 v00.00.11 final gate: B-369
-v00.00.13k branch: work/v00.00.13k-live-cartographic-drape
+v00.00.13k1 branch: work/v00.00.13k1-provider-config-fix
 v00.00.13k map rule: a live real-world cartographic layer is draped over the smooth v13j DEM terrain and water presentation.
 v00.00.13k request rule: standard provider requests are strictly viewport-driven. Only a 3x3 current-view tile set is requested at the active zoom; no country/region prefetch or offline archive is implemented.
 v00.00.13k zoom rule: map tiles use z7 at Denmark overview and progressively z8/z9/z10/z11 as the camera approaches the terrain.
 v00.00.13k cache rule: viewed tiles are cached for 14 days and reused; expired tiles are only refreshed when they are viewed again.
 v00.00.13k provider rule: provider URL template/attribution/User-Agent can be overridden by local provider.json. Default DEV provider is OpenStreetMap Standard and attribution remains visible.
+v00.00.13k1 provider config rule: provider.json string fields are read by a local minimal compatibility reader; the live map no longer requires UnityEngine.JsonUtility to compile.
 v00.00.13k historical rule: live OpenStreetMap is a present-day QA basemap, not authoritative 1864 road/building history. A local denmark_1864.png historical raster takes precedence and disables live tile requests.
 v00.00.13k terrain rule: map tile meshes conform to V013J_SmoothTerrain by collider sampling and use a flat water fallback where no land terrain exists, making the map visibly 3D instead of a separate flat plane.
 v00.00.13k prototype-cleanup rule: GIS_Road_/GIS_Ferry_ lines, prototype city blocks and duplicate v13j labels are hidden while the live basemap is active.
