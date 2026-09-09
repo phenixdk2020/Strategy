@@ -1,108 +1,93 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09l2
+Prototype version: v00.00.09l3
 Build status: TEST
-Build name: COMPANY TACTICAL CONTROL + FULL-SCALE FORMATION GEOMETRY TEST 09L2
-Visible build marker: PROJECT 1864 | v00.00.09l2 TEST
+Build name: REDUCED QA BATTLE + COMPANY TACTICAL CONTROL TEST 09L3
+Visible build marker: PROJECT 1864 | v00.00.09l3 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09k/09l/09l2 supplements
+Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3 supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
+v00.00.09l3 - Reduced QA battle
+- Temporary scale-down while company-level selection, movement, formation geometry and 1:1 rendering are stabilized.
+- Active infantry in the QA battle:
+  * Denmark: 1. Infanteri-Regiment, approximately 1,540 men, 2 battalions, 8 companies.
+  * Prussia: 8th Regiment (QA), approximately 2,460 men, 3 battalions, 12 companies.
+- Active infantry total: approximately 4,000 men.
+- Active company tactical centres: 20 total (8 Danish + 12 Prussian).
+- 11. Infanteri-Regiment and 18th Regiment remain defined/configured in the OOB data model but are removed from the active BattleManager roster and hidden in this QA scenario.
+- This reduction does NOT change the intended historical/campaign OOB or the final brigade architecture.
+- Brigade reserve/commit AI is paused in this focused two-regiment QA gate because it requires two active subordinate regiments per brigade.
+- Regimental HQ, dual standards, cavalry/artillery pilot assets and the underlying brigade/OOB code remain in the project.
+- The retained 09k regiment-wide foot renderer is disabled after mounted Regimental HQ creation; 09l2 company renderer remains authoritative for ordinary infantry.
+- PlayerCommander stale selection/routes for hidden regiments are removed before the hidden regiments are deactivated.
+- Removed company tactical entities are deleted from the 09l2 company lists so the active company count is genuinely 20 rather than 40 hidden/visible mixed entities.
+- Console acceptance marker:
+  QA-SCALE-09L3|Installed=True|ActiveRegiments=2|...|ActiveCompanies=20|ActiveInfantry=4000|...
+
 v00.00.09l2 - Company tactical control
-- Companies are no longer OOB-data-only presentation blocks. Every company receives a lightweight tactical centre GameObject.
-- Denmark: 2 battalions x 4 companies per regiment = 8 companies per regiment.
-- Prussia: 3 battalions x 4 companies per regiment = 12 companies per regiment.
-- Current four-regiment pilot therefore creates 40 company tactical centres: 16 Danish + 24 Prussian.
-- Ordinary 1:1 soldiers remain GPU-instanced; there is no GameObject/MonoBehaviour/collider/NavMeshAgent/AI per ordinary soldier.
-- Single LMB click on a Danish company selects that company only.
-- Shift-click adds; Ctrl-click toggles.
-- LMB drag box-select selects Danish company centres inside the marquee.
-- RMB issues a company movement order.
-- Alt+RMB appends a company waypoint.
-- RMB drag defines final facing when drag distance is sufficient.
-- F = Line, C = Column, H = Hold, Z/X = rotate selected company facing by 15 degrees.
-- Double-clicking a company switches back to whole-regiment selection.
-- Existing PlayerCommander whole-regiment control remains available and remains the path for V3 regiment movement.
+- Every company has a lightweight tactical centre; ordinary soldiers remain GPU-instanced.
+- Denmark: 2 battalions x 4 companies per regiment.
+- Prussia: 3 battalions x 4 companies per regiment.
+- LMB selects a Danish company; Shift adds; Ctrl toggles.
+- LMB drag box-select selects company centres.
+- RMB moves selected companies; Alt+RMB appends a waypoint; RMB drag sets final facing.
+- F = Line, C = Column, H = Hold, Z/X rotate company facing.
+- Double-clicking a company returns to whole-regiment selection.
+- Manual company orders clear the parent regiment route, switch parent Officer AI OFF and set the parent regiment Hold to avoid competing movement writers.
 
-v00.00.09l2 - Manual company movement ownership
-- Direct manual company movement is mutually exclusive with an active parent regiment route.
-- Before a company movement order is issued, the selected parent regiment PlayerCommander route is removed.
-- Active parent OfficerAIController is switched OFF for a manual company order.
-- Parent Regiment is set Hold so company centres do not fight against a simultaneously moving regiment transform.
-- This prevents competing movement writes while preserving V3 as the authoritative whole-regiment steering layer.
-- Brigade AI architecture itself is unchanged by 09l2.
-
-v00.00.09l2 - Full-scale formation geometry fix
-- The old 09k regiment-wide foot renderer created all soldiers around one Regiment pivot and produced long snake/L-shaped formations at full manpower.
-- 09l2 anchors 1:1 infantry to individual company tactical centres instead.
-- Company Line = 3 ranks with approximately 0.52 m file spacing and 0.76 m rank spacing.
-- Company Column = 8 files across with compact march depth.
-- Four companies form a battalion line; battalions occupy separate depth rows inside the regiment template.
-- The old 09k ordinary-infantry renderer is disabled only after its retained mounted Regimental HQ groups have been created.
-- Mounted Regimental HQ, Brigade HQ, dual standards, cavalry and artillery remain active.
-- 09l2 company renderer follows terrain height for each instanced soldier.
-
-v00.00.09l2 - Company casualty state
-- Regiment.CurrentStrength remains authoritative for the existing regiment-level combat resolver in this gate.
-- Strength changes are reconciled into company CurrentStrength values after reserving regimental staff manpower.
-- Company losses are distributed across company states rather than reducing only one visual tail.
-- Company slot order is deterministically shuffled for rendering, so casualties appear as distributed gaps rather than cutting the end off a formation and creating an artificial L shape.
-- A later combat gate will move fire eligibility, ammo, LOS/exposure and casualty targeting fully to company level.
-
-v00.00.09l2 - Selection modes
-- Company selection and Regiment selection are separate command modes.
-- Company selection clears PlayerCommander regiment selection.
-- Whole-regiment selection clears company selection.
-- The legacy 09h regiment-centre box selector is disabled once 09l2 company control installs; 09l2 owns the marquee and selects companies.
-- Enemy/Prussian companies are not directly selectable by the player.
+v00.00.09l2 - Formation geometry
+- 1:1 infantry is anchored to independent company tactical centres rather than one regiment-wide pivot.
+- Company Line = 3 ranks, approximately 0.52 m file spacing / 0.76 m rank spacing.
+- Company Column = 8 files across.
+- Four companies form a battalion line; battalions occupy separate template rows.
+- Company casualty slots are deterministically distributed so losses do not simply cut one end off a formation.
+- Company movement still does not have independent V3 obstacle/path navigation; whole-regiment V3 remains the accepted steering path.
 
 Retained v00.00.09l / 09l1
-- Danish side remains the historical working pilot 7. Brigade: 1. Infanteri-Regiment (~1540) + 11. Infanteri-Regiment (~1584).
-- Prussian 8th + 18th pair remains explicitly QA until a date-specific historical brigade OOB is sourced.
-- One Brigade HQ per side remains active; each Brigade HQ has six mounted staff figures.
-- Regimental mounted HQ groups remain three riders each.
-- Brigade missions remain Hold / DefendArea / AttackCaptureArea.
-- Regiment brigade roles remain Reserve / Support / Engaged / Manoeuvre / Withdraw.
-- Danish Brigade AI starts OFF and F11 toggles it; Prussian QA Brigade AI starts ON.
-- Dual standards remain national/army flag + regimental identity flag.
-- Danish field battery remains 8 guns / approximately 190 personnel.
-- Danish cavalry pilot remains personnel/horses/mounted-effective separated.
-- 09l1 Unity 6.6 compatibility fixes remain retained.
+- Historical Danish working OOB remains 7. Brigade: 1. + 11. Infanteri-Regiment.
+- Prussian 8th + 18th pair remains explicitly QA pending date-specific source lock.
+- Regimental HQ = 3 mounted staff figures; Brigade HQ = 6 mounted staff figures.
+- Dual standards = national/army flag + regimental identity flag.
+- Danish battery baseline = 8 guns / approximately 190 personnel.
+- Cavalry manpower, serviceable horses and mounted effective remain separate values.
+- 09l1 Unity 6.6 compile compatibility fixes remain retained.
 
 Retained movement/combat baseline
 - Navigation V3 remains whole-regiment steering authority.
-- 09i1 Farmhouse/Barn continuation fix remains active.
+- 09i1 Farmhouse/Barn detour continuation remains active.
 - 09h4 manual AI-OFF regiment route recovery remains active.
-- Decorative trees/fence posts remain soft/pass-through; Farmhouse/Barn remain hard; river remains bridge-only.
-- Weapon-specific reload timing/visual state remains based on actual outgoing volley nextFireTime.
-- Existing Regiment fire policy, range cone, accuracy, morale/cohesion and combat resolver are unchanged in 09l2.
+- Trees/fence posts remain soft/pass-through; Farmhouse/Barn hard; river bridge-only.
+- Weapon-specific reload animation follows actual outgoing volley nextFireTime.
+- Regiment fire policy, range cone, accuracy, morale/cohesion and current combat resolver remain unchanged by 09l3.
 
 Known transition constraints
-- Company movement in 09l2 is a tactical child-centre model under the Regiment command entity. Independent company obstacle/path navigation is a later gate so V3 is not replaced simultaneously with company-control introduction.
-- Whole-regiment movement still uses the central tactical collider/bounds of the existing map.
+- 09l3 is intentionally a QA scale-down, not a final battle OOB.
+- Company movement is still lightweight direct movement without independent V3 obstacle routing.
+- Company-level fire/LOS/ammo/casualty resolution remains a later gate.
 - Unity Input Manager deprecation warning remains non-blocking; Input System migration is a separate controls revision.
 
-Primary 09l2 QA
+Primary 09l3 QA
 1. Unity 6000.6.0f1 compiles without red errors.
-2. Build marker: PROJECT 1864 | v00.00.09l2 TEST.
-3. Console: COMPANY-09L2|Installed=True with Companies=40.
-4. Console: RENDER-09L2|Installed=True.
-5. Console: RENDER-AUTH-09L2 confirms old regiment foot renderer disabled and mounted HQ retained.
-6. Danish company can be selected individually.
-7. Shift/Ctrl company multi-select works.
-8. LMB drag selects company centres.
-9. RMB moves only selected companies.
-10. Alt+RMB appends company waypoint.
+2. Build marker: PROJECT 1864 | v00.00.09l3 TEST.
+3. Console shows COMPANY-09L2 installation followed by QA-SCALE-09L3.
+4. QA-SCALE-09L3 reports ActiveRegiments=2.
+5. QA-SCALE-09L3 reports ActiveCompanies=20.
+6. QA-SCALE-09L3 reports ActiveInfantry approximately 4000.
+7. Only 1. Infanteri-Regiment and 8th Regiment are visible/active as infantry regiments.
+8. Danish companies can be individually selected.
+9. Company box selection works.
+10. RMB moves only the selected company/company group.
 11. F/C/H/Z/X work on company selection.
 12. Double-click company returns to whole-regiment selection.
-13. Whole-regiment V3 movement remains functional in Regiment selection mode.
-14. Full-strength regiment appears as clean battalion/company blocks rather than the old snake/L geometry.
-15. Casualties create distributed gaps inside companies instead of cutting off one regiment edge.
-16. 1:1 infantry, reload pose, Regimental HQ, Brigade HQ, dual standards, cavalry and artillery remain visible.
-17. Observe FPS at close, medium and full-map zoom.
+13. Whole-regiment V3 movement for the active Danish regiment remains functional.
+14. Formation appears as clean company/battalion blocks rather than the previous regiment snake/L geometry.
+15. 1:1 infantry, reload visuals, mounted Regimental HQ and dual standards remain visible for active regiments.
+16. Observe FPS at close, medium and full-map zoom before restoring the second regiment on each side.
 
 Design supplements:
 - docs/parts/part-09k-fullscale-oob-command-arms.md
 - docs/parts/part-09l-brigade-hq-historical-oob.md
 - docs/parts/part-09l2-company-tactical-control.md
+- docs/parts/part-09l3-reduced-qa-battle.md
 - docs/parts/part-09m-oob-designer-campaign.md
