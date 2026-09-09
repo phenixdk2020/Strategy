@@ -119,7 +119,7 @@ public sealed class PrototypeNavigation09AHotfix : MonoBehaviour
     {
         obstacles.Clear();
 
-        Transform[] all = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None);
+        Transform[] all = Object.FindObjectsByType<Transform>();
         foreach (Transform item in all)
         {
             if (item == null)
