@@ -169,6 +169,10 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
             if (oob == null)
                 oob = regiment.gameObject.AddComponent<PrototypeRegimentOOB09K>();
             oob.Build(regiment);
+
+            if (regiment.GetComponent<PrototypeOfficerObjective09K>() == null)
+                regiment.gameObject.AddComponent<PrototypeOfficerObjective09K>();
+
             configured++;
         }
 
@@ -178,7 +182,7 @@ public sealed class PrototypeFullScaleOOBManager09K : MonoBehaviour
             Debug.Log(
                 "OOB-09K|Installed=True|Scenario=FourFullScaleRegiments|" +
                 "Denmark=2|Prussia=2|ApproxInfantry=8107|" +
-                "CommandLevel=Regiment|InternalLevels=Battalion+Company");
+                "CommandLevel=Regiment|InternalLevels=Battalion+Company|OfficerObjectiveState=True");
         }
     }
 
