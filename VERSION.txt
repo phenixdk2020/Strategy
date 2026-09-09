@@ -1,13 +1,17 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13h
-Build status: DENMARK PREMIUM VISUAL DEV / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN DENMARK PREMIUM VISUAL V13H
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h
+Prototype version: v00.00.13h1
+Build status: DENMARK PREMIUM MAP-ONLY DEV / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN DENMARK PREMIUM VISUAL V13H1 MAP-ONLY
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
 v13h visual direction: Historic Miniature Grand Strategy Diorama — serious, historical, readable, premium 3D miniature presentation; not cartoon and not photorealistic
+v13h1 MAP-ONLY rule: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition are temporarily disabled while Denmark map visuals are rebuilt
+v13h1 clock rule: campaign clock and construction progression remain available through a dedicated map-only time controller with pause/x1/x5/x20/reset
+v13h1 presentation cleanup: legacy CampaignMapController labels/panels, v11 usability diagnostics/search UI and formation markers are disabled for map-visual QA
+v13h1 Denmark-only rule: foreign node/control/settlement presentation remains hidden; Sweden/Norway/Finland/Germany stay in simulation data only
 v13h foundation: retains corrected v13f Denmark landmesh, v13e clean sea/infrastructure base and v13g Denmark-only presentation/close-zoom rules
 v13h terrain: corrected Denmark landmesh receives restrained grass/meadow/heath materials plus deterministic field patches and hedgerows; low-relief presentation remains non-authoritative
 v13h water: clean sea receives darker blue premium material, high smoothness and subtle time-based colour breathing; water remains presentation-only
@@ -18,7 +22,7 @@ v13h construction: Aalborg barracks and Aarhus farm staged simulation projects r
 v13h atmosphere: warm directional light, soft shadows, restrained linear fog and tighter Denmark composition
 v13h labels: v13h becomes sole visible label owner, uses shadowed text without heavy black boxes, semantic zoom and Denmark-only region filtering
 v13h camera: Home framing tightened to Denmark; close zoom remains available with hidden legacy terrain floor disabled
-Gameplay isolation: no campaign movement, ETA, route-distance, campaign time, logistics, tactical AI or tactical navigation behavior is intentionally changed by v00.00.13h
+Gameplay isolation: v00.00.13h1 intentionally suspends campaign formation movement/contact/battle only for map development; campaign strategic data is preserved and no tactical AI/navigation code is changed
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 QA state: IMPLEMENTERET / AFVENTER UNITY COMPILE + RUNTIME QA
