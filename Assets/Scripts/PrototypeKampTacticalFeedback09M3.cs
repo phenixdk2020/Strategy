@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -13,34 +15,25 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
     public const float BridgeHalfWidthZ = 4.0f;
     public const float BridgeApproachOffset = 12.0f;
 
-    private sealed class RegimentFan
-    {
-        public LineRenderer Close;
-        public LineRenderer Medium;
-        public LineRenderer Long;
-    }
-
-    private sealed class GhostSet
-    {
-        public LineRenderer Box;
-        public LineRenderer Path;
-    }
+    private sealed class RegimentFan { public LineRenderer Close; public LineRenderer Medium; public LineRenderer Long; }
+    private sealed class GhostSet { public LineRenderer Box; public LineRenderer Path; }
 
     private readonly Dictionary<Regiment, RegimentFan> fans = new Dictionary<Regiment, RegimentFan>();
-    private readonly Dictionary<PrototypeCompanyTacticalEntity09L2, GhostSet> ghosts =
-        new Dictionary<PrototypeCompanyTacticalEntity09L2, GhostSet>();
+    private readonly Dictionary<PrototypeCompanyTacticalEntity09L2, GhostSet> ghosts = new Dictionary<PrototypeCompanyTacticalEntity09L2, GhostSet>();
     private readonly List<Vector3> pathScratch = new List<Vector3>(8);
     private readonly List<Vector3> boxScratch = new List<Vector3>(8);
     private Transform visualRoot;
     private bool announced;
     private Camera cam;
+    private FieldInfo waypointsField;
+    private FieldInfo waypointPointField;
+    private FieldInfo waypointFacingField;
+    private FieldInfo waypointHasFacingField;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
-        if (UnityEngine.Object.FindAnyObjectByType<PrototypeKampTacticalFeedback09M3>() != null)
-            return;
-
+        if (UnityEngine.Object.FindAnyObjectByType<PrototypeKampTacticalFeedback09M3>() != null) return;
         GameObject root = new GameObject("PrototypeKampTacticalFeedback_v000009m3");
         root.AddComponent<PrototypeKampTacticalFeedback09M3>();
     }
@@ -50,28 +43,27 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         visualRoot = new GameObject("KampTacticalFeedbackRoot09M3").transform;
         visualRoot.SetParent(transform, false);
         cam = Camera.main;
+        CacheWaypointReflection();
+    }
+
+    private void CacheWaypointReflection()
+    {
+        waypointsField = typeof(PrototypeCompanyTacticalEntity09L2).GetField("waypoints", BindingFlags.Instance | BindingFlags.NonPublic);
     }
 
     private void LateUpdate()
     {
         PrototypeCompanyTacticalControl09L2 control = PrototypeCompanyTacticalControl09L2.Instance;
-        if (control == null || !control.Installed)
-            return;
-
-        if (cam == null)
-            cam = Camera.main;
-
+        if (control == null || !control.Installed) return;
+        if (cam == null) cam = Camera.main;
         HideOfficerAndPivotFans();
         RerouteCompaniesAcrossRiver(control);
         UpdateRegimentRangeFans(control);
         UpdateGhostOrders(control);
-
         if (!announced)
         {
             announced = true;
-            Debug.Log(
-                "KAMP-FEEDBACK-09M3|Installed=True|RangeCone=SelectedRegimentFrontage|" +
-                "River=BridgeOnly|Ghost=DestinationBox+Path");
+            Debug.Log("KAMP-FEEDBACK-09M3|Installed=True|RangeCone=SelectedRegimentFrontage|River=BridgeOnly|Ghost=DestinationBox+Path");
         }
     }
 
@@ -83,53 +75,35 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
             for (int i = 0; i < battle.Regiments.Count; i++)
             {
                 Regiment regiment = battle.Regiments[i];
-                if (regiment == null)
-                    continue;
-
+                if (regiment == null) continue;
                 if (regiment.ShowRange)
                 {
                     regiment.ShowRange = false;
                     regiment.RefreshRangeVisibility();
                 }
-
-                DisableNamedFans(regiment.transform);
+                DisableFan(regiment.transform.Find("CloseRangeFan"));
+                DisableFan(regiment.transform.Find("MediumRangeFan"));
+                DisableFan(regiment.transform.Find("LongRangeFan"));
             }
         }
-
         PrototypeKampCommandQa09M1 qa = UnityEngine.Object.FindAnyObjectByType<PrototypeKampCommandQa09M1>();
-        if (qa == null)
-            return;
-
+        if (qa == null) return;
         Transform[] children = qa.GetComponentsInChildren<Transform>(true);
         for (int i = 0; i < children.Length; i++)
         {
             Transform child = children[i];
-            if (child == null)
-                continue;
-            if (child.name != "CloseFan" && child.name != "MediumFan" && child.name != "LongFan")
-                continue;
+            if (child == null) continue;
+            if (child.name != "CloseFan" && child.name != "MediumFan" && child.name != "LongFan") continue;
             LineRenderer line = child.GetComponent<LineRenderer>();
-            if (line != null && line.enabled)
-                line.enabled = false;
+            if (line != null && line.enabled) line.enabled = false;
         }
-    }
-
-    private static void DisableNamedFans(Transform root)
-    {
-        if (root == null)
-            return;
-        DisableFan(root.Find("CloseRangeFan"));
-        DisableFan(root.Find("MediumRangeFan"));
-        DisableFan(root.Find("LongRangeFan"));
     }
 
     private static void DisableFan(Transform fan)
     {
-        if (fan == null)
-            return;
+        if (fan == null) return;
         LineRenderer line = fan.GetComponent<LineRenderer>();
-        if (line != null && line.enabled)
-            line.enabled = false;
+        if (line != null && line.enabled) line.enabled = false;
     }
 
     private void RerouteCompaniesAcrossRiver(PrototypeCompanyTacticalControl09L2 control)
@@ -138,10 +112,76 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         for (int i = 0; i < companies.Count; i++)
         {
             PrototypeCompanyTacticalEntity09L2 company = companies[i];
-            if (company == null || !company.IsMoving)
-                continue;
-            company.EnsureRiverSafeRoute();
+            if (company == null || !company.IsMoving) continue;
+            Vector3 first, final, facing; bool hasFacing;
+            if (!TryReadRoute(company, out first, out final, out facing, out hasFacing)) continue;
+            if (!SegmentCrossesRiver(company.transform.position, first)) continue;
+            List<Vector3> hops = new List<Vector3>(6);
+            BuildPath(company.transform.position, final, hops);
+            company.Hold();
+            for (int h = 0; h < hops.Count; h++)
+                company.IssueMove(hops[h], facing, h == hops.Count - 1 && hasFacing, h > 0);
         }
+    }
+
+    private bool TryReadRoute(PrototypeCompanyTacticalEntity09L2 company, out Vector3 first, out Vector3 final, out Vector3 facing, out bool hasFacing)
+    {
+        first = company.transform.position;
+        final = first;
+        facing = company.transform.forward;
+        hasFacing = false;
+        IList waypoints = GetWaypoints(company);
+        if (waypoints == null || waypoints.Count == 0) return false;
+        first = ReadWaypointPoint(waypoints[0], first);
+        object last = waypoints[waypoints.Count - 1];
+        final = ReadWaypointPoint(last, first);
+        facing = ReadWaypointFacing(last, facing);
+        hasFacing = ReadWaypointHasFacing(last);
+        return true;
+    }
+
+    private IList GetWaypoints(PrototypeCompanyTacticalEntity09L2 company)
+    {
+        if (waypointsField == null) CacheWaypointReflection();
+        if (waypointsField == null) return null;
+        return waypointsField.GetValue(company) as IList;
+    }
+
+    private Vector3 ReadWaypointPoint(object waypoint, Vector3 fallback)
+    {
+        if (waypoint == null) return fallback;
+        if (waypointPointField == null) waypointPointField = waypoint.GetType().GetField("WorldPoint", BindingFlags.Instance | BindingFlags.Public);
+        if (waypointPointField == null) return fallback;
+        object value = waypointPointField.GetValue(waypoint);
+        return value is Vector3 ? (Vector3)value : fallback;
+    }
+
+    private Vector3 ReadWaypointFacing(object waypoint, Vector3 fallback)
+    {
+        if (waypoint == null) return fallback;
+        if (waypointFacingField == null) waypointFacingField = waypoint.GetType().GetField("Facing", BindingFlags.Instance | BindingFlags.Public);
+        if (waypointFacingField == null) return fallback;
+        object value = waypointFacingField.GetValue(waypoint);
+        return value is Vector3 ? (Vector3)value : fallback;
+    }
+
+    private bool ReadWaypointHasFacing(object waypoint)
+    {
+        if (waypoint == null) return false;
+        if (waypointHasFacingField == null) waypointHasFacingField = waypoint.GetType().GetField("HasFacing", BindingFlags.Instance | BindingFlags.Public);
+        if (waypointHasFacingField == null) return false;
+        object value = waypointHasFacingField.GetValue(waypoint);
+        return value is bool && (bool)value;
+    }
+
+    private void CopyRoute(PrototypeCompanyTacticalEntity09L2 company, List<Vector3> buffer)
+    {
+        buffer.Clear();
+        buffer.Add(company.transform.position);
+        IList waypoints = GetWaypoints(company);
+        if (waypoints == null) return;
+        for (int i = 0; i < waypoints.Count; i++)
+            buffer.Add(ReadWaypointPoint(waypoints[i], company.transform.position));
     }
 
     private void UpdateRegimentRangeFans(PrototypeCompanyTacticalControl09L2 control)
@@ -149,29 +189,18 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         HashSet<Regiment> selectedParents = new HashSet<Regiment>();
         IReadOnlyList<PrototypeCompanyTacticalEntity09L2> selected = control.SelectedCompanies;
         for (int i = 0; i < selected.Count; i++)
-        {
             if (selected[i] != null && selected[i].ParentRegiment != null)
                 selectedParents.Add(selected[i].ParentRegiment);
-        }
-
-        IReadOnlyList<PrototypeCompanyTacticalEntity09L2> companies = control.Companies;
         foreach (Regiment regiment in selectedParents)
         {
-            if (regiment == null || regiment.IsRouted)
-                continue;
-
-            Vector3 origin;
-            Vector3 forward;
-            float muzzleHalf;
-            if (!TryGetRegimentFront(regiment, companies, selected, out origin, out forward, out muzzleHalf))
-                continue;
-
+            if (regiment == null || regiment.IsRouted) continue;
+            Vector3 origin, forward; float muzzleHalf;
+            if (!TryGetRegimentFront(regiment, selected, out origin, out forward, out muzzleHalf)) continue;
             RegimentFan fan = GetOrCreateFan(regiment);
-            DrawArc(fan.Close, origin, forward, regiment.CloseRange, regiment.FireArcHalfAngle, muzzleHalf, true);
-            DrawArc(fan.Medium, origin, forward, regiment.EffectiveRange, regiment.FireArcHalfAngle, muzzleHalf, true);
+            DrawArc(fan.Close, origin, forward, regiment.CloseRange, regiment.FireArcHalfAngle, true);
+            DrawArc(fan.Medium, origin, forward, regiment.EffectiveRange, regiment.FireArcHalfAngle, true);
             DrawOuterFan(fan.Long, origin, forward, regiment.MaximumRange, regiment.FireArcHalfAngle, muzzleHalf, true);
         }
-
         foreach (KeyValuePair<Regiment, RegimentFan> pair in fans)
         {
             bool show = selectedParents.Contains(pair.Key);
@@ -181,38 +210,21 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         }
     }
 
-    private static bool TryGetRegimentFront(
-        Regiment regiment,
-        IReadOnlyList<PrototypeCompanyTacticalEntity09L2> companies,
-        IReadOnlyList<PrototypeCompanyTacticalEntity09L2> selected,
-        out Vector3 origin,
-        out Vector3 forward,
-        out float muzzleHalf)
+    private static bool TryGetRegimentFront(Regiment regiment, IReadOnlyList<PrototypeCompanyTacticalEntity09L2> selected, out Vector3 origin, out Vector3 forward, out float muzzleHalf)
     {
-        origin = Vector3.zero;
-        forward = Vector3.zero;
-        muzzleHalf = 8.5f;
-        Vector3 centroid = Vector3.zero;
-        Vector3 facing = Vector3.zero;
-        float width = 0f;
-        int count = 0;
-
+        origin = Vector3.zero; forward = Vector3.zero; muzzleHalf = 8.5f;
+        Vector3 centroid = Vector3.zero; Vector3 facing = Vector3.zero; float width = 0f; int count = 0;
         for (int i = 0; i < selected.Count; i++)
         {
             PrototypeCompanyTacticalEntity09L2 company = selected[i];
-            if (company == null || company.ParentRegiment != regiment || company.CurrentStrength <= 0)
-                continue;
+            if (company == null || company.ParentRegiment != regiment || company.CurrentStrength <= 0) continue;
             centroid += company.transform.position;
-            Vector3 f = company.transform.forward;
-            f.y = 0f;
+            Vector3 f = company.transform.forward; f.y = 0f;
             if (f.sqrMagnitude > 0.01f) facing += f.normalized;
             width += company.GetFootprintWidth();
             count++;
         }
-
-        if (count <= 0)
-            return false;
-
+        if (count <= 0) return false;
         centroid /= count;
         if (facing.sqrMagnitude < 0.01f) facing = regiment.transform.forward;
         facing.y = 0f;
@@ -228,8 +240,7 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
     private RegimentFan GetOrCreateFan(Regiment regiment)
     {
         RegimentFan fan;
-        if (fans.TryGetValue(regiment, out fan) && fan.Long != null)
-            return fan;
+        if (fans.TryGetValue(regiment, out fan) && fan.Long != null) return fan;
         fan = new RegimentFan
         {
             Close = CreateLine("RegimentRangeClose_" + regiment.RegimentName, 0.09f, new Color(1.00f, 0.94f, 0.18f, 0.55f)),
@@ -245,33 +256,25 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         HashSet<PrototypeCompanyTacticalEntity09L2> live = new HashSet<PrototypeCompanyTacticalEntity09L2>();
         IReadOnlyList<PrototypeCompanyTacticalEntity09L2> selected = control.SelectedCompanies;
         bool previewing = Input.GetMouseButton(1) && selected.Count > 0;
-        Vector3 previewPoint = Vector3.zero;
+        Vector3 previewPoint;
         bool hasPreview = previewing && TryGetGroundPoint(Input.mousePosition, out previewPoint);
-
+        if (!hasPreview) previewPoint = Vector3.zero;
         for (int i = 0; i < selected.Count; i++)
         {
             PrototypeCompanyTacticalEntity09L2 company = selected[i];
-            if (company == null || company.CurrentStrength <= 0)
-                continue;
-
-            Vector3 destination;
-            bool hasDest = company.TryGetFinalDestination(out destination);
-            if (!hasDest && !hasPreview)
-            {
-                HideGhost(company);
-                continue;
-            }
-            if (hasPreview) destination = previewPoint;
-
+            if (company == null || company.CurrentStrength <= 0) continue;
+            Vector3 first, final, facing; bool hasFacing;
+            bool hasDest = TryReadRoute(company, out first, out final, out facing, out hasFacing);
+            if (!hasDest && !hasPreview) { HideGhost(company); continue; }
+            Vector3 destination = hasPreview ? previewPoint : final;
             live.Add(company);
             GhostSet ghost = GetOrCreateGhost(company);
             float halfW = company.GetFootprintWidth() * 0.5f + 0.35f;
             float halfD = company.GetFootprintDepth() * 0.5f + 0.35f;
-            Vector3 facing = company.transform.forward;
-            facing.y = 0f;
-            if (facing.sqrMagnitude < 0.01f) facing = Vector3.forward;
-            facing.Normalize();
-            Quaternion rot = Quaternion.LookRotation(facing, Vector3.up);
+            Vector3 look = company.transform.forward; look.y = 0f;
+            if (look.sqrMagnitude < 0.01f) look = Vector3.forward;
+            look.Normalize();
+            Quaternion rot = Quaternion.LookRotation(look, Vector3.up);
             boxScratch.Clear();
             boxScratch.Add(destination + rot * new Vector3(-halfW, 0f, -halfD));
             boxScratch.Add(destination + rot * new Vector3(-halfW, 0f, halfD));
@@ -280,23 +283,19 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
             DrawGroundLoop(ghost.Box, boxScratch, true);
             pathScratch.Clear();
             if (hasPreview) BuildPath(company.transform.position, destination, pathScratch);
-            else company.CopyRoute(pathScratch);
+            else CopyRoute(company, pathScratch);
             DrawGroundLine(ghost.Path, pathScratch, true);
         }
-
         List<PrototypeCompanyTacticalEntity09L2> stale = new List<PrototypeCompanyTacticalEntity09L2>();
         foreach (KeyValuePair<PrototypeCompanyTacticalEntity09L2, GhostSet> pair in ghosts)
-        {
             if (!live.Contains(pair.Key)) stale.Add(pair.Key);
-        }
         for (int i = 0; i < stale.Count; i++) HideGhost(stale[i]);
     }
 
     private GhostSet GetOrCreateGhost(PrototypeCompanyTacticalEntity09L2 company)
     {
         GhostSet ghost;
-        if (ghosts.TryGetValue(company, out ghost) && ghost.Box != null)
-            return ghost;
+        if (ghosts.TryGetValue(company, out ghost) && ghost.Box != null) return ghost;
         ghost = new GhostSet
         {
             Box = CreateLine("GhostDestBox_" + company.CompanyId, 0.12f, new Color(0.78f, 0.92f, 1f, 0.55f)),
@@ -333,15 +332,11 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         line.enabled = false;
         Shader shader = Shader.Find("Sprites/Default");
         if (shader == null) shader = Shader.Find("Unlit/Color");
-        if (shader != null)
-        {
-            Material material = new Material(shader) { name = name + "_Mat", color = color };
-            line.sharedMaterial = material;
-        }
+        if (shader != null) line.sharedMaterial = new Material(shader) { name = name + "_Mat", color = color };
         return line;
     }
 
-    private static void DrawArc(LineRenderer line, Vector3 origin, Vector3 forward, float range, float halfAngle, float muzzleHalf, bool enabled)
+    private static void DrawArc(LineRenderer line, Vector3 origin, Vector3 forward, float range, float halfAngle, bool enabled)
     {
         if (line == null) return;
         const int arcSegments = 40;
@@ -349,10 +344,8 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         line.positionCount = arcSegments + 1;
         for (int i = 0; i <= arcSegments; i++)
         {
-            float t = i / (float)arcSegments;
-            float angle = Mathf.Lerp(-halfAngle, halfAngle, t);
-            Vector3 direction = Quaternion.AngleAxis(angle, Vector3.up) * forward;
-            line.SetPosition(i, Ground(origin + direction * range));
+            float angle = Mathf.Lerp(-halfAngle, halfAngle, i / (float)arcSegments);
+            line.SetPosition(i, Ground(origin + Quaternion.AngleAxis(angle, Vector3.up) * forward * range));
         }
         line.enabled = enabled;
     }
@@ -371,17 +364,13 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         line.positionCount = 1 + sideSegments + arcSegments + sideSegments;
         int index = 0;
         line.SetPosition(index++, Ground(leftMuzzle));
-        for (int i = 1; i <= sideSegments; i++)
-            line.SetPosition(index++, Ground(Vector3.Lerp(leftMuzzle, leftEdge, i / (float)sideSegments)));
+        for (int i = 1; i <= sideSegments; i++) line.SetPosition(index++, Ground(Vector3.Lerp(leftMuzzle, leftEdge, i / (float)sideSegments)));
         for (int i = 1; i <= arcSegments; i++)
         {
-            float t = i / (float)arcSegments;
-            float angle = Mathf.Lerp(-halfAngle, halfAngle, t);
-            Vector3 direction = Quaternion.AngleAxis(angle, Vector3.up) * forward;
-            line.SetPosition(index++, Ground(origin + direction * range));
+            float angle = Mathf.Lerp(-halfAngle, halfAngle, i / (float)arcSegments);
+            line.SetPosition(index++, Ground(origin + Quaternion.AngleAxis(angle, Vector3.up) * forward * range));
         }
-        for (int i = 1; i <= sideSegments; i++)
-            line.SetPosition(index++, Ground(Vector3.Lerp(rightEdge, rightMuzzle, i / (float)sideSegments)));
+        for (int i = 1; i <= sideSegments; i++) line.SetPosition(index++, Ground(Vector3.Lerp(rightEdge, rightMuzzle, i / (float)sideSegments)));
         line.enabled = enabled;
     }
 
@@ -408,25 +397,17 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         if (buffer == null) return;
         buffer.Clear();
         from.y = 0f;
-        to = SnapOutOfRiver(to);
-        to.y = 0f;
+        to = SnapOutOfRiver(to); to.y = 0f;
         buffer.Add(from);
-        if (!SegmentCrossesRiver(from, to))
-        {
-            buffer.Add(Ground(to));
-            return;
-        }
+        if (!SegmentCrossesRiver(from, to)) { buffer.Add(Ground(to)); return; }
         float bridgeX = StreamCenterX(BridgeZ);
         float fromSide = BankSide(from);
         float toSide = BankSide(to);
         if (Mathf.Abs(fromSide) < 0.1f) fromSide = toSide >= 0f ? -1f : 1f;
         if (Mathf.Abs(toSide) < 0.1f) toSide = -fromSide;
-        Vector3 approach = new Vector3(bridgeX + fromSide * BridgeApproachOffset, 0f, BridgeZ);
-        Vector3 deck = new Vector3(bridgeX, 0f, BridgeZ);
-        Vector3 exit = new Vector3(bridgeX + toSide * BridgeApproachOffset, 0f, BridgeZ);
-        AppendIfFar(buffer, approach);
-        AppendIfFar(buffer, deck);
-        AppendIfFar(buffer, exit);
+        AppendIfFar(buffer, new Vector3(bridgeX + fromSide * BridgeApproachOffset, 0f, BridgeZ));
+        AppendIfFar(buffer, new Vector3(bridgeX, 0f, BridgeZ));
+        AppendIfFar(buffer, new Vector3(bridgeX + toSide * BridgeApproachOffset, 0f, BridgeZ));
         AppendIfFar(buffer, to);
     }
 
@@ -442,11 +423,9 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
 
     public static bool SegmentCrossesRiver(Vector3 a, Vector3 b)
     {
-        const int samples = 48;
-        for (int i = 1; i < samples; i++)
+        for (int i = 1; i < 48; i++)
         {
-            float t = i / (float)samples;
-            Vector3 point = Vector3.Lerp(a, b, t);
+            Vector3 point = Vector3.Lerp(a, b, i / 48f);
             if (IsRiverWater(point) && !IsBridgeZone(point)) return true;
         }
         return false;
@@ -460,19 +439,11 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
     public static bool IsBridgeZone(Vector3 point)
     {
         float bridgeX = StreamCenterX(BridgeZ);
-        return Mathf.Abs(point.z - BridgeZ) <= BridgeHalfWidthZ + 1.2f &&
-               Mathf.Abs(point.x - bridgeX) <= BridgeHalfLengthX + 1.5f;
+        return Mathf.Abs(point.z - BridgeZ) <= BridgeHalfWidthZ + 1.2f && Mathf.Abs(point.x - bridgeX) <= BridgeHalfLengthX + 1.5f;
     }
 
-    public static float StreamCenterX(float z)
-    {
-        return Mathf.Sin(z * 0.065f) * 4.8f;
-    }
-
-    public static float BankSide(Vector3 point)
-    {
-        return Mathf.Sign(point.x - StreamCenterX(point.z));
-    }
+    public static float StreamCenterX(float z) { return Mathf.Sin(z * 0.065f) * 4.8f; }
+    public static float BankSide(Vector3 point) { return Mathf.Sign(point.x - StreamCenterX(point.z)); }
 
     private static void AppendIfFar(List<Vector3> buffer, Vector3 point)
     {
@@ -497,8 +468,7 @@ public sealed class PrototypeKampTacticalFeedback09M3 : MonoBehaviour
         Ray ray = cam.ScreenPointToRay(screenPosition);
         Plane ground = new Plane(Vector3.up, Vector3.zero);
         if (!ground.Raycast(ray, out float enter)) return false;
-        point = ray.GetPoint(enter);
-        point = SnapOutOfRiver(point);
+        point = SnapOutOfRiver(ray.GetPoint(enter));
         point.y = PrototypeBootstrap.SampleGroundHeight(point.x, point.z) + 0.10f;
         return true;
     }
