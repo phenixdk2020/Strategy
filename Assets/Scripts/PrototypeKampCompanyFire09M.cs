@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// v00.00.09m1 - testable company volleys for Strategy-Kamp.
-// Companies fire from their own centres using the 09l5 hit model.
-// Fire policy on the parent regiment now gates trigger range.
+// v00.00.09m9 - company volleys. Parent HQ may stay HoldFire; AI/Prussia open Medium.
 [DefaultExecutionOrder(11210)]
 public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
 {
@@ -23,14 +21,24 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
         new Dictionary<Regiment, float>();
     private readonly Dictionary<Regiment, float> regimentReloadEnd =
         new Dictionary<Regiment, float>();
+    private readonly HashSet<Regiment> playerHoldLock = new HashSet<Regiment>();
     private bool announced;
+
+    public void NotifyPlayerFirePolicy(Regiment regiment, RegimentFirePolicy policy)
+    {
+        if (regiment == null)
+            return;
+        if (policy == RegimentFirePolicy.HoldFire)
+            playerHoldLock.Add(regiment);
+        else
+            playerHoldLock.Remove(regiment);
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
         if (Object.FindAnyObjectByType<PrototypeKampCompanyFire09M>() != null)
             return;
-
         GameObject root = new GameObject("PrototypeKampCompanyFire_v000009m");
         root.AddComponent<PrototypeKampCompanyFire09M>();
     }
@@ -70,36 +78,46 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
         PrototypeCompanyTacticalControl09L2 control = PrototypeCompanyTacticalControl09L2.Instance;
         if (control == null || !control.Installed)
             return;
-
         IReadOnlyList<PrototypeCompanyTacticalEntity09L2> companies = control.Companies;
         if (!announced && companies.Count > 0)
         {
             announced = true;
-            Debug.Log("KAMP-FIRE-09M|Installed=True|Owner=CompanyCentre|Policy=ParentFirePolicy|Formula=09l5Volley|Smoke=CompanyMuzzle");
+            Debug.Log("KAMP-FIRE-09M|Installed=True|Owner=CompanyCentre|AIPrussia=OpenMedium|PlayerHold=Lock");
         }
-
         for (int i = 0; i < companies.Count; i++)
         {
             PrototypeCompanyTacticalEntity09L2 shooter = companies[i];
             if (shooter == null || shooter.ParentRegiment == null || shooter.CurrentStrength <= 0)
                 continue;
-
             Regiment regiment = shooter.ParentRegiment;
             if (regiment.IsRouted)
                 continue;
-            if (regiment.FirePolicy == RegimentFirePolicy.HoldFire)
+            if (!AllowsCompanyVolley(regiment))
                 continue;
-
             FireState state = GetState(shooter);
             if (Time.time < state.NextFireTime)
                 continue;
-
             PrototypeCompanyTacticalEntity09L2 target = FindTarget(shooter, companies);
             if (target == null)
                 continue;
-
             FireVolley(shooter, target, state);
         }
+    }
+
+    private bool AllowsCompanyVolley(Regiment regiment)
+    {
+        if (regiment == null)
+            return false;
+        if (regiment.FirePolicy != RegimentFirePolicy.HoldFire)
+            return true;
+        if (playerHoldLock.Contains(regiment))
+            return false;
+        OfficerAIController officer = regiment.GetComponent<OfficerAIController>();
+        bool aiFights = regiment.Team == BattleTeam.Prussia || (officer != null && officer.AIEnabled);
+        if (!aiFights)
+            return false;
+        regiment.SetFirePolicy(RegimentFirePolicy.MediumRange);
+        return true;
     }
 
     private FireState GetState(PrototypeCompanyTacticalEntity09L2 company)
@@ -152,16 +170,13 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
         float trigger = regiment.GetFireTriggerRange();
         if (trigger <= 0.01f)
             trigger = regiment.EffectiveRange;
-
         PrototypeCompanyTacticalEntity09L2 best = null;
         float bestDist = trigger;
-
         Vector3 forward = shooter.transform.forward;
         forward.y = 0f;
         if (forward.sqrMagnitude < 0.01f)
             forward = Vector3.forward;
         forward.Normalize();
-
         for (int i = 0; i < companies.Count; i++)
         {
             PrototypeCompanyTacticalEntity09L2 candidate = companies[i];
@@ -171,7 +186,6 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
                 continue;
             if (candidate.ParentRegiment.IsRouted)
                 continue;
-
             Vector3 to = candidate.transform.position - shooter.transform.position;
             to.y = 0f;
             float dist = to.magnitude;
@@ -179,11 +193,9 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
                 continue;
             if (Vector3.Angle(forward, to) > regiment.FireArcHalfAngle)
                 continue;
-
             bestDist = dist;
             best = candidate;
         }
-
         return best;
     }
 
@@ -195,7 +207,6 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
         Regiment regiment = shooter.ParentRegiment;
         Regiment enemy = target.ParentRegiment;
         float distance = Vector3.Distance(shooter.transform.position, target.transform.position);
-
         if (!shooter.IsMoving)
         {
             Vector3 to = target.transform.position - shooter.transform.position;
@@ -206,7 +217,6 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
                 shooter.transform.rotation = Quaternion.Slerp(shooter.transform.rotation, desired, 0.65f);
             }
         }
-
         float rangeX;
         if (distance <= regiment.CloseRange)
             rangeX = 1.75f;
@@ -214,7 +224,6 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
             rangeX = Mathf.Lerp(1.75f, 1.00f, Mathf.InverseLerp(regiment.CloseRange, regiment.EffectiveRange, distance));
         else
             rangeX = Mathf.Lerp(1.00f, 0.30f, Mathf.InverseLerp(regiment.EffectiveRange, regiment.MaximumRange, distance));
-
         float weaponX = regiment.WeaponType == InfantryWeaponType.DreyseNeedleRifle ? (0.013f / 0.014f) : 1f;
         float moraleX = Mathf.Lerp(0.72f, 1f, regiment.Morale / 100f);
         float cohesionX = Mathf.Lerp(0.68f, 1f, regiment.Cohesion / 100f);
@@ -222,14 +231,11 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
         float expected = firingMen * 0.014f * weaponX * rangeX * moraleX * cohesionX;
         int hits = Mathf.Max(0, Mathf.RoundToInt(expected * Random.Range(0.72f, 1.28f)));
         hits = Mathf.Min(hits, target.CurrentStrength);
-
         float shock = Mathf.Lerp(5.0f, 1.5f, Mathf.Clamp01(distance / regiment.MaximumRange));
         if (hits > 0 && enemy != null)
             enemy.ReceiveVolley(hits, shock, regiment);
-
         if (state.Smoke != null)
             state.Smoke.Emit(Random.Range(10, 22));
-
         float reload = regiment.CurrentReloadSeconds * Random.Range(0.90f, 1.12f);
         state.LastVolleyTime = Time.time;
         state.ReloadEnd = Time.time + reload;
