@@ -5,14 +5,15 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// PROJECT 1864 Campaign v00.00.13n — Cesium Denmark 3D Foundation.
+// PROJECT 1864 Campaign v00.00.13n2 — Cesium Denmark 3D Foundation.
 // Replaces the visible hand-built GIS/cartographic render stack with Cesium World Terrain
 // plus Bing Maps Aerial (no labels) streamed through Cesium ion.
 // Campaign simulation remains MAP-ONLY and is not changed by this presentation layer.
+// Physics meshes are disabled during map-only QA to avoid Unity large-triangle collider bake warnings.
 [DefaultExecutionOrder(-9000)]
 public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
 {
-    public const string BuildTag = "v00.00.13n";
+    public const string BuildTag = "v00.00.13n2";
     public const string RootName = "V013N_CESIUM_DENMARK_3D";
 
     private const double HomeLongitude = 10.05;
@@ -103,6 +104,13 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
 
         terrainTileset = terrainObject.AddComponent<Cesium3DTileset>();
         terrainObject.AddComponent<CesiumCameraManager>();
+
+        // MAP-ONLY QA does not require Unity MeshColliders on the streamed Cesium terrain.
+        // Cesium enables physics meshes by default; Unity 6.6 warns when very large streamed
+        // terrain triangles are baked into PhysX. Disable collider generation before the ion
+        // source/asset is assigned, so no terrain tiles begin physics baking first.
+        terrainTileset.createPhysicsMeshes = false;
+
         terrainTileset.tilesetSource = CesiumDataSource.FromCesiumIon;
         terrainTileset.ionAssetID = CesiumWorldTerrainAssetId;
         terrainTileset.maximumScreenSpaceError = 4.0f;
@@ -129,7 +137,7 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
 
         ready = true;
         status = "Cesium World Terrain + Bing Aerial · Danmark";
-        Debug.Log("CAMPAIGN-V013N|Cesium=True|TerrainAsset=1|ImageryAsset=2|LabelsInImagery=False|OldMapStack=False|MapOnly=True|SimulationChanged=False|TokenSource=" + tokenSource);
+        Debug.Log("CAMPAIGN-V013N2|Cesium=True|TerrainAsset=1|ImageryAsset=2|LabelsInImagery=False|PhysicsMeshes=False|OldMapStack=False|MapOnly=True|SimulationChanged=False|TokenSource=" + tokenSource);
     }
 
     private void ConfigureCamera(Transform cesiumRoot)
@@ -254,7 +262,7 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log("CAMPAIGN-V013N|TokenRead=False|" + ex.Message);
+            Debug.Log("CAMPAIGN-V013N2|TokenRead=False|" + ex.Message);
         }
 
         // Empty is intentional: Cesium may use the project/default ion token configured by the editor login.
@@ -389,7 +397,7 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
         EnsureStyles();
 
         GUI.Box(new Rect(12f, 112f, 455f, 27f),
-            "13n · " + status + " · " + tokenSource,
+            "13n2 · " + status + " · " + tokenSource,
             statusStyle);
 
         GUI.Label(new Rect(16f, 140f, 620f, 21f),
