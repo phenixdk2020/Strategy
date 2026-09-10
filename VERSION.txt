@@ -1,22 +1,21 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09m10
+Prototype version: v00.00.09m11
 Build status: TEST
-Build name: FULL 09M8/09M9 DROP ON STRATEGY-KAMP TEST 09M10
-Visible build marker: PROJECT 1864 | v00.00.09m10 TEST
+Build name: COMPILE FIX CONE GHOST BRIDGE TEST 09M11
+Visible build marker: PROJECT 1864 | v00.00.09m11 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4/09l5/09m supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09m10 - Remaining selection / cone / CommandQa scripts on strategy-kamp
-- Feedback 09M7: frontage cone, bridge-only river, regiment ghost.
-- Company click/drag selection. HUD no longer eats the field.
-- CommandQa without FindObjectsSortMode. Flags stay on.
-- 09L5 no longer blocks the bottom of the screen.
+v00.00.09m11 - Compile-safe 09M3 + CommandQa
+- 09M3 no longer calls EnsureRiverSafeRoute / TryGetFinalDestination.
+- Ghost box + bridge path while RMB is held.
+- Cone from selected company frontage.
+- CommandQa uses Resources.FindObjectsOfTypeAll (no FindObjectsSortMode).
 
-Primary 09m10 QA
-1. Marker: PROJECT 1864 | v00.00.09m10 TEST.
-2. Click and box-select Danish companies.
-3. Two flags behind each regiment.
-4. RMB across the stream uses the bridge + ghost path.
-5. Cone on the soldier line. AI ON / MELLEM = volleys.
+Primary 09m11 QA
+1. Marker: PROJECT 1864 | v00.00.09m11 TEST.
+2. Project compiles without CS1061 / CS0165.
+3. Select companies, hold RMB: ghost rectangle + path via the wooden bridge.
+4. Cone sits on the soldier line.
