@@ -6,6 +6,7 @@ public sealed class BattleManager : MonoBehaviour
 {
     public static BattleManager Instance { get; private set; }
     public IReadOnlyList<Regiment> Regiments => regiments;
+    public AiDifficulty Difficulty { get; private set; } = AiDifficulty.Normal;
 
     private readonly List<Regiment> regiments = new List<Regiment>();
     private float battleMinutes = 10f * 60f + 20f;
@@ -16,6 +17,7 @@ public sealed class BattleManager : MonoBehaviour
     private GUIStyle hitStyle;
     private GUIStyle topStyle;
     private GUIStyle helpStyle;
+    private PlayerCommander commander;
 
     private void Awake()
     {
@@ -27,6 +29,11 @@ public sealed class BattleManager : MonoBehaviour
         }
 
         Instance = this;
+    }
+
+    private void Start()
+    {
+        commander = FindAnyObjectByType<PlayerCommander>();
     }
 
     private void OnDestroy()
@@ -43,7 +50,6 @@ public sealed class BattleManager : MonoBehaviour
             return;
         }
 
-        // A concluded battle is a terminal paused state. Only restart is accepted.
         if (!string.IsNullOrEmpty(resultMessage))
         {
             if (!paused)
@@ -59,6 +65,8 @@ public sealed class BattleManager : MonoBehaviour
             SetSpeed(2);
         if (Input.GetKeyDown(KeyCode.Alpha3))
             SetSpeed(3);
+        if (Input.GetKeyDown(KeyCode.I))
+            CycleDifficulty();
 
         if (!paused)
             battleMinutes += Time.deltaTime * 2.2f;
@@ -75,6 +83,22 @@ public sealed class BattleManager : MonoBehaviour
     public void NotifyRout(Regiment regiment)
     {
         // Hook for future chronicle, prisoners, wounded and command reports.
+    }
+
+    public void CycleDifficulty()
+    {
+        switch (Difficulty)
+        {
+            case AiDifficulty.Easy:
+                Difficulty = AiDifficulty.Normal;
+                break;
+            case AiDifficulty.Normal:
+                Difficulty = AiDifficulty.Hard;
+                break;
+            default:
+                Difficulty = AiDifficulty.Easy;
+                break;
+        }
     }
 
     private void EvaluateBattleResult()
@@ -164,7 +188,8 @@ public sealed class BattleManager : MonoBehaviour
         int minutes = Mathf.FloorToInt(battleMinutes) % 60;
         string clock = $"1 February 1864  {hours:00}:{minutes:00}";
         string state = paused ? "PAUSE" : speed + "x";
-        GUI.Box(new Rect(10, 10, Screen.width - 20, 34), $"PROJECT 1864 - P0A Battle Prototype v00.00.08     {clock}     [{state}]", topStyle);
+        GUI.Box(new Rect(10, 10, Screen.width - 20, 34),
+            $"PROJECT 1864 - P0A Battle Prototype v00.00.09     {clock}     [{state}]     AI {Difficulty.ToString().ToUpperInvariant()}", topStyle);
 
         GUI.Box(new Rect(10, 52, 285, 84),
             "DANMARK\nHold højderyggen og gården\nSlå de to preussiske regimenter tilbage", helpStyle);
@@ -185,10 +210,11 @@ public sealed class BattleManager : MonoBehaviour
             float y = Screen.height - screen.y - 31f;
             string team = regiment.Team == BattleTeam.Denmark ? "DK" : "PR";
             string routed = regiment.IsRouted ? "  ROUTED" : string.Empty;
+            string aiMark = regiment.UsesOfficerAi ? "AI ON" : "AI OFF";
             string label =
                 $"{regiment.RegimentName} ({team})  {regiment.CurrentStrength}\n" +
                 $"{regiment.WeaponShortName} | Exp {regiment.Experience:0} | Reload {regiment.CurrentReloadSeconds:0.0}s\n" +
-                $"Morale {regiment.Morale:0}  Coh {regiment.Cohesion:0}{routed}";
+                $"{aiMark} | {regiment.Officer.DisplayName}{routed}";
 
             GUI.Box(new Rect(x, y, 200f, 62f), label, unitStyle);
 
@@ -196,13 +222,35 @@ public sealed class BattleManager : MonoBehaviour
                 GUI.Box(new Rect(screen.x - 62f, y - 30f, 124f, 26f), $"Ramte {regiment.LastVolleyHits}", hitStyle);
         }
 
-        GUI.Box(new Rect(10, Screen.height - 116, 390, 106),
-            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\nF = line | C = column | H = hold | T = range\nWASD = kamera | Q/E = roter | hjul = zoom | Space = pause | 1/2/3 = speed | R = restart", helpStyle);
+        DrawSelectedCommandPanel();
+
+        GUI.Box(new Rect(10, Screen.height - 116, 430, 106),
+            "STYRING\nKlik = vælg | Shift+klik = flere | Højreklik = flyt/angrib\nF = line | C = column | H = hold | T = range | A = AI UNIT\nI = AI difficulty | WASD = kamera | Space = pause | 1/2/3 = speed | R = restart", helpStyle);
 
         if (!string.IsNullOrEmpty(resultMessage))
         {
             Rect resultRect = new Rect(Screen.width * 0.5f - 270f, Screen.height * 0.5f - 45f, 540f, 90f);
             GUI.Box(resultRect, resultMessage + "\nTryk R for at spille igen", topStyle);
         }
+    }
+
+    private void DrawSelectedCommandPanel()
+    {
+        if (commander == null)
+            commander = FindAnyObjectByType<PlayerCommander>();
+        if (commander == null || commander.Selected.Count == 0)
+            return;
+
+        Regiment r = commander.Selected[0];
+        if (r == null)
+            return;
+
+        string ai = r.AiUnitOn || r.IsAI ? "ON" : "OFF";
+        string text =
+            $"AI UNIT [{ai}] | {r.Officer.DisplayName}\n" +
+            $"Tac {r.Officer.TacticalSkill:0}  Init {r.Officer.Initiative:0}  Agg {r.Officer.Aggressiveness:0}\n" +
+            $"Mission {r.Mission} | {r.CurrentTask}\n" +
+            $"Reason: {r.CurrentReason}";
+        GUI.Box(new Rect(Screen.width - 430, Screen.height - 116, 420, 106), text, helpStyle);
     }
 }
