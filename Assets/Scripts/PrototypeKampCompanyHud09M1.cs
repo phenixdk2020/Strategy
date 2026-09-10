@@ -111,8 +111,12 @@ public sealed class PrototypeKampCompanyHud09M1 : MonoBehaviour
 
         if (parent != null)
         {
+            string authority = PrototypeKampCommandAuthority09M2.Instance != null
+                ? PrototypeKampCommandAuthority09M2.Instance.GetLevelLabel(parent)
+                : "MANUEL";
             body +=
-                "Morale " + parent.Morale.ToString("0") +
+                "Kommando " + authority +
+                "    Morale " + parent.Morale.ToString("0") +
                 "    Kohaesion " + parent.Cohesion.ToString("0") +
                 "    " + parent.WeaponShortName + "\n";
         }
@@ -128,7 +132,7 @@ public sealed class PrototypeKampCompanyHud09M1 : MonoBehaviour
         GUI.Label(new Rect(card.x + 8f, card.y + 4f, card.width - 16f, 16f), "KOMPAGNI", titleStyle);
         GUI.Label(
             new Rect(12f, Screen.height - 26f, 520f, 18f),
-            "RMB flyt  |  F linie  |  C kolonne  |  H hold  |  lang march = kolonne til kontakt/destination",
+            "RMB flyt (manuel)  |  MAN / REG-AI / BRG  |  F linie  |  C kolonne  |  F11 brigade",
             hintStyle);
     }
 
