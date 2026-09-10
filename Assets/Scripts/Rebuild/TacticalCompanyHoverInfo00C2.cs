@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Project1864.Rebuild
 {
-    // v00.01.00c2 - Mouse-over Company information.
+    // v00.01.00c3 - Mouse-over Company information retained from c2.
     // UI/presentation only. No selection, movement, combat or OOB writes.
     [DefaultExecutionOrder(700)]
     public sealed class TacticalCompanyHoverInfo00C2 : MonoBehaviour
@@ -22,18 +22,28 @@ namespace Project1864.Rebuild
             if (UnityEngine.Object.FindAnyObjectByType<TacticalCompanyHoverInfo00C2>() != null)
                 return;
 
-            GameObject root = new GameObject("REBUILD_00C2_HOVER_INFO");
+            GameObject root = new GameObject("REBUILD_00C3_HOVER_INFO");
             root.AddComponent<TacticalCompanyHoverInfo00C2>();
         }
 
         private void Start()
         {
             cam = Camera.main;
-            Debug.Log("REBUILD-HOVER-00C2|Installed=True|Mode=MouseOver|WritesSelection=False|WritesMovement=False|WritesCombat=False");
+            Debug.Log(
+                "REBUILD-HOVER-00C3|Installed=True|Mode=MouseOver|Toggle=H|" +
+                "WritesSelection=False|WritesMovement=False|WritesCombat=False");
         }
 
         private void Update()
         {
+            if (!TacticalCompanyDrill00C3.HoverInfoEnabled)
+            {
+                hovered = null;
+                hoveredBattalion = null;
+                hoveredRegiment = null;
+                return;
+            }
+
             if (cam == null)
                 cam = Camera.main;
             if (cam == null)
@@ -84,7 +94,7 @@ namespace Project1864.Rebuild
 
         private void OnGUI()
         {
-            if (hovered == null)
+            if (!TacticalCompanyDrill00C3.HoverInfoEnabled || hovered == null)
                 return;
 
             string nation = hovered.Nation == RebuildNation.Denmark ? "Danmark" : "Preussen";
@@ -102,10 +112,9 @@ namespace Project1864.Rebuild
             GUI.depth = -980;
 
             Color previous = GUI.color;
-            GUI.color = new Color(0.08f, 0.09f, 0.10f, 0.92f);
+            GUI.color = new Color(0.055f, 0.060f, 0.068f, 0.94f);
             GUI.DrawTexture(box, Texture2D.whiteTexture);
             GUI.color = previous;
-
             GUI.Box(box, string.Empty);
 
             GUIStyle title = new GUIStyle(GUI.skin.label)
