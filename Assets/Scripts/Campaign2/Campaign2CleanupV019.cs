@@ -1,20 +1,16 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// v00.00.19-C2 presentation cleanup on campaign2 only.
-/// Hides Nordic nodes that the Denmark-first projection dumps onto Jutland.
+/// v00.00.20-C2: Stockholm-labels are IMGUI from CampaignMapController.
+/// Nodes outside the Denmark theatre get parked off-camera so the label cannot sit on Aarhus.
 /// </summary>
 [DefaultExecutionOrder(32000)]
 public sealed class Campaign2CleanupV019 : MonoBehaviour
 {
-    static readonly string[] HideIds =
-    {
-        "STOCKHOLM", "ABO", "HELSINGFORS", "CHRISTIANIA", "TAMMERFORS",
-        "VASA", "BJORNEBORG", "TAVASTEHUS", "DRAMMEN", "FREDRIKSHALD",
-        "GOTEBORG", "JONKOPING"
-    };
+    static readonly Vector2 Parked = new Vector2(-800f, -800f);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void AutoCreate()
@@ -26,33 +22,28 @@ public sealed class Campaign2CleanupV019 : MonoBehaviour
         new GameObject("Campaign2CleanupV019").AddComponent<Campaign2CleanupV019>();
     }
 
-    void LateUpdate()
+    void Start()
     {
-        HideNamed("CampaignVersionHud_v0003");
-        HideNamed("CampaignBuildVersionOverlay_v0018c2");
-        HideNamed("CampaignBuildVersionOverlay_v0013m");
-
-        GameObject[] all = FindObjectsByType<GameObject>(FindObjectsInactive.Exclude);
-        for (int i = 0; i < all.Length; i++)
-        {
-            GameObject go = all[i];
-            if (go == null || string.IsNullOrEmpty(go.name))
-                continue;
-            for (int k = 0; k < HideIds.Length; k++)
-            {
-                if (go.name.IndexOf(HideIds[k], StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    go.SetActive(false);
-                    break;
-                }
-            }
-        }
+        ParkForeignNodes();
     }
 
-    static void HideNamed(string name)
+    void LateUpdate()
     {
-        GameObject go = GameObject.Find(name);
-        if (go != null)
-            go.SetActive(false);
+        ParkForeignNodes();
+    }
+
+    static void ParkForeignNodes()
+    {
+        if (CampaignSession.Nodes == null)
+            return;
+        foreach (KeyValuePair<string, CampaignNodeState> pair in CampaignSession.Nodes)
+        {
+            CampaignNodeState node = pair.Value;
+            if (node == null)
+                continue;
+            if (Campaign2Config.InTheatre(node.Latitude, node.Longitude))
+                continue;
+            node.MapPosition = Parked;
+        }
     }
 }

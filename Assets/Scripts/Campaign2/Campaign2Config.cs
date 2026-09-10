@@ -1,18 +1,13 @@
 using UnityEngine;
 
-/// <summary>
-/// Presentation-only constants for the campaign2 Denmark 3D diorama.
-/// Geographic identity remains latitude/longitude. Unity Y is never used for ETA.
-/// </summary>
 public static class Campaign2Config
 {
-    public const string BuildTag = "v00.00.19-C2";
+    public const string BuildTag = "v00.00.20-C2";
     public const string BuildName = "CAMPAIGN2 3D DENMARK DIORAMA";
     public const string RootName = "C2_DENMARK_DIORAMA";
     public const string LandObjectName = "C2_Land";
     public const string WaterObjectName = "C2_Water";
 
-    // 1864 theatre: Denmark + Schleswig-Holstein + Bornholm.
     public const double MinLatitude = 53.38;
     public const double MaxLatitude = 57.90;
     public const double MinLongitude = 8.05;
@@ -23,7 +18,6 @@ public static class Campaign2Config
 
     public const float WaterY = 0.00f;
     public const float BeachLift = 0.12f;
-
     public const float MetresToVisualY = 0.018f;
 
     public const float CameraMinHeight = 5.5f;
@@ -39,4 +33,10 @@ public static class Campaign2Config
     public static readonly Color SkyColor = new Color(0.42f, 0.48f, 0.50f, 1f);
     public static readonly Color FogColor = new Color(0.50f, 0.58f, 0.58f, 1f);
     public static readonly Color SunColor = new Color(1.00f, 0.93f, 0.80f, 1f);
+
+    public static bool InTheatre(double latitude, double longitude)
+    {
+        return latitude >= 53.35 && latitude <= 57.95 &&
+               longitude >= 8.00 && longitude <= 15.25;
+    }
 }

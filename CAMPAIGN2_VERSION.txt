@@ -1,11 +1,3 @@
-PROJECT 1864 - Campaign2
-Track: campaign2
-Folder: Strategy-Campaign2
-Version: v00.00.19-C2
-
-Changes:
-- One HUD at y=72 (under Unity toolbar)
-- Extra version overlays disabled
-- Stockholm/Abo/Christiania markers hidden on this track
-- Fake inland peaks lowered (no volcano Jutland)
-- Darker water / atlas-leaning palette
+v00.00.20-C2
+Stockholm/Abo labels parked off the Denmark theatre.
+Pull Strategy-Campaign2 and Play.
