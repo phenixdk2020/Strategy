@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace Project1864.Rebuild
 {
-    // Gate B entity. This object owns only Company identity, world pose, footprint and selection state.
-    // Movement and combat are intentionally NOT implemented in v00.01.00b.
+    // Gate B entity retained as the clean tactical Company state/selection anchor.
+    // v00.01.00c2 removes permanent world labels; hover UI now owns readable identity presentation.
     public sealed class TacticalCompanyEntity00B : MonoBehaviour
     {
         public string UnitId { get; private set; }
@@ -22,7 +22,6 @@ namespace Project1864.Rebuild
         private LineRenderer outline;
         private Material normalMaterial;
         private Material selectedMaterial;
-        private TextMesh label;
 
         public void Initialize(RebuildUnitRecord record, Vector3 worldPosition, Quaternion worldRotation)
         {
@@ -43,7 +42,6 @@ namespace Project1864.Rebuild
             transform.rotation = worldRotation;
 
             BuildFootprint();
-            BuildLabel();
             SetSelected(false);
 
             Debug.Log(
@@ -51,7 +49,7 @@ namespace Project1864.Rebuild
                 "|Parent=" + ParentUnitId +
                 "|Nation=" + Nation +
                 "|Strength=" + PresentStrength +
-                "|TransformParentIsOOBParent=False");
+                "|TransformParentIsOOBParent=False|WorldLabel=False");
         }
 
         public void SetSelected(bool selected)
@@ -71,8 +69,8 @@ namespace Project1864.Rebuild
 
         private void BuildFootprint()
         {
-            // Gate B uses a compact QA footprint instead of soldier instances.
-            // Gate C will replace this visual with the 1:1 renderer while retaining this entity.
+            // The hidden QA footprint remains the single Company hit/selection footprint.
+            // Rendering is handled separately by TacticalCompanyRenderer00C.
             const int ranks = 3;
             const float fileSpacing = 0.52f;
             int files = Mathf.Max(1, Mathf.CeilToInt(PresentStrength / (float)ranks));
@@ -99,8 +97,8 @@ namespace Project1864.Rebuild
             footprintRenderer.sharedMaterial = normalMaterial;
 
             BoxCollider hitBox = gameObject.AddComponent<BoxCollider>();
-            hitBox.center = new Vector3(0f, 0.55f, 0f);
-            hitBox.size = new Vector3(FootprintWidth, 1.1f, FootprintDepth + 1.5f);
+            hitBox.center = new Vector3(0f, 0.75f, 0f);
+            hitBox.size = new Vector3(FootprintWidth, 1.5f, FootprintDepth + 1.5f);
 
             outline = gameObject.AddComponent<LineRenderer>();
             outline.useWorldSpace = false;
@@ -109,7 +107,7 @@ namespace Project1864.Rebuild
             outline.material = CreateMaterial(new Color(1f, 0.82f, 0.18f), "00B_SelectionOutline_" + UnitId);
             outline.startWidth = 0.22f;
             outline.endWidth = 0.22f;
-            outline.positionCount = 4;
+
             float halfW = FootprintWidth * 0.5f + 0.7f;
             float halfD = FootprintDepth * 0.5f + 0.7f;
             outline.SetPosition(0, new Vector3(-halfW, 0.18f, -halfD));
@@ -118,25 +116,11 @@ namespace Project1864.Rebuild
             outline.SetPosition(3, new Vector3(halfW, 0.18f, -halfD));
         }
 
-        private void BuildLabel()
-        {
-            GameObject labelObject = new GameObject("Label_" + UnitId);
-            labelObject.transform.SetParent(transform, false);
-            labelObject.transform.localPosition = new Vector3(0f, 2.1f, 0f);
-            labelObject.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-
-            label = labelObject.AddComponent<TextMesh>();
-            label.text = DisplayName + "  [" + UnitId + "]\n" + PresentStrength + " men";
-            label.anchor = TextAnchor.MiddleCenter;
-            label.alignment = TextAlignment.Center;
-            label.fontSize = 40;
-            label.characterSize = 0.11f;
-            label.color = Color.white;
-        }
-
         private static Material CreateMaterial(Color color, string materialName)
         {
             Shader shader = Shader.Find("Standard");
+            if (shader == null)
+                shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null)
                 shader = Shader.Find("Sprites/Default");
 
