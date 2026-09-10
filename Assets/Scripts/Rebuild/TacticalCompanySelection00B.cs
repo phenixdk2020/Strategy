@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace Project1864.Rebuild
 {
-    // Gate B selection owner. No legacy PlayerCommander participates in the rebuild runtime.
+    // Gate B selection owner retained unchanged functionally in v00.01.00c2.
+    // Visual status text is minimized so Gate C2 renderer/hover UI owns presentation.
     public sealed class TacticalCompanySelection00B : MonoBehaviour
     {
         public static TacticalCompanySelection00B Instance { get; private set; }
@@ -40,7 +41,7 @@ namespace Project1864.Rebuild
             RefreshCompanies();
             Debug.Log(
                 "REBUILD-SELECT-00B|Installed=True|Owner=Single|" +
-                "LMB=Select|Shift=Add|Ctrl=Toggle|Drag=Box|Movement=False");
+                "LMB=Select|Shift=Add|Ctrl=Toggle|Drag=Box|Movement=False|BehaviourChangedIn00C2=False");
         }
 
         private void OnDestroy()
@@ -90,7 +91,7 @@ namespace Project1864.Rebuild
 
             if (Input.GetMouseButtonDown(1) && selected.Count > 0)
             {
-                transientMessage = "Movement er bevidst ikke aktivt i Gate B. Næste movement gate får én Company steering-owner.";
+                transientMessage = "Movement er bevidst ikke aktivt endnu. Gate D får én Company steering-owner.";
                 transientUntil = Time.unscaledTime + 3.5f;
                 Debug.Log(
                     "REBUILD-ORDER-00B|Ignored=True|Reason=MovementDeferredToGateD|Selected=" + selected.Count);
@@ -232,17 +233,9 @@ namespace Project1864.Rebuild
             if (leftTracking && leftDragging)
                 DrawSelectionBox(leftStart, leftCurrent);
 
-            GUI.depth = -900;
-            GUI.Box(new Rect(12f, 42f, 520f, 68f), "");
-            GUI.Label(new Rect(22f, 49f, 500f, 22f),
-                "GATE A+B | 8 independent Companies | Stable UnitID | No Regiment runtime owner");
-            GUI.Label(new Rect(22f, 70f, 500f, 20f),
-                "LMB select | Shift add | Ctrl toggle | LMB drag box | Esc clear");
-            GUI.Label(new Rect(22f, 89f, 500f, 18f),
-                "Selected: " + selected.Count + " | Movement/combat intentionally OFF in 00.01.00b");
-
             if (!string.IsNullOrEmpty(transientMessage) && Time.unscaledTime < transientUntil)
             {
+                GUI.depth = -970;
                 GUI.Box(new Rect(12f, 118f, 620f, 30f), transientMessage);
             }
         }
