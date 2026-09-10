@@ -1,0 +1,1 @@
+Use channel-rebuild for the clean tactical rebuild QA. Do not force-reset channel-test.
