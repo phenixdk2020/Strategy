@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 namespace Project1864.Rebuild
 {
@@ -22,7 +21,6 @@ namespace Project1864.Rebuild
             public TacticalCompanyEntity00B Company;
             public Vector3[] SoldierSlots;
             public Renderer QaFootprintRenderer;
-
             public Matrix4x4[] LeftLeg;
             public Matrix4x4[] RightLeg;
             public Matrix4x4[] Torso;
@@ -85,7 +83,6 @@ namespace Project1864.Rebuild
 
             if (mainCamera == null)
                 mainCamera = Camera.main;
-
             if (mainCamera == null)
                 return;
 
@@ -103,24 +100,21 @@ namespace Project1864.Rebuild
 
             CreatePrimitiveMeshes();
             CreateMaterials();
-
             states.Clear();
-            int total = 0;
 
+            int total = 0;
             for (int i = 0; i < companies.Length; i++)
             {
                 TacticalCompanyEntity00B company = companies[i];
                 if (company == null)
                     continue;
 
-                CompanyRenderState state = BuildState(company);
-                states.Add(state);
+                states.Add(BuildState(company));
                 total += company.PresentStrength;
             }
 
             mainCamera = Camera.main;
             installed = states.Count == 8;
-
             if (!installed)
                 return;
 
@@ -128,7 +122,7 @@ namespace Project1864.Rebuild
                 "REBUILD-RENDER-00C|Installed=True|Owner=PresentationOnly|Companies=" + states.Count +
                 "|VisibleManpower=" + total +
                 "|VisualRatio=1:1|PerSoldierGameObject=False|MovementWrites=False|CombatWrites=False|" +
-                "LOD=Full260_Medium520_Far850");
+                "LOD=Full260_Medium520_Far850|PerFrameBatchAllocation=False");
         }
 
         private CompanyRenderState BuildState(TacticalCompanyEntity00B company)
@@ -168,12 +162,8 @@ namespace Project1864.Rebuild
             {
                 int rank = i % LineRanks;
                 int file = i / LineRanks;
-
                 float x = -width * 0.5f + file * FileSpacing;
                 float z = -rank * RankSpacing;
-
-                // Tiny deterministic positional variance prevents a perfectly synthetic grid
-                // without changing Company frontage or tactical footprint.
                 float jitterX = HashSigned(i * 17 + 3) * 0.035f;
                 float jitterZ = HashSigned(i * 31 + 11) * 0.025f;
                 slots[i] = new Vector3(x + jitterX, 0f, z + jitterZ);
@@ -320,32 +310,11 @@ namespace Project1864.Rebuild
             if (mesh == null || material == null || matrices == null || count <= 0)
                 return;
 
-            int start = 0;
-            Matrix4x4[] batch = new Matrix4x4[1023];
-
-            while (start < count)
-            {
-                int batchCount = Mathf.Min(1023, count - start);
-                for (int i = 0; i < batchCount; i++)
-                    batch[i] = matrices[start + i];
-
-                Graphics.DrawMeshInstanced(
-                    mesh,
-                    0,
-                    material,
-                    batch,
-                    batchCount,
-                    null,
-                    ShadowCastingMode.On,
-                    true,
-                    0,
-                    mainCamera,
-                    LightProbeUsage.Off,
-                    null);
-
-                drawCalls++;
-                start += batchCount;
-            }
+            // A Company is intentionally below Unity's 1023-instance DrawMeshInstanced limit,
+            // so the Company's persistent matrix array can be rendered directly with zero
+            // per-frame batch-array allocations.
+            Graphics.DrawMeshInstanced(mesh, 0, material, matrices, count);
+            drawCalls++;
         }
 
         private static Matrix4x4 PartMatrix(
@@ -354,9 +323,10 @@ namespace Project1864.Rebuild
             Quaternion localRotation,
             Vector3 scale)
         {
-            Vector3 worldPosition = companyTransform.TransformPoint(localPosition);
-            Quaternion worldRotation = companyTransform.rotation * localRotation;
-            return Matrix4x4.TRS(worldPosition, worldRotation, scale);
+            return Matrix4x4.TRS(
+                companyTransform.TransformPoint(localPosition),
+                companyTransform.rotation * localRotation,
+                scale);
         }
 
         private static float HashSigned(int value)
@@ -370,22 +340,19 @@ namespace Project1864.Rebuild
 
         private void CreatePrimitiveMeshes()
         {
-            cubeMesh = CapturePrimitiveMesh(PrimitiveType.Cube, "REBUILD_00C_MeshCube");
-            sphereMesh = CapturePrimitiveMesh(PrimitiveType.Sphere, "REBUILD_00C_MeshSphere");
-            cylinderMesh = CapturePrimitiveMesh(PrimitiveType.Cylinder, "REBUILD_00C_MeshCylinder");
+            cubeMesh = CapturePrimitiveMesh(PrimitiveType.Cube);
+            sphereMesh = CapturePrimitiveMesh(PrimitiveType.Sphere);
+            cylinderMesh = CapturePrimitiveMesh(PrimitiveType.Cylinder);
         }
 
-        private static Mesh CapturePrimitiveMesh(PrimitiveType type, string meshName)
+        private static Mesh CapturePrimitiveMesh(PrimitiveType type)
         {
             GameObject temporary = GameObject.CreatePrimitive(type);
-            temporary.name = "TEMP_" + meshName;
+            temporary.name = "TEMP_REBUILD_00C_MESH_SOURCE";
             temporary.SetActive(false);
 
             MeshFilter filter = temporary.GetComponent<MeshFilter>();
             Mesh mesh = filter != null ? filter.sharedMesh : null;
-            if (mesh != null)
-                mesh.name = meshName;
-
             UnityEngine.Object.Destroy(temporary);
             return mesh;
         }
@@ -429,7 +396,17 @@ namespace Project1864.Rebuild
             float fps = smoothedDelta > 0f ? 1f / smoothedDelta : 0f;
             float ms = smoothedDelta > 0f ? smoothedDelta * 1000f : 0f;
 
-            GUI.depth = -880;
+            // Gate C status intentionally covers the Gate B text box without changing
+            // the single Gate B selection owner itself.
+            GUI.depth = -950;
+            GUI.Box(new Rect(12f, 42f, 520f, 68f), string.Empty);
+            GUI.Label(new Rect(22f, 49f, 500f, 22f),
+                "GATE A+B+C | 8 independent Companies | 1:1 renderer | Stable UnitID");
+            GUI.Label(new Rect(22f, 70f, 500f, 20f),
+                "LMB select | Shift add | Ctrl toggle | LMB drag box | Esc clear");
+            GUI.Label(new Rect(22f, 89f, 500f, 18f),
+                "Movement/combat intentionally OFF in v00.01.00c");
+
             Rect box = new Rect(Mathf.Max(8f, Screen.width - 405f), 8f, 395f, 76f);
             GUI.Box(box, string.Empty);
             GUI.Label(new Rect(box.x + 10f, box.y + 7f, box.width - 20f, 20f),
@@ -438,7 +415,7 @@ namespace Project1864.Rebuild
                 "FPS " + fps.ToString("0") + " | " + ms.ToString("0.0") + " ms | Draw calls " + drawCalls);
             GUI.Label(new Rect(box.x + 10f, box.y + 49f, box.width - 20f, 20f),
                 "LOD companies F/M/F: " + fullDetailCompanies + "/" + mediumDetailCompanies + "/" + farDetailCompanies +
-                " | Movement/Combat OFF");
+                " | Move/Combat OFF");
         }
     }
 }
