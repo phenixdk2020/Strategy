@@ -45,7 +45,7 @@ public struct OfficerDecision
 
 /// <summary>
 /// Shared officer decision core for player-delegated and enemy regiments.
-/// Difficulty only changes delay, noise and coordination — never combat stats.
+/// Difficulty only changes delay, noise and coordination - never combat stats.
 /// </summary>
 public static class OfficerDecisionCore
 {
@@ -71,7 +71,7 @@ public static class OfficerDecisionCore
     {
         if (team == BattleTeam.Denmark)
             return OfficerMission.Hold;
-        return hasAdvanceWaypoint ? OfficerMission.AdvanceAttack : OfficerMission.AdvanceAttack;
+        return OfficerMission.AdvanceAttack;
     }
 
     public static float NextThinkDelay(OfficerProfile officer, AiDifficulty difficulty)
@@ -164,7 +164,7 @@ public static class OfficerDecisionCore
                 return new OfficerDecision
                 {
                     Task = "Local counter-move",
-                    ReasonCode = "Threat to front — engaging",
+                    ReasonCode = "Threat to front - engaging",
                     Target = threat,
                     MoveTo = threat.transform.position,
                     HoldPosition = false,
@@ -177,8 +177,8 @@ public static class OfficerDecisionCore
             {
                 Task = "Hold fire line",
                 ReasonCode = officer.Caution >= 55f
-                    ? "Officer cautious — holding fire line"
-                    : "Threat to front — engaging",
+                    ? "Officer cautious - holding fire line"
+                    : "Threat to front - engaging",
                 Target = threat,
                 MoveTo = null,
                 HoldPosition = true,
@@ -271,7 +271,7 @@ public static class OfficerDecisionCore
         return new OfficerDecision
         {
             Task = "Engage target",
-            ReasonCode = "Threat to front — engaging",
+            ReasonCode = "Threat to front - engaging",
             Target = threat,
             MoveTo = null,
             HoldPosition = true,
@@ -309,12 +309,8 @@ public static class OfficerDecisionCore
             float distance = Vector3.Distance(self.transform.position, candidate.transform.position);
             float score = 220f - distance;
 
-            if (difficulty == AiDifficulty.Hard)
-            {
-                Regiment neighborThreat = NeighborUnderPressure(self, candidate);
-                if (neighborThreat)
-                    score += 18f;
-            }
+            if (difficulty == AiDifficulty.Hard && NeighborUnderPressure(self, candidate))
+                score += 18f;
 
             if (difficulty == AiDifficulty.Easy && officer.TacticalSkill < 50f && Random.value < 0.28f)
                 score -= Random.Range(10f, 40f);
