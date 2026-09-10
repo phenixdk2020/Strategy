@@ -17,19 +17,21 @@ v00.00.13k state: DEV LIVE CARTOGRAPHIC 3D DRAPE / VIEWPORT TILES / MAP-ONLY
 v00.00.13k1 state: DEV PROVIDER CONFIG COMPILE HOTFIX / LIVE CARTOGRAPHIC 3D DRAPE / MAP-ONLY
 v00.00.13l state: DEV PREMIUM CARTOGRAPHIC VISUAL / CLOSE DETAIL / MAP-ONLY
 v00.00.13m state: DEV UNIFIED DENMARK 3D MAP / SINGLE VISIBLE MAP STACK / MAP-ONLY
-Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m
+v00.00.13m1 state: DEV STARTUP VISUAL ISOLATION / NO LEGACY MAP FLASH / MAP-ONLY
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m -> v00.00.13m1
 v00.00.11 work package: B-280-B-369
 v00.00.11 final gate: B-369
 v00.00.13m branch: work/v00.00.13m-unified-denmark-3d-map
-v00.00.13m architecture rule: v13m is the sole visible Denmark map owner after initialization. v13j/v13k/v13l components/renderers/status overlays are disabled; only the v13j MeshCollider remains as the elevation reference.
-v00.00.13m full-map rule: a single continuous 520x340 mesh covers the complete validated Denmark campaign envelope with terrain relief on land and flat sea level on water.
-v00.00.13m atlas rule: z8 provider tiles for the full envelope are stitched into one overview atlas using Web-Mercator-correct UVs. The atlas remains visible at every zoom, eliminating exposed old green terrain and disconnected rectangular live-map islands.
-v00.00.13m detail rule: z10/z11/z12/z13 5x5 viewport detail overlays are allowed at progressively closer camera heights. They sit above the permanent overview atlas and therefore cannot create holes during loading/panning.
-v00.00.13m cache rule: unified tiles reuse eligible interactive/premium caches and write to Application.persistentDataPath/PROJECT1864/MapCache/unified with a 14-day age rule.
-v00.00.13m camera rule: minimum height 0.12, terrain clearance 0.08, near clip 0.003, FOV 45.
-v00.00.13m landmark rule: Aalborg Kaserne and Aarhus Gård are compact close-zoom landmarks, independently terrain-anchored by nearest valid v13j land collider hit.
-v00.00.13m cleanup rule: old GIS road/ferry lines, old city blocks and previous v13k/v13l landmarks remain visually suppressed.
-v00.00.13m provider rule: OpenStreetMap Standard remains a temporary present-day development basemap with attribution; it is not authoritative 1864 infrastructure or settlement history.
+v00.00.13m architecture rule: v13m is the sole visible Denmark map owner after initialization; old presentation stacks are implementation dependencies only.
+v00.00.13m1 startup rule: all pre-v13m renderers are hidden continuously from startup while their required data/colliders may still initialize internally.
+v00.00.13m1 reveal rule: the V013M unified base surface stays hidden until the stitched overview texture is assigned; the user sees a loading panel instead of a legacy terrain map followed by a second map.
+v00.00.13m1 v13j dependency rule: v13j may build only long enough to provide V013J_SmoothTerrain MeshCollider; its renderer is hidden and its MonoBehaviour is disabled immediately after collider availability.
+v00.00.13m1 old-UI rule: v13k/v13l map owners and v13j historical label owner are disabled immediately.
+v00.00.13m1 cleanup rule: V013A-L, GIS_, Outline_, StrategicLink_, CampaignNode_, CampaignControl_ and Settlement3D_ renderers are suppressed unless they are owned by v13m.
+v00.00.13m1 overlay rule: campaign build/version label moves to y=88, below the top time controls.
+v00.00.13m atlas rule: z8 provider tiles for the full envelope are stitched into one permanent overview atlas using Web-Mercator-correct UVs.
+v00.00.13m detail rule: z10/z11/z12/z13 5x5 viewport detail overlays are allowed above the permanent atlas.
+v00.00.13m landmark rule: Aalborg Kaserne and Aarhus Gård are compact terrain-anchored close-zoom landmarks.
 v00.00.13h1 MAP-ONLY rule remains active: strategic formation movement/contact/battle remains disabled until map presentation passes QA.
 3D map rule: Unity world distance is presentation only; authoritative strategic distance comes from geographic coordinates plus explicit route geometry.
 Projection rule: CampaignGeoProjection broad-map/geodesic APIs remain authoritative for campaign content.
