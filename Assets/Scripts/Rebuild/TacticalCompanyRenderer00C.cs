@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace Project1864.Rebuild
 {
-    // v00.01.00c / Gate C
-    // 1:1 presentation layer driven exclusively from TacticalCompanyEntity00B state.
-    // This renderer never writes Company position, facing, selection, movement, combat or OOB state.
+    // v00.01.00c2 - Soldier Visual Upgrade.
+    // Presentation-only 1:1 renderer. It never writes tactical position, facing,
+    // selection, movement, combat, casualties or OOB state.
     [DefaultExecutionOrder(500)]
     public sealed class TacticalCompanyRenderer00C : MonoBehaviour
     {
@@ -24,17 +24,23 @@ namespace Project1864.Rebuild
             public Matrix4x4[] LeftLeg;
             public Matrix4x4[] RightLeg;
             public Matrix4x4[] Torso;
+            public Matrix4x4[] CoatSkirt;
             public Matrix4x4[] Head;
             public Matrix4x4[] Headgear;
+            public Matrix4x4[] LeftArm;
+            public Matrix4x4[] RightArm;
+            public Matrix4x4[] CrossBelt;
             public Matrix4x4[] Pack;
-            public Matrix4x4[] Rifle;
+            public Matrix4x4[] RifleStock;
+            public Matrix4x4[] RifleBarrel;
+            public Matrix4x4[] Bayonet;
         }
 
         private const float FileSpacing = 0.52f;
         private const float RankSpacing = 0.76f;
         private const int LineRanks = 3;
-        private const float FullDetailDistance = 260f;
-        private const float MediumDetailDistance = 520f;
+        private const float FullDetailDistance = 250f;
+        private const float MediumDetailDistance = 500f;
         private const float MaximumRenderDistance = 850f;
 
         private readonly List<CompanyRenderState> states = new List<CompanyRenderState>();
@@ -42,6 +48,7 @@ namespace Project1864.Rebuild
         private Mesh cubeMesh;
         private Mesh sphereMesh;
         private Mesh cylinderMesh;
+        private Mesh capsuleMesh;
 
         private Material dkCoat;
         private Material dkTrousers;
@@ -51,7 +58,9 @@ namespace Project1864.Rebuild
         private Material prHeadgear;
         private Material skin;
         private Material leather;
+        private Material strap;
         private Material rifleWood;
+        private Material metal;
 
         private Camera mainCamera;
         private bool installed;
@@ -68,7 +77,7 @@ namespace Project1864.Rebuild
             if (UnityEngine.Object.FindAnyObjectByType<TacticalCompanyRenderer00C>() != null)
                 return;
 
-            GameObject root = new GameObject("REBUILD_00C_1TO1_RENDERER");
+            GameObject root = new GameObject("REBUILD_00C2_SOLDIER_RENDERER");
             root.AddComponent<TacticalCompanyRenderer00C>();
         }
 
@@ -119,10 +128,11 @@ namespace Project1864.Rebuild
                 return;
 
             Debug.Log(
-                "REBUILD-RENDER-00C|Installed=True|Owner=PresentationOnly|Companies=" + states.Count +
+                "REBUILD-RENDER-00C2|Installed=True|Owner=PresentationOnly|Companies=" + states.Count +
                 "|VisibleManpower=" + total +
-                "|VisualRatio=1:1|PerSoldierGameObject=False|MovementWrites=False|CombatWrites=False|" +
-                "LOD=Full260_Medium520_Far850|PerFrameBatchAllocation=False");
+                "|VisualRatio=1:1|HumanProportions=V2|RifleSilhouette=Stock+Barrel+Bayonet|" +
+                "PerSoldierGameObject=False|MovementWrites=False|CombatWrites=False|" +
+                "LOD=Full250_Medium500_Far850|WorldLabels=False");
         }
 
         private CompanyRenderState BuildState(TacticalCompanyEntity00B company)
@@ -135,10 +145,16 @@ namespace Project1864.Rebuild
                 LeftLeg = new Matrix4x4[strength],
                 RightLeg = new Matrix4x4[strength],
                 Torso = new Matrix4x4[strength],
+                CoatSkirt = new Matrix4x4[strength],
                 Head = new Matrix4x4[strength],
                 Headgear = new Matrix4x4[strength],
+                LeftArm = new Matrix4x4[strength],
+                RightArm = new Matrix4x4[strength],
+                CrossBelt = new Matrix4x4[strength],
                 Pack = new Matrix4x4[strength],
-                Rifle = new Matrix4x4[strength]
+                RifleStock = new Matrix4x4[strength],
+                RifleBarrel = new Matrix4x4[strength],
+                Bayonet = new Matrix4x4[strength]
             };
 
             Transform footprint = company.transform.Find("QA_Footprint_" + company.UnitId);
@@ -164,8 +180,8 @@ namespace Project1864.Rebuild
                 int file = i / LineRanks;
                 float x = -width * 0.5f + file * FileSpacing;
                 float z = -rank * RankSpacing;
-                float jitterX = HashSigned(i * 17 + 3) * 0.035f;
-                float jitterZ = HashSigned(i * 31 + 11) * 0.025f;
+                float jitterX = HashSigned(i * 17 + 3) * 0.025f;
+                float jitterZ = HashSigned(i * 31 + 11) * 0.018f;
                 slots[i] = new Vector3(x + jitterX, 0f, z + jitterZ);
             }
 
@@ -218,61 +234,100 @@ namespace Project1864.Rebuild
 
         private void FillMatrices(CompanyRenderState state, DetailLevel detail)
         {
-            Transform companyTransform = state.Company.transform;
+            Transform root = state.Company.transform;
             int count = Mathf.Min(state.Company.PresentStrength, state.SoldierSlots.Length);
+            bool danish = state.Company.Nation == RebuildNation.Denmark;
 
             for (int i = 0; i < count; i++)
             {
                 Vector3 slot = state.SoldierSlots[i];
-                float heightVariance = 1f + HashSigned(i * 13 + 5) * 0.025f;
+                float h = 1f + HashSigned(i * 13 + 5) * 0.022f;
+                float lean = HashSigned(i * 43 + 9) * 1.6f;
 
                 state.Torso[i] = PartMatrix(
-                    companyTransform,
-                    slot + new Vector3(0f, 0.78f, 0f),
-                    Quaternion.identity,
-                    new Vector3(0.42f, 0.72f * heightVariance, 0.25f));
+                    root,
+                    slot + new Vector3(0f, 1.00f, 0f),
+                    Quaternion.Euler(lean, 0f, 0f),
+                    new Vector3(0.34f, 0.58f * h, 0.22f));
 
-                state.Headgear[i] = PartMatrix(
-                    companyTransform,
-                    slot + new Vector3(0f, 1.58f * heightVariance, 0f),
+                state.CoatSkirt[i] = PartMatrix(
+                    root,
+                    slot + new Vector3(0f, 0.66f, -0.015f),
                     Quaternion.identity,
-                    new Vector3(0.22f, 0.095f, 0.22f));
+                    new Vector3(0.38f, 0.24f, 0.25f));
+
+                float hatHeight = danish ? 0.12f : 0.15f;
+                state.Headgear[i] = PartMatrix(
+                    root,
+                    slot + new Vector3(0f, 1.72f * h, 0f),
+                    Quaternion.identity,
+                    new Vector3(0.205f, hatHeight, 0.205f));
 
                 if (detail == DetailLevel.Far)
                     continue;
 
                 state.Head[i] = PartMatrix(
-                    companyTransform,
-                    slot + new Vector3(0f, 1.40f * heightVariance, 0f),
+                    root,
+                    slot + new Vector3(0f, 1.49f * h, 0.015f),
                     Quaternion.identity,
-                    new Vector3(0.26f, 0.26f, 0.26f));
+                    new Vector3(0.215f, 0.235f, 0.205f));
 
-                state.Rifle[i] = PartMatrix(
-                    companyTransform,
-                    slot + new Vector3(0.31f, 0.83f, 0.03f),
-                    Quaternion.Euler(0f, 0f, -7f),
-                    new Vector3(0.055f, 1.28f, 0.055f));
+                state.RifleStock[i] = PartMatrix(
+                    root,
+                    slot + new Vector3(0.20f, 0.91f, -0.18f),
+                    Quaternion.Euler(-4f, 0f, 0f),
+                    new Vector3(0.105f, 0.13f, 0.34f));
+
+                state.RifleBarrel[i] = PartMatrix(
+                    root,
+                    slot + new Vector3(0.20f, 0.96f, 0.50f),
+                    Quaternion.Euler(-4f, 0f, 0f),
+                    new Vector3(0.040f, 0.040f, 1.05f));
 
                 if (detail == DetailLevel.Medium)
                     continue;
 
                 state.LeftLeg[i] = PartMatrix(
-                    companyTransform,
-                    slot + new Vector3(-0.105f, 0.20f, 0f),
-                    Quaternion.identity,
-                    new Vector3(0.16f, 0.70f * heightVariance, 0.18f));
+                    root,
+                    slot + new Vector3(-0.095f, 0.31f, 0f),
+                    Quaternion.Euler(0f, 0f, -1.8f),
+                    new Vector3(0.105f, 0.31f * h, 0.105f));
 
                 state.RightLeg[i] = PartMatrix(
-                    companyTransform,
-                    slot + new Vector3(0.105f, 0.20f, 0f),
-                    Quaternion.identity,
-                    new Vector3(0.16f, 0.70f * heightVariance, 0.18f));
+                    root,
+                    slot + new Vector3(0.095f, 0.31f, 0f),
+                    Quaternion.Euler(0f, 0f, 1.8f),
+                    new Vector3(0.105f, 0.31f * h, 0.105f));
+
+                state.LeftArm[i] = PartMatrix(
+                    root,
+                    slot + new Vector3(-0.18f, 1.03f, 0.11f),
+                    Quaternion.Euler(48f, 0f, -12f),
+                    new Vector3(0.085f, 0.27f, 0.085f));
+
+                state.RightArm[i] = PartMatrix(
+                    root,
+                    slot + new Vector3(0.18f, 1.02f, 0.12f),
+                    Quaternion.Euler(50f, 0f, 12f),
+                    new Vector3(0.085f, 0.27f, 0.085f));
+
+                state.CrossBelt[i] = PartMatrix(
+                    root,
+                    slot + new Vector3(-0.015f, 1.03f, -0.118f),
+                    Quaternion.Euler(0f, 0f, 28f),
+                    new Vector3(0.055f, 0.52f, 0.035f));
 
                 state.Pack[i] = PartMatrix(
-                    companyTransform,
-                    slot + new Vector3(0f, 0.86f, -0.19f),
+                    root,
+                    slot + new Vector3(0f, 0.98f, -0.18f),
                     Quaternion.identity,
-                    new Vector3(0.34f, 0.42f, 0.16f));
+                    new Vector3(0.30f, 0.35f, 0.14f));
+
+                state.Bayonet[i] = PartMatrix(
+                    root,
+                    slot + new Vector3(0.20f, 0.915f, 1.16f),
+                    Quaternion.Euler(-4f, 0f, 0f),
+                    new Vector3(0.018f, 0.018f, 0.28f));
             }
         }
 
@@ -289,20 +344,26 @@ namespace Project1864.Rebuild
             Material headgear = danish ? dkHeadgear : prHeadgear;
 
             DrawInstanced(cubeMesh, coat, state.Torso, count);
+            DrawInstanced(cubeMesh, coat, state.CoatSkirt, count);
             DrawInstanced(cylinderMesh, headgear, state.Headgear, count);
 
             if (detail == DetailLevel.Far)
                 return;
 
             DrawInstanced(sphereMesh, skin, state.Head, count);
-            DrawInstanced(cubeMesh, rifleWood, state.Rifle, count);
+            DrawInstanced(cubeMesh, rifleWood, state.RifleStock, count);
+            DrawInstanced(cubeMesh, metal, state.RifleBarrel, count);
 
             if (detail == DetailLevel.Medium)
                 return;
 
-            DrawInstanced(cubeMesh, trousers, state.LeftLeg, count);
-            DrawInstanced(cubeMesh, trousers, state.RightLeg, count);
+            DrawInstanced(capsuleMesh, trousers, state.LeftLeg, count);
+            DrawInstanced(capsuleMesh, trousers, state.RightLeg, count);
+            DrawInstanced(capsuleMesh, coat, state.LeftArm, count);
+            DrawInstanced(capsuleMesh, coat, state.RightArm, count);
+            DrawInstanced(cubeMesh, strap, state.CrossBelt, count);
             DrawInstanced(cubeMesh, leather, state.Pack, count);
+            DrawInstanced(cubeMesh, metal, state.Bayonet, count);
         }
 
         private void DrawInstanced(Mesh mesh, Material material, Matrix4x4[] matrices, int count)
@@ -310,9 +371,6 @@ namespace Project1864.Rebuild
             if (mesh == null || material == null || matrices == null || count <= 0)
                 return;
 
-            // A Company is intentionally below Unity's 1023-instance DrawMeshInstanced limit,
-            // so the Company's persistent matrix array can be rendered directly with zero
-            // per-frame batch-array allocations.
             Graphics.DrawMeshInstanced(mesh, 0, material, matrices, count);
             drawCalls++;
         }
@@ -343,12 +401,13 @@ namespace Project1864.Rebuild
             cubeMesh = CapturePrimitiveMesh(PrimitiveType.Cube);
             sphereMesh = CapturePrimitiveMesh(PrimitiveType.Sphere);
             cylinderMesh = CapturePrimitiveMesh(PrimitiveType.Cylinder);
+            capsuleMesh = CapturePrimitiveMesh(PrimitiveType.Capsule);
         }
 
         private static Mesh CapturePrimitiveMesh(PrimitiveType type)
         {
             GameObject temporary = GameObject.CreatePrimitive(type);
-            temporary.name = "TEMP_REBUILD_00C_MESH_SOURCE";
+            temporary.name = "TEMP_REBUILD_00C2_MESH_SOURCE";
             temporary.SetActive(false);
 
             MeshFilter filter = temporary.GetComponent<MeshFilter>();
@@ -359,18 +418,19 @@ namespace Project1864.Rebuild
 
         private void CreateMaterials()
         {
-            // QA palette only. Historical uniform art remains a later dedicated visual gate.
-            dkCoat = CreateMaterial(new Color(0.50f, 0.07f, 0.07f), "00C_DK_Coat");
-            dkTrousers = CreateMaterial(new Color(0.08f, 0.11f, 0.17f), "00C_DK_Trousers");
-            dkHeadgear = CreateMaterial(new Color(0.04f, 0.05f, 0.07f), "00C_DK_Headgear");
+            dkCoat = CreateMaterial(new Color(0.48f, 0.055f, 0.050f), "00C2_DK_Coat");
+            dkTrousers = CreateMaterial(new Color(0.055f, 0.075f, 0.115f), "00C2_DK_Trousers");
+            dkHeadgear = CreateMaterial(new Color(0.025f, 0.030f, 0.038f), "00C2_DK_Headgear");
 
-            prCoat = CreateMaterial(new Color(0.05f, 0.10f, 0.18f), "00C_PR_Coat");
-            prTrousers = CreateMaterial(new Color(0.30f, 0.31f, 0.31f), "00C_PR_Trousers");
-            prHeadgear = CreateMaterial(new Color(0.025f, 0.025f, 0.025f), "00C_PR_Headgear");
+            prCoat = CreateMaterial(new Color(0.035f, 0.075f, 0.145f), "00C2_PR_Coat");
+            prTrousers = CreateMaterial(new Color(0.27f, 0.28f, 0.29f), "00C2_PR_Trousers");
+            prHeadgear = CreateMaterial(new Color(0.018f, 0.018f, 0.020f), "00C2_PR_Headgear");
 
-            skin = CreateMaterial(new Color(0.71f, 0.54f, 0.42f), "00C_Skin");
-            leather = CreateMaterial(new Color(0.19f, 0.12f, 0.07f), "00C_Leather");
-            rifleWood = CreateMaterial(new Color(0.17f, 0.085f, 0.035f), "00C_Rifle");
+            skin = CreateMaterial(new Color(0.72f, 0.54f, 0.41f), "00C2_Skin");
+            leather = CreateMaterial(new Color(0.13f, 0.075f, 0.035f), "00C2_Leather");
+            strap = CreateMaterial(new Color(0.78f, 0.75f, 0.64f), "00C2_Straps");
+            rifleWood = CreateMaterial(new Color(0.22f, 0.105f, 0.035f), "00C2_RifleWood");
+            metal = CreateMaterial(new Color(0.24f, 0.26f, 0.27f), "00C2_Metal");
         }
 
         private static Material CreateMaterial(Color color, string materialName)
@@ -396,21 +456,19 @@ namespace Project1864.Rebuild
             float fps = smoothedDelta > 0f ? 1f / smoothedDelta : 0f;
             float ms = smoothedDelta > 0f ? smoothedDelta * 1000f : 0f;
 
-            // Gate C status intentionally covers the Gate B text box without changing
-            // the single Gate B selection owner itself.
             GUI.depth = -950;
-            GUI.Box(new Rect(12f, 42f, 520f, 68f), string.Empty);
-            GUI.Label(new Rect(22f, 49f, 500f, 22f),
-                "GATE A+B+C | 8 independent Companies | 1:1 renderer | Stable UnitID");
-            GUI.Label(new Rect(22f, 70f, 500f, 20f),
+            GUI.Box(new Rect(12f, 42f, 575f, 68f), string.Empty);
+            GUI.Label(new Rect(22f, 49f, 555f, 22f),
+                "GATE A+B+C2 | 8 Companies | Improved 1:1 soldiers | Hover info | Stable UnitID");
+            GUI.Label(new Rect(22f, 70f, 555f, 20f),
                 "LMB select | Shift add | Ctrl toggle | LMB drag box | Esc clear");
-            GUI.Label(new Rect(22f, 89f, 500f, 18f),
-                "Movement/combat intentionally OFF in v00.01.00c");
+            GUI.Label(new Rect(22f, 89f, 555f, 18f),
+                "World labels OFF | Movement/combat intentionally OFF in v00.01.00c2");
 
             Rect box = new Rect(Mathf.Max(8f, Screen.width - 405f), 8f, 395f, 76f);
             GUI.Box(box, string.Empty);
             GUI.Label(new Rect(box.x + 10f, box.y + 7f, box.width - 20f, 20f),
-                "GATE C | 1:1 COMPANY RENDERER | " + visibleSoldiers + " visible soldiers");
+                "GATE C2 | HUMAN 1:1 RENDERER | " + visibleSoldiers + " visible soldiers");
             GUI.Label(new Rect(box.x + 10f, box.y + 28f, box.width - 20f, 20f),
                 "FPS " + fps.ToString("0") + " | " + ms.ToString("0.0") + " ms | Draw calls " + drawCalls);
             GUI.Label(new Rect(box.x + 10f, box.y + 49f, box.width - 20f, 20f),
