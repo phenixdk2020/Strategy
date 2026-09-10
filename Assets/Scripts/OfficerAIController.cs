@@ -25,6 +25,9 @@ public sealed class OfficerAIController : MonoBehaviour
     public float OrderAggressiveness { get; private set; } = 50f;
     public string CurrentTask { get; private set; } = "MANUAL";
     public string ReasonCode { get; private set; } = "Direct player control";
+    public Vector3 MissionPoint => missionPoint;
+    public Vector3 DefendAnchor => defendAnchor;
+    public Regiment MissionTarget => missionTarget;
 
     private Regiment regiment;
     private float thinkTimer;
