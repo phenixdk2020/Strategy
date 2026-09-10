@@ -1,20 +1,25 @@
 PROJECT 1864 - Unity Battle Prototype
 Prototype version: v00.00.09m1
 Build status: TEST
-Build name: KAMP COMMAND QA 09M1
+Build name: COMPANY MARCH COLUMN + COMMAND HUD TEST 09M1
 Visible build marker: PROJECT 1864 | v00.00.09m1 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4/09l5/09m supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09m1 - Strategy-Kamp command QA
-- Selected company boxes are rebuilt in world space and each corner follows terrain height, so the box no longer floats or clips on a slope.
-- Selected Danish regiment/company group shows the Close/Medium/Long range cone from the mounted HQ.
-- The two lonely company guidons are hidden. Regimental HQ is three mounted officers: commander + national standard + regimental standard.
-- The HQ group stays behind the live company formation instead of remaining on the frozen regiment pivot.
-- Selecting one or more Danish companies opens the command bar: AI ON/OFF, DEF/BAL/OFF, HOLD/KORT/MELLEM/LANG.
-- Company fire now obeys the selected fire policy. HOLD stops volleys. KORT/MELLEM/LANG change the trigger range.
-- Console marker: KAMP-CMD-09M1.
+v00.00.09m1 - Company long-march column + command HUD
+- A company ordered more than about 18 m automatically changes to Column.
+- It deploys back to Line about 14 m before the destination, or immediately if it enters effective range / takes fire.
+- F and C still force Line / Column and lock the policy for 14 seconds.
+- Selected companies get a command card (strength, formation, morale, status) and a world chip (LIN/KOL).
+- Retains 09m soldier figure and company volleys.
 
-Retained v00.00.09m soldier visual and company fire.
+Primary 09m1 QA
+1. Marker: PROJECT 1864 | v00.00.09m1 TEST.
+2. Select Danish companies and RMB a long way across the field. They compress into Column while marching.
+3. They reopen to Line a short distance before the click-point.
+4. If they walk into Prussian fire first, they deploy Line on contact instead of waiting for the destination.
+5. Press C during a march: they stay Column. Press F: they open to Line and stay there briefly.
+6. Selected-unit card bottom-left shows strength + LINIE/KOLONNE.
+7. Short RMB moves stay in the current formation instead of flickering.

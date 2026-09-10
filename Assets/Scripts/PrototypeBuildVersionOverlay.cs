@@ -1,7 +1,5 @@
 using UnityEngine;
 
-// Small always-visible TEST build marker so screenshots immediately reveal
-// which prototype revision is running. Bump the suffix for every TEST delivery.
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
