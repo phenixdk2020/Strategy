@@ -1,12 +1,26 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09m2
+Prototype version: v00.00.09m3
 Build status: TEST
-Build name: COMMAND HIERARCHY MANUAL / REGIMENT / BRIGADE TEST 09M2
-Visible build marker: PROJECT 1864 | v00.00.09m2 TEST
+Build name: REGIMENT RANGE / BRIDGE / GHOST DESTINATION TEST 09M3
+Visible build marker: PROJECT 1864 | v00.00.09m3 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4/09l5/09m supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09m3 - Regiment-front range cone, bridge-only river crossing, ghost destination
+- Selected-regiment fire fans now originate from the company line, not the mounted HQ officers.
+- Detached companies cannot walk the stream; they route to the wooden bridge at z=22 and exit the far bank.
+- RMB orders show a ghost rectangle on the destination footprint and a ghost path including the bridge detour.
+- Fire policy is unchanged: HOLD still means no volleys. Use Ild CLOSE/MEDIUM/LONG to open fire.
+- Retains 09m2 three-level command hierarchy.
+
+Primary 09m3 QA
+1. Marker: PROJECT 1864 | v00.00.09m3 TEST.
+2. Select 1. Regiment companies. A range cone should sit on the soldier line, not on the three mounted officers behind them.
+3. RMB across the blue stream: the ghost path should bend to the bridge. Companies must not wade the water.
+4. A faint destination rectangle stays on the far bank while they march.
+5. Click Ild MEDIUM or LONG; Prussian companies inside the cone should take volleys / smoke. HOLD still suppresses fire.
 
 v00.00.09m2 - Manual / regiment officer / brigade officer command chain
 - A selected Danish regiment can be steered three ways: MANUEL, REG-AI (its own officer), or BRG (7. Brigade officer commands the subordinate regiments).
