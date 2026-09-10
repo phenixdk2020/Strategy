@@ -1,12 +1,29 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09m1
+Prototype version: v00.00.09m2
 Build status: TEST
-Build name: COMPANY MARCH COLUMN + COMMAND HUD TEST 09M1
-Visible build marker: PROJECT 1864 | v00.00.09m1 TEST
+Build name: COMMAND HIERARCHY MANUAL / REGIMENT / BRIGADE TEST 09M2
+Visible build marker: PROJECT 1864 | v00.00.09m2 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4/09l5/09m supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09m2 - Manual / regiment officer / brigade officer command chain
+- A selected Danish regiment can be steered three ways: MANUEL, REG-AI (its own officer), or BRG (7. Brigade officer commands the subordinate regiments).
+- Brigade AI still issues missions only through OfficerAIController.
+- The new authority layer writes those missions onto the detached 09l5 companies, so the empty regiment pivot is no longer the thing that moves.
+- RMB on companies takes that regiment back to manual control.
+- F11 still toggles Danish brigade AI. Prussian QA brigade remains autonomous.
+- Retains 09m1 column-on-long-march and company HUD.
+
+Primary 09m2 QA
+1. Marker: PROJECT 1864 | v00.00.09m2 TEST.
+2. Select 1. Regiment companies. Leave MAN selected. RMB far away: only those companies march. Regiment AI stays off.
+3. Press REG-AI. The regiment officer should send all of that regiment's companies toward the nearest threat / doctrine objective without the player clicking.
+4. Press BRG (or F11). Both 1. Regiment and 5. Regiment should take brigade missions; reserve stays back until the brigade commits it.
+5. RMB a company while BRG is on: that regiment drops to MANUEL. The other brigade regiment keeps AI.
+6. Prussian companies must also march under their officers (8th/18th). They should not freeze on the start line.
+7. Long-march column policy from 09m1 still applies to AI-issued company moves.
 
 v00.00.09m1 - Company long-march column + command HUD
 - A company ordered more than about 18 m automatically changes to Column.
