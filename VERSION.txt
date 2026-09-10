@@ -1,56 +1,20 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09m
+Prototype version: v00.00.09m1
 Build status: TEST
-Build name: KAMP VISUAL + COMPANY FIRE TEST 09M
-Visible build marker: PROJECT 1864 | v00.00.09m TEST
+Build name: KAMP COMMAND QA 09M1
+Visible build marker: PROJECT 1864 | v00.00.09m1 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4/09l5/09m supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09m - Strategy-Kamp testable battle
-- Ordinary company infantry is no longer the 09l2 capsule/sphere stand-in.
-- New GPU-instanced 1864 figure: coat, skirt, belt, trousers, boots, arms, hands, head, kepi or pickelhaube, pack, cross-straps, cartridge box, rifle and bayonet.
-- Danish kepi + visor + red band; Prussian pickelhaube dome + spike + front plate.
-- March, fire and reload poses remain presentation-only.
-- Limited fallen figures appear in emptied casualty slots.
-- Parent HQ remains HoldFire. Companies now fire from their own tactical centres.
-- Company volleys use the documented 09l5 expected-hit formula and apply hits through Regiment.ReceiveVolley so company strengths thin via the existing 09l2 reconciler.
-- Standing companies turn toward a target in arc before firing. Muzzle smoke emits from the company frontage.
-- Console markers: KAMP-VISUAL-09M and KAMP-FIRE-09M.
+v00.00.09m1 - Strategy-Kamp command QA
+- Selected company boxes are rebuilt in world space and each corner follows terrain height, so the box no longer floats or clips on a slope.
+- Selected Danish regiment/company group shows the Close/Medium/Long range cone from the mounted HQ.
+- The two lonely company guidons are hidden. Regimental HQ is three mounted officers: commander + national standard + regimental standard.
+- The HQ group stays behind the live company formation instead of remaining on the frozen regiment pivot.
+- Selecting one or more Danish companies opens the command bar: AI ON/OFF, DEF/BAL/OFF, HOLD/KORT/MELLEM/LANG.
+- Company fire now obeys the selected fire policy. HOLD stops volleys. KORT/MELLEM/LANG change the trigger range.
+- Console marker: KAMP-CMD-09M1.
 
-Retained v00.00.09l5 - Independent company movement authority
-- Active company tactical centres remain detached into an independent world-space tactical root.
-- Multi-company RMB orders preserve relative world-space offsets around the group centroid.
-
-Retained v00.00.09l4 - Company selection / combat authority / guidons
-- 1:1 ordinary soldiers remain GPU-instanced and have no individual colliders.
-- Screen-space company hit testing selects the visible company footprint.
-- Full historical national/regimental standards remain at Regimental HQ.
-- Every active company retains two smaller tactical guidons.
-
-Retained v00.00.09l3 - Reduced QA battle
-- Active infantry remains two regiments while company combat is proven.
-- Denmark: 1. Infanteri-Regiment, approximately 1,540 men, 8 companies.
-- Prussia: 8th Regiment (QA), approximately 2,460 men, 12 companies.
-
-Primary 09m QA
-1. Unity 6000.6.0f1 compiles without red errors.
-2. Build marker: PROJECT 1864 | v00.00.09m TEST.
-3. KAMP-VISUAL-09M reports Figure=1864Infantry and VisiblePersonnel around 4,000.
-4. Danish infantry read as dark-blue coats, grey trousers and kepi. Prussian infantry read as dark coats and spiked helmets.
-5. Zooming to a company shows belt, pack, straps, rifle wood/iron and bayonet rather than a single capsule.
-6. KAMP-FIRE-09M reports Owner=CompanyCentre.
-7. March Danish companies into Prussian fire arc. Both sides produce muzzle smoke and company ranks thin.
-8. Parent HQ remains HoldFire and does not fire a giant regiment volley from the mounted staff.
-9. Moving a company still moves only that company. Group RMB still preserves spacing.
-10. Fallen figures appear in thinned companies without collapsing the formation into an L-shape.
-
-Design supplements:
-- docs/parts/part-09k-fullscale-oob-command-arms.md
-- docs/parts/part-09l-brigade-hq-historical-oob.md
-- docs/parts/part-09l2-company-tactical-control.md
-- docs/parts/part-09l3-reduced-qa-battle.md
-- docs/parts/part-09l4-company-authority-guidons.md
-- docs/parts/part-09l5-independent-company-movement.md
-- docs/parts/part-09m-kamp-visual-fire.md
+Retained v00.00.09m soldier visual and company fire.
