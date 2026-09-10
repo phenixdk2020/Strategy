@@ -21,23 +21,25 @@ v00.00.13m1 state: DEV STARTUP VISUAL ISOLATION / NO LEGACY MAP FLASH / MAP-ONLY
 v00.00.13n state: DEV CESIUM DENMARK 3D FOUNDATION / WORLD TERRAIN + AERIAL / MAP-ONLY
 v00.00.13n1 state: DEV CESIUM UGUI COMPILE HOTFIX / MAP-ONLY
 v00.00.13n2 state: DEV CESIUM PHYSICS WARNING CLEANUP / MAP-ONLY
-Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m -> v00.00.13m1 -> v00.00.13n -> v00.00.13n1 -> v00.00.13n2
+v00.00.13n3 state: DEV CESIUM TOKEN BINDING + LOAD DIAGNOSTICS / MAP-ONLY
+Lineage: campaign v00.00.10e clean baseline -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m -> v00.00.13m1 -> v00.00.13n -> v00.00.13n1 -> v00.00.13n2 -> v00.00.13n3
 v00.00.11 work package: B-280-B-369
 v00.00.11 final gate: B-369
-v00.00.13n2 branch: work/v00.00.13n2-cesium-physics-warning-cleanup
+v00.00.13n3 branch: work/v00.00.13n3-cesium-token-binding-diagnostics
 v00.00.13n renderer rule: Cesium for Unity owns the visible geographic world on CampaignMap. Previous v13 map renderers are disabled/hidden and may not appear beneath or above Cesium.
 v00.00.13n package rule: official Cesium scoped registry is configured in Packages/manifest.json; com.cesium.unity is pinned to 1.25.1.
 v00.00.13n1 UI dependency rule: Unity 6000.6 requires explicit com.unity.ugui 2.0.0 plus com.unity.modules.ui 1.0.0 so CesiumCreditSystemUI can resolve UnityEngine.EventSystems.
 v00.00.13n2 physics rule: Cesium terrain physics mesh generation is OFF during MAP-ONLY QA by setting Cesium3DTileset.createPhysicsMeshes=false before the ion terrain source is assigned.
-v00.00.13n2 warning rule: repeated Unity PhysX large-triangle (>500 units) BakeMesh warnings from streamed Cesium World Terrain should no longer be emitted because no global Cesium MeshColliders are generated.
-v00.00.13n2 future collision rule: terrain collision is deferred until gameplay needs it; then use bounded/local high-detail collision or a dedicated terrain-query path rather than global coarse-tile MeshColliders.
+v00.00.13n3 token finding: Unity runtime log showed requests to https://api.cesium.com/v1/assets/1/endpoint?access_token= and asset 2 with an empty token, returning HTTP 401.
+v00.00.13n3 server rule: runtime-created Cesium terrain and raster overlay explicitly bind to CesiumIonServer.defaultServer.
+v00.00.13n3 token precedence: CESIUM_ION_TOKEN env -> local PROJECT1864/Cesium/ion-token.txt -> CesiumIonServer.defaultServer.defaultIonAccessToken.
+v00.00.13n3 request rule: no Cesium ion asset ID is activated unless a non-empty token has been resolved and assigned explicitly first.
+v00.00.13n3 helper rule: PROJECT 1864/Campaign/Cesium ion token (lokal) can import the current Cesium Project Default Token to the local PROJECT 1864 token file, or save a manually supplied token. No credential is committed to GitHub.
+v00.00.13n3 diagnostics rule: terrain and raster overlay load failures surface HTTP code/message directly in the Game view and CAMPAIGN-V013N3 Console records.
 v00.00.13n terrain rule: Cesium World Terrain ion asset ID 1 is the development terrain source with streamed LOD and no custom rectangle DEM renderer.
-v00.00.13n imagery rule: Bing Maps Aerial ion asset ID 2 is the development imagery source. It intentionally has no map labels/road overlays, avoiding the visible maritime/cartographic lines that appeared in v13m.
-v00.00.13n token rule: Cesium credentials are local-only. Accepted locations are CESIUM_ION_TOKEN environment variable, Application.persistentDataPath/PROJECT1864/Cesium/ion-token.txt, or the Cesium editor/default ion login. No token is committed.
-v00.00.13n camera rule: Campaign camera is anchored to the globe with CesiumGlobeAnchor and CesiumOriginShift. Home centres Denmark; wheel zoom, middle-drag/WASD pan and Home reset are the first map-navigation slice.
-v00.00.13n Denmark-first rule: development camera bounds remain Denmark-focused while the global Cesium source stays capable of later expansion to Sweden/Germany/Norway without rebuilding the terrain pipeline.
+v00.00.13n imagery rule: Bing Maps Aerial ion asset ID 2 is the development imagery source. It intentionally has no map labels/road overlays.
+v00.00.13n camera rule: Campaign camera is anchored to the globe with CesiumGlobeAnchor + CesiumOriginShift. Home centres Denmark; wheel zoom, middle-drag/WASD pan and Home reset are the first map-navigation slice.
 v00.00.13n history rule: modern terrain/aerial imagery is visual/geographic reference only. Historical roads, rail, bridges, ferries, settlements, borders and military sites are separate 1864 data layers.
-v00.00.13n old-map cleanup rule: V013A-M, GIS_, Outline_, StrategicLink_, CampaignNode_, CampaignControl_ and Settlement3D_ presentation renderers are suppressed while Cesium is active.
 v00.00.13h1 MAP-ONLY rule remains active: strategic formation movement/contact/battle remains disabled until map presentation passes QA.
 3D map rule: simulation coordinates remain authoritative lat/lon/geodesic data and are not derived from the rendered terrain.
 Runtime isolation: CampaignMap is the campaign runtime; tactical PrototypeBattle remains explicit-only and must not auto-open or auto-bootstrap on CampaignMap.
