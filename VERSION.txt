@@ -1,23 +1,22 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09m9
+Prototype version: v00.00.09m10
 Build status: TEST
-Build name: SELECT + FLAGS + FRONTAGE CONE + BRIDGE GHOST TEST 09M9
-Visible build marker: PROJECT 1864 | v00.00.09m9 TEST
+Build name: FULL 09M8/09M9 DROP ON STRATEGY-KAMP TEST 09M10
+Visible build marker: PROJECT 1864 | v00.00.09m10 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4/09l5/09m supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09m9 - Packaged playable TEST of 09m4–09m8
-- Visible marker bump so this drop can be identified in screenshots.
-- Click/drag company selection (no full-width HUD eat).
-- National + regiment flags behind each line.
-- Range cone from regiment frontage. River only via the bridge. Ghost box + path.
-- Prussian / Danish AI open MELLEM unless the player clicked HOLD.
+v00.00.09m10 - Remaining selection / cone / CommandQa scripts on strategy-kamp
+- Feedback 09M7: frontage cone, bridge-only river, regiment ghost.
+- Company click/drag selection. HUD no longer eats the field.
+- CommandQa without FindObjectsSortMode. Flags stay on.
+- 09L5 no longer blocks the bottom of the screen.
 
-Primary 09m9 QA
-1. Marker: PROJECT 1864 | v00.00.09m9 TEST.
-2. Click and box-select Danish companies. Yellow footprints.
+Primary 09m10 QA
+1. Marker: PROJECT 1864 | v00.00.09m10 TEST.
+2. Click and box-select Danish companies.
 3. Two flags behind each regiment.
-4. RMB across the stream: ghost path via the wooden bridge.
-5. Cone sits on the soldier line. AI ON or MELLEM produces volleys.
+4. RMB across the stream uses the bridge + ghost path.
+5. Cone on the soldier line. AI ON / MELLEM = volleys.
