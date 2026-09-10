@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 [DefaultExecutionOrder(20000)]
 public sealed class CampaignBuildVersionOverlay : MonoBehaviour
 {
-    public const string CampaignVersion = "v00.00.13m1";
-    public const string CampaignChannel = "UNIFIED MAP STARTUP ISOLATION DEV";
+    public const string CampaignVersion = "v00.00.13n";
+    public const string CampaignChannel = "CESIUM DENMARK 3D FOUNDATION DEV";
 
     private GUIStyle style;
 
@@ -19,7 +19,7 @@ public sealed class CampaignBuildVersionOverlay : MonoBehaviour
         if (UnityEngine.Object.FindAnyObjectByType<CampaignBuildVersionOverlay>() != null)
             return;
 
-        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013m1");
+        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013n");
         root.AddComponent<CampaignBuildVersionOverlay>();
     }
 
@@ -37,7 +37,7 @@ public sealed class CampaignBuildVersionOverlay : MonoBehaviour
         }
 
         GUI.Label(
-            new Rect(12f, 88f, 1050f, 24f),
+            new Rect(12f, 82f, 1050f, 24f),
             "PROJECT 1864 CAMPAIGN | " + CampaignVersion + " " + CampaignChannel,
             style);
     }
