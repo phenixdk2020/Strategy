@@ -2,7 +2,7 @@ using UnityEngine;
 
 public static class Campaign2Config
 {
-    public const string BuildTag = "v00.00.20-C2";
+    public const string BuildTag = "v00.00.21-C2";
     public const string BuildName = "CAMPAIGN2 3D DENMARK DIORAMA";
     public const string RootName = "C2_DENMARK_DIORAMA";
     public const string LandObjectName = "C2_Land";
@@ -15,7 +15,6 @@ public static class Campaign2Config
 
     public const int GridX = 360;
     public const int GridZ = 260;
-
     public const float WaterY = 0.00f;
     public const float BeachLift = 0.12f;
     public const float MetresToVisualY = 0.018f;
