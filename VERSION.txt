@@ -1,8 +1,8 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13n2
-Build status: CESIUM PHYSICS WARNING CLEANUP DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN CESIUM DENMARK 3D FOUNDATION V13N2
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m -> v00.00.13m1 -> v00.00.13n -> v00.00.13n1 -> v00.00.13n2
+Prototype version: v00.00.13n3
+Build status: CESIUM TOKEN BINDING + DIAGNOSTICS DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN CESIUM DENMARK 3D FOUNDATION V13N3
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m -> v00.00.13m1 -> v00.00.13n -> v00.00.13n1 -> v00.00.13n2 -> v00.00.13n3
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
@@ -10,17 +10,20 @@ Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-awar
 v13n architecture rule: Cesium for Unity is the sole visible geographic renderer on CampaignMap. Hand-built v13a-v13m GIS/cartographic renderers remain code history only and are disabled/hidden during runtime.
 v13n package rule: official Cesium scoped registry https://unity.pkg.cesium.com with com.cesium.unity 1.25.1.
 v13n1 UI dependency hotfix: Unity UI com.unity.ugui 2.0.0 and com.unity.modules.ui 1.0.0 are explicit project dependencies because CesiumCreditSystemUI uses UnityEngine.EventSystems in Unity 6000.6.
-v13n2 physics rule: Cesium3DTileset.createPhysicsMeshes is explicitly set false BEFORE tileset source/asset assignment during MAP-ONLY QA. This prevents Unity PhysX from baking streamed world-terrain MeshColliders with >500 m triangle edges and removes the repeated large-triangle stability warnings.
-v13n2 scope rule: disabling physics meshes affects only Cesium terrain colliders in map-only presentation. Terrain rendering, imagery, georeference, LOD streaming, camera navigation and campaign simulation data remain unchanged.
-v13n2 future collision rule: when campaign terrain interaction is needed, collision must be reintroduced deliberately as local/high-detail collision or another bounded terrain-query solution instead of baking coarse world-scale tiles globally.
+v13n2 physics rule: Cesium3DTileset.createPhysicsMeshes is false during MAP-ONLY QA to avoid global PhysX MeshCollider bake warnings on coarse streamed terrain triangles.
+v13n3 token root cause: runtime logs showed HTTP 401 for ion assets 1 and 2 with endpoint URLs containing access_token= (empty). Cesium was connected in the editor, but the runtime-created tileset/overlay did not receive a usable token value.
+v13n3 token rule: CesiumIonServer.defaultServer is assigned explicitly to the runtime terrain tileset and aerial overlay. A token is resolved before any ion asset ID is assigned.
+v13n3 token precedence: CESIUM_ION_TOKEN environment variable -> local Application.persistentDataPath/PROJECT1864/Cesium/ion-token.txt -> Cesium Project Default Token value from CesiumIonServer.defaultServer.defaultIonAccessToken.
+v13n3 no-empty-request rule: if no token value can be resolved, terrain/imagery asset IDs are not started. The UI reports TOKEN MANGLER instead of repeatedly requesting /v1/assets/.../endpoint?access_token= and generating 401 errors.
+v13n3 local token helper: PROJECT 1864/Campaign/Cesium ion token (lokal) can import the Cesium Project Default Token into the local PROJECT 1864 token file or accept a manually pasted token. The value is not committed to GitHub.
+v13n3 diagnostics: terrain and raster overlay load failures are surfaced in the Campaign Game view with HTTP status/message and also logged as CAMPAIGN-V013N3 diagnostic records.
 v13n terrain rule: Cesium World Terrain ion asset 1 supplies streamed LOD terrain instead of the custom DEM mesh/tile pipeline.
 v13n imagery rule: Bing Maps Aerial ion asset 2 supplies aerial imagery without road/place-name labels burned into a cartographic raster. Historical 1864 layers remain a later overlay and modern imagery is development reference only.
 v13n georeference rule: CesiumGeoreference is centred on Denmark and the Campaign camera receives CesiumGlobeAnchor + CesiumOriginShift for real-world movement and floating-origin handling.
 v13n camera rule: Home frames Denmark from approximately 430 km; wheel zoom supports close inspection down to approximately 80 m; middle-mouse/WASD pan changes longitude/latitude and Home resets Denmark view.
-v13n ion token rule: no credential is stored in GitHub. Runtime accepts CESIUM_ION_TOKEN environment variable or Application.persistentDataPath/PROJECT1864/Cesium/ion-token.txt; otherwise Cesium may use the token configured through its editor/ion login.
 v13n old-map rule: v13i/v13j/v13k/v13l/v13m and earlier Campaign map presentation components are disabled, and legacy V013*/GIS_/Outline_/StrategicLink_/CampaignNode_/Settlement3D_ renderers are force-hidden.
 v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition remain temporarily disabled while map presentation is under QA.
-Simulation isolation: campaign state, strategic lat/lon data, route distance/ETA, campaign time, logistics and tactical AI/navigation are unchanged by v13n2.
+Simulation isolation: campaign state, strategic lat/lon data, route distance/ETA, campaign time, logistics and tactical AI/navigation are unchanged by v13n3.
 Historical accuracy: Cesium World Terrain and Bing aerial are geography/visual development sources, not authoritative 1864 infrastructure or settlement history. Historical roads, rail, settlements, ferries and structures will be authored as separate period-correct layers.
 Input warning: legacy Input Manager remains temporarily enabled because older campaign/tactical controls still use UnityEngine.Input. Project-wide Input System migration remains separate work.
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
