@@ -37,6 +37,14 @@ public sealed class CampaignMapCameraController : MonoBehaviour
         transform.rotation = homeRotation;
     }
 
+    public void ApplyPresentationHome(Vector3 position, Quaternion rotation)
+    {
+        homePosition = position;
+        homeRotation = rotation;
+        transform.position = position;
+        transform.rotation = rotation;
+    }
+
     private void Update()
     {
         if (cam == null)
@@ -203,7 +211,8 @@ public sealed class CampaignMapCameraController : MonoBehaviour
     private static bool IsCampaignTerrainCollider(Collider collider)
     {
         string name = collider.gameObject.name;
-        return string.Equals(name, "V013J_SmoothTerrain", StringComparison.Ordinal) ||
+        return string.Equals(name, Campaign2Config.LandObjectName, StringComparison.Ordinal) ||
+               string.Equals(name, "V013J_SmoothTerrain", StringComparison.Ordinal) ||
                name.StartsWith("GIS_Terrain_", StringComparison.Ordinal);
     }
 
