@@ -1,56 +1,23 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09m3
+Prototype version: v00.00.09m9
 Build status: TEST
-Build name: REGIMENT RANGE / BRIDGE / GHOST DESTINATION TEST 09M3
-Visible build marker: PROJECT 1864 | v00.00.09m3 TEST
+Build name: SELECT + FLAGS + FRONTAGE CONE + BRIDGE GHOST TEST 09M9
+Visible build marker: PROJECT 1864 | v00.00.09m9 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.08 + 09k/09l/09l2/09l3/09l4/09l5/09m supplements
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09m3 - Regiment-front range cone, bridge-only river crossing, ghost destination
-- Selected-regiment fire fans now originate from the company line, not the mounted HQ officers.
-- Detached companies cannot walk the stream; they route to the wooden bridge at z=22 and exit the far bank.
-- RMB orders show a ghost rectangle on the destination footprint and a ghost path including the bridge detour.
-- Fire policy is unchanged: HOLD still means no volleys. Use Ild CLOSE/MEDIUM/LONG to open fire.
-- Retains 09m2 three-level command hierarchy.
+v00.00.09m9 - Packaged playable TEST of 09m4–09m8
+- Visible marker bump so this drop can be identified in screenshots.
+- Click/drag company selection (no full-width HUD eat).
+- National + regiment flags behind each line.
+- Range cone from regiment frontage. River only via the bridge. Ghost box + path.
+- Prussian / Danish AI open MELLEM unless the player clicked HOLD.
 
-Primary 09m3 QA
-1. Marker: PROJECT 1864 | v00.00.09m3 TEST.
-2. Select 1. Regiment companies. A range cone should sit on the soldier line, not on the three mounted officers behind them.
-3. RMB across the blue stream: the ghost path should bend to the bridge. Companies must not wade the water.
-4. A faint destination rectangle stays on the far bank while they march.
-5. Click Ild MEDIUM or LONG; Prussian companies inside the cone should take volleys / smoke. HOLD still suppresses fire.
-
-v00.00.09m2 - Manual / regiment officer / brigade officer command chain
-- A selected Danish regiment can be steered three ways: MANUEL, REG-AI (its own officer), or BRG (7. Brigade officer commands the subordinate regiments).
-- Brigade AI still issues missions only through OfficerAIController.
-- The new authority layer writes those missions onto the detached 09l5 companies, so the empty regiment pivot is no longer the thing that moves.
-- RMB on companies takes that regiment back to manual control.
-- F11 still toggles Danish brigade AI. Prussian QA brigade remains autonomous.
-- Retains 09m1 column-on-long-march and company HUD.
-
-Primary 09m2 QA
-1. Marker: PROJECT 1864 | v00.00.09m2 TEST.
-2. Select 1. Regiment companies. Leave MAN selected. RMB far away: only those companies march. Regiment AI stays off.
-3. Press REG-AI. The regiment officer should send all of that regiment's companies toward the nearest threat / doctrine objective without the player clicking.
-4. Press BRG (or F11). Both 1. Regiment and 5. Regiment should take brigade missions; reserve stays back until the brigade commits it.
-5. RMB a company while BRG is on: that regiment drops to MANUEL. The other brigade regiment keeps AI.
-6. Prussian companies must also march under their officers (8th/18th). They should not freeze on the start line.
-7. Long-march column policy from 09m1 still applies to AI-issued company moves.
-
-v00.00.09m1 - Company long-march column + command HUD
-- A company ordered more than about 18 m automatically changes to Column.
-- It deploys back to Line about 14 m before the destination, or immediately if it enters effective range / takes fire.
-- F and C still force Line / Column and lock the policy for 14 seconds.
-- Selected companies get a command card (strength, formation, morale, status) and a world chip (LIN/KOL).
-- Retains 09m soldier figure and company volleys.
-
-Primary 09m1 QA
-1. Marker: PROJECT 1864 | v00.00.09m1 TEST.
-2. Select Danish companies and RMB a long way across the field. They compress into Column while marching.
-3. They reopen to Line a short distance before the click-point.
-4. If they walk into Prussian fire first, they deploy Line on contact instead of waiting for the destination.
-5. Press C during a march: they stay Column. Press F: they open to Line and stay there briefly.
-6. Selected-unit card bottom-left shows strength + LINIE/KOLONNE.
-7. Short RMB moves stay in the current formation instead of flickering.
+Primary 09m9 QA
+1. Marker: PROJECT 1864 | v00.00.09m9 TEST.
+2. Click and box-select Danish companies. Yellow footprints.
+3. Two flags behind each regiment.
+4. RMB across the stream: ghost path via the wooden bridge.
+5. Cone sits on the soldier line. AI ON or MELLEM produces volleys.
