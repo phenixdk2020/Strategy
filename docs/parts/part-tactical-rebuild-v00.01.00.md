@@ -3,6 +3,7 @@
 **Status:** Authoritative work-branch architecture charter  
 **Branch:** `work/tactical-rebuild-v00.01.00`  
 **Baseline:** v00.00.09j, commit `b9e5f520abe9a8306b76d79df85f79b0a20e6fe8`  
+**Current rebuild revision:** `v00.01.00b` — Gate A+B implementation  
 **Reason:** v00.00.09l2–09l5 proved the desired Company-level gameplay but also proved that layering Company control on top of Regiment-owned movement/combat creates conflicting authority.
 
 ## 1. What is being restarted
@@ -14,7 +15,7 @@ The rebuild does **not** mean starting a new Unity project from zero. It starts 
 ## 2. Systems retained as proven concepts
 
 - RTS camera and zoom.
-- Pause and simulation speeds.
+- Pause and simulation speeds as a retained design concept.
 - LMB/RMB command philosophy and box selection.
 - Directional fire arc and HOLD/CLOSE/MEDIUM/LONG fire discipline.
 - Danish rifled muzzle-loader vs Prussian Dreyse weapon profiles.
@@ -73,40 +74,65 @@ Prussia
 ~190–210 men per Company
 ```
 
-Expected visible infantry is roughly 1,500–1,700 total, depending on the selected test strengths.
+The implemented 00.01.00b values are:
 
-This is a QA scale only. The final OOB remains historically structured, and later gates scale to full Danish and Prussian Regiments.
+```text
+Denmark I Battalion: 759 men
+Company strengths: 190 / 190 / 190 / 189
+
+Prussia I Battalion: 812 men
+Company strengths: 203 / 203 / 203 / 203
+
+Active tactical manpower: 1,571
+Active Company entities: 8
+```
+
+Full reference Regiment data is still present in the OOB registry:
+
+- Denmark `DK-INF-001`: 1. Infanteri-Regiment / Danske Livregiment, 1540.
+- Prussia `PR-INF-008`: 8th Regiment QA, 2460.
+
+Only I Battalion on each side is flagged `TacticalActive` in this gate.
 
 ## 6. Development gates
 
-### Gate A — Unit identity and OOB data
+### Gate A — Unit identity and OOB data — IMPLEMENTED IN 00.01.00b
 
-Implement:
+Implemented:
 
 - stable `UnitID`
 - Nation
 - UnitType
 - Echelon
-- ParentFormationID
+- ParentUnitId
 - AuthorizedStrength
 - PresentStrength
-- Battalion/Company records
+- Regiment/Battalion/Company records
 - official 1864 name and traditional identity as separate fields
+- full two-battalion Danish and three-battalion Prussian reference OOB data for the two pilot Regiments
 
-No tactical movement changes yet.
+No tactical movement or combat owner is introduced by Gate A.
 
-### Gate B — Independent Company entities and selection
+### Gate B — Independent Company entities and selection — IMPLEMENTED IN 00.01.00b
 
-Implement exactly eight QA Companies (four per side) as independent world-space tactical entities.
+Exactly eight QA Companies are spawned as independent world-space tactical entities.
 
-Required acceptance:
+Implementation rules:
 
-- one Company can be clicked reliably
-- box selection works
-- Shift adds
-- Ctrl toggles
-- selecting a parent grouping selects subordinate Companies without creating physical parent movement
-- moving any HQ does not move a Company
+- Companies are scene children only of neutral `REBUILD_00B_COMPANY_ENTITIES`.
+- OOB parenthood is stored in `ParentUnitId`.
+- No Company is a Transform child of a Battalion or Regiment.
+- No `Regiment` tactical object is spawned by the rebuild runtime.
+- Selection has one owner: `TacticalCompanySelection00B`.
+- LMB selects.
+- Shift+LMB adds.
+- Ctrl+LMB toggles.
+- LMB drag box-selects by Company centre.
+- Esc clears.
+- Only Danish Companies are player-selectable in this QA.
+- RMB intentionally does not move units yet.
+
+Gate B uses low rectangular Company footprints as temporary QA visuals. They are not the 1:1 soldier renderer.
 
 ### Gate C — 1:1 renderer
 
@@ -196,18 +222,62 @@ Shared stable Unit IDs connect campaign and tactical layers.
 - Reorganisation never teleports units.
 - Tactical casualties/ammo/fatigue return to the campaign state.
 
-## 7. Version strategy
+## 7. 00.01.00b runtime isolation
+
+00.01.00b deliberately does not allow the old 09j runtime to become a hidden parent authority.
+
+A `BattleManager` blocker is created before scene load so the legacy `PrototypeBootstrap` does not build the four old Regiment objects. Before the first normal Update, legacy MonoBehaviour runtime layers are disabled except:
+
+- `RTSCameraController`
+- `PrototypeBuildVersionOverlay`
+
+The clean rebuild then creates its own minimal QA field, camera, OOB registry, eight Company entities and selection owner.
+
+This means 00.01.00b has deliberately:
+
+```text
+Legacy Regiment runtime objects: 0
+Legacy PlayerCommander: inactive/not used
+Company movement owner: none
+Company combat owner: none
+Officer AI: inactive
+Brigade AI: inactive
+Artillery/cavalry: inactive
+```
+
+This isolation is a feature of the gate, not missing functionality.
+
+## 8. 00.01.00b acceptance test
+
+The gate passes only when all of these are true:
+
+1. Unity 6000.6.0f1 compiles with no red errors.
+2. Visible marker is `PROJECT 1864 | v00.01.00b TEST`.
+3. Console shows `REBUILD-OOB-00B|Installed=True`.
+4. Console shows `REBUILD-00B|Installed=True|GateA=True|GateB=True`.
+5. Exactly eight Company footprints are visible: four Danish and four Prussian.
+6. One Danish Company can be selected without selecting its neighbours.
+7. Shift adds Companies.
+8. Ctrl toggles Companies.
+9. Drag-box selects multiple Danish Companies.
+10. Esc clears selection.
+11. There are no old Regiment formations, HQs, range cones or legacy PlayerCommander order previews.
+12. RMB does not move any Company and logs `MovementDeferredToGateD`.
+13. Every tactical Company exposes a stable UnitID independent of its display name.
+14. Company transforms are not parented to OOB Regiment/Battalion transforms.
+
+## 9. Version strategy
 
 The clean rebuild uses a new tactical version family beginning at:
 
 `v00.01.00a`
 
-This intentionally separates the rebuild from the experimental `v00.00.09*` series.
+`v00.01.00b` is the first runtime gate implementation.
 
-Every delivered TEST gate receives a visible build suffix. `channel-test` is not moved to the rebuild until a gate has compiled and passed focused QA.
+Every delivered TEST gate receives a visible build suffix. The old `channel-test` is not force-moved backwards over the 09l5 history. The rebuild uses its own test channel until a tested gate is deliberately promoted.
 
-## 8. Source/reference material
+## 10. Source/reference material
 
-The old 09j runtime is the code baseline. 09k–09l5 remain evidence/reference for OOB, 1:1 rendering, HQ, flags, cavalry/artillery and Company-control lessons.
+The old 09j runtime is the source-code baseline. 09k–09l5 remain evidence/reference for OOB, 1:1 rendering, HQ, flags, cavalry/artillery and Company-control lessons.
 
 The consolidated design and 1864 OOB reference from the later documentation branch remain authoritative design inputs and must be carried into the rebuild workflow even though the runtime branch starts from 09j.
