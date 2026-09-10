@@ -1,11 +1,10 @@
 using UnityEngine;
 
-// Small always-visible TEST build marker so screenshots immediately reveal
-// which tactical rebuild revision is running.
+// Always-visible TEST build marker for the clean tactical rebuild.
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
-    public const string BuildVersion = "v00.01.00a";
+    public const string BuildVersion = "v00.01.00b";
     public const string BuildChannel = "TEST";
 
     private GUIStyle style;
