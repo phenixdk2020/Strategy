@@ -5,15 +5,13 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// PROJECT 1864 Campaign v00.00.13n2 — Cesium Denmark 3D Foundation.
-// Replaces the visible hand-built GIS/cartographic render stack with Cesium World Terrain
-// plus Bing Maps Aerial (no labels) streamed through Cesium ion.
-// Campaign simulation remains MAP-ONLY and is not changed by this presentation layer.
-// Physics meshes are disabled during map-only QA to avoid Unity large-triangle collider bake warnings.
+// PROJECT 1864 Campaign v00.00.13n3 — Cesium token binding + diagnostics.
+// Cesium World Terrain + Bing Maps Aerial are the sole visible geographic renderer.
+// MAP-ONLY remains active. Physics meshes remain disabled during map QA.
 [DefaultExecutionOrder(-9000)]
 public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
 {
-    public const string BuildTag = "v00.00.13n2";
+    public const string BuildTag = "v00.00.13n3";
     public const string RootName = "V013N_CESIUM_DENMARK_3D";
 
     private const double HomeLongitude = 10.05;
@@ -32,10 +30,13 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
     private Camera cam;
 
     private bool ready;
+    private bool tokenReady;
     private string status = "starter Cesium Danmark";
-    private string tokenSource = "Cesium ion default/login";
+    private string tokenSource = "token ikke kontrolleret";
+    private string loadDiagnostic = string.Empty;
     private GUIStyle statusStyle;
     private GUIStyle helpStyle;
+    private GUIStyle warningStyle;
 
     private Vector3 lastMousePosition;
     private bool dragging;
@@ -50,6 +51,18 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
             return;
 
         new GameObject("CampaignCesiumDenmarkV013N").AddComponent<CampaignCesiumDenmarkV013N>();
+    }
+
+    private void OnEnable()
+    {
+        Cesium3DTileset.OnCesium3DTilesetLoadFailure += OnTilesetLoadFailure;
+        CesiumRasterOverlay.OnCesiumRasterOverlayLoadFailure += OnRasterOverlayLoadFailure;
+    }
+
+    private void OnDisable()
+    {
+        Cesium3DTileset.OnCesium3DTilesetLoadFailure -= OnTilesetLoadFailure;
+        CesiumRasterOverlay.OnCesiumRasterOverlayLoadFailure -= OnRasterOverlayLoadFailure;
     }
 
     private void Awake()
@@ -104,12 +117,41 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
 
         terrainTileset = terrainObject.AddComponent<Cesium3DTileset>();
         terrainObject.AddComponent<CesiumCameraManager>();
-
-        // MAP-ONLY QA does not require Unity MeshColliders on the streamed Cesium terrain.
-        // Cesium enables physics meshes by default; Unity 6.6 warns when very large streamed
-        // terrain triangles are baked into PhysX. Disable collider generation before the ion
-        // source/asset is assigned, so no terrain tiles begin physics baking first.
         terrainTileset.createPhysicsMeshes = false;
+
+        aerialOverlay = terrainObject.AddComponent<CesiumIonRasterOverlay>();
+
+        // Bind the public Cesium ion server explicitly. Runtime-created objects otherwise
+        // depend on the current "server for new objects" state, which can differ from the
+        // project-default server selected in the Cesium editor panel.
+        CesiumIonServer server = CesiumIonServer.defaultServer;
+        if (server != null)
+        {
+            terrainTileset.ionServer = server;
+            aerialOverlay.ionServer = server;
+        }
+
+        string token = ResolveIonToken(server, out tokenSource);
+        tokenReady = !string.IsNullOrWhiteSpace(token);
+
+        ConfigureCamera(root.transform);
+        ConfigureSceneLighting();
+
+        if (!tokenReady)
+        {
+            // Do not assign ion asset IDs when the token is empty. This prevents the repeated
+            // requests to /v1/assets/.../endpoint?access_token= that returned HTTP 401 in n2.
+            ready = true;
+            status = "CESIUM TOKEN MANGLER — terrain er ikke startet";
+            loadDiagnostic = "Åbn PROJECT 1864 > Campaign > Cesium ion token (lokal) og importér Project Default Token eller indsæt en token.";
+            Debug.LogError("CAMPAIGN-V013N3|Cesium=False|Reason=IonTokenMissing|NoAssetRequestsStarted=True");
+            return;
+        }
+
+        // Assign the resolved token explicitly BEFORE asset IDs so the first ion request cannot
+        // be created with an empty access_token.
+        terrainTileset.ionAccessToken = token;
+        aerialOverlay.ionAccessToken = token;
 
         terrainTileset.tilesetSource = CesiumDataSource.FromCesiumIon;
         terrainTileset.ionAssetID = CesiumWorldTerrainAssetId;
@@ -121,23 +163,67 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
         terrainTileset.maximumCachedBytes = 1024L * 1024L * 1024L;
         terrainTileset.showCreditsOnScreen = true;
 
-        aerialOverlay = terrainObject.AddComponent<CesiumIonRasterOverlay>();
         aerialOverlay.ionAssetID = BingMapsAerialAssetId;
-
-        string localToken = ResolveLocalIonToken();
-        if (!string.IsNullOrWhiteSpace(localToken))
-        {
-            terrainTileset.ionAccessToken = localToken;
-            aerialOverlay.ionAccessToken = localToken;
-            tokenSource = "lokal ion-token";
-        }
-
-        ConfigureCamera(root.transform);
-        ConfigureSceneLighting();
 
         ready = true;
         status = "Cesium World Terrain + Bing Aerial · Danmark";
-        Debug.Log("CAMPAIGN-V013N2|Cesium=True|TerrainAsset=1|ImageryAsset=2|LabelsInImagery=False|PhysicsMeshes=False|OldMapStack=False|MapOnly=True|SimulationChanged=False|TokenSource=" + tokenSource);
+        loadDiagnostic = "Token bundet eksplicit · afventer streamed terrain/imagery";
+        Debug.Log("CAMPAIGN-V013N3|Cesium=True|TerrainAsset=1|ImageryAsset=2|PhysicsMeshes=False|TokenExplicit=True|TokenSource=" + tokenSource);
+    }
+
+    private static string ResolveIonToken(CesiumIonServer server, out string source)
+    {
+        string env = Environment.GetEnvironmentVariable("CESIUM_ION_TOKEN");
+        if (!string.IsNullOrWhiteSpace(env))
+        {
+            source = "CESIUM_ION_TOKEN env";
+            return env.Trim();
+        }
+
+        try
+        {
+            string path = Path.Combine(Application.persistentDataPath, "PROJECT1864", "Cesium", "ion-token.txt");
+            if (File.Exists(path))
+            {
+                string value = File.ReadAllText(path).Trim();
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    source = "lokal ion-token";
+                    return value;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning("CAMPAIGN-V013N3|LocalTokenRead=False|" + ex.Message);
+        }
+
+        if (server != null && !string.IsNullOrWhiteSpace(server.defaultIonAccessToken))
+        {
+            source = "Cesium Project Default Token";
+            return server.defaultIonAccessToken.Trim();
+        }
+
+        source = "TOKEN MANGLER";
+        return string.Empty;
+    }
+
+    private void OnTilesetLoadFailure(Cesium3DTilesetLoadFailureDetails details)
+    {
+        if (terrainTileset == null || details.tileset != terrainTileset)
+            return;
+
+        loadDiagnostic = "Terrain fejl HTTP " + details.httpStatusCode + " · " + details.message;
+        Debug.LogError("CAMPAIGN-V013N3|TerrainLoad=False|HTTP=" + details.httpStatusCode + "|" + details.message);
+    }
+
+    private void OnRasterOverlayLoadFailure(CesiumRasterOverlayLoadFailureDetails details)
+    {
+        if (aerialOverlay == null || details.overlay != aerialOverlay)
+            return;
+
+        loadDiagnostic = "Aerial fejl HTTP " + details.httpStatusCode + " · " + details.message;
+        Debug.LogError("CAMPAIGN-V013N3|AerialLoad=False|HTTP=" + details.httpStatusCode + "|" + details.message);
     }
 
     private void ConfigureCamera(Transform cesiumRoot)
@@ -236,37 +322,10 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
             double metresPerDegreeLon = Math.Max(15000.0, metresPerDegreeLat * Math.Cos(latRad));
             llh.x += eastMetres / metresPerDegreeLon;
             llh.y += northMetres / metresPerDegreeLat;
-
-            // Denmark-first development envelope. Keeps the camera from wandering away during map QA.
             llh.x = Math.Max(7.0, Math.Min(13.7, llh.x));
             llh.y = Math.Max(54.2, Math.Min(58.3, llh.y));
             cameraAnchor.longitudeLatitudeHeight = llh;
         }
-    }
-
-    private static string ResolveLocalIonToken()
-    {
-        string env = Environment.GetEnvironmentVariable("CESIUM_ION_TOKEN");
-        if (!string.IsNullOrWhiteSpace(env))
-            return env.Trim();
-
-        try
-        {
-            string path = Path.Combine(Application.persistentDataPath, "PROJECT1864", "Cesium", "ion-token.txt");
-            if (File.Exists(path))
-            {
-                string value = File.ReadAllText(path).Trim();
-                if (!string.IsNullOrWhiteSpace(value))
-                    return value;
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.Log("CAMPAIGN-V013N2|TokenRead=False|" + ex.Message);
-        }
-
-        // Empty is intentional: Cesium may use the project/default ion token configured by the editor login.
-        return string.Empty;
     }
 
     private static void DisableLegacyPresentationComponents()
@@ -278,20 +337,13 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
                 continue;
 
             string n = component.GetType().Name;
-            if (n == "CampaignUnifiedMapStartupGateV013M1" ||
-                n == "CampaignUnifiedDenmark3DMapV013M" ||
-                n == "CampaignPremiumCartographicVisualV013L" ||
-                n == "CampaignLiveCartographicDrapeV013K" ||
-                n == "CampaignHistorical3DMapV013J" ||
-                n == "CampaignHistoricalMapLabelsV013J" ||
-                n == "CampaignDenmarkGisFoundationV013I" ||
-                n == "CampaignDenmarkPremiumVisualV013H" ||
-                n == "CampaignDenmarkUiZoomFixV013G" ||
-                n == "CampaignDenmarkLandmeshFixV013F" ||
-                n == "CampaignDenmarkCleanRenderV013E" ||
-                n == "CampaignDenmarkMapRebuildV013D" ||
-                n == "CampaignDenmarkV013DLegacyGate" ||
-                n == "CampaignDenmarkCleanupV013C" ||
+            if (n == "CampaignUnifiedMapStartupGateV013M1" || n == "CampaignUnifiedDenmark3DMapV013M" ||
+                n == "CampaignPremiumCartographicVisualV013L" || n == "CampaignLiveCartographicDrapeV013K" ||
+                n == "CampaignHistorical3DMapV013J" || n == "CampaignHistoricalMapLabelsV013J" ||
+                n == "CampaignDenmarkGisFoundationV013I" || n == "CampaignDenmarkPremiumVisualV013H" ||
+                n == "CampaignDenmarkUiZoomFixV013G" || n == "CampaignDenmarkLandmeshFixV013F" ||
+                n == "CampaignDenmarkCleanRenderV013E" || n == "CampaignDenmarkMapRebuildV013D" ||
+                n == "CampaignDenmarkV013DLegacyGate" || n == "CampaignDenmarkCleanupV013C" ||
                 n == "CampaignLayerManagerV013")
             {
                 component.enabled = false;
@@ -304,41 +356,25 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
         Renderer[] renderers = UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include);
         foreach (Renderer renderer in renderers)
         {
-            if (renderer == null)
-                continue;
-
+            if (renderer == null) continue;
             Transform t = renderer.transform;
-            if (t != null && t.root != null && t.root.name == RootName)
-                continue;
-
-            string n = renderer.gameObject.name;
-            if (IsLegacyVisualName(n))
-                renderer.enabled = false;
+            if (t != null && t.root != null && t.root.name == RootName) continue;
+            if (IsLegacyVisualName(renderer.gameObject.name)) renderer.enabled = false;
         }
     }
 
     private static bool IsLegacyVisualName(string n)
     {
         if (string.IsNullOrEmpty(n)) return false;
-
-        return n.StartsWith("V013A_", StringComparison.Ordinal) ||
-               n.StartsWith("V013B_", StringComparison.Ordinal) ||
-               n.StartsWith("V013C_", StringComparison.Ordinal) ||
-               n.StartsWith("V013D_", StringComparison.Ordinal) ||
-               n.StartsWith("V013E_", StringComparison.Ordinal) ||
-               n.StartsWith("V013F_", StringComparison.Ordinal) ||
-               n.StartsWith("V013G_", StringComparison.Ordinal) ||
-               n.StartsWith("V013H_", StringComparison.Ordinal) ||
-               n.StartsWith("V013I_", StringComparison.Ordinal) ||
-               n.StartsWith("V013J_", StringComparison.Ordinal) ||
-               n.StartsWith("V013K_", StringComparison.Ordinal) ||
-               n.StartsWith("V013L_", StringComparison.Ordinal) ||
-               n.StartsWith("V013M_", StringComparison.Ordinal) ||
-               n.StartsWith("GIS_", StringComparison.Ordinal) ||
-               n.StartsWith("Outline_", StringComparison.Ordinal) ||
-               n.StartsWith("StrategicLink_", StringComparison.Ordinal) ||
-               n.StartsWith("CampaignNode_", StringComparison.Ordinal) ||
-               n.StartsWith("CampaignControl_", StringComparison.Ordinal) ||
+        return n.StartsWith("V013A_", StringComparison.Ordinal) || n.StartsWith("V013B_", StringComparison.Ordinal) ||
+               n.StartsWith("V013C_", StringComparison.Ordinal) || n.StartsWith("V013D_", StringComparison.Ordinal) ||
+               n.StartsWith("V013E_", StringComparison.Ordinal) || n.StartsWith("V013F_", StringComparison.Ordinal) ||
+               n.StartsWith("V013G_", StringComparison.Ordinal) || n.StartsWith("V013H_", StringComparison.Ordinal) ||
+               n.StartsWith("V013I_", StringComparison.Ordinal) || n.StartsWith("V013J_", StringComparison.Ordinal) ||
+               n.StartsWith("V013K_", StringComparison.Ordinal) || n.StartsWith("V013L_", StringComparison.Ordinal) ||
+               n.StartsWith("V013M_", StringComparison.Ordinal) || n.StartsWith("GIS_", StringComparison.Ordinal) ||
+               n.StartsWith("Outline_", StringComparison.Ordinal) || n.StartsWith("StrategicLink_", StringComparison.Ordinal) ||
+               n.StartsWith("CampaignNode_", StringComparison.Ordinal) || n.StartsWith("CampaignControl_", StringComparison.Ordinal) ||
                n.StartsWith("Settlement3D_", StringComparison.Ordinal);
     }
 
@@ -376,32 +412,22 @@ public sealed class CampaignCesiumDenmarkV013N : MonoBehaviour
     {
         if (statusStyle != null) return;
 
-        statusStyle = new GUIStyle(GUI.skin.box)
-        {
-            alignment = TextAnchor.MiddleLeft,
-            fontSize = 11,
-            fontStyle = FontStyle.Bold
-        };
+        statusStyle = new GUIStyle(GUI.skin.box) { alignment = TextAnchor.MiddleLeft, fontSize = 11, fontStyle = FontStyle.Bold };
         statusStyle.normal.textColor = new Color(0.94f, 0.94f, 0.90f);
 
-        helpStyle = new GUIStyle(GUI.skin.label)
-        {
-            alignment = TextAnchor.MiddleLeft,
-            fontSize = 10
-        };
+        helpStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = 10 };
         helpStyle.normal.textColor = new Color(0.84f, 0.86f, 0.88f);
+
+        warningStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, fontSize = 10, fontStyle = FontStyle.Bold };
+        warningStyle.normal.textColor = tokenReady ? new Color(0.76f, 0.90f, 0.76f) : new Color(1.0f, 0.72f, 0.35f);
     }
 
     private void OnGUI()
     {
         EnsureStyles();
 
-        GUI.Box(new Rect(12f, 112f, 455f, 27f),
-            "13n2 · " + status + " · " + tokenSource,
-            statusStyle);
-
-        GUI.Label(new Rect(16f, 140f, 620f, 21f),
-            "Zoom: musehjul · Pan: midterste mus / WASD · Home: Danmark",
-            helpStyle);
+        GUI.Box(new Rect(12f, 112f, 650f, 27f), "13n3 · " + status + " · " + tokenSource, statusStyle);
+        GUI.Label(new Rect(16f, 140f, 900f, 21f), loadDiagnostic, warningStyle);
+        GUI.Label(new Rect(16f, 161f, 620f, 21f), "Zoom: musehjul · Pan: midterste mus / WASD · Home: Danmark", helpStyle);
     }
 }
