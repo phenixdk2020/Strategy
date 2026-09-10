@@ -1,7 +1,11 @@
-PROJECT 1864 - Campaign2 3D Denmark Map
+PROJECT 1864 - Campaign2
 Track: campaign2
-Local folder (updater): Strategy-Campaign2
-Remote: phenixdk2020/Strategy origin/campaign2
-Do not use: phenixdk2020/Campaign2
-Prototype version: v00.00.18-C2 + atlas files v00.00.03
-Version HUD: y=72 (under Unity toolbar)
+Folder: Strategy-Campaign2
+Version: v00.00.19-C2
+
+Changes:
+- One HUD at y=72 (under Unity toolbar)
+- Extra version overlays disabled
+- Stockholm/Abo/Christiania markers hidden on this track
+- Fake inland peaks lowered (no volcano Jutland)
+- Darker water / atlas-leaning palette
