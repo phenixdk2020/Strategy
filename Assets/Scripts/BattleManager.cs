@@ -105,6 +105,10 @@ public sealed class BattleManager : MonoBehaviour
         if (uniformDesigner != null && uniformDesigner.IsPointerOverControls(mousePosition))
             return true;
 
+        PrototypeKampCommandQa09M1 kampCommand = Object.FindAnyObjectByType<PrototypeKampCommandQa09M1>();
+        if (kampCommand != null && kampCommand.IsPointerOverControls(mousePosition))
+            return true;
+
         PrototypeCombatTuningManager tuning = PrototypeCombatTuningManager.Instance;
         return tuning != null && tuning.IsPointerOverControls(mousePosition);
     }
