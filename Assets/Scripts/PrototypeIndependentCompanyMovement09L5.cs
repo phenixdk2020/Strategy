@@ -177,7 +177,7 @@ public sealed class PrototypeIndependentCompanyMovement09L5 : MonoBehaviour
     {
         HashSet<Regiment> parents = new HashSet<Regiment>();
         IReadOnlyList<PrototypeCompanyTacticalEntity09L2> companies = control.Companies;
-        bool commandMenu = Object.FindAnyObjectByType<PrototypeKampCommandQa09M1>() != null;
+        bool commandMenu = UnityEngine.Object.FindAnyObjectByType<PrototypeKampCommandQa09M1>() != null;
 
         for (int i = 0; i < companies.Count; i++)
         {
