@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 [DefaultExecutionOrder(20000)]
 public sealed class CampaignBuildVersionOverlay : MonoBehaviour
 {
-    public const string CampaignVersion = "v00.00.13n1";
-    public const string CampaignChannel = "CESIUM UGUI COMPILE HOTFIX DEV";
+    public const string CampaignVersion = "v00.00.13n2";
+    public const string CampaignChannel = "CESIUM PHYSICS WARNING CLEANUP DEV";
 
     private GUIStyle style;
 
@@ -19,7 +19,7 @@ public sealed class CampaignBuildVersionOverlay : MonoBehaviour
         if (UnityEngine.Object.FindAnyObjectByType<CampaignBuildVersionOverlay>() != null)
             return;
 
-        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013n1");
+        GameObject root = new GameObject("CampaignBuildVersionOverlay_v0013n2");
         root.AddComponent<CampaignBuildVersionOverlay>();
     }
 
