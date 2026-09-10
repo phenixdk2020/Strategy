@@ -42,6 +42,12 @@ public sealed class Regiment : MonoBehaviour
     public bool HasHitFeedback => LastVolleyHits > 0 && Time.unscaledTime < hitFeedbackUntil;
     public bool ShowRange { get; set; } = true;
     public bool IsAI { get; private set; }
+    public bool AiUnitOn { get; private set; }
+    public OfficerProfile Officer { get; private set; }
+    public OfficerMission Mission { get; private set; }
+    public string CurrentTask { get; private set; } = "Direct control";
+    public string CurrentReason { get; private set; } = "Player command";
+    public bool UsesOfficerAi => !IsRouted && (IsAI || AiUnitOn);
 
     private readonly List<Transform> soldierModels = new List<Transform>();
     private Vector3 destination;
@@ -53,9 +59,8 @@ public sealed class Regiment : MonoBehaviour
     private float aiThinkTimer;
     private float hitFeedbackUntil;
     private Regiment forcedTarget;
-    private Regiment aiTarget;
-    private bool hasAiWaypoint;
-    private Vector3 aiWaypoint;
+    private Vector3 defendAnchor;
+    private Vector3? advancePoint;
     private GameObject selectionMarker;
     private LineRenderer rangeRing;
     private ParticleSystem smoke;
@@ -69,8 +74,19 @@ public sealed class Regiment : MonoBehaviour
         InitialStrength = strength;
         CurrentStrength = strength;
         IsAI = isAI;
+        AiUnitOn = isAI;
         Experience = Mathf.Clamp(experience ?? GetPrototypeExperience(regimentName), 0f, 100f);
         transform.position = startPosition;
+        defendAnchor = startPosition;
+        Officer = OfficerDecisionCore.ProfileFor(regimentName);
+        Mission = OfficerDecisionCore.DefaultMission(team, initialAiWaypoint.HasValue);
+        advancePoint = initialAiWaypoint;
+
+        if (UsesOfficerAi)
+        {
+            CurrentTask = "Awaiting orders";
+            CurrentReason = "Officer AI active";
+        }
 
         if (team == BattleTeam.Denmark)
         {
@@ -81,12 +97,6 @@ public sealed class Regiment : MonoBehaviour
         {
             ApplyWeaponProfile(InfantryWeaponType.DreyseNeedleRifle);
             moveSpeed = 3.35f;
-        }
-
-        if (initialAiWaypoint.HasValue)
-        {
-            hasAiWaypoint = true;
-            aiWaypoint = initialAiWaypoint.Value;
         }
 
         uniformMaterial = PrototypeBootstrap.CreateSharedMaterial(
@@ -250,7 +260,7 @@ public sealed class Regiment : MonoBehaviour
             Cohesion = Mathf.Min(100f, Cohesion + 1.0f * Time.deltaTime);
         }
 
-        if (IsAI)
+        if (UsesOfficerAi)
             UpdateAI();
 
         if (forcedTarget != null && !forcedTarget.IsRouted)
@@ -283,32 +293,30 @@ public sealed class Regiment : MonoBehaviour
         aiThinkTimer -= Time.deltaTime;
         if (aiThinkTimer > 0f)
             return;
-        aiThinkTimer = Random.Range(0.7f, 1.2f);
 
-        if (hasAiWaypoint)
-        {
-            if (Vector3.Distance(transform.position, aiWaypoint) > 4f)
-            {
-                OrderMove(aiWaypoint);
-                return;
-            }
-            hasAiWaypoint = false;
-        }
+        AiDifficulty difficulty = BattleManager.Instance != null ? BattleManager.Instance.Difficulty : AiDifficulty.Normal;
+        OfficerDecision decision = OfficerDecisionCore.Decide(this, Officer, Mission, defendAnchor, advancePoint, difficulty);
+        aiThinkTimer = decision.ThinkDelay;
+        CurrentTask = decision.Task;
+        CurrentReason = decision.ReasonCode;
+        OfficerDecisionCore.LogTelemetry(this, Officer, Mission, decision, difficulty);
 
-        if (aiTarget == null || aiTarget.IsRouted)
-            aiTarget = FindNearestEnemy(999f);
-
-        if (aiTarget == null)
-            return;
-
-        float distance = Vector3.Distance(transform.position, aiTarget.transform.position);
-        if (distance > EffectiveRange * 0.86f)
-            OrderAttack(aiTarget);
-        else
+        if (decision.HoldPosition)
         {
             hasDestination = false;
-            forcedTarget = aiTarget;
+            if (decision.Target != null)
+                forcedTarget = decision.Target;
+            return;
         }
+
+        if (decision.Target != null)
+        {
+            OrderAttackInternal(decision.Target);
+            return;
+        }
+
+        if (decision.MoveTo.HasValue)
+            OrderMoveInternal(decision.MoveTo.Value);
     }
 
     private void UpdateMovement()
@@ -453,6 +461,8 @@ public sealed class Regiment : MonoBehaviour
         retreat.z += Random.Range(-15f, 15f);
         destination = retreat;
         hasDestination = true;
+        CurrentTask = "Routed";
+        CurrentReason = "Formation broken";
         BattleManager.Instance.NotifyRout(this);
     }
 
@@ -478,20 +488,74 @@ public sealed class Regiment : MonoBehaviour
             rangeRing.enabled = IsSelected && ShowRange;
     }
 
+    public void SetAiUnitOn(bool enabled)
+    {
+        if (IsRouted || IsAI)
+            return;
+
+        AiUnitOn = enabled;
+        if (!enabled)
+        {
+            CurrentTask = "Direct control";
+            CurrentReason = "Player override";
+            return;
+        }
+
+        defendAnchor = transform.position;
+        if (Mission == OfficerMission.Hold || Mission == OfficerMission.DefendArea)
+            Mission = OfficerMission.Hold;
+        CurrentTask = "Delegated";
+        CurrentReason = "Officer AI active";
+        aiThinkTimer = 0f;
+    }
+
     public void OrderMove(Vector3 worldPoint)
     {
         if (IsRouted)
             return;
-        forcedTarget = null;
-        destination = worldPoint;
-        destination.y = PrototypeBootstrap.SampleGroundHeight(destination.x, destination.z) + 0.10f;
-        hasDestination = true;
+        if (AiUnitOn && !IsAI)
+        {
+            Mission = OfficerMission.AdvanceAttack;
+            advancePoint = worldPoint;
+        }
+        OrderMoveInternal(worldPoint);
     }
 
     public void OrderAttack(Regiment target)
     {
         if (IsRouted || target == null || target.Team == Team)
             return;
+        if (AiUnitOn && !IsAI)
+        {
+            Mission = OfficerMission.AdvanceAttack;
+            advancePoint = target.transform.position;
+        }
+        OrderAttackInternal(target);
+    }
+
+    public void OrderHold()
+    {
+        if (IsRouted)
+            return;
+        defendAnchor = transform.position;
+        if (AiUnitOn && !IsAI)
+            Mission = OfficerMission.Hold;
+        hasDestination = false;
+        forcedTarget = null;
+        CurrentTask = AiUnitOn || IsAI ? "Hold position" : "Direct control";
+        CurrentReason = AiUnitOn || IsAI ? "Holding assigned ground" : "Player command";
+    }
+
+    private void OrderMoveInternal(Vector3 worldPoint)
+    {
+        forcedTarget = null;
+        destination = worldPoint;
+        destination.y = PrototypeBootstrap.SampleGroundHeight(destination.x, destination.z) + 0.10f;
+        hasDestination = true;
+    }
+
+    private void OrderAttackInternal(Regiment target)
+    {
         forcedTarget = target;
         float d = Vector3.Distance(transform.position, target.transform.position);
         if (d > EffectiveRange * 0.92f)
@@ -499,14 +563,10 @@ public sealed class Regiment : MonoBehaviour
             destination = target.transform.position;
             hasDestination = true;
         }
-    }
-
-    public void OrderHold()
-    {
-        if (IsRouted)
-            return;
-        hasDestination = false;
-        forcedTarget = null;
+        else
+        {
+            hasDestination = false;
+        }
     }
 
     public void SetFormation(RegimentFormation formation)
