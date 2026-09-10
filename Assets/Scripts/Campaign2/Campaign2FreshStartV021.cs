@@ -2,19 +2,14 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-/// <summary>
-/// v00.00.21-C2 — start labels/layers forfra på campaign2.
-/// Slukker legacy HUD, node-labels, control-cylindere og gamle v13-lag.
-/// Dioramaets egne bynavne (København, Aarhus, …) er det eneste kort-lag.
-/// </summary>
 [DefaultExecutionOrder(33000)]
 public sealed class Campaign2FreshStartV021 : MonoBehaviour
 {
     static readonly string[] HidePrefixes =
     {
         "CampaignControl_", "CampaignNode_", "CampaignFormation_",
-        "StrategicLink_", "CampaignRouteGhost", "V013", "GIS_", "GEO_",
-        "Outline_", "CampaignMapUsability", "CampaignMapSearchHover",
+        "StrategicLink_", "CampaignRouteGhost",
+        "CampaignMapUsability", "CampaignMapSearchHover",
         "CampaignHistoricalMapLabels"
     };
 
@@ -26,11 +21,6 @@ public sealed class Campaign2FreshStartV021 : MonoBehaviour
         if (FindAnyObjectByType<Campaign2FreshStartV021>() != null)
             return;
         new GameObject("Campaign2FreshStartV021").AddComponent<Campaign2FreshStartV021>();
-    }
-
-    void Start()
-    {
-        Strip();
     }
 
     void LateUpdate()
@@ -49,18 +39,18 @@ public sealed class Campaign2FreshStartV021 : MonoBehaviour
         Disable<CampaignMapOnlyModeV013H1>();
         Disable<CampaignVersionHud>();
         Disable<CampaignBuildVersionOverlay>();
-        Disable<CampaignUnifiedDenmark3DMapV013M>();
-        Disable<CampaignHistorical3DMapV013J>();
 
-        GameObject[] all = FindObjectsByType<GameObject>(FindObjectsInactive.Include);
+        GameObject[] all = FindObjectsByType<GameObject>(FindObjectsInactive.Exclude);
         for (int i = 0; i < all.Length; i++)
         {
             GameObject go = all[i];
             if (go == null || string.IsNullOrEmpty(go.name))
                 continue;
-            if (go.name == "Campaign2FreshStartV021" || go.name == "C2_DENMARK_DIORAMA")
+            if (go.GetComponent<Camera>() != null)
                 continue;
             if (go.name.StartsWith("C2_", StringComparison.Ordinal))
+                continue;
+            if (go.name.StartsWith("Campaign2", StringComparison.Ordinal))
                 continue;
             for (int p = 0; p < HidePrefixes.Length; p++)
             {
@@ -80,9 +70,9 @@ public sealed class Campaign2FreshStartV021 : MonoBehaviour
         {
             if (found[i] == null)
                 continue;
+            if (found[i].GetComponent<Camera>() != null)
+                continue;
             found[i].enabled = false;
-            if (found[i].gameObject.name != "CampaignMap")
-                found[i].gameObject.SetActive(false);
         }
     }
 }

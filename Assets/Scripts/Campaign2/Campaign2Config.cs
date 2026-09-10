@@ -2,11 +2,12 @@ using UnityEngine;
 
 public static class Campaign2Config
 {
-    public const string BuildTag = "v00.00.21-C2";
+    public const string BuildTag = "v00.00.22-C2";
     public const string BuildName = "CAMPAIGN2 3D DENMARK DIORAMA";
     public const string RootName = "C2_DENMARK_DIORAMA";
     public const string LandObjectName = "C2_Land";
     public const string WaterObjectName = "C2_Water";
+    public const bool SuppressLegacyLabels = true;
 
     public const double MinLatitude = 53.38;
     public const double MaxLatitude = 57.90;
