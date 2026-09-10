@@ -1,56 +1,59 @@
 PROJECT 1864 - Tactical Rebuild
-Prototype version: v00.01.00c2
-Build status: TEST / GATE A+B+C2
-Build name: SOLDIER VISUAL UPGRADE + HOVER INFO TEST 00.01.00C2
-Visible build marker: PROJECT 1864 | v00.01.00c2 TEST
+Prototype version: v00.01.00c3
+Build status: TEST / GATE A+B+C3
+Build name: VISUAL POLISH + DRILL TEST 00.01.00C3
+Visible build marker: PROJECT 1864 | v00.01.00c3 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: clean Company-first rebuild after v00.00.09l5 freeze
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Delivery branch: strategi/kampe_rebuild
 
-v00.01.00c2 - Soldier Visual Upgrade + Hover Info
-- Builds directly on v00.01.00c Gate A+B+C.
+v00.01.00c3 - Visual Polish + Drill Test
+- Builds directly on v00.01.00c2.
 - Active force remains exactly eight independent Companies: four Danish and four Prussian.
 - Active manpower remains Denmark 759 + Prussia 812 = 1571 men.
-- Company OOB identity, UnitID, world pose and selection ownership remain unchanged.
-- Permanent world-space TextMesh Company labels are removed.
-- Mouse-over information panel now shows Regiment, Battalion, Company, nation, strength, formation, UnitID and selected state.
-- Selection behaviour remains unchanged: LMB select, Shift add, Ctrl toggle, drag-box select, Esc clear.
-- Soldier silhouette upgraded from simple block figure to a more articulated low-poly infantryman.
-- Full LOD now includes separate legs, torso, coat skirt, head, headgear, two arms, cross-belt, pack and a three-part rifle/bayonet silhouette.
-- Rifle is now represented by wooden stock, long metal barrel and bayonet rather than a single vertical cuboid.
-- Torso is narrower and limb proportions are reduced to improve human readability at close/medium zoom.
-- Danish and Prussian QA uniform palettes remain visually distinct.
-- 1:1 renderer remains Graphics.DrawMeshInstanced with no GameObject/MonoBehaviour/Collider/NavMeshAgent/Animator per ordinary soldier.
-- Renderer remains presentation-only and writes no tactical movement/combat/OOB state.
-- Full detail <=250 m, Medium <=500 m, Far <=850 m.
-- No national/regimental standards in this revision; flag work is deliberately deferred.
-- Movement/navigation remains OFF until Gate D.
-- Company combat remains OFF until Gate E.
-- Officer AI, Brigade AI, artillery and cavalry remain inactive.
+- Stable UnitID/OOB and clean Company-first ownership remain unchanged.
+- 1:1 soldier presentation is sharpened again with narrower body proportions, separate boots/hands, cleaner coat shape and a clearer stock + metal barrel + bayonet weapon silhouette.
+- A new c3 renderer reads Company state only and writes presentation only.
+- Permanent world labels remain removed.
+- Mouse-over info remains read-only and can be toggled with H.
+- V toggles Clean/Debug presentation.
+- F toggles selected Danish Companies between Line and Column in place.
+- Z/X rotate selected Danish Companies 15 degrees left/right in place.
+- Company selection footprint and outline recalculate when formation changes.
+- Selection remains unchanged: LMB select, Shift add, Ctrl toggle, drag-box select, Esc clear.
+- No standards/flags in this revision.
+- RMB movement remains OFF and deferred to Gate D.
+- Navigation, combat, Officer AI, Brigade AI, artillery and cavalry remain inactive.
 
-QA acceptance for v00.01.00c2
+Drill geometry
+- Line: 3 ranks, 0.52 m file spacing, 0.76 m rank spacing.
+- Column: 8 files, 0.60 m file spacing, 0.72 m row spacing.
+
+QA acceptance for v00.01.00c3
 1. Unity compiles without red errors.
-2. Visible marker is PROJECT 1864 | v00.01.00c2 TEST.
-3. Console contains REBUILD-RENDER-00C2|Installed=True.
-4. Console contains REBUILD-HOVER-00C2|Installed=True.
-5. Exactly eight independent Companies remain in the scene.
-6. Approximately 1571 individual soldier visuals remain visible.
-7. Permanent white Company labels no longer appear over formations.
-8. Mouse-over on any Company shows the new info panel.
-9. Danish Company selection works exactly as before.
-10. Shift/Ctrl/drag-box/Esc work exactly as before.
-11. Selection outline remains attached to the correct Company footprint.
-12. Soldiers are visibly more human-shaped than v00.01.00c.
-13. Rifles read as stock + barrel + bayonet at close zoom.
-14. FPS remains acceptable and no obvious recurring GC/freeze behaviour is introduced.
+2. Visible marker is PROJECT 1864 | v00.01.00c3 TEST.
+3. Console contains REBUILD-RENDER-00C3|Installed=True.
+4. Console contains REBUILD-DRILL-00C3|Installed=True.
+5. Exactly eight independent Companies remain in scene.
+6. Approximately 1571 soldier visuals remain visible.
+7. LMB/Shift/Ctrl/drag-box/Esc selection works as before.
+8. F changes only selected Danish Companies Line <-> Column.
+9. Selection footprint/outline follows Line/Column geometry.
+10. Z/X rotate only selected Companies in place without translating them.
+11. V toggles Clean/Debug view.
+12. H toggles hover info.
+13. No permanent Company world labels appear.
+14. No standards/flags appear.
 15. RMB still does not move Companies and reports MovementDeferredToGateD.
+16. No legacy Regiment runtime/Officer AI/Brigade AI is reactivated.
+17. FPS remains acceptable without obvious recurring GC/freeze behaviour.
 
-Previous gate: v00.01.00c
-- Gate A: stable UnitID + clean OOB data.
-- Gate B: eight independent Company tactical entities and one selection owner.
-- Gate C: 1:1 GPU-instanced renderer.
+Previous revisions
+- v00.01.00c2: Soldier Visual Upgrade + Hover Info.
+- v00.01.00c: Gate C 1:1 GPU renderer.
+- v00.01.00b: Gate A stable UnitID/OOB + Gate B independent Company selection.
 
 Planned next gates
 D. Company movement/navigation with one steering owner, including hard/soft obstacles and bridge/river constraints.
