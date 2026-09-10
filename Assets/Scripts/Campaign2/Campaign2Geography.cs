@@ -4,9 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// Land/water classification and visual elevation for campaign2.
-/// Denmark rings come from Natural Earth 50m already in CampaignDenmarkGeography.
-/// Schleswig-Holstein, Fehmarn and a simplified Limfjord hole are campaign2-only.
-/// Elevation is a readable diorama approximation, not a DEM bake yet.
+/// v00.00.19-C2: low readable relief, no fake inland volcanoes.
 /// </summary>
 public static class Campaign2Geography
 {
@@ -50,45 +48,40 @@ public static class Campaign2Geography
     {
         float lat = (float)latitude;
         float lon = (float)longitude;
-        float h = 10f;
-        h += 155f * Peak(lat, lon, 56.00f, 9.58f, 0.52f);
-        h += 70f * Peak(lat, lon, 56.16f, 9.92f, 0.28f);
-        h += 95f * Peak(lat, lon, 55.34f, 10.18f, 0.22f);
-        h += 85f * Peak(lat, lon, 55.53f, 11.68f, 0.34f);
-        h += 58f * Peak(lat, lon, 54.907f, 9.758f, 0.075f);
-        h += 48f * Peak(lat, lon, 55.57f, 9.75f, 0.10f);
-        h += 135f * Peak(lat, lon, 55.13f, 14.92f, 0.16f);
-        h += 55f * Peak(lat, lon, 54.20f, 9.80f, 0.42f);
-        h += 40f * Peak(lat, lon, 54.47f, 9.46f, 0.16f);
-
-        if (lon < 8.85f && lat > 55.15f && lat < 57.15f)
-            h += 16f;
-
+        float h = 8f + inland01 * 18f;
+        h += 22f * Peak(lat, lon, 56.00f, 9.58f, 0.42f);
+        h += 14f * Peak(lat, lon, 56.16f, 9.92f, 0.22f);
+        h += 16f * Peak(lat, lon, 55.34f, 10.18f, 0.18f);
+        h += 14f * Peak(lat, lon, 55.53f, 11.68f, 0.26f);
+        h += 18f * Peak(lat, lon, 54.907f, 9.758f, 0.06f);
+        h += 12f * Peak(lat, lon, 55.57f, 9.75f, 0.08f);
+        h += 28f * Peak(lat, lon, 55.13f, 14.92f, 0.14f);
+        h += 16f * Peak(lat, lon, 54.20f, 9.80f, 0.32f);
+        h += 12f * Peak(lat, lon, 54.47f, 9.46f, 0.14f);
         float detail = Mathf.PerlinNoise(lon * 3.1f + 4.2f, lat * 3.1f + 1.7f);
-        h += (detail - 0.5f) * 18f;
-        h *= Mathf.Lerp(0.18f, 1f, inland01);
-        return Mathf.Clamp(h, 2.5f, 175f);
+        h += (detail - 0.5f) * 6f;
+        return Mathf.Clamp(h, 2.5f, 48f);
     }
 
     public static Color LandCoverColor(double latitude, double longitude, float inland01, float elevationMeters)
     {
         float lat = (float)latitude;
         float lon = (float)longitude;
-        Color sand = new Color(0.78f, 0.72f, 0.52f);
-        Color field = new Color(0.55f, 0.62f, 0.34f);
-        Color rich = new Color(0.42f, 0.54f, 0.28f);
-        Color heath = new Color(0.55f, 0.46f, 0.32f);
-        Color highland = new Color(0.62f, 0.55f, 0.38f);
+        Color sand = new Color(0.72f, 0.66f, 0.48f);
+        Color field = new Color(0.58f, 0.56f, 0.38f);
+        Color rich = new Color(0.40f, 0.48f, 0.30f);
+        Color heath = new Color(0.52f, 0.44f, 0.32f);
+        Color highland = new Color(0.56f, 0.50f, 0.36f);
 
         Color c = Color.Lerp(field, rich, inland01);
         if (lon < 9.15f && lat > 55.3f && lat < 57.3f)
-            c = Color.Lerp(c, heath, 0.55f);
-        if (elevationMeters > 70f)
-            c = Color.Lerp(c, highland, Mathf.InverseLerp(70f, 140f, elevationMeters));
+            c = Color.Lerp(c, heath, 0.45f);
+        if (elevationMeters > 28f)
+            c = Color.Lerp(c, highland, Mathf.InverseLerp(28f, 48f, elevationMeters));
         if (inland01 < 0.34f)
             c = Color.Lerp(sand, c, inland01 / 0.34f);
         float noise = Mathf.PerlinNoise(lon * 8.4f, lat * 8.4f);
-        c *= 0.94f + (noise - 0.5f) * 0.10f;
+        c *= 0.94f + (noise - 0.5f) * 0.08f;
         return c;
     }
 
