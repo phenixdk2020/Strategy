@@ -1,36 +1,25 @@
 # campaign2 — PROJECT 1864
 
-Ekstra campaign-spor til et nyt 3D-hovedkort af Danmark.
+Dette spor lever **kun** her: `phenixdk2020/Strategy` branch `campaign2`.
 
-Dette spor rører **ikke** `channel-campaign` og **ikke** `channel-test`.
+Updater CAMPAIGN2 mapper det til:
+
+`OneDrive\Strategy-Campaign2`
+
+Repoet `phenixdk2020/Campaign2` bruges **ikke**. Alt kort-arbejde skal landes på denne branch.
 
 | Spor | Branch | Rolle |
 |---|---|---|
-| Kampagnekort (aktivt) | `channel-campaign` | v13m OSM-drape, map-only. Bevares urørt. |
-| Kamp-test | `channel-test` | Taktiske slag. Bevares urørt. |
-| **3D-kort reset** | **`campaign2`** | Nyt Danmark-diorama uden OSM som landets hud. |
+| Kampagnekort (aktivt v13) | `channel-campaign` | OSM-drape. Rør ikke. |
+| Kamp-test | `channel-test` | Taktiske slag. Rør ikke. |
+| **3D-kort reset** | **`campaign2`** | Danmark-diorama / atlas. |
 
-## Hvorfor dette spor findes
+## Nye filer fra den gamle Campaign2-kanal
 
-`channel-campaign` v13m er et moderne OpenStreetMap-atlas klistret på et næsten fladt mesh. Det er ikke det 3D-Danmark, kampagnen skal være. I stedet for at lappe v13n oven på v13j/k/l/m får resetten sit eget spor.
+- `Assets/Scripts/Campaign2/CampaignVersionHud.cs` — versionslinje ved y=72, auto på CampaignMap
+- `Assets/Scripts/Campaign2/TheaterAtlasBootstrap.cs` — pergament/atlas (valgfri komponent)
+- `Assets/Resources/CampaignMap/rings.txt` — silhuet-polygoner
+- `docs/B-190-CAMPAIGN-RELIEF-MAP.md`
+- `docs/TILE-00-SONDERJYLLAND.md`
 
-Arvet v13m-kode på branchen er **kun udgangspunkt**. Den er ikke målet og må udskiftes her uden at true det aktive campaign-spor.
-
-## Mål
-
-Et Total War / Grand Tactician-agtigt 3D-diorama:
-
-- rigtig kyst og øer (vand vs land i 3D)
-- DEM-relief med synlig vertical exaggeration
-- malet landcover, ikke satellit/OSM
-- 1864-teater inkl. Slesvig-Holsten
-- kamera med pitch, ikke kun top-down
-
-Designet står i `docs/PROJECT-1864-Campaign2-3D-Denmark-Map.md`.
-
-## Isolation
-
-- Lat/lon, rute-km og ETA forbliver authoritative. Unity-Y er kun præsentation.
-- Tactical `PrototypeBattle` auto-åbnes ikke.
-- MAP-ONLY indtil kortet består visuel QA.
-- Ingen merge tilbage til `channel-campaign`, før Allan har godkendt Play Mode.
+Efter updater CAMPAIGN2: åbn `Strategy-Campaign2` i Unity, Play på CampaignMap.

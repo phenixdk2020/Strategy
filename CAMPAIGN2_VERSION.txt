@@ -1,21 +1,7 @@
-PROJECT 1864 - Campaign2 3D Denmark Map Reset
+PROJECT 1864 - Campaign2 3D Denmark Map
 Track: campaign2
-Prototype version: v00.00.16-C2
-Build status: SPOR OPRETTET / DESIGN LÅST / IKKE IMPLEMENTERET
-Build name: CAMPAIGN2 3D DENMARK DIORAMA
-Branched from: channel-campaign @ 923c9488 (v00.00.13m)
-Does not replace: channel-campaign remains the active campaign map track until campaign2 passes QA
-Does not touch: channel-test tactical battle track
-
-Goal: replace OSM-draped flat mesh with a true 3D Denmark theatre diorama
-Visible map stack: one land mesh + one water mesh. No OSM atlas as base skin.
-Elevation source: Copernicus EU-DEM or SDFE DHM, baked. Not live Terrarium/OSM tiles.
-Vertical exaggeration: visual 8x/12x/16x test modes. True elevation stored separately.
-Envelope: 53.2-58.0 N, 7.5-13.5 E (Denmark + Schleswig-Holstein, Kiel, Hamburg approaches)
-Look: stylized landcover splat, not satellite, not present-day OSM roads
-Camera: pitch 25-70, terrain-aware height, overview to close inspection
-Simulation isolation: lat/lon, geodesic distance, ETA, logistics, tactical AI unchanged
-MAP-ONLY: combat/contact/PrototypeBattle remain disabled on this track
-Unity baseline: 6000.6.0f1 (Unity 6.6)
-QA owner: local Unity compile/runtime verification by Allan
-Promotion: DEV only. No merge to channel-campaign before Play Mode acceptance.
+Local folder (updater): Strategy-Campaign2
+Remote: phenixdk2020/Strategy origin/campaign2
+Do not use: phenixdk2020/Campaign2
+Prototype version: v00.00.18-C2 + atlas files v00.00.03
+Version HUD: y=72 (under Unity toolbar)
