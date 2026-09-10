@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// v00.00.09m - testable company volleys for Strategy-Kamp.
-// Parent HQ stays HoldFire (09l4). Companies fire from their own centres
-// using the documented 09l5 hit model so battles can actually be played.
+// v00.00.09m1 - testable company volleys for Strategy-Kamp.
+// Companies fire from their own centres using the 09l5 hit model.
+// Fire policy on the parent regiment now gates trigger range.
 [DefaultExecutionOrder(11210)]
 public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
 {
@@ -75,7 +75,7 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
         if (!announced && companies.Count > 0)
         {
             announced = true;
-            Debug.Log("KAMP-FIRE-09M|Installed=True|Owner=CompanyCentre|ParentHQ=HoldFire|Formula=09l5Volley|Smoke=CompanyMuzzle");
+            Debug.Log("KAMP-FIRE-09M|Installed=True|Owner=CompanyCentre|Policy=ParentFirePolicy|Formula=09l5Volley|Smoke=CompanyMuzzle");
         }
 
         for (int i = 0; i < companies.Count; i++)
@@ -86,6 +86,8 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
 
             Regiment regiment = shooter.ParentRegiment;
             if (regiment.IsRouted)
+                continue;
+            if (regiment.FirePolicy == RegimentFirePolicy.HoldFire)
                 continue;
 
             FireState state = GetState(shooter);
@@ -147,7 +149,7 @@ public sealed class PrototypeKampCompanyFire09M : MonoBehaviour
         IReadOnlyList<PrototypeCompanyTacticalEntity09L2> companies)
     {
         Regiment regiment = shooter.ParentRegiment;
-        float trigger = regiment.MaximumRange;
+        float trigger = regiment.GetFireTriggerRange();
         if (trigger <= 0.01f)
             trigger = regiment.EffectiveRange;
 
