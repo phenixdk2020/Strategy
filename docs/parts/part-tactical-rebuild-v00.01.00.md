@@ -1,9 +1,10 @@
 # PROJECT 1864 — Tactical Rebuild v00.01.00
 
-**Status:** Authoritative work-branch architecture charter  
-**Branch:** `work/tactical-rebuild-v00.01.00`  
+**Status:** Authoritative clean-rebuild architecture charter  
+**Delivery branch:** `strategi/kampe_rebuild`  
+**Original work branch:** `work/tactical-rebuild-v00.01.00`  
 **Baseline:** v00.00.09j, commit `b9e5f520abe9a8306b76d79df85f79b0a20e6fe8`  
-**Current rebuild revision:** `v00.01.00b` — Gate A+B implementation  
+**Current rebuild revision:** `v00.01.00c2` — Gate A+B+C plus visual/hover QA pass  
 **Reason:** v00.00.09l2–09l5 proved the desired Company-level gameplay but also proved that layering Company control on top of Regiment-owned movement/combat creates conflicting authority.
 
 ## 1. What is being restarted
@@ -74,7 +75,7 @@ Prussia
 ~190–210 men per Company
 ```
 
-The implemented 00.01.00b values are:
+Current implemented values:
 
 ```text
 Denmark I Battalion: 759 men
@@ -87,12 +88,12 @@ Active tactical manpower: 1,571
 Active Company entities: 8
 ```
 
-Full reference Regiment data is still present in the OOB registry:
+Full reference Regiment data remains present in the OOB registry:
 
 - Denmark `DK-INF-001`: 1. Infanteri-Regiment / Danske Livregiment, 1540.
 - Prussia `PR-INF-008`: 8th Regiment QA, 2460.
 
-Only I Battalion on each side is flagged `TacticalActive` in this gate.
+Only I Battalion on each side is flagged `TacticalActive` in the current small QA scenario.
 
 ## 6. Development gates
 
@@ -132,13 +133,11 @@ Implementation rules:
 - Only Danish Companies are player-selectable in this QA.
 - RMB intentionally does not move units yet.
 
-Gate B uses low rectangular Company footprints as temporary QA visuals. They are not the 1:1 soldier renderer.
+### Gate C — 1:1 renderer — IMPLEMENTED IN 00.01.00c
 
-### Gate C — 1:1 renderer
+Every active infantryman is rendered 1:1 as an instanced visual tied to Company state.
 
-Render every active soldier as an instanced visual tied to Company state.
-
-No per-soldier:
+No ordinary soldier receives its own:
 
 - MonoBehaviour
 - NavMeshAgent
@@ -146,7 +145,34 @@ No per-soldier:
 - collider
 - heavy Animator
 
-LOD/culling must be designed from the start.
+LOD/culling is present from the start and the renderer is read-only presentation.
+
+### Gate C2 — Soldier readability + hover UI — IMPLEMENTED IN 00.01.00c2
+
+This is deliberately a visual/UI QA pass, not a new simulation authority layer.
+
+Implemented:
+
+- Permanent world-space Company labels removed.
+- Mouse-over info panel shows Regiment, Battalion, Company, nation, strength, formation, UnitID and selected state.
+- Selection behaviour is unchanged from Gate B.
+- Soldier body is less block-like: narrower torso, separate coat skirt, capsule limbs, two visible arms, cross-belt and pack.
+- Rifle silhouette is split into wooden stock, long metal barrel and bayonet.
+- Danish and Prussian QA palettes remain distinct.
+- Full detail <=250 m; Medium <=500 m; Far <=850 m.
+- No national or regimental standards in c2; flag work is deferred after QA feedback.
+- No movement, navigation, combat or AI is added in c2.
+
+Acceptance focus:
+
+1. Build marker is `PROJECT 1864 | v00.01.00c2 TEST`.
+2. Eight Company entities remain intact.
+3. 1571 1:1 soldier visuals remain visible at suitable LOD.
+4. White world labels are gone.
+5. Mouse-over info is readable and points to the correct Company/OOB lineage.
+6. LMB/Shift/Ctrl/drag-box/Esc selection remains unchanged.
+7. Soldier and rifle silhouette are visibly improved without unacceptable FPS loss.
+8. RMB still logs `MovementDeferredToGateD` and performs no movement.
 
 ### Gate D — Company movement and navigation
 
@@ -222,9 +248,9 @@ Shared stable Unit IDs connect campaign and tactical layers.
 - Reorganisation never teleports units.
 - Tactical casualties/ammo/fatigue return to the campaign state.
 
-## 7. 00.01.00b runtime isolation
+## 7. Runtime isolation
 
-00.01.00b deliberately does not allow the old 09j runtime to become a hidden parent authority.
+The clean rebuild deliberately does not allow the old 09j runtime to become a hidden parent authority.
 
 A `BattleManager` blocker is created before scene load so the legacy `PrototypeBootstrap` does not build the four old Regiment objects. Before the first normal Update, legacy MonoBehaviour runtime layers are disabled except:
 
@@ -233,7 +259,7 @@ A `BattleManager` blocker is created before scene load so the legacy `PrototypeB
 
 The clean rebuild then creates its own minimal QA field, camera, OOB registry, eight Company entities and selection owner.
 
-This means 00.01.00b has deliberately:
+Current isolation remains:
 
 ```text
 Legacy Regiment runtime objects: 0
@@ -245,38 +271,20 @@ Brigade AI: inactive
 Artillery/cavalry: inactive
 ```
 
-This isolation is a feature of the gate, not missing functionality.
+This isolation is intentional and remains a hard acceptance rule until each later gate explicitly introduces a single owner.
 
-## 8. 00.01.00b acceptance test
+## 8. Version strategy
 
-The gate passes only when all of these are true:
+The clean rebuild uses a tactical version family beginning at `v00.01.00a`.
 
-1. Unity 6000.6.0f1 compiles with no red errors.
-2. Visible marker is `PROJECT 1864 | v00.01.00b TEST`.
-3. Console shows `REBUILD-OOB-00B|Installed=True`.
-4. Console shows `REBUILD-00B|Installed=True|GateA=True|GateB=True`.
-5. Exactly eight Company footprints are visible: four Danish and four Prussian.
-6. One Danish Company can be selected without selecting its neighbours.
-7. Shift adds Companies.
-8. Ctrl toggles Companies.
-9. Drag-box selects multiple Danish Companies.
-10. Esc clears selection.
-11. There are no old Regiment formations, HQs, range cones or legacy PlayerCommander order previews.
-12. RMB does not move any Company and logs `MovementDeferredToGateD`.
-13. Every tactical Company exposes a stable UnitID independent of its display name.
-14. Company transforms are not parented to OOB Regiment/Battalion transforms.
+- `v00.01.00b` = Gate A+B runtime foundation.
+- `v00.01.00c` = Gate C 1:1 renderer.
+- `v00.01.00c2` = soldier visual/readability upgrade + hover info, no simulation changes.
+- next simulation gate = Gate D Company movement/navigation.
 
-## 9. Version strategy
+Every delivered TEST gate receives a visible build suffix. The old `channel-test` history remains untouched. Tactical rebuild delivery now uses the dedicated `strategi/kampe_rebuild` branch and separate local working tree `Strategy-Kampe-Rebuild`.
 
-The clean rebuild uses a new tactical version family beginning at:
-
-`v00.01.00a`
-
-`v00.01.00b` is the first runtime gate implementation.
-
-Every delivered TEST gate receives a visible build suffix. The old `channel-test` is not force-moved backwards over the 09l5 history. The rebuild uses its own test channel until a tested gate is deliberately promoted.
-
-## 10. Source/reference material
+## 9. Source/reference material
 
 The old 09j runtime is the source-code baseline. 09k–09l5 remain evidence/reference for OOB, 1:1 rendering, HQ, flags, cavalry/artillery and Company-control lessons.
 
