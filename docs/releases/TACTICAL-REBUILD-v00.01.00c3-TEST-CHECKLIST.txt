@@ -1,0 +1,12 @@
+PROJECT 1864 v00.01.00c3 TEST CHECKLIST
+
+1. Visible marker: v00.01.00c3 TEST.
+2. Exactly 8 Companies and ~1571 soldiers.
+3. LMB/Shift/Ctrl/box/Esc selection unchanged.
+4. F toggles selected Danish Companies Line/Column.
+5. Z/X rotates selected Danish Companies +/-15 degrees in place.
+6. V toggles Clean/Debug view.
+7. H toggles hover info.
+8. No permanent labels and no flags/standards.
+9. RMB does not move Companies; Gate D remains deferred.
+10. No movement/navigation/combat/AI introduced.
