@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09l5 TEST + 09m1: keep companies detached; do not force AI off when the
-// Strategy-Kamp command menu owns fire-policy / AI toggles.
+// v00.00.09l5 TEST + 09m2: keep companies detached; keep officer AI alive so
+// regiment/brigade command can write company waypoints.
 [DefaultExecutionOrder(430)]
 public sealed class PrototypeIndependentCompanyMovement09L5 : MonoBehaviour
 {
@@ -185,14 +185,14 @@ public sealed class PrototypeIndependentCompanyMovement09L5 : MonoBehaviour
             if (regiment == null || !regiment.gameObject.activeInHierarchy || !parents.Add(regiment))
                 continue;
 
-            if (!commandMenu)
-            {
-                OfficerAIController officer = regiment.GetComponent<OfficerAIController>();
-                if (officer != null && officer.AIEnabled)
-                    officer.SetAIEnabled(false);
-            }
+            OfficerAIController officer = regiment.GetComponent<OfficerAIController>();
+            bool keepOfficer = commandMenu || PrototypeKampCommandAuthority09M2.ShouldKeepOfficerAI(regiment);
+            if (!keepOfficer && officer != null && officer.AIEnabled)
+                officer.SetAIEnabled(false);
 
-            regiment.OrderHold();
+            // Empty regiment pivot must stay still. Live companies are detached.
+            if (officer == null || !officer.AIEnabled)
+                regiment.OrderHold();
         }
     }
 
