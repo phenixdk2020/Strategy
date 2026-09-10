@@ -1,24 +1,24 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.13m
-Build status: UNIFIED DENMARK 3D MAP DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
-Build name: CAMPAIGN UNIFIED DENMARK 3D MAP V13M
-Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m
+Prototype version: v00.00.13m1
+Build status: UNIFIED DENMARK 3D MAP STARTUP ISOLATION DEV / MAP-ONLY / CLEAN CAMPAIGN LINEAGE
+Build name: CAMPAIGN UNIFIED DENMARK 3D MAP V13M1
+Base lineage: clean campaign v00.00.10e -> rebuilt v00.00.11 -> v00.00.13 -> v00.00.13a -> v00.00.13b -> v00.00.13c -> v00.00.13d -> v00.00.13e -> v00.00.13f -> v00.00.13g -> v00.00.13h -> v00.00.13h1 -> v00.00.13i -> v00.00.13i1 -> v00.00.13i2 -> v00.00.13j -> v00.00.13k -> v00.00.13k1 -> v00.00.13l -> v00.00.13m -> v00.00.13m1
 Runtime scene: Assets/Scenes/CampaignMap.unity
 Editor startup rule: campaign branch opens CampaignMap; PrototypeBattle is explicit-only and must never auto-open
 Campaign isolation: tactical TEST navigation/AI experiments are excluded from this build
 Runtime isolation: GrandCampaignBootstrap.CampaignModeEnabled remains scene-aware so tactical PrototypeBootstrap cannot build on CampaignMap
-v13m architecture rule: only one visible map stack may own the Denmark campaign presentation. Once v13m is ready, v13j/v13k/v13l renderers and their OnGUI/status layers are disabled while the v13j MeshCollider is retained as elevation reference.
-v13m base-map rule: the full Denmark campaign envelope uses one continuous 520x340 visual mesh containing elevated land and flat water, rather than disconnected viewport rectangles over visible legacy terrain.
-v13m atlas rule: a complete z8 overview atlas is stitched from the map provider into one texture and mapped across the full Denmark mesh using Web-Mercator-correct UVs. Missing tiles receive a neutral fallback instead of exposing old green terrain.
-v13m no-hole rule: the country atlas always remains underneath close detail, so panning/zooming cannot reveal raw v13j terrain between live tile patches.
-v13m detail rule: viewport-only 5x5 z10-z13 tiles may overlay the base atlas at medium/close zoom for road/place-name detail while the unified country surface remains continuously visible below.
-v13m cache rule: map tiles reuse existing interactive/premium caches where possible and write new tiles under Application.persistentDataPath/PROJECT1864/MapCache/unified. Cache retention remains 14 days.
-v13m camera rule: minimum height 0.12, terrain clearance 0.08, near clip 0.003 and FOV 45 preserve close map inspection.
-v13m landmark rule: Aalborg Kaserne and Aarhus Gård are rebuilt as compact terrain-anchored close-zoom landmarks owned by v13m; old v13k/v13l landmark renderers remain hidden.
-v13m route/settlement presentation rule: prototype GIS_Road_/GIS_Ferry_ lines, old city blocks and duplicate legacy map renderers remain suppressed. Cartographic data is the temporary road/water/place-name visual reference.
-v13m provider rule: default development cartography remains OpenStreetMap Standard with visible attribution. It is a present-day development basemap only, not authoritative 1864 infrastructure/history.
+v13m architecture rule: one unified Denmark map renderer owns the visible presentation; v13j/v13k/v13l are implementation predecessors only.
+v13m1 startup isolation rule: legacy renderers are hidden from the first frames of CampaignMap instead of remaining visible while the unified atlas is assembled.
+v13m1 dependency rule: v13j may continue internally only until V013J_SmoothTerrain provides its MeshCollider; its renderer stays hidden and the component is disabled once the collider exists.
+v13m1 map reveal rule: V013M_UnifiedDenmarkSurface remains hidden until its stitched map texture is actually assigned. During loading only a neutral loading message is shown, preventing the visible map-1 then map-2 transition.
+v13m1 GUI cleanup rule: v13k/v13l presentation components and v13j historical labels are disabled immediately so old status/labels cannot draw over the unified map.
+v13m1 legacy cleanup rule: V013A-L, GIS_, Outline_, StrategicLink_, CampaignNode_, CampaignControl_ and Settlement3D_ renderers are force-hidden unless they belong to V013M.
+v13m1 overlay rule: build/version text is moved down to y=88 so it no longer collides with the top campaign time controls.
+v13m base-map rule: one continuous 520x340 mesh contains elevated land and flat water, with a complete stitched z8 overview atlas and viewport z10-z13 detail overlays.
+v13m no-hole rule: the country atlas always remains beneath close detail, so panning/zooming cannot expose legacy green terrain.
+v13m landmark rule: Aalborg Kaserne and Aarhus Gård remain compact terrain-anchored close-zoom landmarks owned by v13m.
 v13h1 MAP-ONLY rule remains active: campaign combat/contact handling, QA enemy march orders, formation movement, battle contact UI and PrototypeBattle transition remain temporarily disabled while map presentation is under QA.
-Simulation isolation: strategic lat/lon, route distance, ETA, campaign time, logistics and tactical AI/navigation are unchanged by v13m.
+Simulation isolation: strategic lat/lon, route distance, ETA, campaign time, logistics and tactical AI/navigation are unchanged by v13m1.
 Input warning: legacy Input Manager remains temporarily enabled because tactical and older campaign controls still use UnityEngine.Input. Project-wide Input System migration remains separate work.
 Promotion status: DEV only; official active campaign remains v00.00.11 until formal gates/QA are satisfied
 Unity baseline: 6000.6.0f1 (Unity 6.6)
