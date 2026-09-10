@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09l5 TEST
-// Decouples company tactical centres from the Regiment transform so a regiment no longer
-// behaves as one rigid body. Multi-company RMB orders preserve relative company spacing
-// around the selected group centroid instead of rebuilding one giant lateral line.
+// v00.00.09l5 TEST + 09m1: keep companies detached; do not force AI off when the
+// Strategy-Kamp command menu owns fire-policy / AI toggles.
 [DefaultExecutionOrder(430)]
 public sealed class PrototypeIndependentCompanyMovement09L5 : MonoBehaviour
 {
@@ -173,16 +171,13 @@ public sealed class PrototypeIndependentCompanyMovement09L5 : MonoBehaviour
                 company.SetSelected(true);
             }
         }
-
-        Debug.Log(
-            "COMPANY-AUTH-09L5|WholeRegimentSelectionConverted=True|Parents=" + parents.Count +
-            "|Companies=" + selectedCompanies.Count);
     }
 
     private static void SuppressParentMovementWriters(PrototypeCompanyTacticalControl09L2 control)
     {
         HashSet<Regiment> parents = new HashSet<Regiment>();
         IReadOnlyList<PrototypeCompanyTacticalEntity09L2> companies = control.Companies;
+        bool commandMenu = Object.FindAnyObjectByType<PrototypeKampCommandQa09M1>() != null;
 
         for (int i = 0; i < companies.Count; i++)
         {
@@ -190,9 +185,12 @@ public sealed class PrototypeIndependentCompanyMovement09L5 : MonoBehaviour
             if (regiment == null || !regiment.gameObject.activeInHierarchy || !parents.Add(regiment))
                 continue;
 
-            OfficerAIController officer = regiment.GetComponent<OfficerAIController>();
-            if (officer != null && officer.AIEnabled)
-                officer.SetAIEnabled(false);
+            if (!commandMenu)
+            {
+                OfficerAIController officer = regiment.GetComponent<OfficerAIController>();
+                if (officer != null && officer.AIEnabled)
+                    officer.SetAIEnabled(false);
+            }
 
             regiment.OrderHold();
         }
@@ -280,15 +278,8 @@ public sealed class PrototypeIndependentCompanyMovement09L5 : MonoBehaviour
             if (finalFacing.sqrMagnitude < 0.01f)
                 finalFacing = averageForward;
 
-            // Overrides the legacy 09l2 "one giant line" group destination written earlier
-            // in the same mouse-up frame. Every company receives its own translated target.
             snapshot.Company.IssueMove(destination, finalFacing.normalized, explicitFacing, rightAppend);
         }
-
-        Debug.Log(
-            "COMPANY-AUTH-09L5|Order=GroupMove|Companies=" + snapshots.Count +
-            "|RelativeOffsetsPreserved=True|RotateOffsets=" + explicitFacing +
-            "|Append=" + rightAppend);
 
         snapshots.Clear();
     }
