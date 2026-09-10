@@ -1,0 +1,9 @@
+PROJECT 1864
+Tactical rebuild build: v00.01.00b TEST
+Gate: A+B
+Delivery branch: channel-rebuild
+Work branch: work/tactical-rebuild-v00.01.00
+Purpose: clean OOB + independent Company selection
+Movement: deferred
+Combat: deferred
+1:1 renderer: deferred to Gate C
