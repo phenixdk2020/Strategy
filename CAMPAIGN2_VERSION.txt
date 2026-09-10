@@ -1,4 +1,5 @@
-v00.00.21-C2
-Label/layer reset on campaign2.
-Only C2 diorama landmarks remain.
-Legacy node labels, control discs and v13 overlays are switched off.
+v00.00.23-C2
+CampaignMapController.enabled = false on this track.
+That script was still drawing every node label in OnGUI.
+Clock/pause lives in Campaign2ClockHud.
+Diorama landmark names remain.

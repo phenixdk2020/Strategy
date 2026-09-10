@@ -2,16 +2,14 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[DefaultExecutionOrder(33000)]
+[DefaultExecutionOrder(-500)]
 public sealed class Campaign2FreshStartV021 : MonoBehaviour
 {
-    static readonly string[] HidePrefixes =
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void MuteControllerEarly()
     {
-        "CampaignControl_", "CampaignNode_", "CampaignFormation_",
-        "StrategicLink_", "CampaignRouteGhost",
-        "CampaignMapUsability", "CampaignMapSearchHover",
-        "CampaignHistoricalMapLabels"
-    };
+        // BeforeSceneLoad cannot find instances yet.
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void AutoCreate()
@@ -23,6 +21,11 @@ public sealed class Campaign2FreshStartV021 : MonoBehaviour
         new GameObject("Campaign2FreshStartV021").AddComponent<Campaign2FreshStartV021>();
     }
 
+    void Awake()
+    {
+        Strip();
+    }
+
     void LateUpdate()
     {
         Strip();
@@ -30,47 +33,24 @@ public sealed class Campaign2FreshStartV021 : MonoBehaviour
 
     static void Strip()
     {
-        Disable<CampaignMapUsabilityV011>();
-        Disable<CampaignMapSearchHoverV011>();
-        Disable<CampaignHistoricalMapLabelsV013J>();
-        Disable<CampaignVisualPolishV013A>();
-        Disable<CampaignVisualPolishV013B>();
-        Disable<CampaignLayerManagerV013>();
-        Disable<CampaignMapOnlyModeV013H1>();
-        Disable<CampaignVersionHud>();
-        Disable<CampaignBuildVersionOverlay>();
-
-        GameObject[] all = FindObjectsByType<GameObject>(FindObjectsInactive.Exclude);
-        for (int i = 0; i < all.Length; i++)
-        {
-            GameObject go = all[i];
-            if (go == null || string.IsNullOrEmpty(go.name))
-                continue;
-            if (go.GetComponent<Camera>() != null)
-                continue;
-            if (go.name.StartsWith("C2_", StringComparison.Ordinal))
-                continue;
-            if (go.name.StartsWith("Campaign2", StringComparison.Ordinal))
-                continue;
-            for (int p = 0; p < HidePrefixes.Length; p++)
-            {
-                if (go.name.StartsWith(HidePrefixes[p], StringComparison.Ordinal))
-                {
-                    go.SetActive(false);
-                    break;
-                }
-            }
-        }
+        DisableKeepObject<CampaignMapController>();
+        DisableKeepObject<CampaignMapUsabilityV011>();
+        DisableKeepObject<CampaignMapSearchHoverV011>();
+        DisableKeepObject<CampaignHistoricalMapLabelsV013J>();
+        DisableKeepObject<CampaignVisualPolishV013A>();
+        DisableKeepObject<CampaignVisualPolishV013B>();
+        DisableKeepObject<CampaignLayerManagerV013>();
+        DisableKeepObject<CampaignMapOnlyModeV013H1>();
+        DisableKeepObject<CampaignVersionHud>();
+        DisableKeepObject<CampaignBuildVersionOverlay>();
     }
 
-    static void Disable<T>() where T : Behaviour
+    static void DisableKeepObject<T>() where T : Behaviour
     {
         T[] found = FindObjectsByType<T>(FindObjectsInactive.Include);
         for (int i = 0; i < found.Length; i++)
         {
             if (found[i] == null)
-                continue;
-            if (found[i].GetComponent<Camera>() != null)
                 continue;
             found[i].enabled = false;
         }
