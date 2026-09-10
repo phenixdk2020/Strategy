@@ -1,29 +1,54 @@
 PROJECT 1864 - Tactical Rebuild
-Prototype version: v00.01.00a
-Build status: TEST / REBUILD FOUNDATION
-Build name: CLEAN COMPANY ARCHITECTURE REBUILD 00.01.00A
-Visible build marker: PROJECT 1864 | v00.01.00a TEST
+Prototype version: v00.01.00b
+Build status: TEST / GATE A+B
+Build name: CLEAN OOB + INDEPENDENT COMPANY SELECTION TEST 00.01.00B
+Visible build marker: PROJECT 1864 | v00.01.00b TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: clean Company-first rebuild after v00.00.09l5 freeze
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.01.00a - Tactical rebuild foundation
-- New rebuild branch starts from the last pre-full-scale tactical baseline: v00.00.09j commit b9e5f520abe9a8306b76d79df85f79b0a20e6fe8.
-- v00.00.09l5 remains preserved separately as failed QA evidence and is not used as the runtime base.
-- No 09k-09l5 Company/full-scale compatibility layers are carried into the new branch.
-- Rebuild architecture rule: Company is the first-class infantry tactical entity.
-- OOB parent relationships are data only and must never require Transform parenting.
-- One tactical entity has exactly one movement/steering owner and one combat owner.
-- Regiment/Battalion/Brigade issue intent and aggregate state; they do not directly overwrite Company transforms each frame.
-- 1:1 visual soldiers remain the target, implemented through GPU instancing/LOD rather than one heavy GameObject per soldier.
-- First QA scale is intentionally small: one battalion per side, four Companies per battalion, approximately 180-220 men per Company.
-- Brigade AI, artillery and cavalry remain disabled until Company selection, movement, formation geometry and combat pass their gates.
-- Existing v00.00.09j systems are reference/baseline code only and will be replaced or retained selectively; they must not become parallel authority layers.
+v00.01.00b - Gate A+B: clean OOB and independent Company entities
+- Starts from the v00.01.00a rebuild foundation on work/tactical-rebuild-v00.01.00.
+- The legacy PrototypeBootstrap is prevented from constructing the old four-Regiment runtime by a pre-scene BattleManager blocker.
+- Before the first Update, legacy MonoBehaviour runtime layers are disabled except RTSCameraController and the visible build marker.
+- No legacy PlayerCommander participates in Company selection.
+- No Regiment tactical entity is spawned by the rebuild runtime.
+- New OOB data uses stable UnitID values that are separate from display names.
+- OOB parent relationships are stored only as ParentUnitId data; Companies are not Transform children of Regiment or Battalion objects.
+- Full reference OOB data exists for one Danish Regiment and one Prussian Regiment.
+- Denmark: 1. Infanteri-Regiment / Danske Livregiment, 1540 total working strength, two battalions and eight Company records.
+- Prussia: 8th Regiment QA, 2460 total working strength, three battalions and twelve Company records.
+- Only I Battalion on each side is TacticalActive in this QA gate.
+- Active Company strength: Denmark 759 across four Companies; Prussia 812 across four Companies; total active manpower 1571.
+- Exactly eight TacticalCompanyEntity00B objects are spawned in world space under a neutral scene container, not under their OOB parents.
+- Gate B uses a simple low rectangular Company footprint as a QA visual. 1:1 soldier instancing is deliberately deferred to Gate C.
+- Company selection has exactly one input owner: TacticalCompanySelection00B.
+- LMB selects one Danish Company.
+- Shift+LMB adds a Company.
+- Ctrl+LMB toggles a Company.
+- LMB drag box-selects Danish Companies by Company centre.
+- Esc clears selection.
+- RMB intentionally does not move units in 00.01.00b; it logs MovementDeferredToGateD so movement is not mixed into the selection/OOB acceptance gate.
+- Company movement owner = none in this gate.
+- Company combat owner = none in this gate.
+- No Officer AI, Brigade AI, artillery or cavalry is active in this gate.
 
-Planned gates
-A. Stable UnitID + OOB data model.
-B. Independent Company tactical entities + click/box selection.
+QA acceptance for 00.01.00b
+1. Unity compiles without red errors.
+2. Visible marker is PROJECT 1864 | v00.01.00b TEST.
+3. Console contains REBUILD-OOB-00B|Installed=True.
+4. Console contains REBUILD-00B|Installed=True|GateA=True|GateB=True.
+5. Exactly eight Company footprints are visible: four Danish and four Prussian.
+6. Danish Companies can be selected individually by LMB.
+7. Shift adds and Ctrl toggles selections.
+8. Drag-box selection selects multiple Danish Companies.
+9. Selecting one Company never selects/moves the other three.
+10. There are no visible legacy Regiment formations, HQs, range cones or old PlayerCommander order previews.
+11. RMB does not move anything yet and reports that movement is deferred.
+12. Company GameObjects are independent of Regiment/Battalion Transform parenting.
+
+Planned next gates
 C. 1:1 Company-driven GPU renderer.
 D. Company movement/navigation with one steering owner, including hard/soft obstacles and bridge/river constraints.
 E. Company combat: range, LOS, ammo, fire, reload, casualties, morale/cohesion.
