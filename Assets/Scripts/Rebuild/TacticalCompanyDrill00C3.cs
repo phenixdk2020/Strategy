@@ -25,9 +25,16 @@ namespace Project1864.Rebuild
 
         private void Start()
         {
+            // c3 supersedes the c2 presentation renderer. Both may auto-create during
+            // AfterSceneLoad, so disable the old presentation component before the first Update.
+            TacticalCompanyRenderer00C oldRenderer = UnityEngine.Object.FindAnyObjectByType<TacticalCompanyRenderer00C>();
+            if (oldRenderer != null)
+                oldRenderer.enabled = false;
+
             Debug.Log(
                 "REBUILD-DRILL-00C3|Installed=True|FormationToggle=F|RotateLeft=Z|RotateRight=X|" +
-                "DebugView=V|HoverToggle=H|TranslationWrites=False|CombatWrites=False|AIWrites=False");
+                "DebugView=V|HoverToggle=H|C2RendererDisabled=" + (oldRenderer != null) +
+                "|TranslationWrites=False|CombatWrites=False|AIWrites=False");
         }
 
         private void Update()
