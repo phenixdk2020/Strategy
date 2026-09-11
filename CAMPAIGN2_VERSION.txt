@@ -1,5 +1,2 @@
-v00.00.23-C2
-CampaignMapController.enabled = false on this track.
-That script was still drawing every node label in OnGUI.
-Clock/pause lives in Campaign2ClockHud.
-Diorama landmark names remain.
+v00.00.24-C2
+Compile fix: Campaign2Config.InTheatre restored.

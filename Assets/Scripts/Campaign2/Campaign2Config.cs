@@ -2,7 +2,7 @@ using UnityEngine;
 
 public static class Campaign2Config
 {
-    public const string BuildTag = "v00.00.23-C2";
+    public const string BuildTag = "v00.00.24-C2";
     public const string BuildName = "CAMPAIGN2 3D DENMARK DIORAMA";
     public const string RootName = "C2_DENMARK_DIORAMA";
     public const string LandObjectName = "C2_Land";
@@ -33,4 +33,10 @@ public static class Campaign2Config
     public static readonly Color SkyColor = new Color(0.42f, 0.48f, 0.50f, 1f);
     public static readonly Color FogColor = new Color(0.50f, 0.58f, 0.58f, 1f);
     public static readonly Color SunColor = new Color(1.00f, 0.93f, 0.80f, 1f);
+
+    public static bool InTheatre(double latitude, double longitude)
+    {
+        return latitude >= 53.35 && latitude <= 57.95 &&
+               longitude >= 8.00 && longitude <= 15.25;
+    }
 }
