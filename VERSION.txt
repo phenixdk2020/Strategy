@@ -1,36 +1,30 @@
 PROJECT 1864 - Tactical Rebuild
-Prototype version: v00.01.00c4
-Build status: TEST / GATE A+B+C4
-Build name: ANIMATED DRILL + VISUAL SOLDIER SCALE TEST 00.01.00C4
-Visible build marker: PROJECT 1864 | v00.01.00c4 TEST
+Prototype version: v00.01.00c5
+Build status: TEST / GATE A+B+C5
+Build name: QA LAB + CLOSE SOLDIER DETAIL TEST 00.01.00C5
+Visible build marker: PROJECT 1864 | v00.01.00c5 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: clean Company-first rebuild after v00.00.09l5 freeze
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Delivery branch: strategi/kampe_rebuild
 
-v00.01.00c4 - Animated Drill + Visual Soldier Scale
-- Builds directly on v00.01.00c3.
+v00.01.00c5 - QA Lab + Close Soldier Detail
+- Builds directly on v00.01.00c4.
 - Active OOB remains exactly eight independent Companies: four Danish and four Prussian.
 - Actual tactical manpower remains Denmark 759 + Prussia 812 = 1571 men.
-- Stable UnitID/OOB and clean Company-first ownership remain unchanged.
-- F no longer teleports between Line/Column. Selected Danish Companies reform over 2.2 seconds.
-- Z/X no longer snap facing. Selected Danish Companies rotate +/-15 degrees over 0.75 seconds in place.
-- Company world position is preserved throughout drill transitions; this is not Gate D movement.
-- Renderer interpolates each visible soldier between its old and new formation slot during reforming.
-- Selection footprint, hit box and outline interpolate with the formation footprint.
-- F10 opens visual settings.
-- Soldier visual ratios available: 1:1, 1:2, 1:3, 1:4, 1:5, 1:10, 1:20.
-- Ratio is VISUAL ONLY. Example: a 190-man Company at 1:2 renders 95 representative soldiers but retains PresentStrength=190.
-- Reduced representatives are sampled across the entire canonical full-strength formation, so 1:2 does not halve formation frontage/depth.
-- Future movement, combat, ammo, casualties, morale and OOB calculations must always use actual strength/state, never representative count.
-- c4 renderer improves the low-poly soldier again: tapered torso/coat, separate legs/boots, arms/hands, belts, pack, cartridge box, musket stock, metal barrel and bayonet.
-- Permanent world labels remain removed.
-- H now has explicit ON/OFF feedback and controls the c4 mouse-over info panel.
-- Hover panel also shows current visual ratio, representative count and drill transition state.
-- V toggles Debug/Clean presentation with explicit feedback.
-- Legacy c2/c3 presentation scripts are suppressed only as superseded presentation components; tactical ownership is unchanged.
-- No standards/flags in this revision.
+- Soldier visual ratio setting from c4 remains available at 1:1, 1:2, 1:3, 1:4, 1:5, 1:10 and 1:20.
+- Visual ratio remains presentation-only; tactical manpower, future ammo, casualties, morale and combat state are not scaled by representative count.
+- Animated F Line/Column reforming and animated Z/X turning from c4 remain active.
+- F8 opens the new QA Lab inspector.
+- QA Lab shows selected count, first selected UnitID/name, actual strength, visible representatives, formation, facing, footprint size and reform/turn state.
+- F7 toggles Auto Drill stress testing for selected Danish Companies. It cycles Line/Column and +45/-45 degree animated turns without translation.
+- F6 runs an automated visual-ratio benchmark over 1:1, 1:2, 1:5, 1:10 and 1:20, measures average frame time/FPS and restores the original ratio afterwards.
+- Y toggles selected-Company facing arrows. These are read-only QA overlays showing the actual Company forward direction.
+- A new close-range soldier detail overlay adds stronger headgear silhouette, visor/brim, front badge, collar/shoulder detail and a Prussian spike at close range.
+- Close soldier detail overlay follows visual ratio and animated Line/Column transitions.
+- c5 adds no flags/standards.
+- Permanent world labels remain removed; hover info from c4 remains available.
 - RMB movement remains OFF and deferred to Gate D.
 - Navigation, combat, Officer AI, Brigade AI, artillery and cavalry remain inactive.
 
@@ -40,43 +34,38 @@ Controls
 - Ctrl+LMB: toggle selection.
 - LMB drag: box selection.
 - Esc: clear selection.
-- F: animated Line <-> Column reform (2.2 s).
-- Z/X: animated facing left/right 15 degrees (0.75 s).
-- F10: open/close visual settings.
+- F: animated Line <-> Column reform.
+- Z/X: animated facing left/right 15 degrees.
+- F10: open/close visual ratio settings.
 - H: hover info ON/OFF.
 - V: Debug/Clean view.
+- F8: QA Lab panel ON/OFF.
+- F7: Auto Drill stress test ON/OFF.
+- F6: start/stop visual-ratio benchmark.
+- Y: facing-arrow overlay ON/OFF.
 - RMB: still intentionally ignored until Gate D.
 
-Visual scale semantics
-- 1:1 = one rendered representative per actual soldier.
-- 1:2 = approximately half the rendered soldier figures.
-- 1:3 / 1:4 / 1:5 / 1:10 / 1:20 = progressively fewer presentation figures.
-- Tactical manpower never changes when this setting changes.
-- Formation dimensions remain based on actual manpower, not displayed representatives.
-
-QA acceptance for v00.01.00c4
+QA acceptance for v00.01.00c5
 1. Unity compiles without red errors.
-2. Visible marker is PROJECT 1864 | v00.01.00c4 TEST.
-3. Console contains REBUILD-SETTINGS-00C4|Installed=True.
-4. Console contains REBUILD-RENDER-00C4|Installed=True.
-5. Console contains REBUILD-DRILL-00C4|Installed=True.
-6. Console contains REBUILD-HOVER-00C4|Installed=True.
-7. Exactly eight independent Companies remain in scene.
-8. At 1:1 the renderer shows about 1571 representative soldiers.
-9. At 1:2 it shows about half as many representatives while hover/OOB still reports actual strength.
-10. Changing ratio live does not change Company footprint or selection size.
-11. F visibly reforms selected Companies over time rather than teleporting slots.
-12. Z/X visibly turn selected Companies over time without translating their world position.
-13. Selection still works throughout and after drill transitions.
-14. H visibly toggles hover functionality and displays an ON/OFF toast.
-15. F10 opens the visual scale panel and ratio buttons update live.
-16. No permanent Company world labels appear.
-17. No standards/flags appear.
-18. RMB still does not move Companies and reports MovementDeferredToGateD.
-19. No old Regiment runtime/Officer AI/Brigade AI is reactivated.
-20. FPS comparison can be made at 1:1, 1:2, 1:5 and 1:10.
+2. Visible marker is PROJECT 1864 | v00.01.00c5 TEST.
+3. Console contains REBUILD-QALAB-00C5|Installed=True.
+4. Console contains REBUILD-QA-OVERLAY-00C5|Installed=True.
+5. Console contains REBUILD-SOLDIER-DETAIL-00C5|Installed=True.
+6. Existing c4 renderer/settings/drill/hover continue working.
+7. F8 opens a QA panel with live selected-Company data.
+8. F7 cycles selected Companies through animated formation and facing tests without changing world position.
+9. F6 cycles visual ratios and logs average FPS/ms for each stage, then restores the original ratio.
+10. Y toggles forward-direction arrows only for selected Companies.
+11. Close zoom shows clearer headgear/trim silhouette than c4.
+12. 1:2 and other ratios still spread representative soldiers across the full actual-strength formation.
+13. Selection remains stable while reforming, turning and running Auto Drill.
+14. Hover info remains available through H.
+15. No permanent Company labels or flags appear.
+16. RMB still does not move Companies and reports MovementDeferredToGateD.
+17. No legacy Regiment runtime/Officer AI/Brigade AI is reactivated.
 
 Previous revisions
+- v00.01.00c4: Animated Drill + Visual Soldier Scale.
 - v00.01.00c3: Visual Polish + Drill Test.
 - v00.01.00c2: Soldier Visual Upgrade + Hover Info.
 - v00.01.00c: Gate C 1:1 GPU renderer.
