@@ -1,129 +1,96 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10g
-Build status: TRUE 11 BASEMAP LAB / PROVIDER ARCHITECTURE
-Build name: CAMPAIGN3 TRUE 11 BASEMAPS
-Branch: channel-campaign3
-Base lineage: clean v00.00.10e campaign foundation -> v00.00.10f style lab -> v00.00.10g true provider lab
-v10f rollback: backup/channel-campaign3-v10f-before-true11-20260911
-Previous Campaign3 v13n3 rollback: backup/channel-campaign3-v13n3-before-maplab11-20260911
+Prototype version: v00.00.10i
+Build status: CAMPAIGN4 PLAYABLE 3D MAP FOUNDATION / UNITY QA PENDING
+Build name: CAMPAIGN4 DENMARK 1851 3D + TOP40 CITY LOD
+Branch: channel-campaign4
+Base lineage: clean v00.00.10e campaign foundation -> v00.00.10f style lab -> v00.00.10g true provider lab -> v00.00.10h historical 1850 city layer -> v00.00.10i playable 3D camera + city LOD
+Campaign3 rollback/reference remains: channel-campaign3
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
 Coordinate contract: WGS84 longitude/latitude is authoritative for shared gameplay data
 
-v10g PURPOSE:
-- Replaces the v10f concept of one Natural Earth mesh with eleven render styles.
-- Creates eleven separate basemap provider roots named BASEMAP_01_* through BASEMAP_11_*.
-- Only the selected basemap root is active.
-- The old v10e Natural Earth renderers remain in the project as a rollback/geography scaffold but are hidden by v10g and are NOT used as a silent fallback.
-- Shared campaign gameplay remains separate: city, zone and army coordinates retain WGS84 identity.
-- Provider status is shown in Play mode. Missing API keys/assets are reported explicitly as KEY REQUIRED / ASSET MISSING.
+v10h HISTORICAL CITY LAYER:
+- Campaign4CityLayer1850.cs replaces the old 10-city presentation scaffold at runtime.
+- Exactly 40 city roots are created from the official 1 February 1850 købstad population ranking.
+- Population controls strategic marker hierarchy.
+- Esbjerg is intentionally absent from the 1851 layer.
+- Campaign3 source remains untouched because the new city layer is Campaign4-specific.
 
-TRUE 11 BASEMAP PROVIDERS:
+v10i PLAYABLE 3D MAP FOUNDATION:
+- Campaign4Camera3DController.cs converts Camera.main from orthographic top-down rendering to a perspective 3D strategy camera.
+- Mouse wheel provides deep country-to-city zoom.
+- WASD/arrows pan the focus point.
+- Middle mouse drag changes yaw/pitch.
+- Q/E rotate around the focus point.
+- Home resets to Denmark overview.
+- F focuses the Aalborg/Limfjord QA area.
+- Camera motion is applied in LateUpdate so the current gameplay/raycast prototype can remain operational while Campaign4 is isolated.
+
+CITY DETAIL LOD:
+- Campaign4CityDetailLOD.cs adds the first close-zoom settlement LOD.
+- Strategic city markers remain active at long range.
+- Near a city, the marker is replaced by deterministic runtime 3D settlement geometry.
+- The placeholder settlement contains roads, houses and a church.
+- Larger cities receive denser generated geometry and a longer detail activation range.
+- Generated buildings are technical LOD placeholders, not source-backed historical building reconstructions.
+- Future authored 1851 prefabs can replace the runtime placeholders without changing the strategic city data contract.
+
+3D TERRAIN FOUNDATION:
+- Provider 1 remains the default Campaign4 basemap.
+- Provider 1 builds real runtime terrain meshes from Mapzen/AWS Terrarium elevation tiles.
+- Elevation values are converted into Unity Y relief.
+- Explicit hydrology includes the Limfjord QA cut.
+- Official DHM/GeoDanmark remains the production target for Denmark terrain when integration/credentials are available.
+
+TRUE 11 BASEMAP PROVIDERS RETAINED FROM v10g:
 1. DEM / DHM-GEODANMARK TARGET
-   - Active pilot: Mapzen Terrain Tiles / AWS Terrarium elevation.
-   - Builds its own 3D mesh per terrain tile.
-   - Explicit hydrology mask cuts Limfjorden and selected major fjords from land geometry.
-   - Official Danish DHM/GeoDanmark remains the target source for the production Denmark provider and requires Datafordeler integration/credentials.
-
 2. CESIUM WORLD TERRAIN
-   - Cesium for Unity 1.25.1.
-   - Cesium World Terrain ion asset 1.
-   - Bing Maps Aerial ion raster overlay asset 2.
-   - Requires CESIUM_ION_TOKEN, persistent token file, or Cesium project default token.
-
 3. ARCGIS TOPOGRAPHIC
-   - Independent Esri World_Topo_Map raster XYZ provider.
-   - Denmark overview loaded at z8 into separate WGS84-projected tile geometry.
-
 4. MAPTILER 3D TERRAIN
-   - Cesium FromUrl provider using MapTiler terrain-quantized-mesh-v2.
-   - MapTiler streets-v4 raster overlay through Cesium URL-template overlay.
-   - Requires MAPTILER_API_KEY or persistent key file.
-
 5. HISTORICAL DANISH MAP
-   - Datafordeler Høje målebordsblade WMS.
-   - Historical 1:20,000 sheets from the 1842-1899 survey/issue period.
-   - Runtime WGS84 -> ETRS89/UTM32 conversion for WMS BBOX requests.
-   - Requires DATAFORDELER_API_KEY or persistent key file.
-   - No modern fallback is shown if credentials are absent.
-
 6. QGIS / BLENDER BAKED
-   - Independent local baked-map adapter.
-   - Reads StreamingAssets/PROJECT1864/Basemaps/QGIS/qgis-denmark.png.
-   - Reads WGS84 extent from qgis-denmark.bounds (minLon,minLat,maxLon,maxLat).
-   - Shows ASSET MISSING instead of substituting another map.
-
 7. PROCEDURAL DENMARK
-   - Own runtime terrain/landcover mesh.
-   - Independent generated materials and relief.
-   - Uses the project geography mask only as a coastline scaffold and applies v10g hydrology mask including Limfjorden.
-
 8. OPENSTREETMAP
-   - Independent OpenStreetMap Standard raster XYZ provider at z8.
-   - Visible attribution: © OpenStreetMap contributors.
-   - Persistent tile cache with minimum seven-day freshness window.
-   - Intended only for interactive comparison, not bulk/offline download.
-
 9. REALISTIC IMAGERY
-   - Independent Esri World Imagery raster XYZ provider at z8.
-   - Modern imagery is comparison/reference only and is never presented as 1851 truth.
-
 10. DIORAMA / MODEL TERRAIN
-   - Own generated 3D terrain mesh.
-   - Own physical landscape dressing and miniature city geometry.
-   - Hydrology mask includes Limfjorden and selected major fjords.
-
 11. HOI4 / PROVINCE MAP
-   - Own strategic province-cell geometry generated from campaign-zone centres.
-   - Own province materials and adjacency/border layer.
-   - Land/water mask includes Limfjorden.
-   - Province cells are simulation scaffolding, not historical administrative borders.
 
-CONTROLS:
+BASEMAP CONTROLS:
 - M or ] = next basemap.
 - [ = previous basemap.
 - Shift+F1 ... Shift+F11 = direct basemap selection.
-- Cesium/MapTiler globe mode: WASD/arrows pan, mouse wheel zoom, middle mouse drag pan, Home resets Denmark view.
 
-CREDENTIAL FILES:
-- Cesium: <persistentDataPath>/PROJECT1864/Cesium/ion-token.txt
-- MapTiler: <persistentDataPath>/PROJECT1864/Keys/maptiler.txt
-- Datafordeler: <persistentDataPath>/PROJECT1864/Keys/datafordeler.txt
-Environment variables CESIUM_ION_TOKEN, MAPTILER_API_KEY and DATAFORDELER_API_KEY take precedence where applicable.
+CAMPAIGN4 3D CAMERA CONTROLS:
+- Mouse wheel = zoom.
+- WASD / arrow keys = pan.
+- Middle mouse drag = orbit / tilt.
+- Q / E = rotate.
+- Home = Denmark overview.
+- F = Aalborg / Limfjord focus.
 
 AALBORG / LIMFJORD QA GATE:
-- Limfjorden is the mandatory high-detail validation area for v10g.
+- Limfjorden is the mandatory high-detail validation area.
 - Provider 1 must visibly separate Vendsyssel/Nørresundby side from Aalborg/Jutland side at the fjord.
-- Providers 3, 5, 8 and 9 must show their own source representation of Limfjorden when source/service access succeeds.
-- Providers 7, 10 and 11 must show the v10g hydrology representation rather than continuous land through Aalborg.
-- Providers 2 and 4 are validated independently in their globe/terrain coordinate system.
-
-DEPENDENCIES ADDED/RESTORED:
-- com.cesium.unity 1.25.1 via https://unity.pkg.cesium.com
-- Unity UI/image conversion/unitywebrequest/unitywebrequesttexture modules required by provider streaming.
-
-UNITY 6.6 COMPATIBILITY CLEANUP:
-- Replaced deprecated FindObjectsByType<T>(FindObjectsSortMode.None) calls in CampaignMapStyleSwitcher and the four navigation scripts reported during QA with the Unity 6.6 sort-free overload.
-- Navigation behavior/clearances were not changed by this cleanup.
-- The project still uses the legacy Input Manager; its deprecation notice is intentionally left for a separate input-system migration rather than mixed into the basemap build.
+- Press F to focus the validation area.
+- Perspective relief, hydrology, city LOD and zoom behavior must all be checked here before broader Denmark polish.
 
 ACCURACY GUARDRAILS:
 - Modern ArcGIS, OSM, imagery, Cesium and MapTiler layers are technology/basemap comparisons, not historical 1851 state.
 - Provider 1 currently uses Mapzen Terrarium as the runnable elevation pilot; it is not claimed to be official DHM.
-- Historical provider 5 covers the source service period 1842-1899; individual sheet survey/publication dates must be handled later if exact 1851 temporal filtering is required.
-- QGIS provider 6 is intentionally empty until a real baked asset package is supplied.
-- Shared city/zone anchors from v10e remain gameplay scaffolding until source-backed 1851 datasets replace them.
+- City WGS84 points are town-centre anchors, not exact 1851 urban footprints.
+- Procedural close-zoom buildings are placeholders until source-backed historical assets replace them.
 
 QA state: IMPLEMENTERET I GITHUB / AFVENTER UNITY 6.6 COMPILE + PLAY MODE QA
 QA checklist:
-1. Allow Unity Package Manager to install Cesium 1.25.1.
-2. Confirm scripts compile without errors.
-3. Enter Play mode; confirm header says v00.00.10g TRUE 11 BASEMAPS.
-4. Select each of 11 buttons and verify the source/status text changes.
-5. Verify provider 1 builds streamed DEM terrain and Limfjorden is visible at Aalborg.
-6. Verify provider 3 ArcGIS, provider 8 OSM and provider 9 imagery load distinct tile sets.
-7. Add credentials and verify providers 2, 4 and 5 independently.
-8. Verify provider 6 clearly reports QGIS BAKED ASSET MISSING until its real asset is supplied.
-9. Verify providers 7, 10 and 11 create visibly independent generated ground geometry.
-10. Confirm local gameplay selection/movement remains functional on local WGS84 providers.
-11. Report any Unity compile/runtime warnings or screenshots from Aalborg/Limfjorden before promoting beyond QA.
+1. Confirm scripts compile without errors in Unity 6.6.
+2. Enter Play mode and verify provider 1 loads DEM terrain.
+3. Confirm Camera.main becomes perspective after Campaign4 camera installation.
+4. Verify mouse-wheel zoom can move from Denmark overview to city scale.
+5. Verify middle-mouse orbit, Q/E rotation and WASD pan.
+6. Press F and verify Aalborg/Limfjorden is centered at close zoom.
+7. Confirm Limfjorden visibly cuts through the terrain at Aalborg.
+8. Confirm exactly 40 CITY1850 roots exist and Esbjerg is absent.
+9. Confirm nearby city Detail3D geometry activates and strategic markers hide.
+10. Zoom away and confirm Detail3D deactivates and strategic markers return.
+11. Confirm army/zone selection and right-click orders still function with the perspective camera.
+12. Report any compile/runtime warnings and screenshots from Aalborg/Limfjorden before promotion.
