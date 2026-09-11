@@ -18,6 +18,41 @@ Dette backlog-supplement konkretiserer den allerede besluttede økonomi-/udvikli
 | B-168 | BESLUTTET | Synlig udvikling på strategikortet | Forbedrede veje/jernbaner, stationer, depoter, industri, byvækst og befæstninger skal så vidt muligt kunne aflæses visuelt på strategikortet. |
 | B-169 | PLANLAGT | Regional development UI | Region/by-panel viser population, workforce, food, horses, industry, stockpiles, transport, aktive projekter, bottlenecks, condition og forventet completion. |
 
+## Åbne designidéer
+
+### SD-I01 — Modulære kasernekomplekser
+
+**Status: IDÉ / IKKE BESLUTTET**
+
+Undersøg om kaserner/mobiliseringscentre skal opbygges som synlige, modulære militære komplekser frem for én enkelt bygning eller en abstrakt level-værdi.
+
+Mulige moduler:
+
+- kaserne/hovedbygning og administration,
+- separat infanterikaserne,
+- artillerikaserne/batteriområde,
+- kanon-/materielskur,
+- stalde til artilleri-, kavaleri- og trækheste,
+- remount-/hestegård,
+- vogn- og seletøjsbygning,
+- depot/magasin til uniformer, våben og feltudrustning,
+- eksercer-/paradeplads,
+- skyde-/øvelsesområde,
+- sygestue/lille lazaret,
+- officers-/administrationsbygning.
+
+Foreløbig designretning:
+
+- Hvert modul bør give **konkret kapacitet** snarere end kun en procentbonus.
+- Et kompleks skal kunne specialiseres mod infanteri, artilleri, kavaleri/heste eller mobilisering.
+- Nye moduler skal så vidt muligt blive **synlige på strategikortet**, så anlægget fysisk vokser.
+- Mænd, heste, kanoner, vogne, ammunition og materiel bør have separate relevante kapacitetsgrænser.
+- Artillerienheder bør kræve passende personel-, materiel- og hestekapacitet; infanteri bør primært afhænge af indkvartering, drill, depot og træning.
+- Et stort kompleks kan rumme flere våbenarter samtidigt.
+- Undersøg faste sockets/plots kontra datadrevet layoutskabelon for placering af moduler.
+- Undersøg nation-/regionsspecifik arkitektur og historiske kasernelayouts.
+- Senere design skal afklare skade/brand/bombardement på individuelle bygninger og om mobiliserede enheder fysisk samles ved komplekset før afmarch.
+
 ## Designværn
 
 - Udvikling skal skabe strategiske trade-offs, ikke micromanagement af hver enkelt gård eller fabrik.
