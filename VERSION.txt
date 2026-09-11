@@ -1,5 +1,5 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.08
+Prototype version: v00.00.09
 Build status: TEST
 Design manual baseline: v00.02.08
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
@@ -10,5 +10,9 @@ P0A v00.00.07 runtime observation: bootstrap/rendering works in Play Mode
 Combat cadence: weapon profile base reload + bounded experience modifier
 Volley feedback: salves may resolve to 0 direct hits; positive hits show temporary 'Ramte N'
 Casualty visual: first strength loss creates one representative prone casualty visual per regiment; no killed/wounded distinction yet
-QA state: v00.00.08 TEST pending compile and full Play regression test in Unity 6000.6.0f1
-NEXT GAMEPLAY BUILD: v00.00.09 Officer AI - AI UNIT ON/OFF, shared player/enemy officer decision core, Easy/Normal/Hard AI difficulty, reason codes/telemetry. Highest priority after v00.00.08 gate.
+Officer AI: shared decision core for player-delegated and enemy regiments
+AI UNIT ON/OFF on Danish regiments (A). Enemy always ON.
+QA officer profiles: Tac/Init/Agg differ by regiment. Not historical judgements.
+Difficulty Easy/Normal/Hard (I) changes delay/noise/coordination only — no combat-stat buffs.
+UI: officer name, AI ON/OFF, current task, reason code. Console telemetry prefix [AI].
+QA state: v00.00.09 TEST pending compile and Play regression of v00.00.08 plus officer AI acceptance.

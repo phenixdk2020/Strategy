@@ -3,6 +3,8 @@ using UnityEngine;
 
 public sealed class PlayerCommander : MonoBehaviour
 {
+    public IReadOnlyList<Regiment> Selected => selected;
+
     private readonly List<Regiment> selected = new List<Regiment>();
     private Camera cam;
 
@@ -32,6 +34,8 @@ public sealed class PlayerCommander : MonoBehaviour
             ForEachSelected(r => r.SetFormation(RegimentFormation.Line));
         if (Input.GetKeyDown(KeyCode.C))
             ForEachSelected(r => r.SetFormation(RegimentFormation.Column));
+        if (Input.GetKeyDown(KeyCode.A))
+            ForEachSelected(r => r.SetAiUnitOn(!r.AiUnitOn));
         if (Input.GetKeyDown(KeyCode.T))
         {
             ForEachSelected(r =>
