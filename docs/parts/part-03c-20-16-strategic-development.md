@@ -101,6 +101,45 @@ Følgende investeringer passer naturligt ind i samme system:
 - **telegrafstationer** — command/reporting network,
 - **jernbanedepoter/værksteder** — rolling stock, repair og operational railway capacity.
 
+#### DESIGNIDÉ — modulære kasernekomplekser
+
+Kaserner bør undersøges som **sammensatte militære komplekser**, der visuelt og funktionelt vokser, når spilleren investerer i garnisonen. Ideen er ikke en fast `Barracks Level 1/2/3`-bonus, men at forskellige fysiske moduler giver konkrete kapaciteter og kan udbygges over tid. Dette er en **åben designidé og ikke en besluttet implementeringsbaseline**.
+
+Et kasernekompleks kan begynde som en mindre hovedbygning med parade-/øvelsesplads og derefter få specialiserede bygninger:
+
+| Modul | Primær funktion | Mulig strategisk effekt |
+| --- | --- | --- |
+| Kaserne/hovedbygning | Indkvartering og administration | Garnisons- og personelkapacitet; basis assembly og readiness. |
+| Infanterikaserne | Indkvartering, drill og våbenøvelse | Højere infantry training/assembly capacity og hurtigere integration af rekrutter/replacements. |
+| Artillerikaserne / batteriområde | Artilleripersonel, kanoner og drill | Kapacitet til at opstille/træne artilleribatterier og holde artillerimateriel operativt. |
+| Kanon-/materielskur | Kanoner, lavetter, limbers og værktøj | Beskyttet materielkapacitet, vedligehold og mindre reparationsarbejde. |
+| Stalde | Artilleri-, kavaleri- og trækheste | Lokal military horse capacity, bedre readiness og mindre afhængighed af ad hoc opstaldning. |
+| Remount-/hestegård | Modtagelse og fordeling af erstatningsheste | Kobler kasernen til det strategiske remount-system. |
+| Vogn- og seletøjsbygning | Vogne, hjul, seletøj og småreparationer | Bedre transport readiness og lokal reparationskapacitet. |
+| Depot/magasin | Uniformer, våben, ammunition og feltudrustning | Lokal mobiliserings- og lagerkapacitet. Ammunition/krudt kan kræve separat sikker placering. |
+| Eksercer-/paradeplads | Drill, formationstræning og samling | Øger den mængde personel/enheder, der kan trænes eller samles samtidigt. |
+| Skyde-/øvelsesområde | Marksmanship og våbenuddannelse | Understøtter live-fire/marksmanship training mod forbrug af ammunition. |
+| Sygestue/lille lazaret | Garnisonssundhed og lettere behandling | Basis treatment/recovery uden at erstatte et regionalt hospital. |
+| Officers-/administrationsbygning | Officersrum, stab og administration | Understøtter større garnison, mobiliseringsadministration og eventuelt training staff capacity. |
+
+Mulig progression kan være fysisk i stedet for et abstrakt level-system:
+
+`Lille garnison -> infanterikaserne -> depot + øvelsesplads -> stalde/remount -> artilleriområde -> fuldt garnisons-/mobiliseringskompleks`
+
+Specialisering skal være mulig. En lokalitet kan fx udvikles primært som **infanterikasernen**, **artillerikaserne**, **kavaleri-/hestecenter** eller **mobiliseringscenter**, afhængigt af hvilke moduler der faktisk bygges. Et stort kompleks kan rumme flere våbenarter samtidig.
+
+Visuelt bør hvert færdigt modul kunne tilføjes som en separat bygning/prop i samme kaserneområde på strategikortet. En udbygning skal derfor kunne ses: flere længer, større paradeplads, stalde, kanonskure, vogne, heste og depoter frem for blot et ændret UI-tal.
+
+Designmæssigt bør følgende undersøges senere:
+
+- om moduler bygges i faste sockets/plots eller genereres efter en layoutskabelon,
+- om historiske kaserner har nation-/regionsspecifik arkitektur og layout,
+- hvilke moduler der er nødvendige for at mobilisere bestemte enhedstyper,
+- forskellen mellem fredstids-garnison, mobiliseringscenter og felt-/frontdepot,
+- kapacitetsgrænser for mænd, heste, artilleri, vogne og materiel,
+- skade, brand, bombardement og erobring af enkelte moduler frem for hele komplekset som én HP-pool,
+- om enheder fysisk skal samles ved komplekset under mobilisering før afmarch.
+
 ### 20.16.6 Projektmodel og byggetid
 
 Alle større udviklinger bør bruge samme generiske projektmodel:
