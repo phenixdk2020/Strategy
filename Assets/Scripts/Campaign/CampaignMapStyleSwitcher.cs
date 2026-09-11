@@ -4,61 +4,62 @@ using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
+/// <summary>
+/// PROJECT 1864 Campaign v00.00.10g
+/// TRUE 11 BASEMAP LAB.
+///
+/// v10f compared eleven visual styles on one Natural Earth 1:50m mesh.
+/// v10g instead owns eleven independent basemap provider roots. Providers may
+/// use streamed raster tiles, streamed DEM, Cesium, generated tactical terrain,
+/// local historical/QGIS assets, or a province-map generator.
+///
+/// WGS84 longitude/latitude remains authoritative. Gameplay markers are kept
+/// separate from basemap presentation.
+/// </summary>
 [DefaultExecutionOrder(-29000)]
 public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 {
-    private sealed class MapProfile
+    private enum ProviderKind
     {
-        public string ShortName;
+        Generated,
+        RasterXyz,
+        CesiumIon,
+        CesiumMapTiler,
+        HistoricalWms,
+        LocalBaked
+    }
+
+    private sealed class Provider
+    {
+        public int Id;
+        public string Button;
         public string Name;
-        public string Description;
-        public Color Land;
-        public Color Sea;
-        public Color Coast;
-        public Color Zone;
-        public Color City;
-        public Color Army;
-        public Color Ambient;
-        public Color Sun;
-        public Color Fog;
-        public float SunIntensity;
-        public float CoastWidth;
-        public float Relief;
-        public float Tilt;
-        public float OrthoSize;
-        public float ZoneScale;
-        public float CityScale;
-        public bool FogEnabled;
-        public float FogDensity;
-        public bool Grid;
-        public bool TileGrid;
-        public bool Adjacency;
+        public string Source;
+        public string Attribution;
+        public string Requirement;
+        public ProviderKind Kind;
+        public CampaignGeneratedBasemapV010G.GeneratedKind GeneratedKind;
+        public string UrlTemplate;
+        public string KeyEnvironment;
+        public string KeyFile;
+        public int Zoom;
+        public GameObject Root;
+        public CampaignRasterBasemapV010G Raster;
+        public CampaignGeneratedBasemapV010G Generated;
+        public CampaignCesiumBasemapV010G Cesium;
+        public CampaignHistoricalWmsV010G Historical;
+        public CampaignLocalBakedBasemapV010G LocalBaked;
     }
 
-    private sealed class MeshSnapshot
-    {
-        public MeshFilter Filter;
-        public Vector3[] OriginalVertices;
-    }
-
-    private sealed class ScaleSnapshot
-    {
-        public Transform Transform;
-        public Vector3 OriginalScale;
-        public string Kind;
-    }
-
-    private readonly List<MapProfile> profiles = new List<MapProfile>();
-    private readonly List<MeshSnapshot> landMeshes = new List<MeshSnapshot>();
-    private readonly List<ScaleSnapshot> markerScales = new List<ScaleSnapshot>();
-
-    private Camera campaignCamera;
-    private Light campaignSun;
-    private GameObject gridRoot;
-    private GameObject tileGridRoot;
-    private GameObject adjacencyRoot;
-    private int activeProfile;
+    private readonly List<Provider> providers = new List<Provider>();
+    private Camera localCamera;
+    private int activeIndex = -1;
     private bool ready;
+    private GUIStyle titleStyle;
+    private GUIStyle infoStyle;
+    private GUIStyle smallStyle;
+
+    private const string LabRootName = "PROJECT1864_TRUE_11_BASEMAP_LAB_v000010g";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -66,288 +67,250 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignMapStyleSwitcher>() != null)
             return;
 
-        GameObject root = new GameObject("PROJECT1864_CampaignMapVisualLab_v000010f");
-        DontDestroyOnLoad(root);
-        root.AddComponent<CampaignMapStyleSwitcher>();
+        GameObject go = new GameObject(LabRootName);
+        DontDestroyOnLoad(go);
+        go.AddComponent<CampaignMapStyleSwitcher>();
     }
 
     private IEnumerator Start()
     {
-        BuildProfiles();
-
-        // GrandCampaignBootstrap creates the v10e geography at runtime.
-        // Wait a few frames so this visual-only layer can safely snapshot it.
-        for (int i = 0; i < 120; i++)
+        // GrandCampaignBootstrap builds the local WGS84 campaign first.
+        for (int i = 0; i < 180; i++)
         {
-            campaignCamera = Camera.main;
-            if (campaignCamera != null && GameObject.Find("GEO_Denmark_NaturalEarth50m") != null)
+            localCamera = Camera.main;
+            if (localCamera != null &&
+                GameObject.Find("GEO_Denmark_NaturalEarth50m") != null)
+            {
                 break;
+            }
+
             yield return null;
         }
 
-        CaptureScene();
-        BuildOverlayLayers();
+        BuildProviderDefinitions();
+        CreateProviderRoots();
+        HideLegacyBasemap();
 
-        ready = campaignCamera != null && landMeshes.Count > 0;
-        if (ready)
+        ready = localCamera != null && providers.Count == 11;
+        if (!ready)
         {
-            ApplyProfile(0);
-            Debug.Log("CAMPAIGN-MAPLAB11|Installed=True|Base=v00.00.10e|Profiles=11|Version=v00.00.10f|Branch=channel-campaign3");
+            Debug.LogError("CAMPAIGN-10G|Installed=False|Reason=CampaignCameraOrProviderInitFailed");
+            yield break;
         }
-        else
-        {
-            Debug.LogWarning("CAMPAIGN-MAPLAB11|Installed=False|Reason=V10E_GeographyOrCameraNotFound");
-        }
+
+        // Start on provider 1 because it is the first genuinely independent
+        // terrain generator and includes the Limfjord hydrology QA cut.
+        ActivateProvider(0);
+
+        Debug.Log(
+            "CAMPAIGN-10G|Installed=True|Mode=True11Basemaps|Providers=11|" +
+            "WGS84=True|GameplayLayerShared=True|Version=v00.00.10g");
     }
 
-    private void BuildProfiles()
+    private void BuildProviderDefinitions()
     {
-        profiles.Clear();
+        providers.Clear();
 
-        profiles.Add(new MapProfile {
-            ShortName = "1 DEM",
-            Name = "1. Dansk højdemodel -> Unity 3D Terrain",
-            Description = "Preview af detaljeret dansk relief: hævet terræn, naturlige farver og skråt strategikamera.",
-            Land = C(0.34f,0.47f,0.24f), Sea = C(0.11f,0.31f,0.43f), Coast = C(0.82f,0.80f,0.65f),
-            Zone = C(0.78f,0.63f,0.20f), City = C(0.92f,0.88f,0.74f), Army = C(0.75f,0.16f,0.14f),
-            Ambient = C(0.52f,0.57f,0.50f), Sun = C(1.00f,0.95f,0.82f), Fog = C(0.54f,0.63f,0.66f),
-            SunIntensity = 1.20f, CoastWidth = 0.07f, Relief = 1.25f, Tilt = 28f, OrthoSize = 42f,
-            ZoneScale = 0.92f, CityScale = 1.00f, FogEnabled = true, FogDensity = 0.0022f
+        providers.Add(new Provider
+        {
+            Id = 1,
+            Button = "1 DEM",
+            Name = "1. DHM/GeoDanmark target — streamed DEM pilot",
+            Source = "Mapzen Terrain Tiles / AWS Terrarium for elevation; v10g hydrology cut; DHM/GeoDanmark adapter target",
+            Attribution = "Terrain Tiles: Mapzen / AWS Open Data. Official Danish DHM/GeoDanmark requires Datafordeler credentials.",
+            Requirement = "Runs without key in pilot mode. DATAFORDELER_API_KEY will be used by later official-DHM adapter.",
+            Kind = ProviderKind.Generated,
+            GeneratedKind = CampaignGeneratedBasemapV010G.GeneratedKind.DemHydrology
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "2 Cesium",
-            Name = "2. Cesium World Terrain + egne 1851-lag",
-            Description = "Cesium-inspireret world-terrain preview med høj dybde, kølig atmosfære og diskrete gameplay-markører.",
-            Land = C(0.29f,0.41f,0.23f), Sea = C(0.08f,0.23f,0.34f), Coast = C(0.70f,0.76f,0.68f),
-            Zone = C(0.86f,0.69f,0.26f), City = C(0.92f,0.91f,0.82f), Army = C(0.78f,0.17f,0.15f),
-            Ambient = C(0.46f,0.52f,0.55f), Sun = C(1.00f,0.97f,0.90f), Fog = C(0.42f,0.55f,0.63f),
-            SunIntensity = 1.35f, CoastWidth = 0.05f, Relief = 1.65f, Tilt = 34f, OrthoSize = 45f,
-            ZoneScale = 0.80f, CityScale = 0.92f, FogEnabled = true, FogDensity = 0.0030f
+        providers.Add(new Provider
+        {
+            Id = 2,
+            Button = "2 Cesium",
+            Name = "2. Cesium World Terrain + imagery",
+            Source = "Cesium World Terrain (ion asset 1) + Bing Maps Aerial (ion asset 2)",
+            Attribution = "Cesium ion / Bing Maps imagery credits are rendered by Cesium.",
+            Requirement = "CESIUM_ION_TOKEN env, local PROJECT1864/Cesium/ion-token.txt, or Cesium Project Default Token",
+            Kind = ProviderKind.CesiumIon
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "3 ArcGIS",
-            Name = "3. ArcGIS Maps SDK + historiske lag",
-            Description = "Professionel GIS-preview med ren kartografi, tydelige lag og koordinatnet.",
-            Land = C(0.55f,0.62f,0.43f), Sea = C(0.48f,0.67f,0.78f), Coast = C(0.16f,0.24f,0.20f),
-            Zone = C(0.86f,0.52f,0.12f), City = C(0.28f,0.20f,0.16f), Army = C(0.68f,0.10f,0.10f),
-            Ambient = C(0.72f,0.72f,0.68f), Sun = C(1.00f,1.00f,0.96f), Fog = C(0.75f,0.82f,0.84f),
-            SunIntensity = 0.95f, CoastWidth = 0.09f, Relief = 0.45f, Tilt = 12f, OrthoSize = 43f,
-            ZoneScale = 0.88f, CityScale = 1.05f, FogEnabled = false, Grid = true
+        providers.Add(new Provider
+        {
+            Id = 3,
+            Button = "3 ArcGIS",
+            Name = "3. ArcGIS World Topographic basemap",
+            Source = "Esri ArcGIS World_Topo_Map cached XYZ service",
+            Attribution = "Esri and contributing data providers.",
+            Requirement = "Network access. Comparison provider only; production licensing/API configuration must be reviewed.",
+            Kind = ProviderKind.RasterXyz,
+            UrlTemplate = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+            Zoom = 8
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "4 MapTiler",
+        providers.Add(new Provider
+        {
+            Id = 4,
+            Button = "4 MapTiler",
             Name = "4. MapTiler 3D Terrain + Cesium",
-            Description = "Moderne terrain/vector-hybrid preview: skarpe kyster, diskret relief og tile-orienteret læsbarhed.",
-            Land = C(0.42f,0.54f,0.31f), Sea = C(0.21f,0.43f,0.57f), Coast = C(0.90f,0.89f,0.79f),
-            Zone = C(0.92f,0.68f,0.18f), City = C(0.95f,0.93f,0.84f), Army = C(0.78f,0.13f,0.13f),
-            Ambient = C(0.60f,0.64f,0.61f), Sun = C(1.00f,0.97f,0.88f), Fog = C(0.65f,0.73f,0.75f),
-            SunIntensity = 1.12f, CoastWidth = 0.07f, Relief = 0.85f, Tilt = 22f, OrthoSize = 43f,
-            ZoneScale = 0.88f, CityScale = 0.98f, FogEnabled = false, TileGrid = true
+            Source = "MapTiler quantized-mesh-v2 terrain loaded through Cesium from URL",
+            Attribution = "MapTiler data/terrain attribution applies.",
+            Requirement = "MAPTILER_API_KEY env or PROJECT1864/Keys/maptiler.txt",
+            Kind = ProviderKind.CesiumMapTiler
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "5 1850-kort",
-            Name = "5. Historisk 1850-kort draperet over 3D-relief",
-            Description = "Historisk papir/sepia art-direction preview over let relief. Ingen historiske rasterdata er endnu indlæst.",
-            Land = C(0.63f,0.55f,0.36f), Sea = C(0.42f,0.53f,0.52f), Coast = C(0.25f,0.20f,0.13f),
-            Zone = C(0.52f,0.24f,0.10f), City = C(0.20f,0.14f,0.09f), Army = C(0.55f,0.08f,0.07f),
-            Ambient = C(0.70f,0.62f,0.48f), Sun = C(1.00f,0.89f,0.66f), Fog = C(0.70f,0.63f,0.50f),
-            SunIntensity = 0.82f, CoastWidth = 0.11f, Relief = 0.55f, Tilt = 16f, OrthoSize = 42f,
-            ZoneScale = 0.85f, CityScale = 1.08f, FogEnabled = true, FogDensity = 0.0012f, Adjacency = true
+        providers.Add(new Provider
+        {
+            Id = 5,
+            Button = "5 1842-99",
+            Name = "5. Historical Danish high table sheets",
+            Source = "Datafordeler Høje målebordsblade WMS, 1:20,000, 1842–1899 survey/issue period",
+            Attribution = "Klimadatastyrelsen / Datafordeler historical map service.",
+            Requirement = "DATAFORDELER_API_KEY env or PROJECT1864/Keys/datafordeler.txt",
+            Kind = ProviderKind.HistoricalWms
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "6 QGIS",
-            Name = "6. QGIS/Blender -> baked terrain tiles",
-            Description = "Baked-tile preview med tydeligt relief, kraftigere lys/skygge og teknisk tile-grid.",
-            Land = C(0.37f,0.49f,0.28f), Sea = C(0.13f,0.34f,0.47f), Coast = C(0.80f,0.81f,0.67f),
-            Zone = C(0.88f,0.62f,0.16f), City = C(0.94f,0.90f,0.78f), Army = C(0.76f,0.12f,0.11f),
-            Ambient = C(0.43f,0.46f,0.42f), Sun = C(1.00f,0.93f,0.78f), Fog = C(0.55f,0.63f,0.64f),
-            SunIntensity = 1.50f, CoastWidth = 0.07f, Relief = 1.55f, Tilt = 32f, OrthoSize = 43f,
-            ZoneScale = 0.86f, CityScale = 0.98f, FogEnabled = false, TileGrid = true
+        providers.Add(new Provider
+        {
+            Id = 6,
+            Button = "6 QGIS",
+            Name = "6. QGIS/Blender baked terrain tiles",
+            Source = "Offline baked Unity basemap supplied through StreamingAssets/PROJECT1864/Basemaps/QGIS",
+            Attribution = "Depends on the source layers used in the baked package.",
+            Requirement = "Requires qgis-denmark.png plus qgis-denmark.bounds in StreamingAssets.",
+            Kind = ProviderKind.LocalBaked
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "7 Procedural",
-            Name = "7. DEM + procedural marker/skov/hede/by",
-            Description = "Gameplay-favorit preview med tydeligt terræn og høj kontrast mellem geografi og simulation.",
-            Land = C(0.31f,0.45f,0.22f), Sea = C(0.10f,0.30f,0.40f), Coast = C(0.75f,0.78f,0.62f),
-            Zone = C(0.95f,0.72f,0.15f), City = C(0.96f,0.90f,0.73f), Army = C(0.82f,0.12f,0.10f),
-            Ambient = C(0.49f,0.55f,0.46f), Sun = C(1.00f,0.95f,0.81f), Fog = C(0.50f,0.60f,0.60f),
-            SunIntensity = 1.25f, CoastWidth = 0.08f, Relief = 1.20f, Tilt = 25f, OrthoSize = 42f,
-            ZoneScale = 1.10f, CityScale = 1.12f, FogEnabled = false, Adjacency = true
+        providers.Add(new Provider
+        {
+            Id = 7,
+            Button = "7 Procedural",
+            Name = "7. Independent procedural Denmark terrain",
+            Source = "Runtime procedural landcover/relief generator with hydrology mask",
+            Attribution = "PROJECT 1864 generated presentation; coastline mask from project geography scaffold.",
+            Requirement = "No external key.",
+            Kind = ProviderKind.Generated,
+            GeneratedKind = CampaignGeneratedBasemapV010G.GeneratedKind.Procedural
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "8 OSM",
-            Name = "8. OpenStreetMap-geometri + historisk korrektion",
-            Description = "OSM-inspireret geometrisk preview med høj netværkslæsbarhed. Moderne OSM-data er ikke indlæst her.",
-            Land = C(0.72f,0.75f,0.61f), Sea = C(0.64f,0.79f,0.86f), Coast = C(0.28f,0.34f,0.28f),
-            Zone = C(0.86f,0.48f,0.08f), City = C(0.22f,0.20f,0.17f), Army = C(0.70f,0.08f,0.08f),
-            Ambient = C(0.78f,0.78f,0.74f), Sun = C(1.00f,1.00f,0.98f), Fog = C(0.78f,0.84f,0.84f),
-            SunIntensity = 0.80f, CoastWidth = 0.10f, Relief = 0.15f, Tilt = 6f, OrthoSize = 43f,
-            ZoneScale = 0.90f, CityScale = 1.12f, FogEnabled = false, Grid = true, Adjacency = true
+        providers.Add(new Provider
+        {
+            Id = 8,
+            Button = "8 OSM",
+            Name = "8. OpenStreetMap Standard basemap",
+            Source = "OpenStreetMap Standard raster tiles for the currently viewed Denmark overview",
+            Attribution = "© OpenStreetMap contributors",
+            Requirement = "Network access; cached locally for at least seven days; no offline bulk downloader.",
+            Kind = ProviderKind.RasterXyz,
+            UrlTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            Zoom = 8
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "9 Painted",
-            Name = "9. Hybrid satellit/terrain-look + malet 1851-overflade",
-            Description = "Dramatisk painterly terrain preview med dybere hav, mørkere land og kraftigere relief.",
-            Land = C(0.24f,0.34f,0.20f), Sea = C(0.055f,0.17f,0.25f), Coast = C(0.64f,0.67f,0.53f),
-            Zone = C(0.90f,0.66f,0.16f), City = C(0.90f,0.86f,0.70f), Army = C(0.82f,0.16f,0.12f),
-            Ambient = C(0.31f,0.36f,0.34f), Sun = C(1.00f,0.86f,0.68f), Fog = C(0.25f,0.35f,0.39f),
-            SunIntensity = 1.60f, CoastWidth = 0.06f, Relief = 1.85f, Tilt = 36f, OrthoSize = 44f,
-            ZoneScale = 0.92f, CityScale = 0.98f, FogEnabled = true, FogDensity = 0.0040f
+        providers.Add(new Provider
+        {
+            Id = 9,
+            Button = "9 Imagery",
+            Name = "9. Realistic satellite/terrain hybrid candidate",
+            Source = "Esri World Imagery cached XYZ service",
+            Attribution = "Esri and imagery/data providers.",
+            Requirement = "Network access. Used as comparison imagery, not as 1851 historical truth.",
+            Kind = ProviderKind.RasterXyz,
+            UrlTemplate = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            Zoom = 8
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "10 Diorama",
-            Name = "10. Håndbygget modeljernbane/diorama-stil",
-            Description = "Miniature/diorama-preview: kraftigt relief, varm belysning, tydelig kyst og større fysiske markører.",
-            Land = C(0.40f,0.52f,0.25f), Sea = C(0.16f,0.38f,0.50f), Coast = C(0.92f,0.86f,0.67f),
-            Zone = C(0.98f,0.72f,0.17f), City = C(0.98f,0.93f,0.78f), Army = C(0.82f,0.14f,0.11f),
-            Ambient = C(0.58f,0.52f,0.41f), Sun = C(1.00f,0.83f,0.60f), Fog = C(0.60f,0.64f,0.58f),
-            SunIntensity = 1.75f, CoastWidth = 0.13f, Relief = 2.20f, Tilt = 42f, OrthoSize = 42f,
-            ZoneScale = 1.18f, CityScale = 1.30f, FogEnabled = false
+        providers.Add(new Provider
+        {
+            Id = 10,
+            Button = "10 Diorama",
+            Name = "10. Independent 3D diorama/model terrain",
+            Source = "PROJECT 1864 generated miniature terrain mesh + physical landscape dressing",
+            Attribution = "PROJECT 1864 generated presentation; geography scaffold is documented separately.",
+            Requirement = "No external key.",
+            Kind = ProviderKind.Generated,
+            GeneratedKind = CampaignGeneratedBasemapV010G.GeneratedKind.Diorama
         });
 
-        profiles.Add(new MapProfile {
-            ShortName = "11 HOI4",
-            Name = "11. HOI4-lignende polygon/regionkort 2D/2.5D",
-            Description = "Strategisk 2.5D-preview med fladt kort, maksimal kontrast, tydelige zoner og gameplay-adjacency.",
-            Land = C(0.36f,0.43f,0.27f), Sea = C(0.08f,0.19f,0.29f), Coast = C(0.76f,0.72f,0.55f),
-            Zone = C(0.96f,0.73f,0.17f), City = C(0.96f,0.91f,0.75f), Army = C(0.88f,0.13f,0.10f),
-            Ambient = C(0.57f,0.59f,0.55f), Sun = C(1.00f,0.97f,0.88f), Fog = C(0.30f,0.35f,0.37f),
-            SunIntensity = 0.92f, CoastWidth = 0.12f, Relief = 0.08f, Tilt = 4f, OrthoSize = 43f,
-            ZoneScale = 1.25f, CityScale = 1.15f, FogEnabled = false, Adjacency = true
+        providers.Add(new Provider
+        {
+            Id = 11,
+            Button = "11 HOI4",
+            Name = "11. Independent province/region strategic map",
+            Source = "Runtime province cells generated from campaign-zone centres and a Denmark land/water mask",
+            Attribution = "PROJECT 1864 strategic simulation layer; not historical administrative borders.",
+            Requirement = "No external key.",
+            Kind = ProviderKind.Generated,
+            GeneratedKind = CampaignGeneratedBasemapV010G.GeneratedKind.Hoi4
         });
     }
 
-    private void CaptureScene()
+    private void CreateProviderRoots()
     {
-        campaignCamera = Camera.main;
-
-        Light[] lights = Object.FindObjectsByType<Light>();
-        for (int i = 0; i < lights.Length; i++)
+        for (int i = 0; i < providers.Count; i++)
         {
-            if (lights[i] != null && lights[i].type == LightType.Directional)
+            Provider p = providers[i];
+            p.Root = new GameObject(string.Format("BASEMAP_{0:00}_{1}", p.Id, Sanitize(p.Button)));
+            p.Root.transform.SetParent(transform, false);
+            p.Root.SetActive(false);
+
+            switch (p.Kind)
             {
-                campaignSun = lights[i];
-                break;
+                case ProviderKind.Generated:
+                    p.Generated = p.Root.AddComponent<CampaignGeneratedBasemapV010G>();
+                    p.Generated.Configure(p.GeneratedKind, p.Id);
+                    break;
+
+                case ProviderKind.RasterXyz:
+                    p.Raster = p.Root.AddComponent<CampaignRasterBasemapV010G>();
+                    p.Raster.Configure(
+                        p.Id,
+                        p.Name,
+                        p.UrlTemplate,
+                        p.Zoom,
+                        p.KeyEnvironment,
+                        p.KeyFile,
+                        p.Attribution);
+                    break;
+
+                case ProviderKind.CesiumIon:
+                    p.Cesium = p.Root.AddComponent<CampaignCesiumBasemapV010G>();
+                    p.Cesium.Configure(CampaignCesiumBasemapV010G.CesiumMode.IonWorldTerrain, p.Id);
+                    break;
+
+                case ProviderKind.CesiumMapTiler:
+                    p.Cesium = p.Root.AddComponent<CampaignCesiumBasemapV010G>();
+                    p.Cesium.Configure(CampaignCesiumBasemapV010G.CesiumMode.MapTilerTerrain, p.Id);
+                    break;
+
+                case ProviderKind.HistoricalWms:
+                    p.Historical = p.Root.AddComponent<CampaignHistoricalWmsV010G>();
+                    p.Historical.Configure(p.Id);
+                    break;
+
+                case ProviderKind.LocalBaked:
+                    p.LocalBaked = p.Root.AddComponent<CampaignLocalBakedBasemapV010G>();
+                    p.LocalBaked.Configure(p.Id);
+                    break;
             }
         }
-
-        MeshFilter[] filters = Object.FindObjectsByType<MeshFilter>();
-        for (int i = 0; i < filters.Length; i++)
-        {
-            MeshFilter filter = filters[i];
-            if (filter == null || filter.sharedMesh == null)
-                continue;
-            if (!filter.gameObject.name.StartsWith("DNK_LandPart_", StringComparison.Ordinal))
-                continue;
-
-            landMeshes.Add(new MeshSnapshot {
-                Filter = filter,
-                OriginalVertices = filter.sharedMesh.vertices
-            });
-        }
-
-        Renderer[] renderers = Object.FindObjectsByType<Renderer>();
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            Renderer r = renderers[i];
-            if (r == null)
-                continue;
-
-            string n = r.gameObject.name;
-            if (n.StartsWith("ZONE_", StringComparison.Ordinal))
-                markerScales.Add(new ScaleSnapshot { Transform = r.transform, OriginalScale = r.transform.localScale, Kind = "ZONE" });
-            else if (n.StartsWith("CITY_", StringComparison.Ordinal))
-                markerScales.Add(new ScaleSnapshot { Transform = r.transform, OriginalScale = r.transform.localScale, Kind = "CITY" });
-        }
-    }
-
-    private void BuildOverlayLayers()
-    {
-        gridRoot = new GameObject("MAPLAB_Grid");
-        gridRoot.transform.SetParent(transform, false);
-        tileGridRoot = new GameObject("MAPLAB_TileGrid");
-        tileGridRoot.transform.SetParent(transform, false);
-        adjacencyRoot = new GameObject("MAPLAB_Adjacency");
-        adjacencyRoot.transform.SetParent(transform, false);
-
-        Material gridMaterial = CreateRuntimeMaterial(new Color(1f, 1f, 1f, 0.28f), "MAPLAB_GridMat");
-        Material tileMaterial = CreateRuntimeMaterial(new Color(0.15f, 0.18f, 0.16f, 0.30f), "MAPLAB_TileMat");
-        Material adjacencyMaterial = CreateRuntimeMaterial(new Color(0.96f, 0.78f, 0.30f, 0.82f), "MAPLAB_AdjacencyMat");
-
-        for (int x = -30; x <= 55; x += 5)
-            CreateLine(gridRoot.transform, "GridX_" + x, new Vector3(x, 0.70f, -35f), new Vector3(x, 0.70f, 35f), 0.035f, gridMaterial);
-        for (int z = -35; z <= 35; z += 5)
-            CreateLine(gridRoot.transform, "GridZ_" + z, new Vector3(-30f, 0.70f, z), new Vector3(55f, 0.70f, z), 0.035f, gridMaterial);
-
-        for (int x = -30; x <= 60; x += 15)
-            CreateLine(tileGridRoot.transform, "TileX_" + x, new Vector3(x, 0.72f, -40f), new Vector3(x, 0.72f, 40f), 0.075f, tileMaterial);
-        for (int z = -40; z <= 40; z += 15)
-            CreateLine(tileGridRoot.transform, "TileZ_" + z, new Vector3(-30f, 0.72f, z), new Vector3(60f, 0.72f, z), 0.075f, tileMaterial);
-
-        string[,] links = {
-            {"DK-VEN","DK-NJ"},{"DK-NJ","DK-MJ"},{"DK-MJ","DK-VJ"},{"DK-MJ","DK-OJ"},
-            {"DK-VJ","DK-SJ"},{"DK-OJ","DK-SJ"},{"DK-SJ","DK-FYN"},{"DK-FYN","DK-NSJ"},
-            {"DK-FYN","DK-SSJ"},{"DK-NSJ","DK-KBH"},{"DK-NSJ","DK-SSJ"},{"DK-SSJ","DK-LF"},
-            {"DK-KBH","DK-SSJ"}
-        };
-
-        for (int i = 0; i < links.GetLength(0); i++)
-        {
-            GameObject a = GameObject.Find("ZONE_" + links[i,0]);
-            GameObject b = GameObject.Find("ZONE_" + links[i,1]);
-            if (a == null || b == null)
-                continue;
-
-            Vector3 from = a.transform.position + Vector3.up * 0.45f;
-            Vector3 to = b.transform.position + Vector3.up * 0.45f;
-            CreateLine(adjacencyRoot.transform, "Adj_" + links[i,0] + "_" + links[i,1], from, to, 0.12f, adjacencyMaterial);
-        }
-
-        gridRoot.SetActive(false);
-        tileGridRoot.SetActive(false);
-        adjacencyRoot.SetActive(false);
-    }
-
-    private static void CreateLine(Transform parent, string name, Vector3 from, Vector3 to, float width, Material material)
-    {
-        GameObject go = new GameObject(name);
-        go.transform.SetParent(parent, false);
-        LineRenderer line = go.AddComponent<LineRenderer>();
-        line.useWorldSpace = true;
-        line.positionCount = 2;
-        line.SetPosition(0, from);
-        line.SetPosition(1, to);
-        line.widthMultiplier = width;
-        line.sharedMaterial = material;
-        line.numCapVertices = 2;
-        line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        line.receiveShadows = false;
     }
 
     private void Update()
     {
-        if (!ready || profiles.Count == 0)
+        if (!ready)
             return;
 
         if (Input.GetKeyDown(KeyCode.M) || Input.GetKeyDown(KeyCode.RightBracket))
-            ApplyProfile((activeProfile + 1) % profiles.Count);
+            ActivateProvider((activeIndex + 1) % providers.Count);
+
         if (Input.GetKeyDown(KeyCode.LeftBracket))
-            ApplyProfile((activeProfile - 1 + profiles.Count) % profiles.Count);
+            ActivateProvider((activeIndex - 1 + providers.Count) % providers.Count);
 
         bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
         if (!shift)
             return;
 
-        KeyCode[] keys = {
+        KeyCode[] keys =
+        {
             KeyCode.F1, KeyCode.F2, KeyCode.F3, KeyCode.F4, KeyCode.F5, KeyCode.F6,
             KeyCode.F7, KeyCode.F8, KeyCode.F9, KeyCode.F10, KeyCode.F11
         };
@@ -356,226 +319,229 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         {
             if (Input.GetKeyDown(keys[i]))
             {
-                ApplyProfile(i);
+                ActivateProvider(i);
                 break;
             }
         }
     }
 
-    private void ApplyProfile(int index)
+    private void ActivateProvider(int index)
     {
-        if (index < 0 || index >= profiles.Count)
+        if (index < 0 || index >= providers.Count)
             return;
 
-        activeProfile = index;
-        MapProfile p = profiles[index];
+        // Save/restore the local camera around globe providers.
+        if (activeIndex >= 0 && IsCesium(providers[activeIndex]))
+            RestoreLocalCamera();
 
-        ApplyCamera(p);
-        ApplyLighting(p);
-        ApplyRelief(p.Relief);
-        ApplyRenderColors(p);
-        ApplyMarkerScale(p);
+        for (int i = 0; i < providers.Count; i++)
+            if (providers[i].Root != null)
+                providers[i].Root.SetActive(i == index);
 
-        if (gridRoot != null) gridRoot.SetActive(p.Grid);
-        if (tileGridRoot != null) tileGridRoot.SetActive(p.TileGrid);
-        if (adjacencyRoot != null) adjacencyRoot.SetActive(p.Adjacency);
+        activeIndex = index;
+        Provider p = providers[index];
 
-        Debug.Log(string.Format(
-            "CAMPAIGN-MAPLAB11|Profile={0:00}|Name={1}|Relief={2:0.00}|Tilt={3:0}|Grid={4}|TileGrid={5}|Adjacency={6}",
-            index + 1, p.Name, p.Relief, p.Tilt, p.Grid, p.TileGrid, p.Adjacency));
+        HideLegacyBasemap();
+
+        if (p.Generated != null)
+            p.Generated.EnsureLoaded();
+        if (p.Raster != null)
+            p.Raster.EnsureLoaded();
+        if (p.Historical != null)
+            p.Historical.EnsureLoaded();
+        if (p.LocalBaked != null)
+            p.LocalBaked.EnsureLoaded();
+        if (p.Cesium != null)
+        {
+            HideLocalGameplayMarkers(true);
+            p.Cesium.EnsureLoaded(localCamera);
+        }
+        else
+        {
+            HideLocalGameplayMarkers(false);
+            if (localCamera != null && !localCamera.gameObject.activeSelf)
+                localCamera.gameObject.SetActive(true);
+        }
+
+        Debug.Log(
+            "CAMPAIGN-10G|Basemap=" + p.Id.ToString("00") +
+            "|Name=" + p.Name +
+            "|Source=" + p.Source);
     }
 
-    private void ApplyCamera(MapProfile p)
+    private void RestoreLocalCamera()
     {
-        if (campaignCamera == null)
+        CampaignCesiumBasemapV010G[] cesiumProviders = Object.FindObjectsByType<CampaignCesiumBasemapV010G>();
+        for (int i = 0; i < cesiumProviders.Length; i++)
+            if (cesiumProviders[i] != null)
+                cesiumProviders[i].DeactivateCamera();
+
+        if (localCamera != null)
+        {
+            localCamera.gameObject.SetActive(true);
+            localCamera.tag = "MainCamera";
+        }
+
+        HideLocalGameplayMarkers(false);
+    }
+
+    private static bool IsCesium(Provider p)
+    {
+        return p != null &&
+               (p.Kind == ProviderKind.CesiumIon || p.Kind == ProviderKind.CesiumMapTiler);
+    }
+
+    private static void HideLegacyBasemap()
+    {
+        SetRenderers("GEO_Denmark_NaturalEarth50m", false);
+        SetRenderers("Grand Campaign Sea", false);
+    }
+
+    private static void SetRenderers(string rootName, bool enabled)
+    {
+        GameObject go = GameObject.Find(rootName);
+        if (go == null)
             return;
 
-        campaignCamera.orthographic = true;
-        campaignCamera.orthographicSize = p.OrthoSize;
-        campaignCamera.backgroundColor = p.Sea * 0.72f;
-
-        Vector3 target = new Vector3(10f, 0f, 0f);
-        float radians = p.Tilt * Mathf.Deg2Rad;
-        float distance = 95f;
-        float zOffset = Mathf.Sin(radians) * distance * 0.62f;
-        float y = Mathf.Cos(radians) * distance;
-        campaignCamera.transform.position = new Vector3(target.x, Mathf.Max(35f, y), target.z - zOffset);
-        campaignCamera.transform.LookAt(target, Vector3.forward);
+        Renderer[] renderers = go.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+            if (renderers[i] != null)
+                renderers[i].enabled = enabled;
     }
 
-    private void ApplyLighting(MapProfile p)
+    private static void HideLocalGameplayMarkers(bool hidden)
     {
-        RenderSettings.ambientLight = p.Ambient;
-        RenderSettings.fog = p.FogEnabled;
-        RenderSettings.fogColor = p.Fog;
-        RenderSettings.fogMode = FogMode.ExponentialSquared;
-        RenderSettings.fogDensity = p.FogDensity;
-
-        if (campaignSun != null)
-        {
-            campaignSun.color = p.Sun;
-            campaignSun.intensity = p.SunIntensity;
-            campaignSun.transform.rotation = Quaternion.Euler(52f, -32f, 0f);
-        }
-    }
-
-    private void ApplyRelief(float amount)
-    {
-        for (int i = 0; i < landMeshes.Count; i++)
-        {
-            MeshSnapshot snap = landMeshes[i];
-            if (snap.Filter == null || snap.Filter.sharedMesh == null || snap.OriginalVertices == null)
-                continue;
-
-            Vector3[] vertices = new Vector3[snap.OriginalVertices.Length];
-            for (int v = 0; v < vertices.Length; v++)
-            {
-                Vector3 original = snap.OriginalVertices[v];
-                float n1 = Mathf.PerlinNoise((original.x + 42f) * 0.095f, (original.z + 37f) * 0.095f);
-                float n2 = Mathf.PerlinNoise((original.x - 13f) * 0.23f, (original.z + 11f) * 0.23f);
-                float relief = Mathf.Max(0f, (n1 * 0.75f + n2 * 0.25f) - 0.36f);
-                original.y += relief * amount;
-                vertices[v] = original;
-            }
-
-            snap.Filter.sharedMesh.vertices = vertices;
-            snap.Filter.sharedMesh.RecalculateNormals();
-            snap.Filter.sharedMesh.RecalculateBounds();
-        }
-    }
-
-    private void ApplyRenderColors(MapProfile p)
-    {
-        Renderer[] renderers = Object.FindObjectsByType<Renderer>();
+        Renderer[] renderers = Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include);
         for (int i = 0; i < renderers.Length; i++)
         {
             Renderer r = renderers[i];
-            if (r == null || r.sharedMaterial == null)
+            if (r == null)
                 continue;
 
             string n = r.gameObject.name;
-            if (n.StartsWith("DNK_LandPart_", StringComparison.Ordinal))
-                SetMaterialColor(r.sharedMaterial, p.Land);
-            else if (n == "Grand Campaign Sea")
-                SetMaterialColor(r.sharedMaterial, p.Sea);
-            else if (n.StartsWith("ZONE_", StringComparison.Ordinal))
-                SetMaterialColor(r.sharedMaterial, p.Zone);
-            else if (n.StartsWith("CITY_", StringComparison.Ordinal))
-                SetMaterialColor(r.sharedMaterial, p.City);
-            else if (n.StartsWith("ARMY_", StringComparison.Ordinal))
-                SetMaterialColor(r.sharedMaterial, p.Army);
-        }
-
-        GameObject geography = GameObject.Find("GEO_Denmark_NaturalEarth50m");
-        if (geography != null)
-        {
-            LineRenderer[] lines = geography.GetComponentsInChildren<LineRenderer>(true);
-            for (int i = 0; i < lines.Length; i++)
+            if (n.StartsWith("ZONE_", StringComparison.Ordinal) ||
+                n.StartsWith("CITY_", StringComparison.Ordinal) ||
+                n.StartsWith("ARMY_", StringComparison.Ordinal))
             {
-                if (lines[i] == null || lines[i].sharedMaterial == null)
-                    continue;
-                SetMaterialColor(lines[i].sharedMaterial, p.Coast);
-                lines[i].widthMultiplier = p.CoastWidth;
+                r.enabled = !hidden;
             }
         }
     }
 
-    private void ApplyMarkerScale(MapProfile p)
+    private static string Sanitize(string value)
     {
-        for (int i = 0; i < markerScales.Count; i++)
-        {
-            ScaleSnapshot snap = markerScales[i];
-            if (snap.Transform == null)
-                continue;
+        if (string.IsNullOrEmpty(value))
+            return "MAP";
 
-            float factor = snap.Kind == "ZONE" ? p.ZoneScale : p.CityScale;
-            Vector3 s = snap.OriginalScale;
-            snap.Transform.localScale = new Vector3(s.x * factor, s.y, s.z * factor);
-        }
+        return value.Replace(" ", "_").Replace("/", "_").Replace(".", "_");
     }
 
-    private void OnGUI()
+    private string ProviderStatus(Provider p)
     {
-        if (!ready || profiles.Count == 0)
+        if (p == null)
+            return "UNKNOWN";
+
+        if (p.Raster != null)
+            return p.Raster.Status;
+        if (p.Generated != null)
+            return p.Generated.Status;
+        if (p.Cesium != null)
+            return p.Cesium.Status;
+        if (p.Historical != null)
+            return p.Historical.Status;
+        if (p.LocalBaked != null)
+            return p.LocalBaked.Status;
+
+        return "INITIALISING";
+    }
+
+    private void EnsureStyles()
+    {
+        if (titleStyle != null)
             return;
 
-        MapProfile p = profiles[activeProfile];
-
-        GUIStyle box = new GUIStyle(GUI.skin.box) {
-            alignment = TextAnchor.UpperLeft,
-            fontSize = 10,
-            wordWrap = true
-        };
-        box.normal.textColor = Color.white;
-
-        GUIStyle title = new GUIStyle(GUI.skin.box) {
+        titleStyle = new GUIStyle(GUI.skin.box)
+        {
             alignment = TextAnchor.MiddleLeft,
             fontSize = 11,
             fontStyle = FontStyle.Bold
         };
-        title.normal.textColor = Color.white;
+        titleStyle.normal.textColor = Color.white;
 
-        float infoWidth = Mathf.Min(500f, Screen.width - 16f);
+        infoStyle = new GUIStyle(GUI.skin.box)
+        {
+            alignment = TextAnchor.UpperLeft,
+            fontSize = 10,
+            wordWrap = true
+        };
+        infoStyle.normal.textColor = Color.white;
+
+        smallStyle = new GUIStyle(GUI.skin.label)
+        {
+            alignment = TextAnchor.MiddleLeft,
+            fontSize = 10
+        };
+        smallStyle.normal.textColor = Color.white;
+    }
+
+    private void OnGUI()
+    {
+        if (!ready || providers.Count != 11 || activeIndex < 0)
+            return;
+
+        EnsureStyles();
+        Provider p = providers[activeIndex];
+
+        float infoWidth = Mathf.Min(690f, Screen.width - 16f);
         float infoX = Screen.width - infoWidth - 8f;
-        GUI.Box(new Rect(infoX, 44f, infoWidth, 28f),
-            "PROJECT 1864 | v00.00.10f MAP LAB 11 | " + (activeProfile + 1) + "/11", title);
-        GUI.Box(new Rect(infoX, 74f, infoWidth, 66f),
-            p.Name + "\n" + p.Description +
-            "\n1-10 er visuelle previews; eksterne DEM/GIS/raster-data er ikke integreret endnu.", box);
+
+        GUI.Box(
+            new Rect(infoX, 42f, infoWidth, 28f),
+            "PROJECT 1864 | v00.00.10g TRUE 11 BASEMAPS | " +
+            (activeIndex + 1) + "/11 | " + ProviderStatus(p),
+            titleStyle);
+
+        GUI.Box(
+            new Rect(infoX, 72f, infoWidth, 104f),
+            p.Name + "\n" +
+            "SOURCE: " + p.Source + "\n" +
+            "REQUIREMENT: " + p.Requirement + "\n" +
+            "ATTRIBUTION: " + p.Attribution,
+            infoStyle);
 
         int columns = Screen.width >= 1700 ? 11 : 6;
-        int rows = Mathf.CeilToInt(profiles.Count / (float)columns);
-        float gap = 3f;
+        int rows = Mathf.CeilToInt(providers.Count / (float)columns);
         float margin = 8f;
-        float buttonHeight = 26f;
+        float gap = 3f;
+        float buttonHeight = 27f;
         float usable = Screen.width - margin * 2f - gap * (columns - 1);
         float buttonWidth = usable / columns;
         float startY = Screen.height - margin - rows * buttonHeight - (rows - 1) * gap;
 
-        for (int i = 0; i < profiles.Count; i++)
+        for (int i = 0; i < providers.Count; i++)
         {
             int row = i / columns;
             int col = i % columns;
-            Rect r = new Rect(
+            Rect rect = new Rect(
                 margin + col * (buttonWidth + gap),
                 startY + row * (buttonHeight + gap),
                 buttonWidth,
                 buttonHeight);
 
-            GUI.enabled = i != activeProfile;
-            if (GUI.Button(r, profiles[i].ShortName))
-                ApplyProfile(i);
+            GUI.enabled = i != activeIndex;
+            if (GUI.Button(rect, providers[i].Button))
+                ActivateProvider(i);
             GUI.enabled = true;
         }
 
-        GUI.Label(new Rect(10f, startY - 22f, Mathf.Min(560f, Screen.width - 20f), 20f),
-            "M / ] = næste | [ = forrige | Shift+F1...F11 = direkte valg");
-    }
+        GUI.Label(
+            new Rect(10f, startY - 40f, Mathf.Min(920f, Screen.width - 20f), 18f),
+            "Aalborg/Limfjord er obligatorisk QA-region. Manglende provider-data vises som MISSING/KEY REQUIRED — ingen skjult Natural Earth fallback.",
+            smallStyle);
 
-    private static Material CreateRuntimeMaterial(Color color, string name)
-    {
-        Shader shader = Shader.Find("Sprites/Default");
-        if (shader == null) shader = Shader.Find("Unlit/Color");
-        if (shader == null) shader = Shader.Find("Standard");
-        Material material = new Material(shader) { name = name };
-        SetMaterialColor(material, color);
-        return material;
-    }
-
-    private static void SetMaterialColor(Material material, Color color)
-    {
-        if (material == null)
-            return;
-
-        material.color = color;
-        if (material.HasProperty("_BaseColor"))
-            material.SetColor("_BaseColor", color);
-        if (material.HasProperty("_Color"))
-            material.SetColor("_Color", color);
-    }
-
-    private static Color C(float r, float g, float b)
-    {
-        return new Color(r, g, b, 1f);
+        GUI.Label(
+            new Rect(10f, startY - 21f, Mathf.Min(720f, Screen.width - 20f), 18f),
+            "M / ] = næste | [ = forrige | Shift+F1...F11 = direkte valg",
+            smallStyle);
     }
 }
