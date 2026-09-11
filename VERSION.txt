@@ -102,6 +102,11 @@ DEPENDENCIES ADDED/RESTORED:
 - com.cesium.unity 1.25.1 via https://unity.pkg.cesium.com
 - Unity UI/image conversion/unitywebrequest/unitywebrequesttexture modules required by provider streaming.
 
+UNITY 6.6 COMPATIBILITY CLEANUP:
+- Replaced deprecated FindObjectsByType<T>(FindObjectsSortMode.None) calls in CampaignMapStyleSwitcher and the four navigation scripts reported during QA with the Unity 6.6 sort-free overload.
+- Navigation behavior/clearances were not changed by this cleanup.
+- The project still uses the legacy Input Manager; its deprecation notice is intentionally left for a separate input-system migration rather than mixed into the basemap build.
+
 ACCURACY GUARDRAILS:
 - Modern ArcGIS, OSM, imagery, Cesium and MapTiler layers are technology/basemap comparisons, not historical 1851 state.
 - Provider 1 currently uses Mapzen Terrarium as the runnable elevation pilot; it is not claimed to be official DHM.
@@ -109,7 +114,7 @@ ACCURACY GUARDRAILS:
 - QGIS provider 6 is intentionally empty until a real baked asset package is supplied.
 - Shared city/zone anchors from v10e remain gameplay scaffolding until source-backed 1851 datasets replace them.
 
-QA state: IMPLEMENTERET I WORK BRANCH / AFVENTER UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: IMPLEMENTERET I GITHUB / AFVENTER UNITY 6.6 COMPILE + PLAY MODE QA
 QA checklist:
 1. Allow Unity Package Manager to install Cesium 1.25.1.
 2. Confirm scripts compile without errors.
