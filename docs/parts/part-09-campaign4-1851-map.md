@@ -61,9 +61,9 @@ Campaign4 viser præcis **40 byer**: de 40 største købstæder i 1850-rangering
 
 Esbjerg må ikke indgå i 1851-bylaget. Den moderne by blev først udviklet efter 1864 og havneanlægget fra slutningen af 1860'erne. Den tidligere prototype-markør var derfor anakronistisk og erstattes i Campaign4.
 
-## Unity-implementation
+## Unity-implementation — historisk bylag
 
-`Campaign4CityLayer1850.cs` oprettes som et separat runtime-lag, så Campaign3-koden ikke ændres.
+`Campaign4CityLayer1850.cs` er et separat runtime-lag, så Campaign3-koden ikke ændres.
 
 Ved start:
 
@@ -71,8 +71,57 @@ Ved start:
 - 40 `CITY1850_<rank>_<navn>`-objekter oprettes fra WGS84-ankre;
 - markerstørrelse skaleres efter 1850-befolkningen;
 - markørerne er reelle 3D-objekter med base + centerstykke;
-- semantic zoom viser top 5 ved strategisk zoom, top 15 ved operational zoom og alle 40 ved close zoom;
+- semantic zoom viser færre labels på strategisk niveau og flere ved tæt zoom;
 - bylaget er gameplay/presentation-data og er fortsat adskilt fra selve basemap-providerne.
+
+## Campaign4 ægte 3D-kamera
+
+Fra v00.00.10i må Campaign4 ikke længere være låst til et lodret orthographic-kamera.
+
+`Campaign4Camera3DController.cs` overtager den visuelle kamera-position i `LateUpdate` og konverterer campaign-kameraet til perspective rendering. Den eksisterende gameplay-selection kan fortsat bruge samme `Camera.main` og raycasts.
+
+### Kamera-funktioner
+
+- perspective camera med FOV 42;
+- glidende zoom fra Danmark-overblik til lokal byskala;
+- zoomafstand ca. 115 Unity-enheder ned til 5,5;
+- WASD/piletaster flytter kameraets pivot;
+- musehjul zoomer ind/ud;
+- midterste museknap + drag ændrer yaw/pitch;
+- Q/E roterer omkring fokuspunktet;
+- `Home` nulstiller til Danmark-overblik;
+- `F` fokuserer Aalborg/Limfjorden som fast QA-område;
+- pitch er begrænset, så kameraet bevarer strategisk læsbarhed og ikke går under terrænet.
+
+Den nye controller er et Campaign4-lag og ændrer derfor ikke Campaign3.
+
+## 3D-terræn og relief
+
+Provider 1 er allerede et rigtigt DEM-runtime-system og må fortsat være Campaign4-standardfundamentet.
+
+Den bygger terrain tiles fra Terrarium elevation data og konverterer højdemeter til Unity-Y. Hydrologilaget skærer bl.a. Limfjorden ud af terrænet. Det betyder, at perspective-kameraet faktisk ser et 3D-mesh og ikke blot et fladt baggrundsbillede.
+
+Produktionsmålet er fortsat officielle danske DHM/GeoDanmark-data, men Terrarium-providerens rolle er at gøre den tekniske 3D-pipeline spilbar nu.
+
+## City Detail LOD
+
+`Campaign4CityDetailLOD.cs` indfører første nær-LOD for byerne.
+
+På stor afstand anvendes de billige strategiske city markers. Når kameraet kommer tæt nok på en by:
+
+- strategimarkøren skjules;
+- et deterministisk 3D-bylag aktiveres;
+- bygninger, hovedgader og kirke genereres som runtime-geometri;
+- København/top-10 får større detail-radius og længere synsafstand end mindre byer;
+- kun nærliggende byer aktiverer detailgeometri, så hele Danmark ikke renderer tusindvis af nær-objekter samtidig.
+
+Den procedurale bebyggelse er **ikke** historisk bygningsfacit. Den er den tekniske LOD-placeholder. Senere udskiftes den gradvist med source-backed 1851 prefabs for centrale byer, havne, kaserner, kirker, stationer, fæstninger osv.
+
+## Visuel retning
+
+Målet for Campaign4 er det tidligere godkendte visuelle koncept: et levende, detaljeret 3D-strategikort, hvor Danmark kan ses samlet, men hvor spilleren kan zoome ned mod by-, havne- og infrastrukturniveau uden at skifte til et statisk billede.
+
+Kortet skal derfor bygges af gameplay-objekter og LOD-lag — ikke af ét stort renderet kortbillede.
 
 ## QA
 
@@ -82,6 +131,12 @@ Ved start:
 4. Der skal oprettes præcis 40 `CITY1850_*` roots.
 5. Esbjerg må ikke findes som aktiv bymarkør.
 6. København skal være tydeligt største city marker.
-7. Ved operational zoom vises kun top 15 labels.
-8. Ved close zoom vises alle 40 labels.
-9. Der må ikke komme compile warnings fra deprecated `FindObjectsByType(...FindObjectsSortMode...)` i Campaign4-bylaget.
+7. Campaign camera skal være `orthographic = false` efter Campaign4-controlleren installeres.
+8. Musehjul skal kunne zoome fra Danmark-overblik til tæt byniveau.
+9. `F` skal fokusere Aalborg/Limfjorden.
+10. Midterste museknap skal kunne ændre kameraets vinkel uden at påvirke højreklik-ordrer.
+11. Nær en by skal `Detail3D` aktiveres og den strategiske markør skjules.
+12. Når kameraet zoomer væk igen, skal `Detail3D` deaktiveres og markøren komme tilbage.
+13. Provider 1 DEM-relief skal være synligt i perspective view.
+14. Der må ikke komme compile warnings fra deprecated `FindObjectsByType(...FindObjectsSortMode...)` i Campaign4-lagene.
+15. Før promotion skal Aalborg/Limfjorden kontrolleres visuelt i Unity Play Mode.
