@@ -230,7 +230,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
     {
         campaignCamera = Camera.main;
 
-        Light[] lights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
+        Light[] lights = Object.FindObjectsByType<Light>();
         for (int i = 0; i < lights.Length; i++)
         {
             if (lights[i] != null && lights[i].type == LightType.Directional)
@@ -240,7 +240,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             }
         }
 
-        MeshFilter[] filters = Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None);
+        MeshFilter[] filters = Object.FindObjectsByType<MeshFilter>();
         for (int i = 0; i < filters.Length; i++)
         {
             MeshFilter filter = filters[i];
@@ -255,7 +255,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             });
         }
 
-        Renderer[] renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        Renderer[] renderers = Object.FindObjectsByType<Renderer>();
         for (int i = 0; i < renderers.Length; i++)
         {
             Renderer r = renderers[i];
@@ -446,7 +446,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
     private void ApplyRenderColors(MapProfile p)
     {
-        Renderer[] renderers = Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        Renderer[] renderers = Object.FindObjectsByType<Renderer>();
         for (int i = 0; i < renderers.Length; i++)
         {
             Renderer r = renderers[i];
