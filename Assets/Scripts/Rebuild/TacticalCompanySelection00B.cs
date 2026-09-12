@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Project1864.Rebuild
 {
-    // Gate B selection owner retained unchanged functionally in v00.01.00c2.
-    // Visual status text is minimized so Gate C2 renderer/hover UI owns presentation.
+    // Gate B selection owner retained through Gate D1.
+    // Selection still owns only selection; D1 order/movement is handled by TacticalCompanyOrder00D1 + Company state.
     public sealed class TacticalCompanySelection00B : MonoBehaviour
     {
         public static TacticalCompanySelection00B Instance { get; private set; }
@@ -40,8 +40,8 @@ namespace Project1864.Rebuild
             cam = Camera.main;
             RefreshCompanies();
             Debug.Log(
-                "REBUILD-SELECT-00B|Installed=True|Owner=Single|" +
-                "LMB=Select|Shift=Add|Ctrl=Toggle|Drag=Box|Movement=False|BehaviourChangedIn00C2=False");
+                "REBUILD-SELECT-00D1|Installed=True|Owner=Single|" +
+                "LMB=Select|Shift=Add|Ctrl=Toggle|Drag=Box|RMBOwnedByGateD1=True");
         }
 
         private void OnDestroy()
@@ -89,13 +89,8 @@ namespace Project1864.Rebuild
                 leftDragging = false;
             }
 
-            if (Input.GetMouseButtonDown(1) && selected.Count > 0)
-            {
-                transientMessage = "Movement er bevidst ikke aktivt endnu. Gate D får én Company steering-owner.";
-                transientUntil = Time.unscaledTime + 3.5f;
-                Debug.Log(
-                    "REBUILD-ORDER-00B|Ignored=True|Reason=MovementDeferredToGateD|Selected=" + selected.Count);
-            }
+            // RMB is intentionally not consumed here in Gate D1.
+            // TacticalCompanyOrder00D1 owns destination/facing ghost and order confirmation.
         }
 
         public void RefreshCompanies()
@@ -138,7 +133,7 @@ namespace Project1864.Rebuild
             }
 
             Debug.Log(
-                "REBUILD-SELECT-00B|Point=True|UnitID=" + hit.UnitId +
+                "REBUILD-SELECT-00D1|Point=True|UnitID=" + hit.UnitId +
                 "|SelectedCount=" + selected.Count +
                 "|Mode=" + (ctrlAtDown ? "Toggle" : shiftAtDown ? "Add" : "Replace"));
         }
@@ -171,7 +166,7 @@ namespace Project1864.Rebuild
             }
 
             Debug.Log(
-                "REBUILD-SELECT-00B|Box=True|Inside=" + inside +
+                "REBUILD-SELECT-00D1|Box=True|Inside=" + inside +
                 "|SelectedCount=" + selected.Count +
                 "|Mode=" + (ctrlAtDown ? "Toggle" : shiftAtDown ? "Add" : "Replace"));
         }
