@@ -1,78 +1,101 @@
 PROJECT 1864 - Tactical Rebuild
-Prototype version: v00.01.00c5
-Build status: TEST / GATE A+B+C5
-Build name: QA LAB + CLOSE SOLDIER DETAIL TEST 00.01.00C5
-Visible build marker: PROJECT 1864 | v00.01.00c5 TEST
+Prototype version: v00.01.00d1
+Build status: TEST / GATE D1 DIRECT COMPANY ORDER
+Build name: GHOST DESTINATION + FACING + MARCH TEST 00.01.00D1
+Visible build marker: PROJECT 1864 | v00.01.00d1 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: clean Company-first rebuild after v00.00.09l5 freeze
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Delivery branch: strategi/kampe_rebuild
 
-v00.01.00c5 - QA Lab + Close Soldier Detail
-- Builds directly on v00.01.00c4.
+v00.01.00d1 - Ghost Destination + Facing + March Test
+- Builds directly on v00.01.00c5.
+- This is the first Gate D movement slice.
 - Active OOB remains exactly eight independent Companies: four Danish and four Prussian.
 - Actual tactical manpower remains Denmark 759 + Prussia 812 = 1571 men.
-- Soldier visual ratio setting from c4 remains available at 1:1, 1:2, 1:3, 1:4, 1:5, 1:10 and 1:20.
-- Visual ratio remains presentation-only; tactical manpower, future ammo, casualties, morale and combat state are not scaled by representative count.
-- Animated F Line/Column reforming and animated Z/X turning from c4 remain active.
-- F8 opens the new QA Lab inspector.
-- QA Lab shows selected count, first selected UnitID/name, actual strength, visible representatives, formation, facing, footprint size and reform/turn state.
-- F7 toggles Auto Drill stress testing for selected Danish Companies. It cycles Line/Column and +45/-45 degree animated turns without translation.
-- F6 runs an automated visual-ratio benchmark over 1:1, 1:2, 1:5, 1:10 and 1:20, measures average frame time/FPS and restores the original ratio afterwards.
-- Y toggles selected-Company facing arrows. These are read-only QA overlays showing the actual Company forward direction.
-- A new close-range soldier detail overlay adds stronger headgear silhouette, visor/brim, front badge, collar/shoulder detail and a Prussian spike at close range.
-- Close soldier detail overlay follows visual ratio and animated Line/Column transitions.
-- c5 adds no flags/standards.
-- Permanent world labels remain removed; hover info from c4 remains available.
-- RMB movement remains OFF and deferred to Gate D.
-- Navigation, combat, Officer AI, Brigade AI, artillery and cavalry remain inactive.
+- Stable UnitID/OOB and clean Company-first ownership remain unchanged.
+- Company is the sole owner of its tactical world pose and movement state.
+- RMB now creates a destination ghost instead of being ignored.
+- RMB-down places the destination centre.
+- Hold RMB and drag to rotate the ghost to the desired final facing.
+- F while the ghost is active toggles its target formation Line <-> Column.
+- Release RMB confirms the order.
+- The ghost rectangle shows the final footprint and a facing arrow shows the final direction before confirmation.
+- Multiple selected Companies receive corresponding ghost footprints while preserving their relative group offsets.
+- After confirmation, Companies move to the destination instead of teleporting.
+- Position, facing and Line/Column reforming are interpolated during the order.
+- Movement duration is derived from distance, turn angle and formation-change time.
+- QA march speed is 1.35 m/s and turn speed is 55 degrees/s.
+- Selection footprint, collider and outline interpolate toward the target formation footprint.
+- Old Z/X snap/animated-turn drill controls are disabled in normal D1 play; facing is now specified by the ghost order.
+- Old F instant/standalone drill is disabled in normal D1 play; F changes the active ghost formation.
+- Visual ratio settings remain available at 1:1, 1:2, 1:3, 1:4, 1:5, 1:10 and 1:20.
+- Visual ratio remains presentation-only; OOB/manpower, later ammo, casualties, morale and combat state use real strength.
+- Representative soldiers remain sampled across the full real-strength formation.
+- New D1 renderer adds articulated upper/lower limbs, neck, nose/face silhouette, shoulders, distinct headgear, equipment and clearer weapon silhouette.
+- Marching/reforming/turning soldiers receive a procedural gait with leg swing, arm swing and body bob instead of sliding as static figures.
+- Prussian close silhouette includes a distinct spike helmet profile; Danish headgear remains visually separate.
+- Permanent world labels remain removed.
+- Hover info remains available through H.
+- F10 visual-ratio settings remain available.
+- c5 QA Lab remains available, but Auto Drill should not be run while testing D1 movement orders.
+- No flags/standards in this revision.
+- No obstacle avoidance, bridge/river routing or V3 detour logic yet; D1 validates the direct order/ghost/movement contract first.
+- Combat, Officer AI, Brigade AI, artillery and cavalry remain inactive.
 
 Controls
 - LMB: select Danish Company.
 - Shift+LMB: add to selection.
 - Ctrl+LMB: toggle selection.
 - LMB drag: box selection.
-- Esc: clear selection.
-- F: animated Line <-> Column reform.
-- Z/X: animated facing left/right 15 degrees.
+- Esc: clear selection / cancel active ghost.
+- RMB down: place destination ghost.
+- Hold RMB + drag: set final facing.
+- F while ghost active: target Line <-> Column.
+- RMB release: confirm order and march/reform to the ghost.
 - F10: open/close visual ratio settings.
 - H: hover info ON/OFF.
 - V: Debug/Clean view.
-- F8: QA Lab panel ON/OFF.
-- F7: Auto Drill stress test ON/OFF.
-- F6: start/stop visual-ratio benchmark.
-- Y: facing-arrow overlay ON/OFF.
-- RMB: still intentionally ignored until Gate D.
+- F8: c5 QA Lab panel.
+- F6: visual-ratio benchmark.
 
-QA acceptance for v00.01.00c5
+QA acceptance for v00.01.00d1
 1. Unity compiles without red errors.
-2. Visible marker is PROJECT 1864 | v00.01.00c5 TEST.
-3. Console contains REBUILD-QALAB-00C5|Installed=True.
-4. Console contains REBUILD-QA-OVERLAY-00C5|Installed=True.
-5. Console contains REBUILD-SOLDIER-DETAIL-00C5|Installed=True.
-6. Existing c4 renderer/settings/drill/hover continue working.
-7. F8 opens a QA panel with live selected-Company data.
-8. F7 cycles selected Companies through animated formation and facing tests without changing world position.
-9. F6 cycles visual ratios and logs average FPS/ms for each stage, then restores the original ratio.
-10. Y toggles forward-direction arrows only for selected Companies.
-11. Close zoom shows clearer headgear/trim silhouette than c4.
-12. 1:2 and other ratios still spread representative soldiers across the full actual-strength formation.
-13. Selection remains stable while reforming, turning and running Auto Drill.
-14. Hover info remains available through H.
-15. No permanent Company labels or flags appear.
-16. RMB still does not move Companies and reports MovementDeferredToGateD.
-17. No legacy Regiment runtime/Officer AI/Brigade AI is reactivated.
+2. Visible marker is PROJECT 1864 | v00.01.00d1 TEST.
+3. Console contains REBUILD-ORDER-00D1|Installed=True.
+4. Console contains REBUILD-RENDER-00D1|Installed=True.
+5. Exactly eight independent Companies remain in scene.
+6. LMB/Shift/Ctrl/drag-box/Esc selection remains stable.
+7. RMB-down shows a ghost footprint at the intended destination.
+8. Holding RMB and dragging rotates the ghost/facing arrow without moving the real Company.
+9. F while the ghost is active changes only the preview Line/Column geometry.
+10. Releasing RMB issues one order; the Company does not teleport.
+11. Men visibly march toward the destination with procedural gait.
+12. A pure facing change makes men rotate/walk into the new facing instead of snapping.
+13. A Line/Column change makes representatives move toward new slots instead of instantly morphing.
+14. Final Company centre, facing and formation match the ghost preview.
+15. Multi-selection preserves relative Company offsets at the target.
+16. 1:2 and other ratios still use real tactical strength while reducing visible representatives only.
+17. Hover remains functional.
+18. No legacy Regiment movement owner is reactivated.
+19. Obstacles/bridges/rivers are intentionally not solved in D1.
+20. Combat remains OFF.
 
 Previous revisions
+- v00.01.00c5: QA Lab + Close Soldier Detail.
 - v00.01.00c4: Animated Drill + Visual Soldier Scale.
 - v00.01.00c3: Visual Polish + Drill Test.
 - v00.01.00c2: Soldier Visual Upgrade + Hover Info.
 - v00.01.00c: Gate C 1:1 GPU renderer.
 - v00.01.00b: Gate A stable UnitID/OOB + Gate B independent Company selection.
 
-Planned next gates
-D. Company movement/navigation with one steering owner, including hard/soft obstacles and bridge/river constraints.
+Next Gate D slices
+- D2: hard/soft obstacles and direct no-progress recovery.
+- D3: bridge-only river crossing and V3-style persistent detour logic at Company level.
+- D4: multi-Company group templates/relative offsets under pathing and terrain fitting.
+
+Later gates
 E. Company combat: range, LOS, ammo, fire, reload, casualties, morale/cohesion.
 F. Scale from one battalion to one full Regiment per side.
 G. Battalion/Regiment HQ and Officer AI.
