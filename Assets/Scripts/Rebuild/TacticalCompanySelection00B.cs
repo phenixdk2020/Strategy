@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Project1864.Rebuild
 {
-    // Gate B selection owner retained through Gate D1.
-    // Selection still owns only selection; D1 order/movement is handled by TacticalCompanyOrder00D1 + Company state.
+    // Single selection owner for the clean rebuild.
+    // D2 keeps Company selection intact and adds regiment-level selection through double-click.
     public sealed class TacticalCompanySelection00B : MonoBehaviour
     {
         public static TacticalCompanySelection00B Instance { get; private set; }
@@ -23,7 +23,11 @@ namespace Project1864.Rebuild
         private string transientMessage = string.Empty;
         private float transientUntil;
 
+        private TacticalCompanyEntity00B lastClickedCompany;
+        private float lastClickTime = -10f;
+
         private const float DragThresholdPixels = 8f;
+        private const float DoubleClickSeconds = 0.34f;
 
         private void Awake()
         {
@@ -40,8 +44,8 @@ namespace Project1864.Rebuild
             cam = Camera.main;
             RefreshCompanies();
             Debug.Log(
-                "REBUILD-SELECT-00D1|Installed=True|Owner=Single|" +
-                "LMB=Select|Shift=Add|Ctrl=Toggle|Drag=Box|RMBOwnedByGateD1=True");
+                "REBUILD-SELECT-00D2|Installed=True|Owner=Single|" +
+                "LMB=Company|DoubleLMB=Regiment|Shift=Add|Ctrl=Toggle|Drag=Box|Esc=Clear");
         }
 
         private void OnDestroy()
@@ -89,8 +93,7 @@ namespace Project1864.Rebuild
                 leftDragging = false;
             }
 
-            // RMB is intentionally not consumed here in Gate D1.
-            // TacticalCompanyOrder00D1 owns destination/facing ghost and order confirmation.
+            // RMB is not consumed here once a Gate-D order owner is installed.
         }
 
         public void RefreshCompanies()
@@ -112,6 +115,21 @@ namespace Project1864.Rebuild
             {
                 if (!shiftAtDown && !ctrlAtDown)
                     ClearSelection();
+                lastClickedCompany = null;
+                lastClickTime = -10f;
+                return;
+            }
+
+            bool doubleClick = hit == lastClickedCompany &&
+                               Time.unscaledTime - lastClickTime <= DoubleClickSeconds;
+            lastClickedCompany = hit;
+            lastClickTime = Time.unscaledTime;
+
+            if (doubleClick)
+            {
+                CompleteRegimentSelection(hit);
+                lastClickedCompany = null;
+                lastClickTime = -10f;
                 return;
             }
 
@@ -133,9 +151,72 @@ namespace Project1864.Rebuild
             }
 
             Debug.Log(
-                "REBUILD-SELECT-00D1|Point=True|UnitID=" + hit.UnitId +
+                "REBUILD-SELECT-00D2|Company=True|UnitID=" + hit.UnitId +
                 "|SelectedCount=" + selected.Count +
                 "|Mode=" + (ctrlAtDown ? "Toggle" : shiftAtDown ? "Add" : "Replace"));
+        }
+
+        private void CompleteRegimentSelection(TacticalCompanyEntity00B source)
+        {
+            string regimentId = ResolveRegimentId(source);
+            if (string.IsNullOrEmpty(regimentId))
+                return;
+
+            List<TacticalCompanyEntity00B> regimentCompanies = new List<TacticalCompanyEntity00B>();
+            for (int i = 0; i < allCompanies.Count; i++)
+            {
+                TacticalCompanyEntity00B company = allCompanies[i];
+                if (company == null || company.Nation != RebuildNation.Denmark)
+                    continue;
+                if (ResolveRegimentId(company) == regimentId)
+                    regimentCompanies.Add(company);
+            }
+
+            if (regimentCompanies.Count == 0)
+                return;
+
+            if (!shiftAtDown && !ctrlAtDown)
+                ClearSelection();
+
+            bool allAlreadySelected = true;
+            for (int i = 0; i < regimentCompanies.Count; i++)
+            {
+                if (!selected.Contains(regimentCompanies[i]))
+                {
+                    allAlreadySelected = false;
+                    break;
+                }
+            }
+
+            for (int i = 0; i < regimentCompanies.Count; i++)
+            {
+                TacticalCompanyEntity00B company = regimentCompanies[i];
+                if (ctrlAtDown && allAlreadySelected)
+                    Remove(company);
+                else
+                    Add(company);
+            }
+
+            transientMessage = "Regiment valgt: " + regimentId + " | Companies: " + regimentCompanies.Count;
+            transientUntil = Time.unscaledTime + 2.2f;
+
+            Debug.Log(
+                "REBUILD-SELECT-00D2|Regiment=True|RegimentID=" + regimentId +
+                "|Companies=" + regimentCompanies.Count +
+                "|SelectedCount=" + selected.Count +
+                "|Mode=" + (ctrlAtDown ? "Toggle" : shiftAtDown ? "Add" : "Replace"));
+        }
+
+        private static string ResolveRegimentId(TacticalCompanyEntity00B company)
+        {
+            if (company == null || RebuildOOBRegistry00B.Instance == null)
+                return string.Empty;
+
+            RebuildUnitRecord battalion = RebuildOOBRegistry00B.Instance.Get(company.ParentUnitId);
+            if (battalion == null)
+                return string.Empty;
+
+            return battalion.ParentUnitId ?? string.Empty;
         }
 
         private void CompleteBoxSelection()
@@ -166,7 +247,7 @@ namespace Project1864.Rebuild
             }
 
             Debug.Log(
-                "REBUILD-SELECT-00D1|Box=True|Inside=" + inside +
+                "REBUILD-SELECT-00D2|Box=True|Inside=" + inside +
                 "|SelectedCount=" + selected.Count +
                 "|Mode=" + (ctrlAtDown ? "Toggle" : shiftAtDown ? "Add" : "Replace"));
         }
