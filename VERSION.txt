@@ -1,9 +1,9 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10k
-Build status: CAMPAIGN4 3D DEM RENDER FIX / UNITY RE-TEST PENDING
-Build name: CAMPAIGN4 DENMARK 1851 3D + TOP40 CITY LOD
+Prototype version: v00.00.10l
+Build status: CAMPAIGN4 STRATEGIC VISUAL PASS / UNITY QA PENDING
+Build name: CAMPAIGN4 DENMARK 1851 3D STRATEGIC ART DIRECTION
 Branch: channel-campaign4
-Base lineage: clean v00.00.10e campaign foundation -> v00.00.10f style lab -> v00.00.10g true provider lab -> v00.00.10h historical 1850 city layer -> v00.00.10i playable 3D camera + city LOD -> v00.00.10j DEM visibility + presentation cleanup -> v00.00.10k Unity 6.6 API compatibility
+Base lineage: clean v00.00.10e campaign foundation -> v00.00.10f style lab -> v00.00.10g true provider lab -> v00.00.10h historical 1850 city layer -> v00.00.10i playable 3D camera + city LOD -> v00.00.10j DEM visibility + presentation cleanup -> v00.00.10k Unity 6.6 API compatibility -> v00.00.10l strategic visual pass
 Campaign3 rollback/reference remains: channel-campaign3
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
@@ -14,45 +14,49 @@ v10h HISTORICAL CITY LAYER:
 - Exactly 40 city roots are created from the official 1 February 1850 købstad population ranking.
 - Population controls strategic marker hierarchy.
 - Esbjerg is intentionally absent from the 1851 layer.
-- Campaign3 source remains untouched because the new city layer is Campaign4-specific.
 
 v10i PLAYABLE 3D MAP FOUNDATION:
 - Campaign4Camera3DController.cs converts Camera.main from orthographic top-down rendering to a perspective 3D strategy camera.
-- Mouse wheel provides deep country-to-city zoom.
+- Mouse wheel provides country-to-city zoom.
 - WASD/arrows pan the focus point.
 - Middle mouse drag changes yaw/pitch.
 - Q/E rotate around the focus point.
 - Home resets to Denmark overview.
-- F focuses the Aalborg/Limfjord QA area.
-- Camera motion is applied in LateUpdate so the current gameplay/raycast prototype can remain operational while Campaign4 is isolated.
-
-CITY DETAIL LOD:
-- Campaign4CityDetailLOD.cs adds the first close-zoom settlement LOD.
-- Strategic city markers remain active at long range.
-- Near a city, the marker is replaced by deterministic runtime 3D settlement geometry.
-- The placeholder settlement contains roads, houses and a church.
-- Larger cities receive denser generated geometry and a longer detail activation range.
-- Generated buildings are technical LOD placeholders, not source-backed historical building reconstructions.
-- Future authored 1851 prefabs can replace the runtime placeholders without changing the strategic city data contract.
+- F focuses Aalborg/Limfjorden.
 
 v10j DEM RENDER + PRESENTATION FIX:
-- First Campaign4 Play Mode screenshot confirmed that the perspective camera was active, but the DEM terrain itself was effectively invisible and the screen was dominated by the blue sea board plus overlapping labels.
-- Root cause: inherited v10g DEM tile triangle winding produced downward-facing normals in the X/Z projection; back-face culling therefore hid the land mesh from the above-ground perspective camera.
-- Campaign4DemMeshRepairV010J.cs watches streamed DEM tile meshes and reverses only meshes whose calculated average normal points downward, then recalculates normals/bounds.
-- Campaign4PresentationV010J.cs hides the inherited v10g TRUE 11 BASEMAP LAB panel after provider 1 is activated.
-- Perspective semantic city labels now show top 5 at strategic range, top 15 at operational range and all 40 only near city scale.
-- Legacy zone-label overlap is suppressed at strategic and very close zoom through the compatibility zoom-band proxy.
-- A compact Campaign4 status/control line replaces the large provider-lab overlay.
+- Repairs inherited DEM tile winding when normals point downward.
+- Hides the inherited TRUE 11 BASMAP LAB panel in Campaign4.
+- Adds perspective-aware semantic labels.
 
 v10k UNITY 6.6 COMPATIBILITY FIX:
-- Unity 6.6 reports Object.GetInstanceID() as obsolete/error-level and requires newer entity APIs.
-- Campaign4DemMeshRepairV010J.cs no longer calls GetInstanceID().
-- Processed DEM meshes are tracked directly in HashSet<Mesh>, which is sufficient because each streamed DEM tile owns a mesh instance for its lifetime.
-- DEM winding repair behaviour is otherwise unchanged.
+- Removes obsolete/error-level Object.GetInstanceID() from the DEM repair.
+- Processed meshes are tracked as HashSet<Mesh>.
+
+v10l STRATEGIC VISUAL PASS:
+- Adds Campaign4StrategicVisualPassV010L.cs.
+- Adds a shared procedural landcover texture across streamed DEM tiles using global WGS84-projected UVs.
+- Landcover is generated from layered noise to create broad grass, field, heath and forest-toned variation.
+- Replaces the flat technical green with darker painterly terrain styling while keeping the actual DEM relief.
+- Re-styles sea and inland-water materials toward the approved dark blue campaign-map look.
+- Re-styles historical city markers to rust-red/orange strategic markers.
+- Adds low-cost procedural forest masses for extra 3D depth at strategic zoom.
+- Adds a separate strategic road scaffold rendered with LineRenderer paths that follow sampled DEM height.
+- Road links are PROJECT 1864 authored presentation scaffolding: they are NOT copied 1:1 from the reference artwork and are NOT claimed as exact 1851 road cartography.
+- Road data is kept separate so source-backed historical transport data can replace the scaffold later without changing the rendering contract.
+- Campaign4Camera3DController overview is tuned to distance 94, pitch 68 degrees, yaw -3 degrees and FOV 38 for a more map-like overview.
+- Existing Aalborg close-focus remains unchanged at city-scale intent.
+- Campaign4PresentationV010J now reports v10l and keeps the HUD compact.
+
+REFERENCE IMAGE POLICY:
+- The approved generated Denmark 1851 artwork is an ART-DIRECTION reference only.
+- Do not copy city lists, road paths, coast details, settlement layouts or other generated content 1:1.
+- Historical/gameplay data must come from PROJECT 1864 datasets and explicit research.
+- Visual targets that may be reproduced: palette, atmosphere, depth, hierarchy, density, marker style, terrain richness and general diorama feel.
 
 3D TERRAIN FOUNDATION:
 - Provider 1 remains the default Campaign4 basemap.
-- Provider 1 builds real runtime terrain meshes from Mapzen/AWS Terrarium elevation tiles.
+- Provider 1 builds runtime terrain meshes from Mapzen/AWS Terrarium elevation tiles.
 - Elevation values are converted into Unity Y relief.
 - Explicit hydrology includes the Limfjord QA cut.
 - Official DHM/GeoDanmark remains the production target for Denmark terrain when integration/credentials are available.
@@ -66,28 +70,32 @@ CAMPAIGN4 3D CAMERA CONTROLS:
 - F = Aalborg / Limfjord focus.
 
 AALBORG / LIMFJORD QA GATE:
-- Limfjorden is the mandatory high-detail validation area.
+- Limfjorden remains the mandatory high-detail validation area.
 - Provider 1 must visibly separate Vendsyssel/Nørresundby side from Aalborg/Jutland side at the fjord.
-- Press F to focus the validation area.
 - Perspective relief, hydrology, city LOD and zoom behavior must all be checked here before broader Denmark polish.
 
 ACCURACY GUARDRAILS:
 - Provider 1 currently uses Mapzen Terrarium as the runnable elevation pilot; it is not claimed to be official DHM.
 - City WGS84 points are town-centre anchors, not exact 1851 urban footprints.
 - Procedural close-zoom buildings are placeholders until source-backed historical assets replace them.
+- v10l roads are intentionally non-canonical presentation scaffolding.
+- The v10l procedural landcover is visual dressing and not a reconstruction of exact 1851 field/forest parcels.
 
-QA state: v10i SCREENSHOT REPRODUCED TERRAIN-VISIBILITY BUG / v10j FIX IMPLEMENTED / v10k COMPILE COMPATIBILITY FIX / UNITY RE-TEST PENDING
+QA state: v10l IMPLEMENTED IN GITHUB / UNITY 6.6 COMPILE + PLAY MODE QA PENDING
 QA checklist:
 1. Confirm scripts compile without errors in Unity 6.6.
 2. Enter Play mode and verify provider 1 loads DEM terrain.
-3. Confirm visible green/brown land terrain replaces the previous sea-only/trapezoid appearance.
-4. Confirm Camera.main remains perspective.
-5. Confirm the old large v10g TRUE 11 BASEMAPS QA panel is hidden.
-6. At Denmark overview, confirm only top 5 city labels are shown.
-7. Zoom closer and confirm top 15 / all 40 labels appear progressively.
-8. Verify mouse-wheel zoom, middle-mouse orbit, Q/E rotation and WASD pan.
-9. Press F and verify Aalborg/Limfjorden is centered at close zoom.
-10. Confirm Limfjorden visibly cuts through the terrain at Aalborg.
-11. Confirm nearby city Detail3D geometry activates and strategic markers hide.
-12. Confirm army/zone selection and right-click orders still function with the perspective camera.
-13. Report the next screenshot from Denmark overview and from F/Aalborg before promotion.
+3. Confirm terrain receives varied green/brown procedural landcover instead of one flat green material.
+4. Confirm sea is visibly darker than in v10k and inland hydrology remains readable.
+5. Confirm city markers are rust-red/orange at strategic zoom.
+6. Confirm procedural forest masses appear on land and not as a full-screen object flood.
+7. Confirm the strategic road scaffold appears only as subtle terrain-following lines.
+8. Confirm roads do not cross obvious sea gaps such as Storebælt as if a modern bridge existed.
+9. Confirm road placement is understood as non-canonical visual scaffolding.
+10. Confirm Denmark overview framing is more top-down and map-like than v10k.
+11. Confirm only top 5 city labels at strategic overview and progressive labels when zooming closer.
+12. Press F and verify Aalborg/Limfjorden still focuses correctly.
+13. Confirm Limfjorden visibly cuts through the terrain at Aalborg.
+14. Confirm nearby city Detail3D geometry still activates at close zoom.
+15. Confirm army/zone selection and right-click orders still function.
+16. Capture a new Denmark overview screenshot for visual comparison against the approved art-direction reference.
