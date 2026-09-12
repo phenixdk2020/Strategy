@@ -4,12 +4,13 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// Campaign4 v00.00.10j presentation cleanup.
+/// Campaign4 presentation layer, updated for v00.00.10l.
 ///
 /// - Keeps provider 1 as the Campaign4 basemap but hides the inherited v10g lab UI.
 /// - Replaces the inherited perspective-unaware city labels with distance-based semantic zoom.
 /// - Drives the legacy zoom-band proxy only to suppress overlapping zone labels at strategic
 ///   and very close city zooms while retaining operational labels in the middle band.
+/// - v10l keeps the HUD compact while the strategic visual pass owns terrain/road/landcover styling.
 /// </summary>
 [DefaultExecutionOrder(32300)]
 public sealed class Campaign4PresentationV010J : MonoBehaviour
@@ -26,7 +27,7 @@ public sealed class Campaign4PresentationV010J : MonoBehaviour
         if (Object.FindAnyObjectByType<Campaign4PresentationV010J>() != null)
             return;
 
-        GameObject root = new GameObject("CAMPAIGN4_v10j_Presentation");
+        GameObject root = new GameObject("CAMPAIGN4_v10l_Presentation");
         DontDestroyOnLoad(root);
         root.AddComponent<Campaign4PresentationV010J>();
     }
@@ -59,8 +60,8 @@ public sealed class Campaign4PresentationV010J : MonoBehaviour
         installed = mapCamera != null && cityRoot != null;
 
         Debug.Log(
-            "CAMPAIGN4-PRESENTATION|Version=v00.00.10j|Installed=" + installed +
-            "|LegacyLabUI=False|PerspectiveSemanticLabels=True");
+            "CAMPAIGN4-PRESENTATION|Version=v00.00.10l|Installed=" + installed +
+            "|LegacyLabUI=False|PerspectiveSemanticLabels=True|StrategicVisualPass=True");
     }
 
     private void LateUpdate()
@@ -78,14 +79,14 @@ public sealed class Campaign4PresentationV010J : MonoBehaviour
         // compatibility proxy so its old zone labels do not flood the screen.
         float distance = Campaign4Camera3DController.IsActive
             ? Campaign4Camera3DController.CurrentDistance
-            : 88f;
+            : 94f;
 
         if (distance > 58f)
-            mapCamera.orthographicSize = 60f;       // Strategic: hide zone labels.
+            mapCamera.orthographicSize = 60f;
         else if (distance > 23f)
-            mapCamera.orthographicSize = 40f;       // Operational: useful zone labels.
+            mapCamera.orthographicSize = 40f;
         else
-            mapCamera.orthographicSize = 60f;       // Close: city layer takes over labels.
+            mapCamera.orthographicSize = 60f;
     }
 
     private void EnsureStyles()
@@ -106,7 +107,7 @@ public sealed class Campaign4PresentationV010J : MonoBehaviour
             fontSize = 10,
             alignment = TextAnchor.MiddleLeft
         };
-        hudStyle.normal.textColor = Color.white;
+        hudStyle.normal.textColor = new Color(0.95f, 0.93f, 0.84f);
     }
 
     private void OnGUI()
@@ -118,7 +119,7 @@ public sealed class Campaign4PresentationV010J : MonoBehaviour
 
         float distance = Campaign4Camera3DController.IsActive
             ? Campaign4Camera3DController.CurrentDistance
-            : 88f;
+            : 94f;
 
         int maxRank = distance > 58f ? 5 : distance > 27f ? 15 : 40;
         cityStyle.fontSize = distance <= 18f ? 11 : 10;
@@ -145,8 +146,11 @@ public sealed class Campaign4PresentationV010J : MonoBehaviour
             GUI.Label(new Rect(screen.x + 6f, y - 9f, 155f, 20f), displayName, cityStyle);
         }
 
-        Rect hud = new Rect(Screen.width - 318f, Screen.height - 34f, 310f, 26f);
-        GUI.Box(hud, "CAMPAIGN4 v00.00.10j | 3D DEM | F: Aalborg | Home: Danmark", hudStyle);
+        Rect hud = new Rect(Screen.width - 390f, Screen.height - 34f, 382f, 26f);
+        GUI.Box(
+            hud,
+            "CAMPAIGN4 v00.00.10l | VISUAL PASS | F: Aalborg | Home: Danmark",
+            hudStyle);
     }
 
     private static int ParseRank(string objectName)
