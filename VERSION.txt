@@ -1,127 +1,95 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10h
-Build status: TRUE 11 BASEMAP LAB / RASTER + UI HOTFIX
-Build name: CAMPAIGN3 TRUE 11 BASEMAPS 10H
+Prototype version: v00.00.10i
+Build status: WORLD IMAGERY STREAMING PILOT
+Build name: CAMPAIGN3 WORLD IMAGERY 10I
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10h-raster-ui-fix
+Work branch: work/channel-campaign3-v10i-world-imagery
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Coordinate contract: WGS84 longitude/latitude remains authoritative for shared gameplay data
+Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
 - v00.00.10e = Denmark campaign foundation / WGS84 gameplay scaffold
 - v00.00.10f = 11-style visual lab
 - v00.00.10g = 11 independent basemap provider architecture
-- v00.00.10h = raster loading/resume + unified basemap UI hotfix
+- v00.00.10h = raster loading/resume + unified UI hotfix
+- v00.00.10i = provider 9 world imagery streaming / dynamic LOD pilot
 
 ROLLBACK:
-- v10g before this hotfix: backup/channel-campaign3-v10g-before-raster-ui-fix-20260912
+- v10h before world imagery: backup/channel-campaign3-v10h-before-world-imagery-20260912
+- v10g: backup/channel-campaign3-v10g-before-raster-ui-fix-20260912
 - v10f: backup/channel-campaign3-v10f-before-true11-20260911
 - previous Campaign3 v13n3: backup/channel-campaign3-v13n3-before-maplab11-20260911
 
-WHY v10h EXISTS:
-Unity QA screenshot on 12 September 2026 showed provider 9 stuck/visible at LOADING 18/30 with only the northern raster rows rendered, while the remaining screen showed the blue campaign background. v10e and v10g IMGUI also overlapped at the top/bottom of the Game view.
+v10i PURPOSE:
+- Promote provider 9 Imagery from a fixed Denmark rectangle to the first camera-driven world basemap pilot.
+- Keep the other ten basemap candidates available for comparison.
+- Preserve historical/gameplay data as separate WGS84 layers; modern imagery is presentation/reference only.
+- Prove that the campaign camera can move from Denmark to Europe and a world overview without changing scene.
 
-ROOT CAUSE:
-- v10g raster loading was sequential.
-- Raster provider roots were deactivated when another map was selected.
-- Unity stops coroutines on inactive GameObjects.
-- v10g kept loadStarted=True after that stop, so reselecting the provider could leave it permanently frozen at a partial tile count such as 18/30.
-- Tiles were revealed individually while loading, producing a visible hard horizontal edge between loaded raster rows and the empty background.
+PROVIDER 9 WORLD STREAMING:
+- Source remains Esri World Imagery XYZ tiles for the prototype comparison layer.
+- The visible tile set is calculated from camera center, aspect ratio and orthographic zoom.
+- Dynamic LOD selects Web-Mercator zoom levels z2 through z12.
+- Tile budget is capped at 96 visible/requested tiles by lowering LOD when necessary.
+- Up to 8 tile requests run concurrently.
+- Tiles nearest the camera center are requested first.
+- New tile generations are built hidden and atomically swapped in only when complete.
+- The previous generation stays visible while a replacement LOD/area loads.
+- Camera movement during a pending generation invalidates that generation and rebuilds after a short stability delay.
+- Runtime-created mesh/material/texture objects are explicitly released when an old generation is replaced.
+- Existing persistent provider cache is reused by zoom/x/y.
 
-v10h RASTER FIX:
-- Up to 6 raster tiles load concurrently instead of one at a time.
-- Aalborg/Limfjord tiles receive first priority in the queue.
-- Successful materialized tiles are remembered across provider switches.
-- On provider deactivation, the old load generation is invalidated and loading state becomes resumable.
-- Reselecting a partially loaded raster provider resumes/retries instead of remaining stuck.
-- Raster tile root remains hidden while the overview set is loading.
-- The raster is revealed atomically only when the current overview set has completed.
-- Failed source tiles receive a neutral missing-tile patch, never data from another provider.
-- Existing seven-day local raster cache remains active.
+WORLD CAMERA:
+- Starts at Denmark: 10.20 E / 56.10 N, orthographic size 43.
+- Home = Denmark overview.
+- PageUp = Europe overview.
+- End = world overview.
+- WASD / arrow keys = pan.
+- Middle mouse drag = grab/pan.
+- Mouse wheel = zoom.
+- Longitude is currently clamped to -179.5..179.5 and latitude to -80..80 for the pilot.
 
-v10h UI FIX:
-- Runtime basemap header now reports v00.00.10h.
-- Obsolete v10e build badge in the upper-left is masked by the v10h build badge.
-- Campaign clock and speed controls remain visible and interactive.
-- Provider toolbar reserves an opaque bottom UI region so old Natural Earth map-info text and city labels no longer paint through the basemap buttons.
-- Loading providers show a centered LOADING status instead of exposing a half-built map.
-- Provider source, requirements, attribution and Aalborg/Limfjord QA requirement remain visible in the upper-right information panel.
+LOD BANDS:
+- World overview: z2-z4.
+- Continental/Europe: approximately z4-z6.
+- Country/Denmark: approximately z7-z8.
+- Regional/local: z9-z12.
+- The tile-budget guard may lower one or more levels on wide aspect ratios.
 
-TRUE 11 BASEMAP PROVIDERS:
-1. DEM / DHM-GEODANMARK TARGET
-   - Runnable pilot: Mapzen Terrain Tiles / AWS Terrarium elevation.
-   - Own 3D mesh and hydrology cut including Limfjorden.
-   - Official DHM/GeoDanmark remains production target.
+PROJECTION NOTE:
+- Gameplay coordinates remain WGS84.
+- Provider 9 imagery tiles are Web Mercator source tiles and are placed into the existing Denmark-first linear Unity WGS84 render projection.
+- This is sufficient for the world-streaming technology pilot but is NOT the final global projection architecture.
+- Dateline wrapping, polar treatment, globe curvature and floating-origin support remain future work before a production global campaign.
 
-2. CESIUM WORLD TERRAIN
-   - Cesium for Unity 1.25.1.
-   - Cesium World Terrain + Bing aerial.
-   - Requires Cesium ion token.
+HISTORICAL GUARDRAIL:
+- Satellite/aerial imagery is modern and must never be treated as 1851 map truth.
+- 1851 political borders, settlements, roads, railways, ports, land use and military infrastructure remain separate historical layers.
+- Imagery may eventually be hidden/repainted beneath historical land-use overlays while retaining the same streaming engine.
 
-3. ARCGIS TOPOGRAPHIC
-   - Esri World Topographic XYZ raster provider.
+LICENSING GUARDRAIL:
+- v10i streams imagery for development comparison and uses a local cache.
+- Do not package or redistribute a bulk offline copy of World Imagery with a release build without a separate licensing review.
+- Attribution remains visible through the provider UI.
 
-4. MAPTILER 3D TERRAIN
-   - MapTiler quantized-mesh through Cesium.
-   - Requires MAPTILER_API_KEY.
+FILES:
+- Assets/Scripts/Campaign/CampaignRasterBasemapV010G.cs now contains provider-9 world streaming mode.
+- Assets/Scripts/Campaign/CampaignWorldImageryOverlayV010I.cs adds the visible v10i badge, world status and controls.
+- docs/parts/part-09-42-CAMPAIGN-V10I-WORLD-IMAGERY.md documents architecture and QA.
 
-5. HISTORICAL DANISH MAP
-   - Datafordeler Høje målebordsblade WMS.
-   - Requires DATAFORDELER_API_KEY.
+QA GATES:
+1. Project compiles in Unity 6000.6.0f1.
+2. Select provider 9 and confirm v00.00.10i badge appears.
+3. Denmark view loads completely and Limfjorden remains visible.
+4. Zoom in/out across at least three LOD bands and confirm the old map remains visible until replacement tiles are ready.
+5. Pan from Denmark toward Germany/Sweden and confirm new imagery streams in.
+6. PageUp shows a Europe overview with a lower LOD.
+7. End shows a world overview at low LOD.
+8. Home returns to Denmark.
+9. Switch from provider 9 to another local provider and confirm the previous Denmark camera is restored.
+10. Switch back to provider 9 and confirm its world center/zoom state persists.
+11. Verify no growing duplicate tile roots remain after repeated pan/zoom cycles.
+12. Verify campaign clock and existing Denmark gameplay markers remain functional at Denmark-scale zoom.
 
-6. QGIS / BLENDER BAKED
-   - Local baked asset adapter.
-   - Requires qgis-denmark.png and qgis-denmark.bounds.
-
-7. PROCEDURAL DENMARK
-   - Own generated terrain/landcover and hydrology.
-
-8. OPENSTREETMAP
-   - OSM Standard XYZ comparison provider.
-
-9. REALISTIC IMAGERY
-   - Esri World Imagery comparison provider.
-
-10. DIORAMA / MODEL TERRAIN
-   - Own generated miniature 3D terrain and dressing.
-
-11. HOI4 / PROVINCE MAP
-   - Own generated strategic region/province geometry.
-
-CONTROLS:
-- M or ] = next basemap
-- [ = previous basemap
-- Shift+F1 ... Shift+F11 = direct provider selection
-- Cesium/MapTiler globe mode retains its own navigation controls
-
-AALBORG / LIMFJORD QA GATE:
-- Aalborg/Limfjord remains mandatory validation region.
-- No provider may silently substitute the Natural Earth v10e render.
-- Providers 1, 7, 10 and 11 must visibly represent the v10g/v10h hydrology separation.
-- Providers 3, 5, 8 and 9 must show their own source representation when provider data is available.
-- Providers 2 and 4 are validated in their Cesium globe coordinate system.
-
-ACCURACY GUARDRAILS:
-- Modern ArcGIS, OSM, imagery, Cesium and MapTiler are comparison basemaps, not 1851 historical truth.
-- Terrarium DEM pilot is not claimed to be official Danish DHM.
-- Høje målebordsblade cover a broader 1842-1899 source period; exact 1851 temporal filtering remains future work.
-- Shared v10e city/zone positions remain gameplay scaffolding until source-backed 1851 datasets replace them.
-
-UNITY 6.6 NOTES:
-- Previous FindObjectsByType sorting warnings were already cleaned in v10g.
-- Legacy Input Manager deprecation remains intentionally separate from this hotfix.
-- No battle/navigation behavior is intentionally changed by v10h.
-
-QA STATE: IMPLEMENTED IN WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
-QA CHECKLIST:
-1. Compile with no new C# errors.
-2. Start Denmark campaign and confirm upper-left badge says v00.00.10h.
-3. Select provider 9 Imagery and confirm status progresses with multiple ACTIVE requests.
-4. Confirm no partial imagery rows are shown while loading.
-5. Confirm the complete map appears at READY / READY WITH FAILED.
-6. Switch away from provider 9 while loading, then select it again; confirm loading resumes rather than freezing.
-7. Repeat with provider 3 and provider 8.
-8. Confirm bottom buttons are no longer mixed with the old Natural Earth map-info panel.
-9. Confirm city/zone/army gameplay remains aligned with local WGS84 providers.
-10. Zoom around Aalborg/Limfjord and capture screenshot for QA.
+QA state: IMPLEMENTED IN WORK BRANCH / AWAITS UNITY 6.6 COMPILE + PLAY MODE QA
