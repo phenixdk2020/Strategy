@@ -117,6 +117,40 @@ På stor afstand anvendes de billige strategiske city markers. Når kameraet kom
 
 Den procedurale bebyggelse er **ikke** historisk bygningsfacit. Den er den tekniske LOD-placeholder. Senere udskiftes den gradvist med source-backed 1851 prefabs for centrale byer, havne, kaserner, kirker, stationer, fæstninger osv.
 
+## v00.00.10j — DEM visibility og presentation cleanup
+
+Første Play Mode-skærmbillede fra v00.00.10i viste, at perspective-kameraet fungerede, men selve Danmarksterrænet var praktisk taget usynligt. Skærmen viste primært den store blå havflade med labels ovenpå.
+
+### Årsag
+
+Den nedarvede v10g DEM-tile-generator bruger en trekant-winding, som i Campaign-projektionens X/Z-plan giver nedadvendte normaler. Set fra Campaign4-kameraet ovenfra bliver de derfor backface-cull'et af Unity-materialet.
+
+### Teknisk rettelse
+
+`Campaign4DemMeshRepairV010J.cs`:
+
+- overvåger nye `DEM_*` MeshFilters efterhånden som terræn-tiles streames ind;
+- recalculerer normaler og måler gennemsnitlig Y-retning;
+- vender trekant-windingen kun på meshes, som vender nedad;
+- recalculerer normaler og bounds efter rettelsen;
+- logger antal reparerede tiles med `CAMPAIGN4-DEM-REPAIR`.
+
+Dette er bevidst et Campaign4-lag, så Campaign3 ikke ændres. Når Campaign4-arkitekturen er endeligt valgt, kan den korrekte winding flyttes direkte ind i den permanente terræn-generator.
+
+### Label- og UI-oprydning
+
+`Campaign4PresentationV010J.cs`:
+
+- lader den nedarvede provider-lab initialisere provider 1;
+- skjuler derefter det store `v00.00.10g TRUE 11 BASEMAPS` QA-panel i Campaign4;
+- deaktiverer kun det gamle city-label `OnGUI`, ikke city-GameObjects;
+- bruger perspektivkameraets reelle afstand som semantic-zoom-kriterium;
+- viser top 5 byer på Danmark-overblik;
+- viser top 15 på operational afstand;
+- viser alle 40 først ved tæt city zoom;
+- reducerer overlap fra de gamle zone-labels ved strategisk og helt tæt zoom;
+- viser kun en lille Campaign4 v10j statuslinje i stedet for basemap-laboratoriets store panel.
+
 ## Visuel retning
 
 Målet for Campaign4 er det tidligere godkendte visuelle koncept: et levende, detaljeret 3D-strategikort, hvor Danmark kan ses samlet, men hvor spilleren kan zoome ned mod by-, havne- og infrastrukturniveau uden at skifte til et statisk billede.
@@ -127,16 +161,21 @@ Kortet skal derfor bygges af gameplay-objekter og LOD-lag — ikke af ét stort 
 
 1. Branch skal være `channel-campaign4`.
 2. Provider 1 skal fortsat være default ved Play.
-3. Limfjorden skal være synlig ved Aalborg og adskille Aalborg-siden fra Nørresundby/Vendsyssel-siden.
-4. Der skal oprettes præcis 40 `CITY1850_*` roots.
-5. Esbjerg må ikke findes som aktiv bymarkør.
-6. København skal være tydeligt største city marker.
-7. Campaign camera skal være `orthographic = false` efter Campaign4-controlleren installeres.
-8. Musehjul skal kunne zoome fra Danmark-overblik til tæt byniveau.
-9. `F` skal fokusere Aalborg/Limfjorden.
-10. Midterste museknap skal kunne ændre kameraets vinkel uden at påvirke højreklik-ordrer.
-11. Nær en by skal `Detail3D` aktiveres og den strategiske markør skjules.
-12. Når kameraet zoomer væk igen, skal `Detail3D` deaktiveres og markøren komme tilbage.
-13. Provider 1 DEM-relief skal være synligt i perspective view.
-14. Der må ikke komme compile warnings fra deprecated `FindObjectsByType(...FindObjectsSortMode...)` i Campaign4-lagene.
-15. Før promotion skal Aalborg/Limfjorden kontrolleres visuelt i Unity Play Mode.
+3. `Camera.main` skal være `orthographic = false` efter Campaign4-controlleren installeres.
+4. DEM-land skal være synligt som faktisk terræn og må ikke længere forsvinde pga. backface-culling.
+5. Den store blå havflade må kun være vandbaggrund og ikke ligne selve Danmark.
+6. Det gamle store `v00.00.10g TRUE 11 BASEMAPS` panel skal være skjult i Campaign4.
+7. Danmark-overblik skal kun vise top 5 city labels.
+8. Operational zoom skal vise top 15 city labels.
+9. Close zoom skal kunne vise alle 40 city labels.
+10. Limfjorden skal være synlig ved Aalborg og adskille Aalborg-siden fra Nørresundby/Vendsyssel-siden.
+11. Der skal oprettes præcis 40 `CITY1850_*` roots.
+12. Esbjerg må ikke findes som aktiv bymarkør.
+13. København skal være tydeligt største city marker.
+14. Musehjul skal kunne zoome fra Danmark-overblik til tæt byniveau.
+15. `F` skal fokusere Aalborg/Limfjorden.
+16. Midterste museknap skal kunne ændre kameraets vinkel uden at påvirke højreklik-ordrer.
+17. Nær en by skal `Detail3D` aktiveres og den strategiske markør skjules.
+18. Når kameraet zoomer væk igen, skal `Detail3D` deaktiveres og markøren komme tilbage.
+19. Der må ikke komme compile warnings fra deprecated `FindObjectsByType(...FindObjectsSortMode...)` i Campaign4-lagene.
+20. Før promotion skal der tages nyt screenshot både af Danmark-overblik og `F`-visningen ved Aalborg/Limfjorden.
