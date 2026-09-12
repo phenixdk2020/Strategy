@@ -149,7 +149,20 @@ Dette er bevidst et Campaign4-lag, så Campaign3 ikke ændres. Når Campaign4-ar
 - viser top 15 på operational afstand;
 - viser alle 40 først ved tæt city zoom;
 - reducerer overlap fra de gamle zone-labels ved strategisk og helt tæt zoom;
-- viser kun en lille Campaign4 v10j statuslinje i stedet for basemap-laboratoriets store panel.
+- viser kun en lille Campaign4-statuslinje i stedet for basemap-laboratoriets store panel.
+
+## v00.00.10k — Unity 6.6 API compatibility
+
+Unity 6.6 rapporterede compile-fejl i DEM-repairlaget, fordi `UnityEngine.Object.GetInstanceID()` nu er obsolete på error-niveau og peger mod den nye EntityId-API.
+
+Campaign4 har ikke behov for et numerisk Unity-ID for denne opgave. `Campaign4DemMeshRepairV010J.cs` tracker derfor nu de allerede kontrollerede terrænmeshes direkte som `HashSet<Mesh>`.
+
+Det giver følgende fordele:
+
+- ingen brug af deprecated/obsolete `GetInstanceID()`;
+- ingen ekstra kobling til Unitys EntityId-API;
+- samme garanti mod at reparere samme DEM-mesh flere gange;
+- ingen ændring af selve winding/normal-reparationen.
 
 ## Visuel retning
 
@@ -177,5 +190,5 @@ Kortet skal derfor bygges af gameplay-objekter og LOD-lag — ikke af ét stort 
 16. Midterste museknap skal kunne ændre kameraets vinkel uden at påvirke højreklik-ordrer.
 17. Nær en by skal `Detail3D` aktiveres og den strategiske markør skjules.
 18. Når kameraet zoomer væk igen, skal `Detail3D` deaktiveres og markøren komme tilbage.
-19. Der må ikke komme compile warnings fra deprecated `FindObjectsByType(...FindObjectsSortMode...)` i Campaign4-lagene.
+19. Der må ikke komme compile-fejl eller warnings fra `GetInstanceID()` eller deprecated `FindObjectsByType(...FindObjectsSortMode...)` i Campaign4-lagene.
 20. Før promotion skal der tages nyt screenshot både af Danmark-overblik og `F`-visningen ved Aalborg/Limfjorden.
