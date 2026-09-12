@@ -12,8 +12,10 @@ using Object = UnityEngine.Object;
 /// - F: focus Aalborg/Limfjorden QA area.
 /// - Home: reset to Denmark overview.
 ///
-/// The controller runs in LateUpdate so it can coexist with the legacy
-/// GrandCampaignBootstrap while Campaign4 is being developed as an isolated branch.
+/// v00.00.10l overview tuning:
+/// - Slightly more top-down strategic framing.
+/// - Narrower FOV and a small yaw offset for a map-like composition.
+/// - Keeps the existing close-zoom Aalborg behaviour.
 /// </summary>
 [DefaultExecutionOrder(32000)]
 public sealed class Campaign4Camera3DController : MonoBehaviour
@@ -30,12 +32,12 @@ public sealed class Campaign4Camera3DController : MonoBehaviour
     private Camera mapCamera;
     private Vector3 currentPivot;
     private Vector3 targetPivot;
-    private float currentDistance = 88f;
-    private float targetDistance = 88f;
-    private float currentYaw;
-    private float targetYaw;
-    private float currentPitch = 62f;
-    private float targetPitch = 62f;
+    private float currentDistance = 94f;
+    private float targetDistance = 94f;
+    private float currentYaw = -3f;
+    private float targetYaw = -3f;
+    private float currentPitch = 68f;
+    private float targetPitch = 68f;
     private bool installed;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -112,7 +114,7 @@ public sealed class Campaign4Camera3DController : MonoBehaviour
             return true;
 
         mapCamera.orthographic = false;
-        mapCamera.fieldOfView = 42f;
+        mapCamera.fieldOfView = 38f;
         mapCamera.nearClipPlane = 0.05f;
         mapCamera.farClipPlane = 500f;
 
@@ -125,10 +127,10 @@ public sealed class Campaign4Camera3DController : MonoBehaviour
         IsActive = true;
 
         Debug.Log(
-            "CAMPAIGN4-CAMERA|Installed=True|Mode=Perspective3D|" +
+            "CAMPAIGN4-CAMERA|Version=v00.00.10l|Installed=True|Mode=Perspective3D|" +
             "ZoomMin=" + MinDistance.ToString("0.0") +
             "|ZoomMax=" + MaxDistance.ToString("0.0") +
-            "|Focus=AalborgWithF|Reset=Home");
+            "|OverviewDistance=94|OverviewPitch=68|FOV=38|Focus=AalborgWithF|Reset=Home");
 
         return true;
     }
@@ -197,9 +199,9 @@ public sealed class Campaign4Camera3DController : MonoBehaviour
     private void ResetToDenmark(bool instant)
     {
         targetPivot = CampaignGeoProjection.Project(10.20f, 56.10f, 0.25f);
-        targetDistance = 88f;
-        targetYaw = 0f;
-        targetPitch = 62f;
+        targetDistance = 94f;
+        targetYaw = -3f;
+        targetPitch = 68f;
 
         if (!instant)
             return;
@@ -218,7 +220,7 @@ public sealed class Campaign4Camera3DController : MonoBehaviour
         targetPitch = 58f;
         ClampPivot();
 
-        Debug.Log("CAMPAIGN4-CAMERA|Focus=Aalborg|LimfjordQA=True|Distance=12.5");
+        Debug.Log("CAMPAIGN4-CAMERA|Version=v00.00.10l|Focus=Aalborg|LimfjordQA=True|Distance=12.5");
     }
 
     private void ClampPivot()
