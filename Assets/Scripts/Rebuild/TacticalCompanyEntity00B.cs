@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Project1864.Rebuild
 {
     // Clean Company tactical state/selection anchor.
-    // v00.01.00c4 adds drill-only animated formation/facing transitions.
-    // Translation, navigation, combat and AI remain intentionally absent.
+    // v00.01.00d1 adds the first real Company order/movement state.
+    // One Company remains the sole owner of its world pose; higher systems issue intent only.
     public sealed class TacticalCompanyEntity00B : MonoBehaviour
     {
         public string UnitId { get; private set; }
@@ -19,11 +19,23 @@ namespace Project1864.Rebuild
         public float FootprintWidth { get; private set; }
         public float FootprintDepth { get; private set; }
 
+        // Retained drill state for older QA helpers.
         public bool IsReforming { get; private set; }
         public RebuildFormation ReformFromFormation { get; private set; }
         public RebuildFormation ReformTargetFormation { get; private set; }
         public float ReformProgress { get; private set; } = 1f;
         public bool IsTurning { get; private set; }
+
+        // Gate D1 order/movement state.
+        public bool IsMovingToOrder { get; private set; }
+        public Vector3 OrderTargetPosition { get; private set; }
+        public Quaternion OrderTargetRotation { get; private set; } = Quaternion.identity;
+        public RebuildFormation OrderFromFormation { get; private set; }
+        public RebuildFormation OrderTargetFormation { get; private set; }
+        public float OrderProgress { get; private set; } = 1f;
+        public float OrderDistance { get; private set; }
+        public float OrderDuration { get; private set; }
+        public bool IsVisualWalking => IsMovingToOrder || IsReforming || IsTurning;
 
         private Renderer footprintRenderer;
         private LineRenderer outline;
@@ -44,6 +56,14 @@ namespace Project1864.Rebuild
         private float turnDuration;
         private float turnElapsed;
 
+        private Vector3 orderStartPosition;
+        private Quaternion orderStartRotation;
+        private float orderElapsed;
+        private float orderStartWidth;
+        private float orderStartDepth;
+        private float orderTargetWidth;
+        private float orderTargetDepth;
+
         public void Initialize(RebuildUnitRecord record, Vector3 worldPosition, Quaternion worldRotation)
         {
             if (record == null)
@@ -60,6 +80,10 @@ namespace Project1864.Rebuild
             Formation = RebuildFormation.Line;
             ReformFromFormation = Formation;
             ReformTargetFormation = Formation;
+            OrderFromFormation = Formation;
+            OrderTargetFormation = Formation;
+            OrderTargetPosition = worldPosition;
+            OrderTargetRotation = worldRotation;
 
             transform.position = worldPosition;
             transform.rotation = worldRotation;
@@ -68,17 +92,23 @@ namespace Project1864.Rebuild
             SetSelected(false);
 
             Debug.Log(
-                "REBUILD-COMPANY-00C4|Created=True|UnitID=" + UnitId +
+                "REBUILD-COMPANY-00D1|Created=True|UnitID=" + UnitId +
                 "|Parent=" + ParentUnitId +
                 "|Nation=" + Nation +
                 "|Strength=" + PresentStrength +
                 "|Formation=" + Formation +
-                "|AnimatedDrill=True|TransformParentIsOOBParent=False|WorldLabel=False|Flags=False");
+                "|MovementOwner=Company|TransformParentIsOOBParent=False|WorldLabel=False|Flags=False");
         }
 
         private void Update()
         {
             float dt = Mathf.Max(0f, Time.unscaledDeltaTime);
+
+            if (IsMovingToOrder)
+            {
+                UpdateMoveOrder(dt);
+                return;
+            }
 
             if (IsReforming)
                 UpdateReform(dt);
@@ -102,8 +132,95 @@ namespace Project1864.Rebuild
             }
         }
 
+        public bool BeginMoveOrder(
+            Vector3 targetPosition,
+            Quaternion targetRotation,
+            RebuildFormation targetFormation,
+            float marchSpeedMetresPerSecond,
+            float turnSpeedDegreesPerSecond,
+            float minimumReformSeconds)
+        {
+            targetPosition.y = transform.position.y;
+
+            float distance = Vector3.Distance(transform.position, targetPosition);
+            float angle = Quaternion.Angle(transform.rotation, targetRotation);
+            bool formationChange = Formation != targetFormation;
+
+            if (distance < 0.02f && angle < 0.25f && !formationChange)
+                return false;
+
+            IsReforming = false;
+            IsTurning = false;
+
+            orderStartPosition = transform.position;
+            orderStartRotation = transform.rotation;
+            OrderTargetPosition = targetPosition;
+            OrderTargetRotation = targetRotation;
+            OrderFromFormation = Formation;
+            OrderTargetFormation = targetFormation;
+            OrderDistance = distance;
+            OrderProgress = 0f;
+            orderElapsed = 0f;
+
+            float moveSeconds = distance / Mathf.Max(0.1f, marchSpeedMetresPerSecond);
+            float turnSeconds = angle / Mathf.Max(1f, turnSpeedDegreesPerSecond);
+            float reformSeconds = formationChange ? Mathf.Max(0.25f, minimumReformSeconds) : 0.20f;
+            OrderDuration = Mathf.Max(0.25f, moveSeconds, turnSeconds, reformSeconds);
+
+            orderStartWidth = FootprintWidth;
+            orderStartDepth = FootprintDepth;
+            GetFootprintDimensions(targetFormation, out orderTargetWidth, out orderTargetDepth);
+
+            IsMovingToOrder = true;
+
+            Debug.Log(
+                "REBUILD-MOVE-00D1|Start=True|UnitID=" + UnitId +
+                "|Distance=" + distance.ToString("0.00") +
+                "|Angle=" + angle.ToString("0.0") +
+                "|FromFormation=" + OrderFromFormation +
+                "|ToFormation=" + OrderTargetFormation +
+                "|Duration=" + OrderDuration.ToString("0.00"));
+            return true;
+        }
+
+        private void UpdateMoveOrder(float dt)
+        {
+            orderElapsed += dt;
+            float raw = Mathf.Clamp01(orderElapsed / Mathf.Max(0.01f, OrderDuration));
+            float t = Smooth01(raw);
+            OrderProgress = t;
+
+            transform.position = Vector3.Lerp(orderStartPosition, OrderTargetPosition, t);
+            transform.rotation = Quaternion.Slerp(orderStartRotation, OrderTargetRotation, t);
+
+            float width = Mathf.Lerp(orderStartWidth, orderTargetWidth, t);
+            float depth = Mathf.Lerp(orderStartDepth, orderTargetDepth, t);
+            ApplyFootprintGeometry(width, depth);
+
+            if (raw < 1f)
+                return;
+
+            transform.position = OrderTargetPosition;
+            transform.rotation = OrderTargetRotation;
+            Formation = OrderTargetFormation;
+            OrderFromFormation = Formation;
+            OrderTargetFormation = Formation;
+            OrderProgress = 1f;
+            IsMovingToOrder = false;
+            RecalculateFootprintGeometry();
+
+            Debug.Log(
+                "REBUILD-MOVE-00D1|Complete=True|UnitID=" + UnitId +
+                "|Position=" + transform.position.ToString("F2") +
+                "|Facing=" + transform.eulerAngles.y.ToString("0.0") +
+                "|Formation=" + Formation);
+        }
+
         public bool BeginFormationDrill(RebuildFormation targetFormation, float durationSeconds)
         {
+            if (IsMovingToOrder)
+                return false;
+
             RebuildFormation effectiveCurrent = IsReforming ? ReformTargetFormation : Formation;
             if (effectiveCurrent == targetFormation)
                 return false;
@@ -118,19 +235,12 @@ namespace Project1864.Rebuild
             reformStartWidth = FootprintWidth;
             reformStartDepth = FootprintDepth;
             GetFootprintDimensions(targetFormation, out reformTargetWidth, out reformTargetDepth);
-
-            Debug.Log(
-                "REBUILD-COMPANY-00C4|Action=FormationTransitionStart|UnitID=" + UnitId +
-                "|From=" + ReformFromFormation +
-                "|To=" + ReformTargetFormation +
-                "|Duration=" + reformDuration.ToString("0.00"));
             return true;
         }
 
-        // Compatibility helper retained for earlier drill code. c4 uses BeginFormationDrill.
         public void SetFormationForDrill(RebuildFormation formation)
         {
-            if (Formation == formation && !IsReforming)
+            if (IsMovingToOrder)
                 return;
 
             IsReforming = false;
@@ -143,7 +253,7 @@ namespace Project1864.Rebuild
 
         public bool BeginTurnDrill(float degrees, float durationSeconds)
         {
-            if (Mathf.Abs(degrees) < 0.01f)
+            if (IsMovingToOrder || Mathf.Abs(degrees) < 0.01f)
                 return false;
 
             turnStartRotation = transform.rotation;
@@ -151,11 +261,6 @@ namespace Project1864.Rebuild
             turnDuration = Mathf.Max(0.10f, durationSeconds);
             turnElapsed = 0f;
             IsTurning = true;
-
-            Debug.Log(
-                "REBUILD-COMPANY-00C4|Action=TurnStart|UnitID=" + UnitId +
-                "|Degrees=" + degrees.ToString("0") +
-                "|Duration=" + turnDuration.ToString("0.00"));
             return true;
         }
 
@@ -178,12 +283,6 @@ namespace Project1864.Rebuild
             ReformProgress = 1f;
             IsReforming = false;
             RecalculateFootprintGeometry();
-
-            Debug.Log(
-                "REBUILD-COMPANY-00C4|Action=FormationTransitionComplete|UnitID=" + UnitId +
-                "|Formation=" + Formation +
-                "|Width=" + FootprintWidth.ToString("0.00") +
-                "|Depth=" + FootprintDepth.ToString("0.00"));
         }
 
         private void UpdateTurn(float dt)
@@ -202,11 +301,6 @@ namespace Project1864.Rebuild
             transform.rotation = turnTargetRotation;
             transform.position = positionBefore;
             IsTurning = false;
-
-            Debug.Log(
-                "REBUILD-COMPANY-00C4|Action=TurnComplete|UnitID=" + UnitId +
-                "|Y=" + transform.eulerAngles.y.ToString("0.0") +
-                "|Translation=False");
         }
 
         private void BuildFootprint()
@@ -226,8 +320,8 @@ namespace Project1864.Rebuild
                 Nation == RebuildNation.Denmark
                     ? new Color(0.56f, 0.16f, 0.16f)
                     : new Color(0.19f, 0.24f, 0.31f),
-                "00C4_Normal_" + UnitId);
-            selectedMaterial = CreateMaterial(new Color(0.86f, 0.72f, 0.16f), "00C4_Selected_" + UnitId);
+                "00D1_Normal_" + UnitId);
+            selectedMaterial = CreateMaterial(new Color(0.86f, 0.72f, 0.16f), "00D1_Selected_" + UnitId);
             footprintRenderer.sharedMaterial = normalMaterial;
 
             hitBox = gameObject.AddComponent<BoxCollider>();
@@ -236,7 +330,7 @@ namespace Project1864.Rebuild
             outline.useWorldSpace = false;
             outline.loop = true;
             outline.positionCount = 4;
-            outline.material = CreateMaterial(new Color(1f, 0.82f, 0.18f), "00C4_SelectionOutline_" + UnitId);
+            outline.material = CreateMaterial(new Color(1f, 0.82f, 0.18f), "00D1_SelectionOutline_" + UnitId);
             outline.startWidth = 0.22f;
             outline.endWidth = 0.22f;
 
@@ -249,7 +343,7 @@ namespace Project1864.Rebuild
             ApplyFootprintGeometry(width, depth);
         }
 
-        private void GetFootprintDimensions(RebuildFormation formation, out float width, out float depth)
+        public void GetFootprintDimensions(RebuildFormation formation, out float width, out float depth)
         {
             if (formation == RebuildFormation.Column)
             {
