@@ -1,88 +1,96 @@
 PROJECT 1864 - Tactical Rebuild
-Prototype version: v00.01.00d1
-Build status: TEST / GATE D1 DIRECT COMPANY ORDER
-Build name: GHOST DESTINATION + FACING + MARCH TEST 00.01.00D1
-Visible build marker: PROJECT 1864 | v00.01.00d1 TEST
+Prototype version: v00.01.00d2
+Build status: TEST / GATE D2 ROUTE + AUTO MARCH DEPLOYMENT
+Build name: REGIMENT ROUTE + COLUMN MARCH + RANGE GHOST + STANDARDS 00.01.00D2
+Visible build marker: PROJECT 1864 | v00.01.00d2 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: clean Company-first rebuild after v00.00.09l5 freeze
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Delivery branch: strategi/kampe_rebuild
 
-v00.01.00d1 - Ghost Destination + Facing + March Test
-- Builds directly on v00.01.00c5.
-- This is the first Gate D movement slice.
-- Active OOB remains exactly eight independent Companies: four Danish and four Prussian.
-- Actual tactical manpower remains Denmark 759 + Prussia 812 = 1571 men.
-- Stable UnitID/OOB and clean Company-first ownership remain unchanged.
-- Company is the sole owner of its tactical world pose and movement state.
-- RMB now creates a destination ghost instead of being ignored.
-- RMB-down places the destination centre.
-- Hold RMB and drag to rotate the ghost to the desired final facing.
-- F while the ghost is active toggles its target formation Line <-> Column.
-- Release RMB confirms the order.
-- The ghost rectangle shows the final footprint and a facing arrow shows the final direction before confirmation.
-- Multiple selected Companies receive corresponding ghost footprints while preserving their relative group offsets.
-- After confirmation, Companies move to the destination instead of teleporting.
-- Position, facing and Line/Column reforming are interpolated during the order.
-- Movement duration is derived from distance, turn angle and formation-change time.
-- QA march speed is 1.35 m/s and turn speed is 55 degrees/s.
-- Selection footprint, collider and outline interpolate toward the target formation footprint.
-- Old Z/X snap/animated-turn drill controls are disabled in normal D1 play; facing is now specified by the ghost order.
-- Old F instant/standalone drill is disabled in normal D1 play; F changes the active ghost formation.
-- Visual ratio settings remain available at 1:1, 1:2, 1:3, 1:4, 1:5, 1:10 and 1:20.
-- Visual ratio remains presentation-only; OOB/manpower, later ammo, casualties, morale and combat state use real strength.
-- Representative soldiers remain sampled across the full real-strength formation.
-- New D1 renderer adds articulated upper/lower limbs, neck, nose/face silhouette, shoulders, distinct headgear, equipment and clearer weapon silhouette.
-- Marching/reforming/turning soldiers receive a procedural gait with leg swing, arm swing and body bob instead of sliding as static figures.
-- Prussian close silhouette includes a distinct spike helmet profile; Danish headgear remains visually separate.
-- Permanent world labels remain removed.
+v00.01.00d2 - Regiment Route + Auto March Deployment + Range Ghost + Standards
+- Builds directly on v00.01.00d1.
+- Active OOB remains the small QA force: four Danish + four Prussian Companies / 1571 actual men.
+- Regiment selection is introduced without adding a competing Regiment movement owner: double-click a Danish Company to select all currently tactical-active Companies belonging to that Regiment.
+- Shift + double-click is ready to add another Regiment once more player Regiments are tactical-active.
+- Current QA has only one Danish tactical-active Regiment subset, so multi-Regiment player selection cannot be fully exercised until Gate F/I scale-up.
+- ALT + RMB click adds route waypoints. Keep ALT held and click several places to construct a route.
+- Release ALT, RMB at the final destination, hold/drag RMB to define final facing, then release RMB to confirm.
+- Backspace removes the last planned waypoint before confirmation.
+- F while planning toggles the FINAL formation Line <-> Column.
+- The march itself automatically uses Column regardless of the requested final combat formation.
+- Route legs are internally sampled into short approximately 8 m movement segments so contact/deployment decisions can be evaluated between legs while Company remains the sole transform owner.
+- When approximately 35 m from the destination, marching Companies deploy back into the chosen final formation before finishing the route.
+- If an enemy Company comes within the current QA contact threshold of 160 m while marching in Column, the route is aborted and the Company deploys into Line.
+- A public NotifyUnderFire(Company) hook is included for Gate E combat integration. In this QA build, U simulates under-fire for selected Companies so the deployment branch can be tested before live combat exists.
+- A cyan ghost route line shows the ordered path.
+- Destination ghost footprints remain visible while the order is active.
+- The destination ghost includes a facing arrow plus a 60-degree fire-sector cone with three QA range arcs:
+  SHORT = 80 m
+  MEDIUM = 160 m
+  LONG = 260 m
+- These D2 range values are QA visualization/tuning values and are NOT historical weapon-source locks yet.
+- D2 adds presentation-only standards: one national flag plus one Regiment banner per active Regiment.
+- Danish national flag is shown as Dannebrog; Danish Regiment banner uses a provisional dark-red/gold QA design.
+- Prussian active Regiment receives a provisional white/black national-style flag and dark Regiment banner.
+- Regiment-banner artwork is NOT historical source-locked yet; placement/identity pipeline is what D2 validates.
+- Standards follow the average position/facing of their active Regiment Companies and do not own tactical movement.
+- Soldier visual ratio settings remain 1:1, 1:2, 1:3, 1:4, 1:5, 1:10 and 1:20 and remain presentation-only.
+- D1 articulated soldier renderer/march gait remains the active soldier renderer in D2.
 - Hover info remains available through H.
 - F10 visual-ratio settings remain available.
-- c5 QA Lab remains available, but Auto Drill should not be run while testing D1 movement orders.
-- No flags/standards in this revision.
-- No obstacle avoidance, bridge/river routing or V3 detour logic yet; D1 validates the direct order/ghost/movement contract first.
-- Combat, Officer AI, Brigade AI, artillery and cavalry remain inactive.
+- D1 order owner and old C4/C5 drill owners are suppressed in D2 to preserve one command path.
+- No obstacle avoidance, bridge/river routing or V3 detour logic yet; those remain the next Gate-D navigation slice.
+- Combat, Officer AI and Brigade AI remain inactive.
 
 Controls
 - LMB: select Danish Company.
-- Shift+LMB: add to selection.
-- Ctrl+LMB: toggle selection.
+- Double LMB on Danish Company: select all tactical-active Companies of that Regiment.
+- Shift + double LMB: add Regiment selection (future-ready for multiple active Regiments).
+- Ctrl + double LMB: toggle whole active Regiment selection.
+- Shift+LMB: add Company.
+- Ctrl+LMB: toggle Company.
 - LMB drag: box selection.
-- Esc: clear selection / cancel active ghost.
-- RMB down: place destination ghost.
+- Esc: clear selection / cancel active route planning.
+- ALT + RMB click: add route waypoint.
+- Keep ALT held + RMB click several places: create multi-point route.
+- Backspace: remove last waypoint during route planning.
+- RMB at final destination: create final destination ghost.
 - Hold RMB + drag: set final facing.
-- F while ghost active: target Line <-> Column.
-- RMB release: confirm order and march/reform to the ghost.
-- F10: open/close visual ratio settings.
+- F during route planning/final ghost: toggle final Line/Column.
+- RMB release on final ghost: confirm route/march order.
+- U: QA-only simulate UNDER FIRE for selected Companies.
+- F10: visual ratio settings.
 - H: hover info ON/OFF.
 - V: Debug/Clean view.
-- F8: c5 QA Lab panel.
-- F6: visual-ratio benchmark.
 
-QA acceptance for v00.01.00d1
+QA acceptance for v00.01.00d2
 1. Unity compiles without red errors.
-2. Visible marker is PROJECT 1864 | v00.01.00d1 TEST.
-3. Console contains REBUILD-ORDER-00D1|Installed=True.
-4. Console contains REBUILD-RENDER-00D1|Installed=True.
-5. Exactly eight independent Companies remain in scene.
-6. LMB/Shift/Ctrl/drag-box/Esc selection remains stable.
-7. RMB-down shows a ghost footprint at the intended destination.
-8. Holding RMB and dragging rotates the ghost/facing arrow without moving the real Company.
-9. F while the ghost is active changes only the preview Line/Column geometry.
-10. Releasing RMB issues one order; the Company does not teleport.
-11. Men visibly march toward the destination with procedural gait.
-12. A pure facing change makes men rotate/walk into the new facing instead of snapping.
-13. A Line/Column change makes representatives move toward new slots instead of instantly morphing.
-14. Final Company centre, facing and formation match the ghost preview.
-15. Multi-selection preserves relative Company offsets at the target.
-16. 1:2 and other ratios still use real tactical strength while reducing visible representatives only.
-17. Hover remains functional.
-18. No legacy Regiment movement owner is reactivated.
-19. Obstacles/bridges/rivers are intentionally not solved in D1.
-20. Combat remains OFF.
+2. Visible marker is PROJECT 1864 | v00.01.00d2 TEST.
+3. Console contains REBUILD-ORDER-00D2|Installed=True.
+4. Console contains REBUILD-STANDARDS-00D2|Installed=True.
+5. Eight independent Company tactical entities remain; no Regiment transform owner is introduced.
+6. Single Company selection remains unchanged.
+7. Double-clicking a Danish Company selects all currently active Companies in DK-INF-001.
+8. ALT+RMB can add at least three route waypoints before the final destination.
+9. Cyan route line connects current group centre, route waypoints and final destination.
+10. Final ghost can be rotated by RMB drag and preview Line/Column with F.
+11. Short/Medium/Long arcs and cone follow the ghost final facing.
+12. Confirmed march changes Companies into Column before route travel.
+13. Company movement follows route instead of moving directly through all user waypoints.
+14. Within approximately 35 m of final destination, Company deploys to requested final formation.
+15. Approaching an enemy within QA contact distance aborts march and deploys to Line.
+16. Pressing U while selected and marching exercises the UNDER_FIRE deploy path.
+17. National flag + Regiment banner are visible for the active Danish and Prussian Regiments.
+18. Flags are presentation-only and do not change selection, pathing or movement state.
+19. 1:2 and other visual ratios still leave actual manpower unchanged.
+20. Hover info remains functional.
+21. No old D1 RMB order or C4 drill owner competes with D2.
+22. No obstacle/bridge/river pathfinding is claimed in this revision.
 
 Previous revisions
+- v00.01.00d1: Ghost Destination + Facing + March Test.
 - v00.01.00c5: QA Lab + Close Soldier Detail.
 - v00.01.00c4: Animated Drill + Visual Soldier Scale.
 - v00.01.00c3: Visual Polish + Drill Test.
@@ -90,19 +98,19 @@ Previous revisions
 - v00.01.00c: Gate C 1:1 GPU renderer.
 - v00.01.00b: Gate A stable UnitID/OOB + Gate B independent Company selection.
 
-Next Gate D slices
-- D2: hard/soft obstacles and direct no-progress recovery.
-- D3: bridge-only river crossing and V3-style persistent detour logic at Company level.
-- D4: multi-Company group templates/relative offsets under pathing and terrain fitting.
+Planned next Gate-D slices
+D3. Hard/soft obstacles, no-progress recovery and reuse of proven V3 detour concepts under the Company movement owner.
+D4. River/bridge restrictions and route validation.
+D5. Group/regiment frontage templates, spacing, crossing/deconfliction and order-delay hooks.
 
 Later gates
-E. Company combat: range, LOS, ammo, fire, reload, casualties, morale/cohesion.
-F. Scale from one battalion to one full Regiment per side.
+E. Company combat: LOS, range, ammo, fire, reload, casualties, morale/cohesion; live under-fire event connects to D2 NotifyUnderFire.
+F. Scale one full Danish and Prussian Regiment tactical-active.
 G. Battalion/Regiment HQ and Officer AI.
-H. Cavalry/dragoons and artillery as first-class tactical unit types.
-I. Brigade HQ + reserve/commit AI and second Regiment.
-J. OOB Designer + campaign-map synchronization.
+H. Cavalry/dragoons and artillery.
+I. Brigade HQ + reserve/commit AI and multiple Regiments.
+J. OOB Designer + campaign synchronization.
 
 Acceptance rule
-- No gate is promoted until the previous gate compiles and passes focused QA.
-- Do not solve tactical ownership conflicts with later execution-order patches. Fix the owning architecture instead.
+- No gate is promoted until the current gate compiles and passes focused QA.
+- One tactical entity keeps one movement owner; Regiment selection/order grouping never becomes a second transform writer.
