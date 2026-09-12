@@ -4,7 +4,7 @@
 **Delivery branch:** `strategi/kampe_rebuild`  
 **Original work branch:** `work/tactical-rebuild-v00.01.00`  
 **Baseline:** v00.00.09j, commit `b9e5f520abe9a8306b76d79df85f79b0a20e6fe8`  
-**Current rebuild revision:** `v00.01.00c2` — Gate A+B+C plus visual/hover QA pass  
+**Current rebuild revision:** `v00.01.00d2` — Gate A+B+C complete, Gate D route/march slice active  
 **Reason:** v00.00.09l2–09l5 proved the desired Company-level gameplay but also proved that layering Company control on top of Regiment-owned movement/combat creates conflicting authority.
 
 ## 1. What is being restarted
@@ -58,6 +58,8 @@ The 09l5 branch/state remains preserved for reference and comparison only.
 10. Ordinary soldiers are rendering instances, not individual heavy AI/GameObject agents.
 11. No compatibility authority patch is accepted when the ownership conflict can be removed instead.
 12. Each development gate must compile and pass a small QA scenario before the next gate is introduced.
+13. Regiment-level player selection is an order-group abstraction; it resolves into Company orders and never creates a second Regiment transform writer.
+14. Visual soldier ratio (`1:1`, `1:2`, etc.) changes only rendered representatives, never tactical manpower/state.
 
 ## 5. Initial QA scale
 
@@ -93,7 +95,7 @@ Full reference Regiment data remains present in the OOB registry:
 - Denmark `DK-INF-001`: 1. Infanteri-Regiment / Danske Livregiment, 1540.
 - Prussia `PR-INF-008`: 8th Regiment QA, 2460.
 
-Only I Battalion on each side is flagged `TacticalActive` in the current small QA scenario.
+Only I Battalion on each side is flagged `TacticalActive` in the current small QA scenario. Therefore D2 can validate Regiment-selection semantics, but not yet a full 8-/12-Company Regiment battle or true multi-Regiment Danish selection.
 
 ## 6. Development gates
 
@@ -123,19 +125,18 @@ Implementation rules:
 - Companies are scene children only of neutral `REBUILD_00B_COMPANY_ENTITIES`.
 - OOB parenthood is stored in `ParentUnitId`.
 - No Company is a Transform child of a Battalion or Regiment.
-- No `Regiment` tactical object is spawned by the rebuild runtime.
+- No `Regiment` tactical movement object is spawned by the rebuild runtime.
 - Selection has one owner: `TacticalCompanySelection00B`.
 - LMB selects.
 - Shift+LMB adds.
 - Ctrl+LMB toggles.
 - LMB drag box-selects by Company centre.
 - Esc clears.
-- Only Danish Companies are player-selectable in this QA.
-- RMB intentionally does not move units yet.
+- Only Danish Companies are player-selectable in the current QA.
 
-### Gate C — 1:1 renderer — IMPLEMENTED IN 00.01.00c
+### Gate C — Instanced soldier renderer — IMPLEMENTED IN 00.01.00c–c5
 
-Every active infantryman is rendered 1:1 as an instanced visual tied to Company state.
+Every active infantryman can be represented through instanced visuals tied to Company state.
 
 No ordinary soldier receives its own:
 
@@ -145,49 +146,147 @@ No ordinary soldier receives its own:
 - collider
 - heavy Animator
 
-LOD/culling is present from the start and the renderer is read-only presentation.
+The renderer evolved through the C-series:
 
-### Gate C2 — Soldier readability + hover UI — IMPLEMENTED IN 00.01.00c2
+- `c`: initial 1:1 instanced renderer.
+- `c2`: permanent world labels removed, hover identity panel added, rifle/body readability improved.
+- `c3`: sharper proportions and formation-aware rendering.
+- `c4`: visual soldier ratio setting (`1:1`, `1:2`, `1:3`, `1:4`, `1:5`, `1:10`, `1:20`) plus animated drill transitions.
+- `c5`: QA lab and closer soldier detail presentation.
+- `d1`: articulated procedural soldier silhouette and simple procedural march gait became the active renderer.
 
-This is deliberately a visual/UI QA pass, not a new simulation authority layer.
+Visual ratio contract:
 
-Implemented:
+```text
+ActualStrength = simulation truth
+VisibleRepresentatives = render-only sampling
+```
 
-- Permanent world-space Company labels removed.
-- Mouse-over info panel shows Regiment, Battalion, Company, nation, strength, formation, UnitID and selected state.
-- Selection behaviour is unchanged from Gate B.
-- Soldier body is less block-like: narrower torso, separate coat skirt, capsule limbs, two visible arms, cross-belt and pack.
-- Rifle silhouette is split into wooden stock, long metal barrel and bayonet.
-- Danish and Prussian QA palettes remain distinct.
-- Full detail <=250 m; Medium <=500 m; Far <=850 m.
-- No national or regimental standards in c2; flag work is deferred after QA feedback.
-- No movement, navigation, combat or AI is added in c2.
+Example: a 190-man Company at `1:2` renders roughly 95 representative soldiers spread over the full real-strength formation footprint. Ammo, casualties, morale, movement and combat remain based on 190.
 
-Acceptance focus:
+### Gate D1 — Direct ghost destination + facing — IMPLEMENTED IN 00.01.00d1
 
-1. Build marker is `PROJECT 1864 | v00.01.00c2 TEST`.
-2. Eight Company entities remain intact.
-3. 1571 1:1 soldier visuals remain visible at suitable LOD.
-4. White world labels are gone.
-5. Mouse-over info is readable and points to the correct Company/OOB lineage.
-6. LMB/Shift/Ctrl/drag-box/Esc selection remains unchanged.
-7. Soldier and rifle silhouette are visibly improved without unacceptable FPS loss.
-8. RMB still logs `MovementDeferredToGateD` and performs no movement.
+D1 introduced the first real clean Company movement slice:
 
-### Gate D — Company movement and navigation
+- RMB destination ghost.
+- RMB drag defines final facing.
+- F changes destination Line/Column.
+- release confirms.
+- Company moves/reforms toward the preview instead of teleporting.
+- multi-selection preserves relative Company offsets.
+- Company remains the sole writer of its world pose.
 
-One Company movement owner handles:
+D1 deliberately omitted obstacle/bridge/river navigation so the order/pose contract could be isolated first.
 
-- direct movement
-- waypoints
-- final facing
-- Line/Column
-- group templates
-- obstacles
-- bridge/river restrictions
-- no-progress recovery
+### Gate D2 — Regiment route + automatic march deployment — IMPLEMENTED IN 00.01.00d2
 
-V3 algorithms may be reused conceptually, but not by layering old Regiment steering under new Company steering.
+D2 adds route and Regiment-order semantics without introducing a Regiment transform owner.
+
+#### Regiment selection
+
+- Double-LMB on a Danish Company selects all currently tactical-active Companies belonging to that Regiment.
+- Shift + double-LMB is prepared to add another Regiment when multiple Danish Regiments become tactical-active.
+- Ctrl + double-LMB toggles the whole active Regiment subset.
+- Selection still resolves to Companies; Regiment is an intent/group abstraction only.
+
+#### Multi-point route planning
+
+- Hold ALT and RMB-click several ground positions to create route waypoints.
+- Backspace removes the most recent waypoint before confirmation.
+- RMB at the final position creates the final ghost.
+- Hold/drag RMB to define final facing.
+- F toggles the final Line/Column formation.
+- RMB release confirms the route.
+- A cyan ghost route line displays the route from current group centre through user waypoints to destination.
+
+Internally, each route is sampled into short ~8 m movement legs. This gives the D2 order coordinator frequent safe decision points while the Company entity remains the actual transform/movement owner.
+
+#### Automatic march formation
+
+A normal march order follows this state model:
+
+```text
+Current formation
+      ↓
+Reform to COLUMN
+      ↓
+Follow route in COLUMN
+      ↓
+Near final destination (~35 m)
+      ↓
+Deploy to requested final formation
+      ↓
+Finish final approach/facing
+```
+
+Contact override:
+
+```text
+Marching in COLUMN
+      ↓
+Enemy contact (QA threshold 160 m)
+      OR
+NotifyUnderFire(company)
+      ↓
+Abort remaining march route
+      ↓
+Deploy to LINE
+```
+
+Until Gate E supplies real fire events, `U` is a QA-only key that calls the under-fire path for selected Companies.
+
+#### Route/fire-sector ghost
+
+The final destination preview includes:
+
+- final footprint(s),
+- final facing arrow,
+- 60-degree sector,
+- SHORT arc = 80 m,
+- MEDIUM arc = 160 m,
+- LONG arc = 260 m.
+
+These D2 ranges are QA visualization/tuning values only. Historical Danish/Prussian weapon profiles remain separate research/balance inputs and will source-lock in the combat gate.
+
+#### National flag + Regiment banner
+
+D2 introduces presentation-only Regiment standards:
+
+- one national flag,
+- one Regiment banner,
+- one pair per active Regiment.
+
+The standard root follows the average position/facing of the Regiment's currently active Companies. It never writes movement or OOB state.
+
+Current banner artwork is deliberately provisional:
+
+- Denmark: Dannebrog + dark-red/gold Regiment QA banner.
+- Prussia: white/black national-style QA flag + dark Regiment QA banner.
+
+Historical vexillology/artwork must be source-locked separately before final asset approval.
+
+### Gate D3 — Obstacles / no-progress recovery — NEXT
+
+Next movement slice should add under the same Company movement ownership:
+
+- hard obstacle detection,
+- soft obstacle penalties,
+- persistent detour state,
+- no-progress recovery,
+- reuse of the proven V3 navigation concepts without restoring old Regiment steering.
+
+### Gate D4 — Rivers / bridges / route validation — PLANNED
+
+- river treated as blocked terrain,
+- bridge-only crossing,
+- route validation and bridge approach logic.
+
+### Gate D5 — Group frontage/deconfliction — PLANNED
+
+- Regiment/Company group templates,
+- spacing and frontage,
+- route crossing/deconfliction,
+- future order-delay hooks.
 
 ### Gate E — Company combat
 
@@ -202,6 +301,8 @@ Company owns:
 - reload state
 - casualties
 - morale/cohesion effects
+
+Gate E must connect live incoming fire to `TacticalCompanyOrder00D2.NotifyUnderFire(company)` so a marching Company can deploy automatically on actual fire contact.
 
 The existing combat tuning values are reference defaults, not immutable final balance.
 
@@ -252,40 +353,44 @@ Shared stable Unit IDs connect campaign and tactical layers.
 
 The clean rebuild deliberately does not allow the old 09j runtime to become a hidden parent authority.
 
-A `BattleManager` blocker is created before scene load so the legacy `PrototypeBootstrap` does not build the four old Regiment objects. Before the first normal Update, legacy MonoBehaviour runtime layers are disabled except:
+A `BattleManager` blocker is created before scene load so the legacy `PrototypeBootstrap` does not build the four old Regiment objects. Before the first normal Update, legacy MonoBehaviour runtime layers are disabled except retained safe presentation/camera components.
 
-- `RTSCameraController`
-- `PrototypeBuildVersionOverlay`
+The clean rebuild creates its own QA field, camera, OOB registry, Company entities, selection owner and the currently approved Gate-D order coordinator.
 
-The clean rebuild then creates its own minimal QA field, camera, OOB registry, eight Company entities and selection owner.
-
-Current isolation remains:
+Current D2 isolation:
 
 ```text
-Legacy Regiment runtime objects: 0
+Legacy Regiment runtime movement objects: 0
 Legacy PlayerCommander: inactive/not used
-Company movement owner: none
-Company combat owner: none
+Company world-pose owner: TacticalCompanyEntity00B
+Group/route intent owner: TacticalCompanyOrder00D2
+Legacy D1 order owner: suppressed in D2
+Old C3/C4 drill owners: suppressed
+Company combat owner: none yet
 Officer AI: inactive
 Brigade AI: inactive
 Artillery/cavalry: inactive
 ```
 
-This isolation is intentional and remains a hard acceptance rule until each later gate explicitly introduces a single owner.
+This isolation remains a hard acceptance rule. Route/regiment grouping must not become a second transform writer.
 
 ## 8. Version strategy
 
 The clean rebuild uses a tactical version family beginning at `v00.01.00a`.
 
 - `v00.01.00b` = Gate A+B runtime foundation.
-- `v00.01.00c` = Gate C 1:1 renderer.
-- `v00.01.00c2` = soldier visual/readability upgrade + hover info, no simulation changes.
-- next simulation gate = Gate D Company movement/navigation.
+- `v00.01.00c` = Gate C initial 1:1 renderer.
+- `v00.01.00c2–c5` = visual/hover/ratio/QA maturation without movement ownership conflicts.
+- `v00.01.00d1` = direct ghost destination/facing + first Company movement.
+- `v00.01.00d2` = Regiment-selection abstraction, ALT waypoint routes, automatic march Column/deployment, route/range ghost and presentation standards.
+- next = D3 obstacle/detour/no-progress recovery under the same Company movement architecture.
 
-Every delivered TEST gate receives a visible build suffix. The old `channel-test` history remains untouched. Tactical rebuild delivery now uses the dedicated `strategi/kampe_rebuild` branch and separate local working tree `Strategy-Kampe-Rebuild`.
+Every delivered TEST gate receives a visible build suffix. The old `channel-test` history remains untouched. Tactical rebuild delivery uses the dedicated `strategi/kampe_rebuild` branch and separate local working tree `Strategy-Kampe-Rebuild`.
 
 ## 9. Source/reference material
 
 The old 09j runtime is the source-code baseline. 09k–09l5 remain evidence/reference for OOB, 1:1 rendering, HQ, flags, cavalry/artillery and Company-control lessons.
 
-The consolidated design and 1864 OOB reference from the later documentation branch remain authoritative design inputs and must be carried into the rebuild workflow even though the runtime branch starts from 09j.
+V3 remains the conceptual source for proven obstacle/navigation behaviour, but its Regiment-era movement authority must not be layered under the clean Company owner.
+
+The consolidated design and 1864 OOB reference remain authoritative design inputs. Historical weapon ranges, standards and uniform details shown in QA builds are not treated as source-locked merely because a prototype visualization exists.
