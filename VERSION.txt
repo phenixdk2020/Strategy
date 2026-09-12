@@ -1,9 +1,9 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10j
+Prototype version: v00.00.10k
 Build status: CAMPAIGN4 3D DEM RENDER FIX / UNITY RE-TEST PENDING
 Build name: CAMPAIGN4 DENMARK 1851 3D + TOP40 CITY LOD
 Branch: channel-campaign4
-Base lineage: clean v00.00.10e campaign foundation -> v00.00.10f style lab -> v00.00.10g true provider lab -> v00.00.10h historical 1850 city layer -> v00.00.10i playable 3D camera + city LOD -> v00.00.10j DEM visibility + presentation cleanup
+Base lineage: clean v00.00.10e campaign foundation -> v00.00.10f style lab -> v00.00.10g true provider lab -> v00.00.10h historical 1850 city layer -> v00.00.10i playable 3D camera + city LOD -> v00.00.10j DEM visibility + presentation cleanup -> v00.00.10k Unity 6.6 API compatibility
 Campaign3 rollback/reference remains: channel-campaign3
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
@@ -42,7 +42,13 @@ v10j DEM RENDER + PRESENTATION FIX:
 - Campaign4PresentationV010J.cs hides the inherited v10g TRUE 11 BASEMAP LAB panel after provider 1 is activated.
 - Perspective semantic city labels now show top 5 at strategic range, top 15 at operational range and all 40 only near city scale.
 - Legacy zone-label overlap is suppressed at strategic and very close zoom through the compatibility zoom-band proxy.
-- A compact Campaign4 v10j status/control line replaces the large provider-lab overlay.
+- A compact Campaign4 status/control line replaces the large provider-lab overlay.
+
+v10k UNITY 6.6 COMPATIBILITY FIX:
+- Unity 6.6 reports Object.GetInstanceID() as obsolete/error-level and requires newer entity APIs.
+- Campaign4DemMeshRepairV010J.cs no longer calls GetInstanceID().
+- Processed DEM meshes are tracked directly in HashSet<Mesh>, which is sufficient because each streamed DEM tile owns a mesh instance for its lifetime.
+- DEM winding repair behaviour is otherwise unchanged.
 
 3D TERRAIN FOUNDATION:
 - Provider 1 remains the default Campaign4 basemap.
@@ -70,7 +76,7 @@ ACCURACY GUARDRAILS:
 - City WGS84 points are town-centre anchors, not exact 1851 urban footprints.
 - Procedural close-zoom buildings are placeholders until source-backed historical assets replace them.
 
-QA state: v10i SCREENSHOT REPRODUCED TERRAIN-VISIBILITY BUG / v10j FIX IMPLEMENTED / UNITY RE-TEST PENDING
+QA state: v10i SCREENSHOT REPRODUCED TERRAIN-VISIBILITY BUG / v10j FIX IMPLEMENTED / v10k COMPILE COMPATIBILITY FIX / UNITY RE-TEST PENDING
 QA checklist:
 1. Confirm scripts compile without errors in Unity 6.6.
 2. Enter Play mode and verify provider 1 loads DEM terrain.
