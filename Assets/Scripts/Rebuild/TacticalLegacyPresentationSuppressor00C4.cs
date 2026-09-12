@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace Project1864.Rebuild
 {
-    // Presentation cleanup retained into D1.
-    // It disables superseded presentation/drill components only; it never writes tactical state.
+    // Presentation/runtime cleanup retained into Gate D2.
+    // It disables superseded owners only; it never writes tactical pose/combat state itself.
     [DefaultExecutionOrder(440)]
     public sealed class TacticalLegacyPresentationSuppressor00C4 : MonoBehaviour
     {
@@ -45,8 +45,8 @@ namespace Project1864.Rebuild
             if (oldHover != null && oldHover.enabled)
                 oldHover.enabled = false;
 
-            bool gateD1 = PrototypeBuildVersionOverlay.BuildVersion.StartsWith("v00.01.00d");
-            if (!gateD1)
+            bool gateD = PrototypeBuildVersionOverlay.BuildVersion.StartsWith("v00.01.00d");
+            if (!gateD)
                 return;
 
             TacticalCompanyRenderer00C4 oldC4Renderer = UnityEngine.Object.FindAnyObjectByType<TacticalCompanyRenderer00C4>();
@@ -60,6 +60,18 @@ namespace Project1864.Rebuild
             TacticalSoldierDetailOverlay00C5 oldC5Detail = UnityEngine.Object.FindAnyObjectByType<TacticalSoldierDetailOverlay00C5>();
             if (oldC5Detail != null && oldC5Detail.enabled)
                 oldC5Detail.enabled = false;
+
+            bool gateD2 = PrototypeBuildVersionOverlay.BuildVersion.StartsWith("v00.01.00d2");
+            if (!gateD2)
+                return;
+
+            TacticalCompanyOrder00D1 oldD1Order = UnityEngine.Object.FindAnyObjectByType<TacticalCompanyOrder00D1>();
+            if (oldD1Order != null && oldD1Order.enabled)
+                oldD1Order.enabled = false;
+
+            TacticalQaLab00C5 oldQa = UnityEngine.Object.FindAnyObjectByType<TacticalQaLab00C5>();
+            if (oldQa != null && oldQa.enabled)
+                oldQa.enabled = false;
         }
     }
 }
