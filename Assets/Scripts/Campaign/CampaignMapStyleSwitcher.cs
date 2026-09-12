@@ -5,16 +5,11 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// PROJECT 1864 Campaign v00.00.10g
-/// TRUE 11 BASEMAP LAB.
+/// PROJECT 1864 Campaign v00.00.10h
+/// TRUE 11 BASEMAP LAB — provider switcher and unified QA UI.
 ///
-/// v10f compared eleven visual styles on one Natural Earth 1:50m mesh.
-/// v10g instead owns eleven independent basemap provider roots. Providers may
-/// use streamed raster tiles, streamed DEM, Cesium, generated tactical terrain,
-/// local historical/QGIS assets, or a province-map generator.
-///
-/// WGS84 longitude/latitude remains authoritative. Gameplay markers are kept
-/// separate from basemap presentation.
+/// WGS84 longitude/latitude remains authoritative campaign geography. Basemap
+/// providers are presentation layers; city/zone/army state remains shared.
 /// </summary>
 [DefaultExecutionOrder(-29000)]
 public sealed class CampaignMapStyleSwitcher : MonoBehaviour
@@ -55,11 +50,13 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
     private Camera localCamera;
     private int activeIndex = -1;
     private bool ready;
+
     private GUIStyle titleStyle;
     private GUIStyle infoStyle;
     private GUIStyle smallStyle;
+    private GUIStyle loadingStyle;
 
-    private const string LabRootName = "PROJECT1864_TRUE_11_BASEMAP_LAB_v000010g";
+    private const string LabRootName = "PROJECT1864_TRUE_11_BASEMAP_LAB_v000010h";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -74,16 +71,12 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
     private IEnumerator Start()
     {
-        // GrandCampaignBootstrap builds the local WGS84 campaign first.
+        // GrandCampaignBootstrap creates the local WGS84 campaign camera/geography.
         for (int i = 0; i < 180; i++)
         {
             localCamera = Camera.main;
-            if (localCamera != null &&
-                GameObject.Find("GEO_Denmark_NaturalEarth50m") != null)
-            {
+            if (localCamera != null && GameObject.Find("GEO_Denmark_NaturalEarth50m") != null)
                 break;
-            }
-
             yield return null;
         }
 
@@ -94,17 +87,15 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         ready = localCamera != null && providers.Count == 11;
         if (!ready)
         {
-            Debug.LogError("CAMPAIGN-10G|Installed=False|Reason=CampaignCameraOrProviderInitFailed");
+            Debug.LogError("CAMPAIGN-10H|Installed=False|Reason=CampaignCameraOrProviderInitFailed");
             yield break;
         }
 
-        // Start on provider 1 because it is the first genuinely independent
-        // terrain generator and includes the Limfjord hydrology QA cut.
         ActivateProvider(0);
 
         Debug.Log(
-            "CAMPAIGN-10G|Installed=True|Mode=True11Basemaps|Providers=11|" +
-            "WGS84=True|GameplayLayerShared=True|Version=v00.00.10g");
+            "CAMPAIGN-10H|Installed=True|Mode=True11Basemaps|Providers=11|" +
+            "WGS84=True|GameplayLayerShared=True|RasterResume=True|AtomicRasterReveal=True");
     }
 
     private void BuildProviderDefinitions()
@@ -116,9 +107,9 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Id = 1,
             Button = "1 DEM",
             Name = "1. DHM/GeoDanmark target — streamed DEM pilot",
-            Source = "Mapzen Terrain Tiles / AWS Terrarium for elevation; v10g hydrology cut; DHM/GeoDanmark adapter target",
-            Attribution = "Terrain Tiles: Mapzen / AWS Open Data. Official Danish DHM/GeoDanmark requires Datafordeler credentials.",
-            Requirement = "Runs without key in pilot mode. DATAFORDELER_API_KEY will be used by later official-DHM adapter.",
+            Source = "Mapzen Terrain Tiles / AWS Terrarium elevation + v10g/v10h hydrology cut",
+            Attribution = "Terrain Tiles: Mapzen / AWS Open Data.",
+            Requirement = "No key for pilot. Official Danish DHM/GeoDanmark remains production target.",
             Kind = ProviderKind.Generated,
             GeneratedKind = CampaignGeneratedBasemapV010G.GeneratedKind.DemHydrology
         });
@@ -128,9 +119,9 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Id = 2,
             Button = "2 Cesium",
             Name = "2. Cesium World Terrain + imagery",
-            Source = "Cesium World Terrain (ion asset 1) + Bing Maps Aerial (ion asset 2)",
-            Attribution = "Cesium ion / Bing Maps imagery credits are rendered by Cesium.",
-            Requirement = "CESIUM_ION_TOKEN env, local PROJECT1864/Cesium/ion-token.txt, or Cesium Project Default Token",
+            Source = "Cesium World Terrain ion asset 1 + Bing Maps Aerial ion asset 2",
+            Attribution = "Cesium ion / Bing Maps credits rendered by Cesium.",
+            Requirement = "CESIUM_ION_TOKEN, local ion-token.txt, or Cesium project default token.",
             Kind = ProviderKind.CesiumIon
         });
 
@@ -139,9 +130,9 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Id = 3,
             Button = "3 ArcGIS",
             Name = "3. ArcGIS World Topographic basemap",
-            Source = "Esri ArcGIS World_Topo_Map cached XYZ service",
+            Source = "Esri ArcGIS World_Topo_Map XYZ service",
             Attribution = "Esri and contributing data providers.",
-            Requirement = "Network access. Comparison provider only; production licensing/API configuration must be reviewed.",
+            Requirement = "Network access. Comparison provider; not 1851 historical truth.",
             Kind = ProviderKind.RasterXyz,
             UrlTemplate = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
             Zoom = 8
@@ -152,9 +143,9 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Id = 4,
             Button = "4 MapTiler",
             Name = "4. MapTiler 3D Terrain + Cesium",
-            Source = "MapTiler quantized-mesh-v2 terrain loaded through Cesium from URL",
+            Source = "MapTiler quantized-mesh-v2 terrain loaded through Cesium",
             Attribution = "MapTiler data/terrain attribution applies.",
-            Requirement = "MAPTILER_API_KEY env or PROJECT1864/Keys/maptiler.txt",
+            Requirement = "MAPTILER_API_KEY or PROJECT1864/Keys/maptiler.txt.",
             Kind = ProviderKind.CesiumMapTiler
         });
 
@@ -165,7 +156,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Name = "5. Historical Danish high table sheets",
             Source = "Datafordeler Høje målebordsblade WMS, 1:20,000, 1842–1899 survey/issue period",
             Attribution = "Klimadatastyrelsen / Datafordeler historical map service.",
-            Requirement = "DATAFORDELER_API_KEY env or PROJECT1864/Keys/datafordeler.txt",
+            Requirement = "DATAFORDELER_API_KEY or PROJECT1864/Keys/datafordeler.txt.",
             Kind = ProviderKind.HistoricalWms
         });
 
@@ -174,9 +165,9 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Id = 6,
             Button = "6 QGIS",
             Name = "6. QGIS/Blender baked terrain tiles",
-            Source = "Offline baked Unity basemap supplied through StreamingAssets/PROJECT1864/Basemaps/QGIS",
-            Attribution = "Depends on the source layers used in the baked package.",
-            Requirement = "Requires qgis-denmark.png plus qgis-denmark.bounds in StreamingAssets.",
+            Source = "Offline baked basemap in StreamingAssets/PROJECT1864/Basemaps/QGIS",
+            Attribution = "Depends on layers used in the baked package.",
+            Requirement = "qgis-denmark.png + qgis-denmark.bounds required.",
             Kind = ProviderKind.LocalBaked
         });
 
@@ -186,7 +177,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Button = "7 Procedural",
             Name = "7. Independent procedural Denmark terrain",
             Source = "Runtime procedural landcover/relief generator with hydrology mask",
-            Attribution = "PROJECT 1864 generated presentation; coastline mask from project geography scaffold.",
+            Attribution = "PROJECT 1864 generated presentation.",
             Requirement = "No external key.",
             Kind = ProviderKind.Generated,
             GeneratedKind = CampaignGeneratedBasemapV010G.GeneratedKind.Procedural
@@ -197,9 +188,9 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Id = 8,
             Button = "8 OSM",
             Name = "8. OpenStreetMap Standard basemap",
-            Source = "OpenStreetMap Standard raster tiles for the currently viewed Denmark overview",
+            Source = "OpenStreetMap Standard XYZ tiles",
             Attribution = "© OpenStreetMap contributors",
-            Requirement = "Network access; cached locally for at least seven days; no offline bulk downloader.",
+            Requirement = "Network access; local seven-day tile cache; no bulk downloader.",
             Kind = ProviderKind.RasterXyz,
             UrlTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
             Zoom = 8
@@ -209,10 +200,10 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         {
             Id = 9,
             Button = "9 Imagery",
-            Name = "9. Realistic satellite/terrain hybrid candidate",
-            Source = "Esri World Imagery cached XYZ service",
+            Name = "9. Realistic satellite/terrain comparison",
+            Source = "Esri World Imagery XYZ service",
             Attribution = "Esri and imagery/data providers.",
-            Requirement = "Network access. Used as comparison imagery, not as 1851 historical truth.",
+            Requirement = "Network access. Modern comparison imagery, not 1851 historical truth.",
             Kind = ProviderKind.RasterXyz,
             UrlTemplate = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
             Zoom = 8
@@ -223,8 +214,8 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Id = 10,
             Button = "10 Diorama",
             Name = "10. Independent 3D diorama/model terrain",
-            Source = "PROJECT 1864 generated miniature terrain mesh + physical landscape dressing",
-            Attribution = "PROJECT 1864 generated presentation; geography scaffold is documented separately.",
+            Source = "PROJECT 1864 generated miniature terrain + physical landscape dressing",
+            Attribution = "PROJECT 1864 generated presentation.",
             Requirement = "No external key.",
             Kind = ProviderKind.Generated,
             GeneratedKind = CampaignGeneratedBasemapV010G.GeneratedKind.Diorama
@@ -235,7 +226,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             Id = 11,
             Button = "11 HOI4",
             Name = "11. Independent province/region strategic map",
-            Source = "Runtime province cells generated from campaign-zone centres and a Denmark land/water mask",
+            Source = "Runtime province cells from campaign-zone centres + Denmark land/water mask",
             Attribution = "PROJECT 1864 strategic simulation layer; not historical administrative borders.",
             Requirement = "No external key.",
             Kind = ProviderKind.Generated,
@@ -330,27 +321,24 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         if (index < 0 || index >= providers.Count)
             return;
 
-        // Save/restore the local camera around globe providers.
         if (activeIndex >= 0 && IsCesium(providers[activeIndex]))
             RestoreLocalCamera();
 
         for (int i = 0; i < providers.Count; i++)
+        {
             if (providers[i].Root != null)
                 providers[i].Root.SetActive(i == index);
+        }
 
         activeIndex = index;
         Provider p = providers[index];
-
         HideLegacyBasemap();
 
-        if (p.Generated != null)
-            p.Generated.EnsureLoaded();
-        if (p.Raster != null)
-            p.Raster.EnsureLoaded();
-        if (p.Historical != null)
-            p.Historical.EnsureLoaded();
-        if (p.LocalBaked != null)
-            p.LocalBaked.EnsureLoaded();
+        if (p.Generated != null) p.Generated.EnsureLoaded();
+        if (p.Raster != null) p.Raster.EnsureLoaded();
+        if (p.Historical != null) p.Historical.EnsureLoaded();
+        if (p.LocalBaked != null) p.LocalBaked.EnsureLoaded();
+
         if (p.Cesium != null)
         {
             HideLocalGameplayMarkers(true);
@@ -364,7 +352,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         }
 
         Debug.Log(
-            "CAMPAIGN-10G|Basemap=" + p.Id.ToString("00") +
+            "CAMPAIGN-10H|Basemap=" + p.Id.ToString("00") +
             "|Name=" + p.Name +
             "|Source=" + p.Source);
     }
@@ -373,8 +361,10 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
     {
         CampaignCesiumBasemapV010G[] cesiumProviders = Object.FindObjectsByType<CampaignCesiumBasemapV010G>();
         for (int i = 0; i < cesiumProviders.Length; i++)
+        {
             if (cesiumProviders[i] != null)
                 cesiumProviders[i].DeactivateCamera();
+        }
 
         if (localCamera != null)
         {
@@ -405,8 +395,10 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
         Renderer[] renderers = go.GetComponentsInChildren<Renderer>(true);
         for (int i = 0; i < renderers.Length; i++)
+        {
             if (renderers[i] != null)
                 renderers[i].enabled = enabled;
+        }
     }
 
     private static void HideLocalGameplayMarkers(bool hidden)
@@ -432,26 +424,17 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
     {
         if (string.IsNullOrEmpty(value))
             return "MAP";
-
         return value.Replace(" ", "_").Replace("/", "_").Replace(".", "_");
     }
 
     private string ProviderStatus(Provider p)
     {
-        if (p == null)
-            return "UNKNOWN";
-
-        if (p.Raster != null)
-            return p.Raster.Status;
-        if (p.Generated != null)
-            return p.Generated.Status;
-        if (p.Cesium != null)
-            return p.Cesium.Status;
-        if (p.Historical != null)
-            return p.Historical.Status;
-        if (p.LocalBaked != null)
-            return p.LocalBaked.Status;
-
+        if (p == null) return "UNKNOWN";
+        if (p.Raster != null) return p.Raster.Status;
+        if (p.Generated != null) return p.Generated.Status;
+        if (p.Cesium != null) return p.Cesium.Status;
+        if (p.Historical != null) return p.Historical.Status;
+        if (p.LocalBaked != null) return p.LocalBaked.Status;
         return "INITIALISING";
     }
 
@@ -482,6 +465,22 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             fontSize = 10
         };
         smallStyle.normal.textColor = Color.white;
+
+        loadingStyle = new GUIStyle(GUI.skin.box)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontSize = 14,
+            fontStyle = FontStyle.Bold
+        };
+        loadingStyle.normal.textColor = Color.white;
+    }
+
+    private static void DrawOpaque(Rect rect, Color color)
+    {
+        Color previous = GUI.color;
+        GUI.color = color;
+        GUI.DrawTexture(rect, Texture2D.whiteTexture);
+        GUI.color = previous;
     }
 
     private void OnGUI()
@@ -489,24 +488,37 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         if (!ready || providers.Count != 11 || activeIndex < 0)
             return;
 
+        // Lower GUI.depth draws over legacy v10e IMGUI. This lets v10h reserve a
+        // clean build badge and bottom provider toolbar without disabling gameplay.
+        GUI.depth = -1000;
         EnsureStyles();
-        Provider p = providers[activeIndex];
 
-        float infoWidth = Mathf.Min(690f, Screen.width - 16f);
+        Provider p = providers[activeIndex];
+        string status = ProviderStatus(p);
+
+        // Mask the obsolete v10e build badge only. The campaign clock/speed bar at
+        // x >= 230 remains fully visible and interactive.
+        DrawOpaque(new Rect(0f, 0f, 228f, 42f), new Color(0.035f, 0.075f, 0.095f, 0.98f));
+        GUI.Box(
+            new Rect(8f, 8f, 212f, 31f),
+            "PROJECT 1864 | v00.00.10h",
+            titleStyle);
+
+        float infoWidth = Mathf.Min(690f, Screen.width - 340f);
         float infoX = Screen.width - infoWidth - 8f;
 
         GUI.Box(
             new Rect(infoX, 42f, infoWidth, 28f),
-            "PROJECT 1864 | v00.00.10g TRUE 11 BASEMAPS | " +
-            (activeIndex + 1) + "/11 | " + ProviderStatus(p),
+            "TRUE 11 BASEMAPS | " + (activeIndex + 1) + "/11 | " + status,
             titleStyle);
 
         GUI.Box(
-            new Rect(infoX, 72f, infoWidth, 104f),
+            new Rect(infoX, 72f, infoWidth, 122f),
             p.Name + "\n" +
             "SOURCE: " + p.Source + "\n" +
             "REQUIREMENT: " + p.Requirement + "\n" +
-            "ATTRIBUTION: " + p.Attribution,
+            "ATTRIBUTION: " + p.Attribution + "\n" +
+            "QA: Aalborg/Limfjord skal være geografisk sammenhængende og uden skjult Natural Earth fallback.",
             infoStyle);
 
         int columns = Screen.width >= 1700 ? 11 : 6;
@@ -517,6 +529,18 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         float usable = Screen.width - margin * 2f - gap * (columns - 1);
         float buttonWidth = usable / columns;
         float startY = Screen.height - margin - rows * buttonHeight - (rows - 1) * gap;
+        float footerTop = startY - 25f;
+
+        // Opaque toolbar masks the obsolete v10e Natural Earth map-info box and
+        // prevents city labels/map-info text from being painted through buttons.
+        DrawOpaque(
+            new Rect(0f, footerTop - 3f, Screen.width, Screen.height - footerTop + 3f),
+            new Color(0.035f, 0.070f, 0.085f, 0.97f));
+
+        GUI.Label(
+            new Rect(10f, footerTop, Screen.width - 20f, 20f),
+            "Aalborg/Limfjord QA | M / ] næste | [ forrige | Shift+F1…F11 direkte valg | Rasterkort vises samlet når alle tiles er færdige",
+            smallStyle);
 
         for (int i = 0; i < providers.Count; i++)
         {
@@ -534,14 +558,14 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
             GUI.enabled = true;
         }
 
-        GUI.Label(
-            new Rect(10f, startY - 40f, Mathf.Min(920f, Screen.width - 20f), 18f),
-            "Aalborg/Limfjord er obligatorisk QA-region. Manglende provider-data vises som MISSING/KEY REQUIRED — ingen skjult Natural Earth fallback.",
-            smallStyle);
-
-        GUI.Label(
-            new Rect(10f, startY - 21f, Mathf.Min(720f, Screen.width - 20f), 18f),
-            "M / ] = næste | [ = forrige | Shift+F1...F11 = direkte valg",
-            smallStyle);
+        if (status.StartsWith("LOADING", StringComparison.Ordinal) ||
+            status.StartsWith("PAUSED", StringComparison.Ordinal))
+        {
+            float w = Mathf.Min(440f, Screen.width - 40f);
+            GUI.Box(
+                new Rect((Screen.width - w) * 0.5f, Screen.height * 0.44f, w, 48f),
+                p.Button + " · " + status + "\nKortet vises samlet, når overview-sættet er klar.",
+                loadingStyle);
+        }
     }
 }
