@@ -3,7 +3,7 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// Campaign4 v00.00.10j runtime repair for the inherited v10g DEM generator.
+/// Campaign4 v00.00.10k runtime repair for the inherited v10g DEM generator.
 ///
 /// The v10g BuildDemTile triangle order produces downward-facing normals in the
 /// WGS84 X/Z projection. In the Campaign4 perspective camera this can make the
@@ -12,11 +12,15 @@ using Object = UnityEngine.Object;
 /// This component watches streamed DEM tiles and reverses only meshes whose
 /// calculated average normal points downward. It is deliberately isolated to
 /// Campaign4 so Campaign3 remains untouched.
+///
+/// v00.00.10k Unity 6.6 compatibility:
+/// - Removed Object.GetInstanceID(), which is obsolete/error-level in Unity 6.6.
+/// - Tracks processed meshes directly with HashSet<Mesh> instead of numeric IDs.
 /// </summary>
 [DefaultExecutionOrder(31900)]
 public sealed class Campaign4DemMeshRepairV010J : MonoBehaviour
 {
-    private readonly HashSet<int> checkedMeshes = new HashSet<int>();
+    private readonly HashSet<Mesh> checkedMeshes = new HashSet<Mesh>();
     private float nextScan;
     private int repairedCount;
 
@@ -26,7 +30,7 @@ public sealed class Campaign4DemMeshRepairV010J : MonoBehaviour
         if (Object.FindAnyObjectByType<Campaign4DemMeshRepairV010J>() != null)
             return;
 
-        GameObject root = new GameObject("CAMPAIGN4_v10j_DEM_Mesh_Repair");
+        GameObject root = new GameObject("CAMPAIGN4_v10k_DEM_Mesh_Repair");
         DontDestroyOnLoad(root);
         root.AddComponent<Campaign4DemMeshRepairV010J>();
     }
@@ -56,8 +60,11 @@ public sealed class Campaign4DemMeshRepairV010J : MonoBehaviour
                 continue;
 
             Mesh mesh = filter.sharedMesh;
-            int id = mesh.GetInstanceID();
-            if (!checkedMeshes.Add(id))
+
+            // Unity 6.6 marks Object.GetInstanceID() obsolete/error-level.
+            // A direct Mesh reference is sufficient because each streamed DEM tile
+            // owns one mesh instance for its lifetime.
+            if (!checkedMeshes.Add(mesh))
                 continue;
 
             mesh.RecalculateNormals();
@@ -95,7 +102,7 @@ public sealed class Campaign4DemMeshRepairV010J : MonoBehaviour
         if (newlyRepaired > 0)
         {
             Debug.Log(
-                "CAMPAIGN4-DEM-REPAIR|Version=v00.00.10j|New=" + newlyRepaired +
+                "CAMPAIGN4-DEM-REPAIR|Version=v00.00.10k|New=" + newlyRepaired +
                 "|Total=" + repairedCount + "|UpwardNormals=True");
         }
     }
