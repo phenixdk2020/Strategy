@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace Project1864.Rebuild
 {
-    // c4 cleanup only: prevents superseded c2/c3 presentation/drill scripts from rendering/responding.
-    // This component writes no tactical state and is NOT a movement/combat authority layer.
+    // Presentation cleanup retained into D1.
+    // It disables superseded presentation/drill components only; it never writes tactical state.
     [DefaultExecutionOrder(440)]
     public sealed class TacticalLegacyPresentationSuppressor00C4 : MonoBehaviour
     {
@@ -13,7 +13,7 @@ namespace Project1864.Rebuild
             if (UnityEngine.Object.FindAnyObjectByType<TacticalLegacyPresentationSuppressor00C4>() != null)
                 return;
 
-            GameObject root = new GameObject("REBUILD_00C4_PRESENTATION_CLEANUP");
+            GameObject root = new GameObject("REBUILD_PRESENTATION_CLEANUP");
             root.AddComponent<TacticalLegacyPresentationSuppressor00C4>();
         }
 
@@ -44,6 +44,22 @@ namespace Project1864.Rebuild
             TacticalCompanyHoverInfo00C2 oldHover = UnityEngine.Object.FindAnyObjectByType<TacticalCompanyHoverInfo00C2>();
             if (oldHover != null && oldHover.enabled)
                 oldHover.enabled = false;
+
+            bool gateD1 = PrototypeBuildVersionOverlay.BuildVersion.StartsWith("v00.01.00d");
+            if (!gateD1)
+                return;
+
+            TacticalCompanyRenderer00C4 oldC4Renderer = UnityEngine.Object.FindAnyObjectByType<TacticalCompanyRenderer00C4>();
+            if (oldC4Renderer != null && oldC4Renderer.enabled)
+                oldC4Renderer.enabled = false;
+
+            TacticalCompanyDrill00C4 oldC4Drill = UnityEngine.Object.FindAnyObjectByType<TacticalCompanyDrill00C4>();
+            if (oldC4Drill != null && oldC4Drill.enabled)
+                oldC4Drill.enabled = false;
+
+            TacticalSoldierDetailOverlay00C5 oldC5Detail = UnityEngine.Object.FindAnyObjectByType<TacticalSoldierDetailOverlay00C5>();
+            if (oldC5Detail != null && oldC5Detail.enabled)
+                oldC5Detail.enabled = false;
         }
     }
 }
