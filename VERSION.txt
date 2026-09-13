@@ -47,65 +47,6 @@ v10k1 HOTFIX:
 - Dictionary/HashSet/coroutine/prune tracking uses EntityId end-to-end; no int compatibility shim.
 - No terrain, camera, imagery, LOD or gameplay behaviour changes intended.
 
-3D TERRAIN SOURCE / CONTRACT:
-- Elevation pilot source: Mapzen/AWS Terrain Tiles in Terrarium encoding.
-- Terrain elevation is requested only for active/pending World Imagery tile identities.
-- Minimum terrain LOD is z5; low-detail world overview can remain flat/top-down.
-- Elevation cache: <persistentDataPath>/PROJECT1864/TerrainCache/terrarium/<z>/<x>/<y>.png
-- If an elevation tile fails, the corresponding imagery remains visible as flat terrain.
-- Terrarium is a development/global height pilot and is NOT claimed to be official Danish DHM.
-- Production Denmark high-detail terrain remains targeted at Danish DHM/GeoDanmark data.
-
-MESH / LOD:
-- Imagery tile materials remain the visible surface.
-- Each elevation-enabled imagery tile is subdivided into a grid.
-- Grid density increases with map LOD:
-  z5: 6x6 cells
-  z6-z7: 10x10
-  z8-z9: 16x16
-  z10: 20x20
-  z11-z12: 24x24
-- Terrain uses strategic vertical exaggeration x18 so Danish relief is readable at campaign scale.
-- No MeshCollider is added to terrain; army/zone selection remains owned by existing gameplay colliders.
-
-3D CAMERA:
-- 3D terrain is enabled by default.
-- T = toggle 2D / 3D.
-- Q / E = rotate the strategic 3D camera around the current map centre.
-- Home = Denmark.
-- PageUp = Europe.
-- End = world overview.
-- WASD / arrow keys = pan.
-- Middle mouse drag = pan.
-- Mouse wheel = zoom.
-- Camera becomes progressively more top-down at larger strategic scales.
-- At world overview scale the camera auto-flattens rather than forcing a horizon-heavy 3D view.
-
-GAMEPLAY MARKER HEIGHTS:
-- ZONE_ markers are lifted to sampled terrain height + their existing visual offset.
-- CITY_ markers are lifted to sampled terrain height + their existing visual offset.
-- ARMY_ markers are lifted after GrandCampaignBootstrap movement updates so armies remain above terrain.
-- If no active terrain sample exists, markers return to their previous flat-map Y baseline.
-
-WORLD IMAGERY STREAMING RETAINED:
-- Dynamic Web-Mercator imagery LOD z2-z12.
-- Maximum visible/requested imagery tile budget remains 96.
-- Up to 8 imagery tile requests run concurrently.
-- Center-prioritised imagery queue.
-- Atomic imagery generation swap keeps old imagery visible until the new generation is ready.
-- Runtime imagery textures/materials/meshes are released when old generations are replaced.
-- Elevation processing follows imagery GameObjects and safely ignores destroyed/cancelled generations.
-
-HISTORICAL GUARDRAIL:
-- World Imagery and Terrarium elevation are modern physical reference layers.
-- Neither defines political/settlement/infrastructure truth for 1851.
-- 1851 borders, settlements, roads, railways, ports, land use, buildings, military infrastructure and OOB remain separate WGS84 gameplay/history layers.
-
-PROJECTION / GLOBAL LIMITS:
-- v10k still uses the existing Denmark-first linear WGS84 Unity render projection.
-- It is adequate for the current world-streaming/3D technology pilot, not final global geometry.
-- Dateline wrap, poles, globe curvature/strategic projection and floating origin remain future architecture work.
-
 NEXT PLANNED POINTS AFTER v10k1:
 1. Implement v10l clean UI and remove temporary debug/status boxes from normal game view.
 2. Replace the 10 QA city markers with CITY-REG-01 city nodes and remove Esbjerg from 1851 start state.
@@ -113,9 +54,5 @@ NEXT PLANNED POINTS AFTER v10k1:
 4. Add click-to-open city panel with population, development class and sourced special buildings; Close hides panel.
 5. Begin territorial polygon zone design for conquest/owner/controller mechanics.
 6. Create CITY-REG-02/03/04 for Schleswig, Holstein and Lauenburg plus a strategic settlement register.
-7. Validate 3D terrain around Aalborg/Limfjorden, Jutland and southern Norway.
-8. Replace/augment Denmark terrain with official Danish DHM/GeoDanmark high-detail data.
-9. Introduce global/floating-origin projection architecture before very large world campaigns.
-10. Add historical 1851 land-use/presentation overlays over the modern imagery reference.
 
 QA state: v10k1 runtime compiled by user after EntityId hotfix; v10l design/city implementation pending.
