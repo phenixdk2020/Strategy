@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// PROJECT 1864 Campaign v00.00.10k
+/// PROJECT 1864 Campaign v00.00.10k1
 /// Adds streamed Terrarium elevation to the active World Imagery tile meshes.
 ///
 /// Design goals:
@@ -51,9 +51,9 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
     private const float FlatCameraThreshold = 430f;
     private const float CameraHeight = 95f;
 
-    private readonly Dictionary<int, TerrainTileRecord> records =
-        new Dictionary<int, TerrainTileRecord>();
-    private readonly HashSet<int> requested = new HashSet<int>();
+    private readonly Dictionary<EntityId, TerrainTileRecord> records =
+        new Dictionary<EntityId, TerrainTileRecord>();
+    private readonly HashSet<EntityId> requested = new HashSet<EntityId>();
 
     private GameObject imageryRoot;
     private Camera worldCamera;
@@ -99,7 +99,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignImageryTerrainV010K>() != null)
             return;
 
-        GameObject go = new GameObject("PROJECT1864_ImageryTerrain_v000010k");
+        GameObject go = new GameObject("PROJECT1864_ImageryTerrain_v000010k1");
         DontDestroyOnLoad(go);
         go.AddComponent<CampaignImageryTerrainV010K>();
     }
@@ -123,7 +123,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
         {
             terrainEnabled = !terrainEnabled;
             ApplyTerrainStateToAll();
-            Debug.Log("CAMPAIGN-10K|Terrain3D=" + terrainEnabled + "|Toggle=T");
+            Debug.Log("CAMPAIGN-10K1|Terrain3D=" + terrainEnabled + "|Toggle=T");
         }
 
         if (terrainEnabled)
@@ -186,7 +186,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
             if (z < MinimumTerrainZoom)
                 continue;
 
-            int id = filter.gameObject.GetInstanceID();
+            EntityId id = filter.gameObject.GetEntityId();
             if (requested.Contains(id))
                 continue;
 
@@ -202,7 +202,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
         int z,
         int x,
         int y,
-        int instanceId)
+        EntityId entityId)
     {
         Texture2D elevation = null;
         yield return LoadElevationTexture(z, x, y, value => elevation = value);
@@ -220,7 +220,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
         {
             failed++;
             Debug.LogWarning(
-                "CAMPAIGN-10K|TerrainTile=False|Z=" + z + "|X=" + x + "|Y=" + y +
+                "CAMPAIGN-10K1|TerrainTile=False|Z=" + z + "|X=" + x + "|Y=" + y +
                 "|Fallback=FlatImagery");
             yield break;
         }
@@ -230,7 +230,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
 
         if (record != null)
         {
-            records[instanceId] = record;
+            records[entityId] = record;
             successful++;
         }
     }
@@ -375,9 +375,6 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
         if (ortho >= FlatCameraThreshold)
             return;
 
-        // CampaignRasterBasemapV010G has already restored the authoritative top-down
-        // map center this frame. Read that x/z center, then move the camera backwards
-        // and tilt it without changing the streaming center/LOD contract.
         Vector3 center = new Vector3(
             worldCamera.transform.position.x,
             0f,
@@ -498,13 +495,13 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
         if (records.Count == 0)
             return;
 
-        List<int> remove = null;
-        foreach (KeyValuePair<int, TerrainTileRecord> pair in records)
+        List<EntityId> remove = null;
+        foreach (KeyValuePair<EntityId, TerrainTileRecord> pair in records)
         {
             if (pair.Value != null && pair.Value.Tile != null)
                 continue;
             if (remove == null)
-                remove = new List<int>();
+                remove = new List<EntityId>();
             remove.Add(pair.Key);
         }
 
@@ -548,7 +545,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
             }
             catch (Exception ex)
             {
-                Debug.LogWarning("CAMPAIGN-10K|ElevationCacheRead=False|" + ex.Message);
+                Debug.LogWarning("CAMPAIGN-10K1|ElevationCacheRead=False|" + ex.Message);
                 if (texture != null)
                     Destroy(texture);
                 texture = null;
@@ -563,7 +560,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
                 request.timeout = 20;
                 try
                 {
-                    request.SetRequestHeader("User-Agent", "PROJECT1864-UnityTerrain/0.00.10k");
+                    request.SetRequestHeader("User-Agent", "PROJECT1864-UnityTerrain/0.00.10k1");
                 }
                 catch
                 {
@@ -607,7 +604,7 @@ public sealed class CampaignImageryTerrainV010K : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogWarning("CAMPAIGN-10K|ElevationCacheWrite=False|" + ex.Message);
+            Debug.LogWarning("CAMPAIGN-10K1|ElevationCacheWrite=False|" + ex.Message);
         }
     }
 
