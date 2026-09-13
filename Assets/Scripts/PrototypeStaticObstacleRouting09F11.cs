@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f11 lightweight static-obstacle routing.
+// v00.00.09f11 lightweight static-obstacle routing, corrected by v00.00.09f12.
 // This deliberately does NOT re-enable the old V1/V3/V4 obstacle-navigation stack.
-// Instead it owns only explicitly approved hard blockers (currently Farmhouse + Barn)
-// and inserts a short sequence of safe corner waypoints when the current route crosses one.
+// It owns only explicitly approved hard blockers (Farmhouse + Barn) and inserts
+// safe corner waypoints when the current route crosses one.
 [DefaultExecutionOrder(-200)]
 public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
 {
@@ -23,6 +23,8 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
         public readonly Queue<Vector3> Waypoints = new Queue<Vector3>();
         public string ObstacleName = string.Empty;
     }
+
+    private static PrototypeStaticObstacleRouting09F11 instance;
 
     private readonly Dictionary<Regiment, RouteState> states = new Dictionary<Regiment, RouteState>();
     private readonly List<Obstacle> obstacles = new List<Obstacle>();
@@ -48,16 +50,38 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
 
     private void Awake()
     {
+        instance = this;
+
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         destinationField = typeof(Regiment).GetField("destination", flags);
         hasDestinationField = typeof(Regiment).GetField("hasDestination", flags);
 
         if (destinationField == null || hasDestinationField == null)
         {
-            Debug.LogError("OBSTACLE-09F11|Installed=False|Reason=RegimentMovementFieldsMissing");
+            Debug.LogError("OBSTACLE-09F12|Installed=False|Reason=RegimentMovementFieldsMissing");
             enabled = false;
             return;
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (instance == this)
+            instance = null;
+    }
+
+    public static bool RequiresDetour(Regiment regiment, Vector3 goal)
+    {
+        if (instance == null || !instance.enabled || regiment == null)
+            return false;
+
+        if (!instance.scanned)
+            instance.ScanApprovedBlockers();
+
+        Vector3 start = regiment.transform.position;
+        start.y = 0f;
+        goal.y = 0f;
+        return instance.FindFirstBlockingObstacle(start, goal, regiment.Formation) != null;
     }
 
     private void Update()
@@ -74,7 +98,6 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
             if (regiment == null || regiment.IsRouted)
                 continue;
 
-            // River/bridge routing has higher priority than building avoidance.
             if (PrototypeRiverBridgeOnly09F3.IsBridgeRouteActive(regiment))
                 continue;
 
@@ -105,9 +128,10 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
 
         scanned = true;
         Debug.Log(
-            "OBSTACLE-09F11|Installed=True|ApprovedBlockers=Farmhouse,Barn|" +
+            "OBSTACLE-09F12|Installed=True|ApprovedBlockers=Farmhouse,Barn|" +
             "Found=" + obstacles.Count +
-            "|Trees=False|Fences=False|Road=False|RiverOwnedSeparately=True");
+            "|RepeatedFinalGoalDoesNotReset=True|Trees=False|Fences=False|" +
+            "RiverOwnedSeparately=True");
     }
 
     private void ApplyRouting(Regiment regiment)
@@ -134,9 +158,15 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
             state.HasGoal &&
             PlanarDistance(rawDestination, state.LastSteeringTarget) <= 1.25f;
 
-        if (!state.HasGoal || !rawIsOwnSteering)
+        bool rawIsFinalGoal =
+            state.HasGoal &&
+            PlanarDistance(rawDestination, state.FinalGoal) <= 1.25f;
+
+        bool isNewExternalGoal =
+            !state.HasGoal || (!rawIsOwnSteering && !rawIsFinalGoal);
+
+        if (isNewExternalGoal)
         {
-            // A new external order replaces any previous obstacle detour.
             state.HasGoal = true;
             state.FinalGoal = rawDestination;
             state.Waypoints.Clear();
@@ -158,7 +188,7 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
                 state.ObstacleName = hit.Name;
 
                 Debug.Log(
-                    "OBSTACLE-09F11|Unit=" + regiment.RegimentName +
+                    "OBSTACLE-09F12|Unit=" + regiment.RegimentName +
                     "|BlockedBy=" + hit.Name +
                     "|Formation=" + regiment.Formation +
                     "|Waypoints=" + state.Waypoints.Count +
