@@ -1,88 +1,78 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f6
+Prototype version: v00.00.09f7
 Build status: TEST
-Build name: 190-MAN COMPANY + 1851 THREE-RANK LINE + RESTORED CONE/SELECTION + DYNAMIC DESTINATION + AUTO MARCH COLUMN
-Visible build marker: PROJECT 1864 | v00.00.09f6 TEST
+Build name: 190-MAN COMPANY + COMPACT RANGE + NARROW CONE + VOLLEY/RELOAD + WALK/FORCED/RUN + EXACT COLUMN BOUNDS
+Visible build marker: PROJECT 1864 | v00.00.09f7 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/footprint/hover + 09f6 tactical visual/march correction + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + formation-ranks doctrine supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f6 - Selection visual correction
-- Selected-unit outline is now terrain-following along all four edges so sloped ground cannot hide portions of the box.
-- Selection footprint is derived from the actual current Line/Column footprint.
-- A small yellow pulsing selection orb is restored above the selected unit centre.
-- PrototypeTacticalVisuals09F6 disables the older 09f5 selection-outline authority.
+v00.00.09f7 - Compact musket-range test
+- Battlefield scale remains 1 Unity unit = 1 metre.
+- Current TEST fire distances are Close 40 m, Medium/Effective 80 m and Long/Maximum 115 m.
+- Long/Maximum is intentionally reduced from the 09f6 400 m visual test to match the desired tactical battlefield scale.
+- The visible fire sector is reduced from 120 degrees total to 70 degrees total (+/-35 degrees).
+- PrototypeFireArcGuard09F7 prevents the current 1v1 prototype from firing when its nearest in-range opponent is outside the new visible +/-35 degree sector.
+- These remain prototype gameplay/range values; later historical weapon profiles are data/research work.
 
-v00.00.09f6 - Fire cone restored
-- Close/Medium/Long range fans are explicitly rebuilt after the older visual layers.
-- Fire fans start across the full current formation frontage instead of a fixed central muzzle width.
-- Fire sector remains 120 degrees total (plus/minus 60 degrees).
-- Current TEST distances remain Close 100 m, Medium/Effective 200 m, Long/Maximum 400 m at 1 Unity unit = 1 metre.
-- Fans follow terrain height and are made more visible at tactical zoom.
+v00.00.09f7 - Volley, reload and black-powder smoke
+- Visible soldier states now include AWAIT, AIM, FIRE and RELOAD.
+- Aim raises the rifle toward the target-facing direction.
+- Fire uses a short recoil pose.
+- Reload returns the weapon to an upright loading position before the next shot.
+- A volley creates black-powder smoke across the full company frontage rather than from only a few isolated points.
+- Smoke remains in world space after emission, so a company moving later does not drag the old cloud with it.
 
-v00.00.09f6 - Destination footprint correction
-- The old fixed 19 x 5.2 m route destination box is no longer authoritative.
-- Permanent route destination ghosts are resized from the company's actual current strength and requested final formation.
-- Live RMB destination preview is also overridden to the same dynamic footprint for a single selected company.
-- A full 190-man, three-rank Line therefore previews a frontage of approximately 48 m plus a small UI margin.
+v00.00.09f7 - Walking, forced march and rout running
+- Normal movement now has a visible walking gait rather than soldiers sliding over terrain.
+- Forced March is available with the G hotkey and the bottom-bar TVANG G button.
+- Danish current TEST speeds: normal walk 3.20 m/s, forced march 4.25 m/s, routed run 5.20 m/s.
+- Prussian current TEST speeds: normal walk 3.35 m/s, forced march 4.45 m/s, routed run 5.40 m/s.
+- Forced March adds 0.22 cohesion points/second on top of existing movement cohesion cost while the unit is moving.
+- Routed/panicked units automatically abandon Forced March and use the faster RUN state while fleeing.
+- Visible gait amplitude, body lean and weapon carry differ between Walk, Forced March and Run.
 
-v00.00.09f6 - Automatic march column restored
-- The old AI-only approach-formation policy is runtime-disabled by PrototypeMarchColumn09F6.
-- Player-routed and AI-routed units now share one formation policy.
-- Long movement (steering destination about 28 m or farther) automatically changes to Column.
-- Units deploy back to Line when enemy contact closes to about 70 m or when the final movement stops.
-- Temporary bridge-entry / bridge-exit steering destinations do not force premature Line deployment.
-- PrototypeRiverBridgeOnly09F3 remains sole owner of bridge-only river routing; 09f6 writes formations only.
+v00.00.09f7 - Casualty placement
+- New fallen soldiers are created from actual formation slots at the moment casualties are received.
+- Casualty placement has only about +/-0.30 m local jitter around the formation slot.
+- Fallen soldiers therefore appear in or immediately beside the line/column rather than several metres away.
+- Fallen visuals remain in world space when the surviving company moves on.
 
-v00.00.09f5 - Company-scale baseline retained
-- Current 1v1 test units represent companies rather than full regiments.
+v00.00.09f7 - Exact formation bounds
+- Selection and destination footprints are calculated from min/max of all current formation slots.
+- This fixes the 09f6 Column error where the rectangle was centred on the regiment pivot even though the marching column extends behind that pivot.
+- Line and Column selection rectangles now use the actual formation centre, width and depth.
+- Destination ghosts apply the same centre offset and therefore match the requested final formation.
+- The yellow selection orb follows the actual formation centre.
+
+v00.00.09f6 retained
+- Long movement still changes Line -> Column and deploys Column -> Line near the final stop/contact.
+- Player and AI movement share the same march-column policy.
+- River routing remains bridge-only and scenery remains pass-through.
+- Selection boxes remain terrain-following on all four edges.
+
+v00.00.09f5 retained
 - Active Danish and Prussian test companies are normalised to 190 men.
-- Internal Regiment class/names are retained for compatibility, while UI identifies the units as companies.
-- At F9 living scale 1:1, one actual living man corresponds to one rendered soldier.
-- At F9 fallen scale 1:1, one actual loss corresponds to one persistent fallen visual.
+- Danish 1851 line baseline remains 3 ranks, approximately 64 + 63 + 63 at full strength.
+- Full-strength three-rank frontage remains approximately 48 m.
+- Two-rank line remains documented as a later doctrine/regulation research option.
+- F9 living/fallen display ratios remain 1:1 / 1:2 / 1:5 / 1:10.
+- Hover UI, bayonets, flags and compact upper-right battle clock remain retained.
 
-v00.00.09f5 - 1851 three-rank line retained
-- Danish 1851 line infantry uses 3 ranks as the prototype baseline.
-- A full 190-man company therefore forms approximately 64 + 63 + 63 men.
-- Lateral spacing is approximately 0.75 m per man, giving a full-strength line frontage of approximately 48 m.
-- Two-rank line is documented as a later doctrine/regulation research and adoption option.
-
-v00.00.09f5 - Weapon / UI retained
-- Danish soldiers retain the richer dark-blue/light-blue 1850s prototype uniform.
-- Musket/rifle and fixed bayonet remain visible at tactical zoom.
-- Permanent floating TextMesh labels over formations remain suppressed; physical flags remain.
-- Hovering a unit shows unit name, nation, strength, fallen/losses, formation, order/AI state, morale, cohesion, ammunition and weapon/range data.
-- Battle clock and simulation speed controls remain compact in the upper-right corner.
-
-Retained from v00.00.09f4
-- F9 living/fallen visual ratios 1:1 / 1:2 / 1:5 / 1:10.
-- Explicit FORSVAR HER / ANGRIB / EROBR HER tactical orders.
-- Dannebrog plus separate Danish regimental/company colour.
-- 1:1 casualty accounting remains simulation-authoritative.
-
-Retained from v00.00.09f3
-- Line/Column changes visibly reform instead of teleporting slots.
-- Stationary facing changes are smoothed instead of instant 15-degree jumps.
-- Trees, fences, Farmhouse and Barn remain pass-through in the current navigation isolation baseline.
-- River/water remains blocked and may only be crossed through the fixed bridge at z=22.
-- Legacy V1/V3/V4/09A/recovery navigation writers remain runtime-disabled.
-
-Retained from v00.00.09f2 / v00.00.09f1 / v00.00.09f
-- One Danish and one Prussian active test unit.
-- Enemy begins HOLD / AI OFF until activated.
-- Bottom command bar remains docked to the lower screen edge.
-- LMB drag box selection, Shift add and Ctrl toggle remain available.
-- RMB movement/facing, Alt+RMB waypoint, F/C formation and Z/X facing remain available.
-
-Primary v00.00.09f6 QA
+Primary v00.00.09f7 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f6 TEST.
-3. Select the Danish company: complete yellow selection rectangle and yellow selection orb are visible.
-4. Close/Medium/Long fire cone is visible and starts from the full formation frontage.
-5. Issue a long RMB move: Line -> Column reform is visible while the company begins marching.
-6. At final stop or within approximately 70 m of enemy contact: Column -> Line reform is visible.
-7. Destination box is approximately the same footprint as the requested final company formation.
-8. Live RMB destination preview uses the same dynamic footprint for one selected company.
-9. A cross-river order still routes through the fixed bridge and does not restore obstacle navigation.
-10. 190-man strength, 3-rank 1851 Line, hover UI, bayonets, flags and 1:1 casualty graphics remain retained.
+2. Build marker reads PROJECT 1864 | v00.00.09f7 TEST.
+3. Selected Line and Column rectangles tightly surround the actual soldier formation.
+4. Column rectangle centre follows the physical column instead of the regiment pivot.
+5. Destination rectangle matches the final Line footprint and centre.
+6. Close/Medium/Long fans read approximately 40/80/115 m and total cone width is about 70 degrees.
+7. Long move visibly reforms Line -> Column and stop/contact reforms Column -> Line.
+8. Normal movement shows WALK animation.
+9. Toggle TVANG G / G and verify faster movement plus FORCED MARCH gait.
+10. Rout a company and verify faster RUN animation while fleeing.
+11. During a volley, soldiers visibly AIM -> FIRE -> RELOAD -> AWAIT.
+12. Black-powder smoke appears across the full firing frontage.
+13. New casualties fall in/next to current formation slots, not several metres away.
+14. Fallen bodies remain where they fell after the company moves away.
+15. River crossing still routes only through the fixed bridge.
