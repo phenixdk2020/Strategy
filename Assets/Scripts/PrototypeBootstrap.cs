@@ -2,6 +2,11 @@ using UnityEngine;
 
 public sealed class PrototypeBootstrap : MonoBehaviour
 {
+    public const float BattlefieldWidth = 1440f;
+    public const float BattlefieldDepth = 960f;
+    public const float BattlefieldHalfWidth = BattlefieldWidth * 0.5f;
+    public const float BattlefieldHalfDepth = BattlefieldDepth * 0.5f;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoBootstrap()
     {
@@ -23,7 +28,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         RenderSettings.ambientLight = new Color(0.55f, 0.57f, 0.53f);
         RenderSettings.fog = true;
         RenderSettings.fogColor = new Color(0.66f, 0.70f, 0.72f);
-        RenderSettings.fogDensity = 0.0022f;
+        RenderSettings.fogDensity = 0.0012f;
 
         CreateLighting();
         CreateCamera();
@@ -38,9 +43,6 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         systems.AddComponent<BattleManager>();
         systems.AddComponent<PlayerCommander>();
 
-        // v00.00.09 test scenario: Denmark defends west; Prussia attacks from east.
-        // The battlefield and starting separation are doubled so there is real time
-        // to pause, inspect, set fire discipline and manoeuvre before contact.
         CreateRegiment(
             "1. Regiment",
             BattleTeam.Denmark,
@@ -73,6 +75,10 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             new Vector3(112f, 0f, 50f),
             Quaternion.Euler(0f, -105f, 0f),
             new Vector3(18f, 0f, 72f));
+
+        Debug.Log(
+            "MAP-09F11|Size=" + BattlefieldWidth.ToString("0") + "x" + BattlefieldDepth.ToString("0") +
+            "m|Previous=360x240|LinearScale=4x|AreaScale=16x|RiverExtended=True");
     }
 
     private void CreateLighting()
@@ -92,7 +98,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         camera.tag = "MainCamera";
         camera.fieldOfView = 48f;
         camera.nearClipPlane = 0.3f;
-        camera.farClipPlane = 1000f;
+        camera.farClipPlane = 3500f;
         cameraObject.transform.position = new Vector3(-18f, 86f, -122f);
         cameraObject.transform.rotation = Quaternion.Euler(39f, 4f, 0f);
         cameraObject.AddComponent<AudioListener>();
@@ -101,10 +107,12 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
     private void CreateGround()
     {
-        const int xSegments = 144;
-        const int zSegments = 96;
-        const float width = 360f;
-        const float depth = 240f;
+        // 4x linear battlefield dimensions. Mesh density is intentionally reduced to
+        // ~5 m per cell so the expanded QA map remains light enough for the prototype.
+        const int xSegments = 288;
+        const int zSegments = 192;
+        const float width = BattlefieldWidth;
+        const float depth = BattlefieldDepth;
 
         Vector3[] vertices = new Vector3[(xSegments + 1) * (zSegments + 1)];
         Vector2[] uvs = new Vector2[vertices.Length];
@@ -141,7 +149,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         Mesh mesh = new Mesh
         {
-            name = "PrototypeBattlefieldMesh_v009_360x240",
+            name = "PrototypeBattlefieldMesh_v09f11_1440x960",
             vertices = vertices,
             triangles = triangles,
             uv = uvs
@@ -172,9 +180,15 @@ public sealed class PrototypeBootstrap : MonoBehaviour
               (z - 54f) * (z - 54f) / 1900f));
 
         float rolls = 0.9f * Mathf.Sin(x * 0.032f) * Mathf.Cos(z * 0.046f);
-        float streamDip = -1.2f * Mathf.Exp(-(x * x) / 180f);
+        float streamX = StreamCenterX(z);
+        float streamDip = -1.2f * Mathf.Exp(-((x - streamX) * (x - streamX)) / 180f);
 
         return ridge + northHill + rolls + streamDip;
+    }
+
+    public static float StreamCenterX(float z)
+    {
+        return Mathf.Sin(z * 0.065f) * 4.8f;
     }
 
     private void CreateStream()
@@ -182,14 +196,19 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         Material water = CreateSharedMaterial(new Color(0.18f, 0.40f, 0.52f), "Water");
         Vector3 previous = Vector3.zero;
 
-        for (int i = 0; i < 61; i++)
+        // Extended from ~236 m to ~944 m so the river spans the new 4x-deep map.
+        const int points = 237;
+        const float startZ = -472f;
+        const float stepZ = 4f;
+
+        for (int i = 0; i < points; i++)
         {
-            float z = -118f + i * 3.93f;
-            float x = Mathf.Sin(z * 0.065f) * 4.8f;
+            float z = startZ + i * stepZ;
+            float x = StreamCenterX(z);
             Vector3 p = new Vector3(x, SampleGroundHeight(x, z) + 0.07f, z);
 
             if (i > 0)
-                CreateSegment("Stream", previous, p, 2.8f, 0.06f, water);
+                CreateSegment("Stream", previous, p, 4.4f, 0.06f, water);
 
             previous = p;
         }
@@ -200,9 +219,13 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         Material road = CreateSharedMaterial(new Color(0.55f, 0.43f, 0.28f), "Road");
         Vector3 previous = Vector3.zero;
 
-        for (int i = 0; i < 61; i++)
+        const int points = 241;
+        const float startX = -704f;
+        const float stepX = 5.87f;
+
+        for (int i = 0; i < points; i++)
         {
-            float x = -172f + i * 5.73f;
+            float x = startX + i * stepX;
             float z = 22f + Mathf.Sin(x * 0.028f) * 5.2f;
             Vector3 p = new Vector3(x, SampleGroundHeight(x, z) + 0.10f, z);
 
@@ -262,12 +285,12 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     {
         Random.InitState(1864);
 
-        for (int i = 0; i < 86; i++)
+        for (int i = 0; i < 420; i++)
         {
-            float x = Random.Range(-170f, 170f);
-            float z = Random.Range(-112f, 112f);
+            float x = Random.Range(-700f, 700f);
+            float z = Random.Range(-460f, 460f);
 
-            bool nearStream = Mathf.Abs(x) < 9f;
+            bool nearStream = Mathf.Abs(x - StreamCenterX(z)) < 10f;
             bool nearFarm =
                 x < -62f &&
                 x > -98f &&
