@@ -1,12 +1,12 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10m
-Build status: HISTORICAL 1851 ZONES + 68 CITY RUNTIME
-Build name: CAMPAIGN3 ZONE/CITY RUNTIME 10M
+Prototype version: v00.00.10n
+Build status: 1851 ZONE OVERLAY FOUNDATION / 20 ZONES + 68 CITY RUNTIME
+Build name: CAMPAIGN3 ZONE OVERLAY 10N
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10m-zone-city-runtime
+Work branch: work/channel-campaign3-v10n-zone-overlay
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.11
+Design baseline: v00.02.12
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
@@ -18,69 +18,72 @@ LINEAGE:
 - v00.00.10j = World Imagery selected as sole Campaign3 runtime basemap
 - v00.00.10k = streamed elevation deforms World Imagery into 3D terrain
 - v00.00.10k1 = Unity 6.6 EntityId compile hotfix
-- v00.00.10m = canonical 1851 zone/city runtime replaces old QA zone/city lists
+- v00.00.10m = canonical 1851 zone/city runtime: 20 zones + 68 cities
+- v00.00.10n = zone overlay/polygon architecture with explicit historical-geometry guardrail
 
 ROLLBACK:
+- before v10n: backup/channel-campaign3-v10m-before-v10n-zone-overlay-20260913
 - before v10m: backup/channel-campaign3-v10m-before-zone-city-runtime-20260913
 - before v10k 3D terrain: backup/channel-campaign3-v10j-before-3d-terrain-20260913
 
-V10M PURPOSE:
-- Replace the 12 coarse QA gameplay zones with the 20 canonical ZONE-REG-01 zones.
-- Replace the 10 QA cities with all 68 CITY-REG-01 market towns.
-- Remove Esbjerg from the 1851 runtime start state.
-- Give every city a stable CityId, ZoneId, Population1850, A/B/C tier and WGS84 coordinate.
-- Enforce the runtime contract that only A-tier cities can normally qualify for new heavy military construction.
-- Keep B/C towns visible and clickable while blocking free barracks/arsenal/major-depot/arms-factory/permanent-fortification construction.
-- Preserve historical fixed/special buildings as a separate later data layer.
+V10N PURPOSE:
+- Make the 20 canonical ZONE-REG-01 zones readable as territorial areas rather than only centre markers/labels.
+- Add a runtime zone-overlay architecture that can later accept sourced historical polygons without changing zone IDs, city IDs or campaign state.
+- Preserve all v10m city population/tier/build restrictions and movement routing.
+- Keep historical accuracy explicit: v10n temporary polygon geometry must never be treated as historical facit.
 
-ZONE RUNTIME:
-- 20 historical simulation zones are loaded from CampaignDenmark1851Registry.
-- Zone IDs follow ZONE-REG-01, including separate Copenhagen City and Skanderborg Amt.
-- Direct movement distinguishes Land and Ferry links.
-- Ferry routes currently receive a simple travel-time multiplier; detailed ports, schedules, capacity and naval interdiction come later.
-- Bornholm remains without an automatic land/ferry campaign link until a proper sea-transport layer is implemented.
+ZONE OVERLAY:
+- New CampaignZoneOverlayV010N auto-loads after the campaign scene.
+- All 20 ZONE-REG-01 identities receive a visible closed boundary polygon.
+- Z toggles the complete zone overlay ON/OFF.
+- Overlay includes an on-screen v00.00.10n status badge.
+- Prototype sectors are generated from canonical zone centres inside five geographic groups: Jylland, Fyn/Langeland, Sjælland/Møn, Lolland-Falster and Bornholm.
+- Geometry metadata explicitly sets HistoricallyExactGeometry=False.
+- Runtime/log contract exposes GeometryMode=PROTOTYPE_CENTRE_DERIVED_SECTORS.
 
-CITY RUNTIME:
-- 68 cities are loaded from CITY-REG-01.
-- Startup validation requires exactly 68 cities, 20 zones and an urban-population checksum of 290,565.
-- City visual size follows A/B/C tier plus a bounded population modifier.
-- A cities are labelled at operational zoom; all cities are labelled at close zoom.
-- Cities are clickable through GrandCampaignCityMarker.
-- The selection panel shows city tier, 1850 population, ZoneId and the heavy-military-build rule.
-- CanBuildHeavyMilitaryInCity(cityId) provides the explicit runtime gate for later construction UI/system integration.
+HISTORICAL GEOMETRY SOURCE CONTRACT:
+- Target production source: DigDag historical-administrative GIS, Amt og Region.
+- DigDag covers historical administrative divisions from approximately 1660 onward and exposes vector/map services.
+- v10n does NOT claim that its centre-derived sector lines equal actual 1851 county borders.
+- A later version must replace only polygon coordinates/geometry with sourced DigDag data while preserving ZONE-REG-01 IDs and simulation state.
 
-QA ARMY:
-- The existing Danish QA army is retained, but its start location now uses canonical ZoneId DK-Z11-VEJ instead of the obsolete DK-SJ scaffold.
+V10M RUNTIME RETAINED:
+- 20 canonical historical simulation zones.
+- 68 CITY-REG-01 market towns.
+- Startup checksum: 20 zones / 68 cities / urban population 290,565.
+- Esbjerg absent from 1851 start state.
+- Every city retains CityId, ZoneId, Population1850, A/B/C tier and WGS84 position.
+- A-tier can qualify for heavy military construction; B/C remain blocked as normal construction sites.
+- Land and Ferry neighbour links remain separate.
+- QA army remains in DK-Z11-VEJ.
 
 3D TERRAIN / IMAGERY COMPATIBILITY:
-- Existing ZONE_, CITY_ and ARMY_ naming prefixes are retained so terrain-height adaptation can continue to identify gameplay markers.
-- World Imagery / streamed 3D terrain architecture is otherwise unchanged by v10m.
+- Zone overlay is a separate visual layer and does not change World Imagery, streamed terrain meshes or campaign simulation data.
+- Existing ZONE_, CITY_ and ARMY_ gameplay markers remain unchanged.
+- Overlay is intentionally non-colliding so it must not intercept city/zone/army selection or march raycasts.
 
 FILES ADDED/CHANGED:
-- Assets/Scripts/Campaign/CampaignDenmark1851Registry.cs
-- Assets/Scripts/Campaign/CampaignDenmark1851Registry.cs.meta
-- Assets/Scripts/Campaign/GrandCampaignCityMarker.cs
-- Assets/Scripts/Campaign/GrandCampaignCityMarker.cs.meta
-- Assets/Scripts/Campaign/GrandCampaignBootstrap.cs
+- Assets/Scripts/Campaign/CampaignZoneOverlayV010N.cs
+- Assets/Scripts/Campaign/CampaignZoneOverlayV010N.cs.meta
 - VERSION.txt
 - docs/PROJECT-1864-Designmanual.md
-- docs/parts/part-10-45-CAMPAIGN-V10M-ZONES-CITIES.md
+- docs/parts/part-11-46-CAMPAIGN-V10N-ZONE-OVERLAY.md
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. Game view identifies v00.00.10m.
-3. Startup log reports RegistryValid=True implicitly by continuing and reports Zones=20, Cities=68, UrbanPopulation1850=290565.
-4. Esbjerg does not exist at campaign start.
-5. All 68 city markers are present and remain above streamed terrain.
-6. Close zoom shows labels for A/B/C towns; operational zoom shows A-city labels.
-7. Clicking a city displays name, tier, population and ZoneId.
-8. B/C towns display heavy military construction as blocked.
-9. A towns report heavy military construction as possible subject to later national/resource/history requirements.
-10. The QA army starts in DK-Z11-VEJ.
-11. Right-click movement works over defined land links.
-12. Defined ferry links are accepted and use RouteType=Ferry.
-13. Non-adjacent movement is rejected.
-14. World Imagery and 3D terrain continue to render and marker-height adaptation remains functional.
-15. Pan/zoom, pause and x1/x5/x20/x100 time controls regress without breakage.
+2. v10m startup validation still reports 20 zones, 68 cities and population 290565.
+3. v10n log reports Installed=True and Zones=20.
+4. All 20 zone boundary loops appear at Denmark zoom.
+5. Z toggles the zone overlay off and on without altering simulation state.
+6. Overlay has no collider and does not block clicks on cities, zones or armies.
+7. All 68 city markers remain visible/interactive as in v10m.
+8. A/B/C heavy military construction rules remain unchanged.
+9. Land and Ferry movement regression passes.
+10. World Imagery remains the active basemap.
+11. 3D terrain still loads and city/zone/army markers remain above terrain.
+12. Overlay badge explicitly says prototype geometry / DigDag target.
+13. No UI or documentation describes v10n sector geometry as historically exact.
+14. Esbjerg remains absent from the 1851 start state.
+15. Pause and x1/x5/x20/x100 campaign time controls regress without breakage.
 
 QA state: IMPLEMENTED ON WORK BRANCH / AWAITS UNITY 6.6 COMPILE + PLAY MODE QA
