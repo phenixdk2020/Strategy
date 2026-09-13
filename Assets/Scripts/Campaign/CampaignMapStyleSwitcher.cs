@@ -3,19 +3,19 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// PROJECT 1864 Campaign v00.00.10j
-/// IMAGERY ONLY CAMPAIGN.
+/// PROJECT 1864 Campaign v00.00.10k
+/// IMAGERY ONLY + STREAMED 3D TERRAIN.
 ///
-/// The former 11-provider comparison lab is retired from Campaign3 runtime.
-/// This bootstrap creates exactly one basemap: provider 9 World Imagery.
-/// WGS84 gameplay state remains separate from the modern imagery presentation.
+/// World Imagery remains the sole Campaign3 basemap. The v10k terrain layer is
+/// independent of gameplay state and deforms the streamed imagery meshes after
+/// their image tiles exist. WGS84 gameplay remains authoritative.
 /// </summary>
 [DefaultExecutionOrder(-29000)]
 public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 {
     public static CampaignMapStyleSwitcher Instance { get; private set; }
 
-    private const string RootName = "PROJECT1864_IMAGERY_ONLY_v000010j";
+    private const string RootName = "PROJECT1864_IMAGERY_TERRAIN_v000010k";
     private const string ImageryRootName = "BASEMAP_09_9_Imagery";
     private const string ImageryUrl =
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -52,7 +52,6 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
     private IEnumerator Start()
     {
-        // GrandCampaignBootstrap builds the WGS84 campaign camera first.
         for (int i = 0; i < 240; i++)
         {
             campaignCamera = Camera.main;
@@ -67,7 +66,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
         if (campaignCamera == null)
         {
-            Debug.LogError("CAMPAIGN-10J|Installed=False|Reason=MainCameraMissing");
+            Debug.LogError("CAMPAIGN-10K|Installed=False|Reason=MainCameraMissing");
             yield break;
         }
 
@@ -76,7 +75,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
         if (imagery == null)
         {
-            Debug.LogError("CAMPAIGN-10J|Installed=False|Reason=ImageryProviderCreateFailed");
+            Debug.LogError("CAMPAIGN-10K|Installed=False|Reason=ImageryProviderCreateFailed");
             yield break;
         }
 
@@ -84,9 +83,9 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         imagery.EnsureLoaded();
 
         Debug.Log(
-            "CAMPAIGN-10J|Installed=True|Basemap=WorldImageryOnly|" +
-            "Provider=09|WorldStreaming=True|WGS84GameplayShared=True|" +
-            "OtherProvidersInstantiated=False");
+            "CAMPAIGN-10K|Installed=True|Basemap=WorldImageryOnly|" +
+            "WorldStreaming=True|TerrainLayer=TerrariumElevation|" +
+            "WGS84GameplayShared=True|OtherProvidersInstantiated=False");
     }
 
     private void CreateImageryBasemap()
@@ -127,8 +126,6 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
     private void LateUpdate()
     {
-        // The old campaign bootstrap can rebuild/re-enable presentation objects in
-        // future revisions. Keep the retired Natural Earth presentation hidden.
         if (ready)
             HideLegacyBasemap();
     }
