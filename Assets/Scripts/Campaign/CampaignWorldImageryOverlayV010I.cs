@@ -1,9 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// PROJECT 1864 v00.00.10j status overlay for the imagery-only campaign map.
-/// World Imagery is now the sole active basemap. This overlay replaces the old
-/// v10e Natural Earth map-info panel with truthful World Imagery status/controls.
+/// PROJECT 1864 v00.00.10k status overlay for the imagery-only campaign map.
+/// Shows World Imagery streaming plus streamed 3D elevation status.
 /// </summary>
 [DefaultExecutionOrder(30000)]
 public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
@@ -12,6 +11,7 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
 
     private GameObject providerRoot;
     private CampaignRasterBasemapV010G worldRaster;
+    private CampaignImageryTerrainV010K terrain;
     private GUIStyle badgeStyle;
     private GUIStyle worldStyle;
     private GUIStyle mapInfoStyle;
@@ -22,7 +22,7 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignWorldImageryOverlayV010I>() != null)
             return;
 
-        GameObject go = new GameObject("PROJECT1864_WorldImageryOverlay_v000010j");
+        GameObject go = new GameObject("PROJECT1864_WorldImageryOverlay_v000010k");
         DontDestroyOnLoad(go);
         go.AddComponent<CampaignWorldImageryOverlayV010I>();
     }
@@ -39,6 +39,9 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
         {
             worldRaster = providerRoot.GetComponent<CampaignRasterBasemapV010G>();
         }
+
+        if (terrain == null)
+            terrain = CampaignImageryTerrainV010K.Instance;
     }
 
     private void EnsureStyles()
@@ -84,34 +87,33 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
         GUI.depth = -2000;
         EnsureStyles();
 
-        // Replace the obsolete build badge from older campaign presentation.
         DrawOpaque(new Rect(0f, 0f, 228f, 42f), new Color(0.035f, 0.075f, 0.095f, 0.99f));
         GUI.Box(
             new Rect(8f, 8f, 212f, 31f),
-            "PROJECT 1864 | v00.00.10j",
+            "PROJECT 1864 | v00.00.10k",
             badgeStyle);
 
         string status = worldRaster != null ? worldRaster.Status : "INITIALISING";
         string detail = worldRaster != null ? worldRaster.WorldDetailStatus : "Waiting for World Imagery provider";
+        string terrainStatus = terrain != null ? terrain.Status : "TERRAIN INITIALISING";
 
-        Rect panel = new Rect(8f, 194f, Mathf.Min(420f, Screen.width - 16f), 78f);
+        Rect panel = new Rect(8f, 194f, Mathf.Min(455f, Screen.width - 16f), 98f);
         DrawOpaque(panel, new Color(0.035f, 0.070f, 0.085f, 0.94f));
         GUI.Box(
             panel,
-            "WORLD IMAGERY · CAMPAIGN MAP\n" +
+            "WORLD IMAGERY + 3D TERRAIN\n" +
             status + "\n" +
             detail + "\n" +
-            "Home=Danmark · PageUp=Europa · End=Verden · WASD/pile=pan · hjul=zoom · MMB=træk",
+            terrainStatus + "\n" +
+            "Home=Danmark · PageUp=Europa · End=Verden · WASD/pile=pan · hjul=zoom · MMB=træk · T=2D/3D · Q/E=drej",
             worldStyle);
 
-        // GrandCampaignBootstrap v10e still owns gameplay UI. Mask only its obsolete
-        // Natural Earth info box and replace it with current imagery information.
-        Rect legacyMapInfo = new Rect(8f, Screen.height - 76f, 395f, 68f);
+        Rect legacyMapInfo = new Rect(8f, Screen.height - 76f, 420f, 68f);
         DrawOpaque(legacyMapInfo, new Color(0.035f, 0.070f, 0.085f, 0.98f));
         GUI.Box(
             legacyMapInfo,
-            "BASEMAP: World Imagery | CRS/gameplay: WGS84\n" +
-            "Modern imagery = visuel reference, ikke historisk 1851-sandhed\n" +
+            "BASEMAP: World Imagery | TERRAIN: Terrarium elevation pilot | WGS84 gameplay\n" +
+            "Modern imagery/elevation = visuel reference, ikke historisk 1851-sandhed\n" +
             "1851 byer, regioner, infrastruktur og hære er separate gameplay-lag",
             mapInfoStyle);
     }
