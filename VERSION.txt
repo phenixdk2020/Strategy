@@ -1,10 +1,10 @@
 PROJECT 1864 - Unity Battle Prototype
 Prototype version: v00.00.09f8
 Build status: TEST
-Build name: SHORTER RANGE + SHARED CONE SIDES + FORMATION-READY FIRE + MORALE-OFF HIT QA
+Build name: SHORTER RANGE + SHARED CONE SIDES + FORMATION-READY FIRE + MORALE-OFF HIT QA + SLOWER FACING
 Visible build marker: PROJECT 1864 | v00.00.09f8 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale-QA + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + formation-ranks doctrine supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
@@ -36,6 +36,13 @@ v00.00.09f8 - Morale temporarily disabled for hit QA
 - Distance accuracy remains active and continues to decline continuously with distance.
 - SHORT/MEDIUM/LONG are therefore still meaningfully different even though morale is temporarily bypassed.
 - New HITTEST-09F8 telemetry logs target, attacker, distance, range band, hits/losses, remaining strength and cohesion whenever casualties occur.
+
+v00.00.09f8 - Slower stationary facing
+- Stationary formation turning is reduced by 30 percent compared with 09f7.
+- Previous stationary facing speed: 24.0 degrees/second.
+- Current TEST stationary facing speed: 16.8 degrees/second.
+- This applies to stationary left/right facing changes and final-facing animation.
+- Normal movement steering remains owned by the movement system and is not slowed by this tuning.
 
 v00.00.09f7 retained
 - Visible soldier states remain AWAIT -> AIM -> FIRE -> RELOAD.
@@ -70,4 +77,5 @@ Primary v00.00.09f8 QA
 8. Morale remains at 100 during the hit-count test.
 9. Fire at SHORT, MEDIUM and LONG distances and compare HITTEST-09F8 Console lines for distance/band/hits.
 10. Distance accuracy remains active; longer shots should on average produce fewer hits than shorter shots, all else equal.
-11. 190-man company, 3-rank 1851 Line, smoke/aim/fire/reload, Forced March, routed Run, exact selection/destination bounds and bridge-only river remain retained.
+11. Stationary left/right facing turns at approximately 16.8 degrees/second, 30 percent slower than 09f7.
+12. 190-man company, 3-rank 1851 Line, smoke/aim/fire/reload, Forced March, routed Run, exact selection/destination bounds and bridge-only river remain retained.
