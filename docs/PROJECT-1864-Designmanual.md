@@ -1,7 +1,7 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.08**  
-**Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**
+**Aktuel designbaseline: v00.02.09**  
+**Aktuel campaign-workbranch: Campaign3 v00.00.10l CLEAN UI + 3D CITIES**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -17,6 +17,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 3B: 20 — Befolkning, økonomi, byudvikling, industri, handel, forskning, rekruttering, træning, sanitet/fanger, regimentshistorik og perks](parts/part-03b-20-20.md)
 - [Del 3C: 20.16 — Strategisk landudvikling: veje, jernbane, gårde, hesteopdræt, våbenindustri og regionale projekter](parts/part-03c-20-16-strategic-development.md)
 - [Del 3D: Battle supply, skumring/nat, overnight resupply, kavaleri og dragoner](parts/part-03d-night-supply-cavalry.md)
+- [Del 3E: 20.17 — CITY-REG-01: Kongeriget Danmarks 68 købstæder i 1850, population og udviklingsklasser](parts/part-03e-20-17-city-register-1851.md)
 - [Del 4: 21–27 — Strategisk/taktisk AI, terræn, performance, UI, save/modding og historisk datamodel](parts/part-04-21-27.md)
 - [Del 5A: Feature-arkitektur F00–F15](parts/part-05a-F00-F15.md)
 - [Del 5B: Feature-arkitektur F16–F31](parts/part-05b-F16-F31.md)
@@ -38,11 +39,19 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Backlog B-240–B-249 — udvidet kavaleri- og dragonmodel](backlog/B-240-CAVALRY-DRAGOONS-EXPANDED.md)
 - [Backlog B-250–B-259 — fog of war, scouts og HQ command effectiveness](backlog/B-250-FOG-SCOUTS-COMMAND-EFFECTIVENESS.md)
 
+## City Register 1851 — kanonisk campaign-baseline
+
+Designbaseline v00.02.09 fastlægger en kanonisk city-node baseline for Kongeriget Danmark ved campaign-start 1. januar 1851. Population bruger folketællingen 1. februar 1850, den nærmeste komplette samtidige opgørelse. Alle 68 købstæder skal findes på strategikortet; de tidligere få QA-byer er ikke længere en kanonisk byliste.
+
+Byer opdeles i tre udviklingsklasser: **A — Development City**, **B — Regional Town** og **C — Minor Town**. Mindre byer skal fortsat være synlige, klikbare og økonomisk/logistisk relevante, men må ikke automatisk kunne udbygges med kaserner, arsenaler, større militære depoter, våbenfabrikker eller permanente fæstninger. Historisk dokumenterede anlæg kan eksistere som fixed/special buildings uanset byens klasse, men giver ikke fri byggeadgang.
+
+Det fulde register, folketal, datakontrakt og implementeringsregler ligger i [Del 3E / CITY-REG-01](parts/part-03e-20-17-city-register-1851.md). Slesvig, Holsten, Lauenborg og strategiske ikke-købstads-settlements får særskilte registre. Esbjerg er ikke en 1851-startby og skal derfor fjernes fra den nuværende QA-startstate.
+
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
 P0A v00.00.09 på arbejdsbranchen implementerer den første sammenhængende tactical-command slice oven på v00.00.08. Danske testregimenter er **forsvarere**, mens de preussiske testregimenter er **angribere**. Battlefield er udvidet fra 180x120 til **360x240**, startafstanden er forøget, og kameraets bounds/zoom er udvidet, så spilleren har reel tid og plads til at pause, inspicere, udstede ordrer og manøvrere før kontakt.
 
-Alle fire regimenter får `OfficerProfile` + `OfficerAIController`. Danske regimenter starter AI OFF, mens preussiske regimenter starter AI ON gennem samme shared decision core. Officerprofilen består af Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution og Composure/Nerve samt separat Officer Experience. Composure påvirker stress-relateret reaction delay og decision noise; alle profiler i v00.00.09 er QA-data og ikke historiske ratings.
+Alle fire regimenter får `OfficerProfile` + `OfficerAIController`. Danske regimenter starter AI OFF, mens preussiske testregimenter starter AI ON gennem samme shared decision core. Officerprofilen består af Leadership, Inspiration, Tactical Skill, Initiative, Staff/Command Skill, Discipline/Obedience, Aggressiveness/Caution og Composure/Nerve samt separat Officer Experience. Composure påvirker stress-relateret reaction delay og decision noise; alle profiler i v00.00.09 er QA-data og ikke historiske ratings.
 
 Valgte danske regimenter kan toggles med **`I` = AI UNIT ON/OFF**; `A` er fortsat kamera-left i WASD. En contextual command-menu giver `DEFENSIVE / BALANCED / OFFENSIVE` doctrine, en 0–100 commander `forsigtig ↔ aggressiv` intent og fire policy `HOLD / CLOSE / MEDIUM / LONG`. Commander intent biaser execution, men officerens egen Aggressiveness er fortsat dominerende i første model. Højreklik går direkte til Regiment, når AI er OFF, og bliver Officer AI Move/Attack mission, når AI er ON.
 
@@ -116,6 +125,7 @@ Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan besky
 
 ## Versionshistorik
 
+- **v00.02.09 / CITY-REG-01** — Kongeriget Danmarks 68 købstæder ved 1851-starten fastlagt med folketal fra 1. februar 1850. Byer opdeles i A/B/C-udviklingsklasser. Alle mindre købstæder skal stadig findes og være klikbare på kortet, men B/C-byer får ikke fri tung militær udbygning; historisk dokumenterede anlæg bevares som fixed/special buildings. Esbjerg fjernes fra 1851-startstate. Slesvig/Holsten/Lauenborg og ikke-købstads-settlements får separate registre.
 - **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile` på alle fire regimenter; `I` toggler player delegation; Defensive/Balanced/Offensive doctrine og 0–100 commander aggression intent; preussiske Officer AI-angribere med preferred-range/manoeuvre/stabilise adfærd; directional 120° infantry fire fan; HOLD/CLOSE/MEDIUM/LONG fire discipline; continuous closer-is-easier accuracy; battlefield 360x240; Pause/x0,5/x1/x2/x5/x20 og battle clock. v00.00.08 reload/0-hit/`Ramte N`/casualty-visual skal fortsat regressionsbestå. De senere besluttede systemer omfatter segmenteret fire eligibility, fysiske HQ-entities, semantic zoom, courier/order progress/interception, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model og fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil styrer basis-reload, regimentets experience modificerer reload-tiden bounded, positive salver viser `Ramte N`, salver kan give 0 direkte hits, og første personeltab pr. regiment skaber én repræsentativ liggende casualty-figur. Designbaselinen fastlægger desuden konkret ammunition/casualty split, skirmishers, artilleriklasser, hestetrukket/manhandled artilleri, manuel artillerimåludpegning, supply-vogne, salvage, dragoner, directional cover, prone, hasty fieldworks, strategisk landudvikling samt officer/delegation/difficulty-retningen.
 - **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering. Battle-end er terminalt pauset indtil restart, RTS-kamera timeScale-uafhængigt og defensive guards forbedret.
