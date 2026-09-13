@@ -3,19 +3,19 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// PROJECT 1864 Campaign v00.00.10k
-/// IMAGERY ONLY + STREAMED 3D TERRAIN.
+/// PROJECT 1864 Campaign3 imagery-only + streamed 3D terrain bootstrap.
 ///
-/// World Imagery remains the sole Campaign3 basemap. The v10k terrain layer is
-/// independent of gameplay state and deforms the streamed imagery meshes after
-/// their image tiles exist. WGS84 gameplay remains authoritative.
+/// World Imagery remains the sole Campaign3 basemap. The terrain subsystem was
+/// introduced in v10k, but the overall current build identity is owned by
+/// CampaignBuildInfo so this component must not expose a stale build version.
+/// WGS84 gameplay remains authoritative.
 /// </summary>
 [DefaultExecutionOrder(-29000)]
 public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 {
     public static CampaignMapStyleSwitcher Instance { get; private set; }
 
-    private const string RootName = "PROJECT1864_IMAGERY_TERRAIN_v000010k";
+    private const string RootName = "PROJECT1864_IMAGERY_TERRAIN_CURRENT";
     private const string ImageryRootName = "BASEMAP_09_9_Imagery";
     private const string ImageryUrl =
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
@@ -66,7 +66,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
         if (campaignCamera == null)
         {
-            Debug.LogError("CAMPAIGN-10K|Installed=False|Reason=MainCameraMissing");
+            Debug.LogError(CampaignBuildInfo.LogTag + "|BasemapInstalled=False|Reason=MainCameraMissing");
             yield break;
         }
 
@@ -75,7 +75,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
 
         if (imagery == null)
         {
-            Debug.LogError("CAMPAIGN-10K|Installed=False|Reason=ImageryProviderCreateFailed");
+            Debug.LogError(CampaignBuildInfo.LogTag + "|BasemapInstalled=False|Reason=ImageryProviderCreateFailed");
             yield break;
         }
 
@@ -83,7 +83,7 @@ public sealed class CampaignMapStyleSwitcher : MonoBehaviour
         imagery.EnsureLoaded();
 
         Debug.Log(
-            "CAMPAIGN-10K|Installed=True|Basemap=WorldImageryOnly|" +
+            CampaignBuildInfo.LogTag + "|BasemapInstalled=True|Basemap=WorldImageryOnly|" +
             "WorldStreaming=True|TerrainLayer=TerrariumElevation|" +
             "WGS84GameplayShared=True|OtherProvidersInstantiated=False");
     }
