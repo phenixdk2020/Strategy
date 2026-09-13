@@ -2,11 +2,15 @@ using UnityEngine;
 
 // Small always-visible build marker so screenshots immediately reveal
 // which PROJECT 1864 track/revision is running.
+//
+// Campaign4 note:
+// This file is branch-specific. Keep BuildVersion/BuildChannel synchronized
+// with VERSION.txt whenever the Campaign4 prototype version changes.
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
-    public const string BuildVersion = "v00.00.10e";
-    public const string BuildChannel = "CAMPAIGN TEST";
+    public const string BuildVersion = "v00.00.10l";
+    public const string BuildChannel = "CAMPAIGN4";
 
     private GUIStyle style;
 
@@ -16,7 +20,7 @@ public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
         if (UnityEngine.Object.FindAnyObjectByType<PrototypeBuildVersionOverlay>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeBuildVersionOverlay_" + BuildVersion);
+        GameObject root = new GameObject("PrototypeBuildVersionOverlay_" + BuildVersion + "_" + BuildChannel);
         root.AddComponent<PrototypeBuildVersionOverlay>();
     }
 
@@ -38,8 +42,8 @@ public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
         EnsureStyle();
         GUI.depth = -1000;
         GUI.Box(
-            new Rect(8f, 8f, 220f, 24f),
-            "PROJECT 1864 | " + BuildVersion + " " + BuildChannel,
+            new Rect(8f, 8f, 286f, 24f),
+            "PROJECT 1864 | " + BuildVersion + " | " + BuildChannel,
             style);
     }
 }
