@@ -175,9 +175,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
 
             if (regiment == null || state == null || regiment.IsRouted)
             {
-                if (complete == null)
-                    complete = new List<Regiment>();
-                complete.Add(regiment);
+                AddComplete(ref complete, regiment);
                 continue;
             }
 
@@ -187,9 +185,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
             if (state.Threat == null)
             {
                 Finish(state, "NO_VALID_THREAT");
-                if (complete == null)
-                    complete = new List<Regiment>();
-                complete.Add(regiment);
+                AddComplete(ref complete, regiment);
                 continue;
             }
 
@@ -201,9 +197,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
             if (distance >= state.TargetDistance - 0.25f)
             {
                 Finish(state, "TARGET_DISTANCE_REACHED");
-                if (complete == null)
-                    complete = new List<Regiment>();
-                complete.Add(regiment);
+                AddComplete(ref complete, regiment);
                 continue;
             }
 
@@ -217,14 +211,13 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
                 if (!BeginBackstep(state, distance))
                 {
                     Finish(state, "BACKSTEP_BLOCKED_BY_RIVER");
-                    if (complete == null)
-                        complete = new List<Regiment>();
-                    complete.Add(regiment);
+                    AddComplete(ref complete, regiment);
                 }
                 continue;
             }
 
-            UpdateBackstep(state);
+            if (UpdateBackstep(state))
+                AddComplete(ref complete, regiment);
         }
 
         if (complete == null)
@@ -233,6 +226,13 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         for (int i = 0; i < complete.Count; i++)
             if (complete[i] != null)
                 active.Remove(complete[i]);
+    }
+
+    private static void AddComplete(ref List<Regiment> complete, Regiment regiment)
+    {
+        if (complete == null)
+            complete = new List<Regiment>();
+        complete.Add(regiment);
     }
 
     private bool BeginBackstep(WithdrawalState state, float currentDistance)
@@ -274,7 +274,8 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         return true;
     }
 
-    private void UpdateBackstep(WithdrawalState state)
+    // Returns true when the withdrawal should be removed from the active set.
+    private bool UpdateBackstep(WithdrawalState state)
     {
         Regiment regiment = state.Unit;
         regiment.SetFirePolicy(RegimentFirePolicy.HoldFire);
@@ -287,7 +288,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         if (remaining <= PositionArrival)
         {
             CompleteBackstep(state);
-            return;
+            return false;
         }
 
         Vector3 step = delta.normalized * BackwardSpeed * Time.deltaTime;
@@ -306,10 +307,11 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         }
         else if (Time.time - state.LastProgressAt > 3.0f)
         {
-            // Failsafe against another movement/safety authority keeping the unit fixed.
             Finish(state, "NO_RETREAT_PROGRESS");
-            active.Remove(regiment);
+            return true;
         }
+
+        return false;
     }
 
     private void CompleteBackstep(WithdrawalState state)
