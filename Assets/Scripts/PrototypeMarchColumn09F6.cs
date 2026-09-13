@@ -4,7 +4,8 @@ using UnityEngine;
 
 // v00.00.09f6 unified movement-formation policy.
 // Applies to both player-routed and AI-routed units: long movement -> Column,
-// then deploys back to Line near the destination or enemy contact.
+// then deploys back to Line at the final stop or when approaching enemy contact.
+// Temporary river/bridge steering destinations do NOT force a premature Line deployment.
 [DefaultExecutionOrder(1700)]
 public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
 {
@@ -14,7 +15,6 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
     private FieldInfo destinationField;
 
     private const float EnterColumnDestinationDistance = 28f;
-    private const float DeployLineDestinationDistance = 16f;
     private const float DeployLineEnemyDistance = 70f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -43,8 +43,8 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
         Debug.Log(
             "MARCH-09F6|Installed=True|Policy=LongMoveColumnThenLine|" +
             "DestinationEnter=" + EnterColumnDestinationDistance.ToString("0") +
-            "m|DestinationDeploy=" + DeployLineDestinationDistance.ToString("0") +
-            "m|EnemyDeploy=" + DeployLineEnemyDistance.ToString("0") + "m");
+            "m|EnemyDeploy=" + DeployLineEnemyDistance.ToString("0") +
+            "m|BridgeSteeringPreservesColumn=True");
     }
 
     private void Update()
@@ -74,9 +74,11 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
         {
             if (autoColumn.Contains(regiment))
             {
-                regiment.SetFormation(RegimentFormation.Line);
+                if (regiment.Formation != RegimentFormation.Line)
+                    regiment.SetFormation(RegimentFormation.Line);
+
                 autoColumn.Remove(regiment);
-                Debug.Log("MARCH-09F6|Unit=" + regiment.RegimentName + "|Column=False|Reason=STOPPED");
+                Debug.Log("MARCH-09F6|Unit=" + regiment.RegimentName + "|Column=False|Reason=FINAL_STOP");
             }
             return;
         }
@@ -85,45 +87,44 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
         float destinationDistance = PlanarDistance(regiment.transform.position, destination);
         float enemyDistance = FindNearestEnemyDistance(regiment, battle);
 
-        bool mustDeploy =
-            destinationDistance <= DeployLineDestinationDistance ||
-            enemyDistance <= DeployLineEnemyDistance;
-
-        if (mustDeploy)
+        // Enemy proximity is the tactical deployment trigger. We intentionally do not
+        // use proximity to the current steering destination because the river system
+        // temporarily substitutes bridge entry/exit points for the real final goal.
+        if (enemyDistance <= DeployLineEnemyDistance)
         {
             if (autoColumn.Contains(regiment))
             {
                 if (regiment.Formation != RegimentFormation.Line)
                     regiment.SetFormation(RegimentFormation.Line);
+
                 autoColumn.Remove(regiment);
                 Debug.Log(
                     "MARCH-09F6|Unit=" + regiment.RegimentName +
-                    "|Column=False|Destination=" + destinationDistance.ToString("0.0") +
-                    "|Enemy=" + FormatDistance(enemyDistance) +
-                    "|Reason=DEPLOY_LINE");
+                    "|Column=False|Enemy=" + enemyDistance.ToString("0.0") +
+                    "|Reason=ENEMY_CONTACT_ZONE");
             }
+            return;
+        }
+
+        if (autoColumn.Contains(regiment))
+        {
+            if (regiment.Formation != RegimentFormation.Column)
+                regiment.SetFormation(RegimentFormation.Column);
             return;
         }
 
         if (destinationDistance < EnterColumnDestinationDistance)
             return;
 
-        if (!autoColumn.Contains(regiment))
-        {
-            autoColumn.Add(regiment);
-            if (regiment.Formation != RegimentFormation.Column)
-                regiment.SetFormation(RegimentFormation.Column);
-
-            Debug.Log(
-                "MARCH-09F6|Unit=" + regiment.RegimentName +
-                "|Column=True|Destination=" + destinationDistance.ToString("0.0") +
-                "|Enemy=" + FormatDistance(enemyDistance) +
-                "|Reason=LONG_MOVE");
-            return;
-        }
-
+        autoColumn.Add(regiment);
         if (regiment.Formation != RegimentFormation.Column)
             regiment.SetFormation(RegimentFormation.Column);
+
+        Debug.Log(
+            "MARCH-09F6|Unit=" + regiment.RegimentName +
+            "|Column=True|Destination=" + destinationDistance.ToString("0.0") +
+            "|Enemy=" + FormatDistance(enemyDistance) +
+            "|Reason=LONG_MOVE");
     }
 
     private static float FindNearestEnemyDistance(Regiment regiment, BattleManager battle)
