@@ -1,9 +1,10 @@
 using UnityEngine;
 
-// v00.00.09f3 TEST navigation authority.
-// Scenery stays fully pass-through. All legacy obstacle/pathfinding writers are
-// disabled. PrototypeRiverBridgeOnly09F3 is the only tactical route constraint and
-// exists solely to enforce bridge-only river crossing.
+// v00.00.09f11 TEST navigation authority.
+// Legacy obstacle/pathfinding stacks remain disabled because they previously caused
+// stuck units. Active route constraints are now deliberately narrow and explicit:
+// 1) PrototypeRiverBridgeOnly09F3 for bridge-only river crossing.
+// 2) PrototypeStaticObstacleRouting09F11 for approved hard buildings only.
 [DefaultExecutionOrder(-32000)]
 public sealed class PrototypeNavigationV3Authority : MonoBehaviour
 {
@@ -15,7 +16,7 @@ public sealed class PrototypeNavigationV3Authority : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeNavigationV3Authority>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeNavigationAuthority_v000009f3");
+        GameObject root = new GameObject("PrototypeNavigationAuthority_v000009f11");
         Object.DontDestroyOnLoad(root);
         root.AddComponent<PrototypeNavigationV3Authority>();
     }
@@ -30,19 +31,24 @@ public sealed class PrototypeNavigationV3Authority : MonoBehaviour
         bool softPassDisabled = DisableLayer<PrototypeNavigation09BTreePassThrough>();
         bool manualRecoveryDisabled = DisableLayer<PrototypeManualRouteRecovery09H4>();
 
-        PrototypeRiverBridgeOnly09F3 riverOnly =
+        PrototypeRiverBridgeOnly09F3 river =
             Object.FindAnyObjectByType<PrototypeRiverBridgeOnly09F3>();
-        bool riverOnlyActive = riverOnly != null && riverOnly.enabled;
+        PrototypeStaticObstacleRouting09F11 buildings =
+            Object.FindAnyObjectByType<PrototypeStaticObstacleRouting09F11>();
+
+        bool riverActive = river != null && river.enabled;
+        bool buildingRoutingActive = buildings != null && buildings.enabled;
 
         if (announced)
             return;
 
         announced = true;
         Debug.Log(string.Format(
-            "NAV-AUTH|Build=v00.00.09f3|Authority=RiverBridgeOnly|" +
+            "NAV-AUTH|Build=v00.00.09f11|Authority=River+ApprovedBuildings|" +
             "V1Disabled={0}|RecoveryDisabled={1}|V3Disabled={2}|V4Disabled={3}|" +
             "09ADisabled={4}|09BDisabled={5}|ManualRecoveryDisabled={6}|" +
-            "SceneryBlocked=False|RiverBlocked=True|BridgeOnly=True|RiverLayerActive={7}",
+            "TreesBlocked=False|FencesBlocked=False|HousesBlocked=True|" +
+            "RiverBlocked=True|BridgeOnly=True|RiverLayerActive={7}|BuildingRouterActive={8}",
             v1Disabled,
             recoveryDisabled,
             v3Disabled,
@@ -50,7 +56,8 @@ public sealed class PrototypeNavigationV3Authority : MonoBehaviour
             hotfix09aDisabled,
             softPassDisabled,
             manualRecoveryDisabled,
-            riverOnlyActive));
+            riverActive,
+            buildingRoutingActive));
     }
 
     private static bool DisableLayer<T>() where T : Behaviour
