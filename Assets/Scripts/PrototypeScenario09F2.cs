@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f2 isolation baseline.
-// Keep exactly one regiment per side and make scenery transparent to movement/click routing.
-// Tactical obstacle navigation is disabled separately by PrototypeNavigationV3Authority.
+// v00.00.09f2 isolation baseline, refined by v00.00.09f11.
+// Keep exactly one regiment per side. Most scenery remains transparent to movement,
+// but explicitly approved hard blockers (Farmhouse + Barn) keep their colliders so
+// the scene semantics match PrototypeStaticObstacleRouting09F11.
 [DefaultExecutionOrder(-12000)]
 public sealed class PrototypeScenario09F2 : MonoBehaviour
 {
@@ -25,7 +26,6 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
         if (applied)
             return;
 
-        // Stop the old 4-lane expansion before its -11000 Update executes.
         PrototypeExpandedOOBManager expanded =
             Object.FindAnyObjectByType<PrototypeExpandedOOBManager>();
         if (expanded != null)
@@ -76,10 +76,10 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
         SetPose(danish, new Vector3(-105f, 0f, 0f), Quaternion.Euler(0f, 90f, 0f));
         SetPose(prussian, new Vector3(105f, 0f, 0f), Quaternion.Euler(0f, -90f, 0f));
 
-        // Scenery is click-through/pass-through in this isolation test. Keep only
-        // the battlefield ground collider and regiment selection colliders enabled.
         Collider[] colliders = Object.FindObjectsByType<Collider>();
         int disabledSceneryColliders = 0;
+        int preservedHouseColliders = 0;
+
         foreach (Collider collider in colliders)
         {
             if (collider == null)
@@ -91,15 +91,24 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
             if (collider.gameObject.name == "Battlefield Ground")
                 continue;
 
+            if (collider.gameObject.name == "Farmhouse" ||
+                collider.gameObject.name == "Barn")
+            {
+                collider.enabled = true;
+                preservedHouseColliders++;
+                continue;
+            }
+
             collider.enabled = false;
             disabledSceneryColliders++;
         }
 
         applied = true;
         Debug.Log(
-            "SCENARIO-09F2|Applied=True|Denmark=1|Prussia=1|" +
-            "Keep=1.Regiment,8th.Regiment|SceneryCollision=PassThrough|" +
-            "DisabledSceneryColliders=" + disabledSceneryColliders);
+            "SCENARIO-09F11|Applied=True|Denmark=1|Prussia=1|" +
+            "HardBlockers=Farmhouse,Barn|OtherScenery=PassThrough|" +
+            "HouseColliders=" + preservedHouseColliders +
+            "|DisabledOtherSceneryColliders=" + disabledSceneryColliders);
     }
 
     private static Regiment FindRegiment(List<Regiment> regiments, string name)
