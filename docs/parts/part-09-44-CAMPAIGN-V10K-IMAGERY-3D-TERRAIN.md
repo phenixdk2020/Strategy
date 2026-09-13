@@ -1,4 +1,4 @@
-# PROJECT 1864 — Campaign v00.00.10k — Imagery + 3D Terrain
+# PROJECT 1864 — Campaign v00.00.10k / v00.00.10k1 — Imagery + 3D Terrain
 
 ## Beslutning
 
@@ -152,7 +152,7 @@ Disse ændringer bør isoleres i en senere version, efter 3D terrain er runtime-
 ## QA
 
 1. Unity 6000.6.0f1 compiler uden errors.
-2. v00.00.10k badge vises.
+2. v00.00.10k1 badge vises.
 3. World Imagery loader som i v10j.
 4. Terrain-status viser elevation requests på z5+.
 5. Danmark er stadig geografisk korrekt i imagery, inkl. Limfjorden.
@@ -165,6 +165,22 @@ Disse ændringer bør isoleres i en senere version, efter 3D terrain er runtime-
 12. Army/zone selection og RMB marchordre virker fortsat.
 13. World overview auto-flatter kameraet.
 14. Ingen voksende duplicate imagery/terrain roots efter gentagne LOD-skift.
+
+## v00.00.10k1 — Unity 6.6 EntityId hotfix
+
+Unity 6000.6 markerer `Object.GetInstanceID()` som obsolete-as-error (`CS0619`) og kræver `GetEntityId()`.
+
+Terrænstreameren brugte tidligere et `int` instance-id som key til at spore imagery tiles. Hotfixet ændrer objektidentitet end-to-end til Unity 6.6 `EntityId`:
+
+- `Dictionary<int, TerrainTileRecord>` → `Dictionary<EntityId, TerrainTileRecord>`
+- `HashSet<int>` → `HashSet<EntityId>`
+- `GetInstanceID()` → `GetEntityId()`
+- coroutine-parameter for tile identity → `EntityId`
+- prune/remove collections → `EntityId`
+
+Der bruges bevidst ikke `GetEntityId().GetHashCode()` som erstatning. EntityId beholdes som reel identitetstype, så løsningen følger Unity 6.6 API-retningen og ikke reintroducerer et 32-bit id-antagelsesproblem.
+
+Hotfixet ændrer ikke terrain-geometri, højdedata, kamera, LOD, cache, marker-height logic eller campaign gameplay.
 
 ## Rollback
 
