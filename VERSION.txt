@@ -3,10 +3,19 @@ Prototype version: v00.00.10k1
 Build status: WORLD IMAGERY + STREAMED 3D TERRAIN PILOT / UNITY 6.6 ENTITYID HOTFIX
 Build name: CAMPAIGN3 IMAGERY TERRAIN 10K1
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10k1-entityid-fix
+Work branch: work/channel-campaign3-v10l-clean-ui-city
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
+
+DESIGN BASELINE UPDATE:
+- Design manual is now v00.02.09.
+- CITY-REG-01 defines the canonical 1851 Kingdom of Denmark city baseline.
+- All 68 market towns from the 1 February 1850 census are registered with population and development tier.
+- Smaller B/C towns must exist on the map but do not receive free heavy military construction.
+- Historically documented military facilities may exist as fixed/special buildings regardless of population tier.
+- Esbjerg is not a 1851 start city and must be removed from the current QA start state in v10l.
+- Separate registers remain required for Schleswig, Holstein, Lauenburg and strategic non-market-town settlements.
 
 LINEAGE:
 - v00.00.10e = Denmark campaign foundation / WGS84 gameplay scaffold
@@ -19,6 +28,7 @@ LINEAGE:
 - v00.00.10k1 = Unity 6.6 EntityId compile hotfix for terrain tile tracking
 
 ROLLBACK:
+- v10k1 before clean UI/city work: backup/channel-campaign3-v10k1-before-clean-ui-city-20260913
 - v10j before 3D terrain: backup/channel-campaign3-v10j-before-3d-terrain-20260913
 - v10i before imagery-only decision: backup/channel-campaign3-v10i-before-imagery-only-20260913
 - v10h before world imagery: backup/channel-campaign3-v10h-before-world-imagery-20260912
@@ -33,13 +43,9 @@ v10k PURPOSE:
 - Preserve v10i/v10j world streaming, LOD, tile cache and atomic imagery generation swap.
 
 v10k1 HOTFIX:
-- Unity 6.6 treats Object.GetInstanceID() as obsolete-as-error (CS0619).
-- CampaignImageryTerrainV010K no longer converts Unity object identity to int.
-- Dictionary<int, TerrainTileRecord> changed to Dictionary<EntityId, TerrainTileRecord>.
-- HashSet<int> requested changed to HashSet<EntityId>.
-- Tile identity now comes from GameObject.GetEntityId().
-- Coroutine parameters and prune/remove collections now use EntityId end-to-end.
-- No gameplay, terrain geometry, LOD, camera, cache or marker-height behaviour changed by this hotfix.
+- Replaces obsolete Object.GetInstanceID() tracking with Unity 6.6 EntityId throughout CampaignImageryTerrainV010K.
+- Dictionary/HashSet/coroutine/prune tracking uses EntityId end-to-end; no int compatibility shim.
+- No terrain, camera, imagery, LOD or gameplay behaviour changes intended.
 
 3D TERRAIN SOURCE / CONTRACT:
 - Elevation pilot source: Mapzen/AWS Terrain Tiles in Terrarium encoding.
@@ -96,40 +102,20 @@ HISTORICAL GUARDRAIL:
 - 1851 borders, settlements, roads, railways, ports, land use, buildings, military infrastructure and OOB remain separate WGS84 gameplay/history layers.
 
 PROJECTION / GLOBAL LIMITS:
-- v10k1 still uses the existing Denmark-first linear WGS84 Unity render projection.
+- v10k still uses the existing Denmark-first linear WGS84 Unity render projection.
 - It is adequate for the current world-streaming/3D technology pilot, not final global geometry.
 - Dateline wrap, poles, globe curvature/strategic projection and floating origin remain future architecture work.
 
 NEXT PLANNED POINTS AFTER v10k1:
-1. Validate 3D terrain around Aalborg/Limfjorden, Jutland and southern Norway.
-2. Replace/augment the Denmark terrain pilot with official Danish DHM/GeoDanmark high-detail data.
-3. Introduce global/floating-origin projection architecture before very large world campaigns.
-4. Add historical 1851 land-use/presentation overlays over the modern imagery reference.
-5. Move gameplay regions/cities/infrastructure from current scaffold data toward sourced 1851 datasets.
+1. Implement v10l clean UI and remove temporary debug/status boxes from normal game view.
+2. Replace the 10 QA city markers with CITY-REG-01 city nodes and remove Esbjerg from 1851 start state.
+3. Add 3D city visuals scaled by development tier/population.
+4. Add click-to-open city panel with population, development class and sourced special buildings; Close hides panel.
+5. Begin territorial polygon zone design for conquest/owner/controller mechanics.
+6. Create CITY-REG-02/03/04 for Schleswig, Holstein and Lauenburg plus a strategic settlement register.
+7. Validate 3D terrain around Aalborg/Limfjorden, Jutland and southern Norway.
+8. Replace/augment Denmark terrain with official Danish DHM/GeoDanmark high-detail data.
+9. Introduce global/floating-origin projection architecture before very large world campaigns.
+10. Add historical 1851 land-use/presentation overlays over the modern imagery reference.
 
-FILES ADDED/CHANGED:
-- Assets/Scripts/Campaign/CampaignImageryTerrainV010K.cs
-- Assets/Scripts/Campaign/CampaignImageryTerrainV010K.cs.meta
-- Assets/Scripts/Campaign/CampaignMapStyleSwitcher.cs
-- Assets/Scripts/Campaign/CampaignWorldImageryOverlayV010I.cs
-- VERSION.txt
-- docs/parts/part-09-44-CAMPAIGN-V10K-IMAGERY-3D-TERRAIN.md
-
-QA GATES:
-1. Unity 6000.6.0f1 compiles without errors.
-2. Game view badge shows v00.00.10k1.
-3. World Imagery starts automatically; no old basemap buttons return.
-4. Denmark imagery loads completely.
-5. TERRAIN status begins loading elevation at z5+ and reports ready tiles.
-6. At Denmark scale, camera is visibly tilted and terrain relief is visible.
-7. T toggles between flat/top-down presentation and 3D terrain presentation.
-8. Q/E rotates the 3D strategic camera without changing map centre.
-9. Limfjorden remains correctly visible as imagery while surrounding land receives elevation.
-10. Southern Norway/Sweden terrain visibly shows stronger relief than Denmark.
-11. Pan/zoom and imagery LOD still perform atomic swaps without blank frames.
-12. Zone/city/army markers remain above the terrain and selectable.
-13. Right-click march orders still work and terrain does not intercept raycasts.
-14. PageUp and End still reach Europe/world overview; world scale auto-flattens camera.
-15. Repeated pan/zoom does not leave growing duplicate terrain/imagery roots.
-
-QA state: ENTITYID HOTFIX IMPLEMENTED / AWAITS UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: v10k1 runtime compiled by user after EntityId hotfix; v10l design/city implementation pending.
