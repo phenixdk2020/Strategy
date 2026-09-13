@@ -130,8 +130,8 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
         Debug.Log(
             "OBSTACLE-09F12|Installed=True|ApprovedBlockers=Farmhouse,Barn|" +
             "Found=" + obstacles.Count +
-            "|RepeatedFinalGoalDoesNotReset=True|Trees=False|Fences=False|" +
-            "RiverOwnedSeparately=True");
+            "|RepeatedFinalGoalDoesNotReset=True|ClusterMerge=True|" +
+            "Trees=False|Fences=False|RiverOwnedSeparately=True");
     }
 
     private void ApplyRouting(Regiment regiment)
@@ -236,7 +236,7 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
         return best;
     }
 
-    private static void BuildDetour(
+    private void BuildDetour(
         Vector3 start,
         Vector3 goal,
         RegimentFormation formation,
@@ -247,12 +247,38 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
             ? LineHalfWidth
             : ColumnHalfWidth;
 
-        Rect r = ExpandedRect(obstacle.Bounds, clearance + CornerPad);
+        Rect cluster = ExpandedRect(obstacle.Bounds, clearance + CornerPad);
 
-        Vector3 tl = GroundPoint(r.xMin, r.yMax);
-        Vector3 tr = GroundPoint(r.xMax, r.yMax);
-        Vector3 bl = GroundPoint(r.xMin, r.yMin);
-        Vector3 br = GroundPoint(r.xMax, r.yMin);
+        // If approved hard blockers overlap after formation clearance is added,
+        // route around them as one compound obstacle. This is important for the
+        // Farmhouse + Barn pair when the 48 m Line frontage is used.
+        bool expanded;
+        int guard = 0;
+        do
+        {
+            expanded = false;
+            guard++;
+
+            foreach (Obstacle other in obstacles)
+            {
+                Rect otherRect = ExpandedRect(other.Bounds, clearance + CornerPad);
+                if (!RectsOverlap(cluster, otherRect))
+                    continue;
+
+                Rect merged = UnionRect(cluster, otherRect);
+                if (!ApproximatelySameRect(cluster, merged))
+                {
+                    cluster = merged;
+                    expanded = true;
+                }
+            }
+        }
+        while (expanded && guard < 8);
+
+        Vector3 tl = GroundPoint(cluster.xMin, cluster.yMax);
+        Vector3 tr = GroundPoint(cluster.xMax, cluster.yMax);
+        Vector3 bl = GroundPoint(cluster.xMin, cluster.yMin);
+        Vector3 br = GroundPoint(cluster.xMax, cluster.yMin);
 
         Vector3[][] candidates =
         {
@@ -297,6 +323,29 @@ public sealed class PrototypeStaticObstacleRouting09F11 : MonoBehaviour
             bounds.min.z - clearance,
             bounds.max.x + clearance,
             bounds.max.z + clearance);
+    }
+
+    private static Rect UnionRect(Rect a, Rect b)
+    {
+        return Rect.MinMaxRect(
+            Mathf.Min(a.xMin, b.xMin),
+            Mathf.Min(a.yMin, b.yMin),
+            Mathf.Max(a.xMax, b.xMax),
+            Mathf.Max(a.yMax, b.yMax));
+    }
+
+    private static bool RectsOverlap(Rect a, Rect b)
+    {
+        return a.xMin <= b.xMax && a.xMax >= b.xMin &&
+               a.yMin <= b.yMax && a.yMax >= b.yMin;
+    }
+
+    private static bool ApproximatelySameRect(Rect a, Rect b)
+    {
+        return Mathf.Abs(a.xMin - b.xMin) < 0.01f &&
+               Mathf.Abs(a.xMax - b.xMax) < 0.01f &&
+               Mathf.Abs(a.yMin - b.yMin) < 0.01f &&
+               Mathf.Abs(a.yMax - b.yMax) < 0.01f;
     }
 
     private static bool SegmentIntersectsRect(Vector3 a, Vector3 b, Rect rect)
