@@ -1,7 +1,7 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n
-Build status: 1851 ZONE OVERLAY FOUNDATION / 20 ZONES + 68 CITY RUNTIME
-Build name: CAMPAIGN3 ZONE OVERLAY 10N
+Prototype version: v00.00.10n1
+Build status: 1851 ZONE OVERLAY FOUNDATION / VERSION BADGE HOTFIX
+Build name: CAMPAIGN3 ZONE OVERLAY 10N1
 Branch target: channel-campaign3
 Work branch: work/channel-campaign3-v10n-zone-overlay
 Unity baseline: 6000.6.0f1 (Unity 6.6)
@@ -20,11 +20,19 @@ LINEAGE:
 - v00.00.10k1 = Unity 6.6 EntityId compile hotfix
 - v00.00.10m = canonical 1851 zone/city runtime: 20 zones + 68 cities
 - v00.00.10n = zone overlay/polygon architecture with explicit historical-geometry guardrail
+- v00.00.10n1 = current-build identity hotfix; removes stale hardcoded v10k1 Game View badge
 
 ROLLBACK:
 - before v10n: backup/channel-campaign3-v10m-before-v10n-zone-overlay-20260913
 - before v10m: backup/channel-campaign3-v10m-before-zone-city-runtime-20260913
 - before v10k 3D terrain: backup/channel-campaign3-v10j-before-3d-terrain-20260913
+
+V10N1 HOTFIX:
+- Adds CampaignBuildInfo as the single source of truth for the overall Campaign3 build identity.
+- Top-left Game View badge now reads CampaignBuildInfo.CurrentVersion instead of a hardcoded v00.00.10k1 string.
+- CampaignMapStyleSwitcher no longer presents itself as the overall v10k build; its root/log identity now uses current-build metadata.
+- Old subsystem class/file names such as CampaignImageryTerrainV010K remain intentionally unchanged because they identify the version in which that subsystem was introduced, not the current overall build.
+- No city, zone, movement, population, terrain or historical-geometry behaviour is changed by this hotfix.
 
 V10N PURPOSE:
 - Make the 20 canonical ZONE-REG-01 zones readable as territorial areas rather than only centre markers/labels.
@@ -33,10 +41,9 @@ V10N PURPOSE:
 - Keep historical accuracy explicit: v10n temporary polygon geometry must never be treated as historical facit.
 
 ZONE OVERLAY:
-- New CampaignZoneOverlayV010N auto-loads after the campaign scene.
+- CampaignZoneOverlayV010N auto-loads after the campaign scene.
 - All 20 ZONE-REG-01 identities receive a visible closed boundary polygon.
 - Z toggles the complete zone overlay ON/OFF.
-- Overlay includes an on-screen v00.00.10n status badge.
 - Prototype sectors are generated from canonical zone centres inside five geographic groups: Jylland, Fyn/Langeland, Sjælland/Møn, Lolland-Falster and Bornholm.
 - Geometry metadata explicitly sets HistoricallyExactGeometry=False.
 - Runtime/log contract exposes GeometryMode=PROTOTYPE_CENTRE_DERIVED_SECTORS.
@@ -44,7 +51,7 @@ ZONE OVERLAY:
 HISTORICAL GEOMETRY SOURCE CONTRACT:
 - Target production source: DigDag historical-administrative GIS, Amt og Region.
 - DigDag covers historical administrative divisions from approximately 1660 onward and exposes vector/map services.
-- v10n does NOT claim that its centre-derived sector lines equal actual 1851 county borders.
+- v10n/v10n1 do NOT claim that centre-derived sector lines equal actual 1851 county borders.
 - A later version must replace only polygon coordinates/geometry with sourced DigDag data while preserving ZONE-REG-01 IDs and simulation state.
 
 V10M RUNTIME RETAINED:
@@ -62,28 +69,28 @@ V10M RUNTIME RETAINED:
 - Existing ZONE_, CITY_ and ARMY_ gameplay markers remain unchanged.
 - Overlay is intentionally non-colliding so it must not intercept city/zone/army selection or march raycasts.
 
-FILES ADDED/CHANGED:
-- Assets/Scripts/Campaign/CampaignZoneOverlayV010N.cs
-- Assets/Scripts/Campaign/CampaignZoneOverlayV010N.cs.meta
+FILES ADDED/CHANGED IN V10N1:
+- Assets/Scripts/Campaign/CampaignBuildInfo.cs
+- Assets/Scripts/Campaign/CampaignBuildInfo.cs.meta
+- Assets/Scripts/Campaign/CampaignWorldImageryOverlayV010I.cs
+- Assets/Scripts/Campaign/CampaignMapStyleSwitcher.cs
 - VERSION.txt
-- docs/PROJECT-1864-Designmanual.md
-- docs/parts/part-11-46-CAMPAIGN-V10N-ZONE-OVERLAY.md
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. v10m startup validation still reports 20 zones, 68 cities and population 290565.
-3. v10n log reports Installed=True and Zones=20.
-4. All 20 zone boundary loops appear at Denmark zoom.
-5. Z toggles the zone overlay off and on without altering simulation state.
-6. Overlay has no collider and does not block clicks on cities, zones or armies.
-7. All 68 city markers remain visible/interactive as in v10m.
-8. A/B/C heavy military construction rules remain unchanged.
-9. Land and Ferry movement regression passes.
-10. World Imagery remains the active basemap.
-11. 3D terrain still loads and city/zone/army markers remain above terrain.
-12. Overlay badge explicitly says prototype geometry / DigDag target.
-13. No UI or documentation describes v10n sector geometry as historically exact.
+2. Top-left Game View badge reads PROJECT 1864 | v00.00.10n1.
+3. No top-level build badge says v00.00.10k or v00.00.10k1.
+4. v10m startup validation still reports 20 zones, 68 cities and population 290565.
+5. v10n zone overlay still reports Installed=True and 20 zones.
+6. All 20 zone boundary loops appear at Denmark zoom.
+7. Z toggles the zone overlay off and on without altering simulation state.
+8. Overlay has no collider and does not block clicks on cities, zones or armies.
+9. All 68 city markers remain visible/interactive as in v10m.
+10. A/B/C heavy military construction rules remain unchanged.
+11. Land and Ferry movement regression passes.
+12. World Imagery remains the active basemap.
+13. 3D terrain still loads and city/zone/army markers remain above terrain.
 14. Esbjerg remains absent from the 1851 start state.
 15. Pause and x1/x5/x20/x100 campaign time controls regress without breakage.
 
-QA state: IMPLEMENTED ON WORK BRANCH / AWAITS UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N1 HOTFIX IMPLEMENTED / READY FOR UNITY 6.6 COMPILE + PLAY MODE QA
