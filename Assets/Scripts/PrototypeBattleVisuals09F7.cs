@@ -4,14 +4,17 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 // v00.00.09f7 company renderer.
-// Adds readable Await -> Aim -> Fire -> Reload states, full-front black-powder smoke,
-// smooth Line/Column reforming and casualty placement at the actual formation slots.
+// Adds readable Await -> Aim -> Fire -> Reload states, Walk / Forced March / Rout Run,
+// full-front black-powder smoke, smooth Line/Column reforming and close casualty placement.
 [DefaultExecutionOrder(22500)]
 public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
 {
     private enum SoldierPhase
     {
         Await,
+        Walk,
+        ForcedMarch,
+        Run,
         Aim,
         Fire,
         Reload
@@ -46,12 +49,13 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
     private Material dkCoat, dkTrousers, prCoat, prTrousers;
     private Material red, white, black, brown, skin, wood, steel, brass;
     private FieldInfo nextFireTimeField;
+    private FieldInfo hasDestinationField;
 
     private const float ReformSpeed = 2.8f;
     private const float FirePoseSeconds = 0.18f;
     private const float AimLeadSeconds = 0.70f;
     private const float ReloadFraction = 0.62f;
-    private const float CasualtyJitter = 0.34f;
+    private const float CasualtyJitter = 0.30f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -72,11 +76,12 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
 
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         nextFireTimeField = typeof(Regiment).GetField("nextFireTime", flags);
+        hasDestinationField = typeof(Regiment).GetField("hasDestination", flags);
 
         Debug.Log(
             "VISUAL-09F7|Installed=True|VolleyStates=Await,Aim,Fire,Reload|" +
-            "Smoke=FullFront|CasualtyPlacement=FormationSlot|CasualtyJitter=" +
-            CasualtyJitter.ToString("0.00") + "m");
+            "MovementStates=Walk,ForcedMarch,Run|Smoke=FullFront|" +
+            "CasualtyPlacement=FormationSlot|CasualtyJitter=" + CasualtyJitter.ToString("0.00") + "m");
     }
 
     private void Update()
@@ -132,9 +137,9 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
             if (regiment == null || !states.TryGetValue(regiment, out State state))
                 continue;
 
-            BuildLivingRoots(regiment, state);
-            BuildFallenRoots(state);
             SoldierPhase phase = GetPhase(regiment, state);
+            BuildLivingRoots(regiment, state, phase);
+            BuildFallenRoots(state);
             DrawLiving(regiment.Team, state.LivingRoots, phase);
             DrawFallen(regiment.Team, state.FallenRoots);
         }
@@ -158,6 +163,20 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
         return value is float f ? f : 0f;
     }
 
+    private bool IsMoving(Regiment regiment)
+    {
+        if (regiment == null)
+            return false;
+
+        if (PrototypeForcedMarch09F7.Instance != null)
+            return PrototypeForcedMarch09F7.IsMoving(regiment);
+
+        if (hasDestinationField == null)
+            return false;
+
+        return (bool)hasDestinationField.GetValue(regiment);
+    }
+
     private void UpdateVolleyDetection(Regiment regiment, State state)
     {
         float next = ReadNextFireTime(regiment);
@@ -174,6 +193,16 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
 
     private SoldierPhase GetPhase(Regiment regiment, State state)
     {
+        bool moving = IsMoving(regiment);
+        if (moving)
+        {
+            if (regiment.IsRouted)
+                return SoldierPhase.Run;
+            if (PrototypeForcedMarch09F7.IsForcedMarch(regiment))
+                return SoldierPhase.ForcedMarch;
+            return SoldierPhase.Walk;
+        }
+
         float sinceVolley = Time.time - state.VolleyStartedAt;
         if (sinceVolley >= 0f && sinceVolley <= FirePoseSeconds)
             return SoldierPhase.Fire;
@@ -223,13 +252,17 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
 
         for (int i = 0; i < lost; i++)
         {
-            int fallenIndex = Mathf.Clamp(regiment.CurrentStrength + i, 0, Mathf.Max(0, previousStrength - 1));
+            int seed = StableHash(regiment.RegimentName) + (state.Fallen.Count + i) * 7919;
+            int fallenIndex = Mathf.Clamp(
+                Mathf.FloorToInt(Hash01(seed + 5) * previousStrength),
+                0,
+                Mathf.Max(0, previousStrength - 1));
+
             Vector3 localSlot = PrototypeBattleVisuals09F5.GetFormationPosition(
                 regiment.Formation,
                 fallenIndex,
                 previousStrength);
 
-            int seed = StableHash(regiment.RegimentName) + (state.Fallen.Count + i) * 7919;
             localSlot.x += (Hash01(seed + 11) * 2f - 1f) * CasualtyJitter;
             localSlot.z += (Hash01(seed + 23) * 2f - 1f) * CasualtyJitter;
 
@@ -318,14 +351,27 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
         return Mathf.Clamp(displayIndex * ratio + (ratio - 1) / 2, 0, actualCount - 1);
     }
 
-    private void BuildLivingRoots(Regiment regiment, State state)
+    private void BuildLivingRoots(Regiment regiment, State state, SoldierPhase phase)
     {
         state.LivingRoots.Clear();
+
+        float frequency = GetMovementFrequency(phase);
+        float bobAmount = GetMovementBob(phase);
+        float lean = GetMovementLean(phase);
+
         for (int i = 0; i < state.LocalPositions.Count; i++)
         {
             Vector3 world = regiment.transform.TransformPoint(state.LocalPositions[i]);
-            world.y = PrototypeBootstrap.SampleGroundHeight(world.x, world.z) + 0.03f;
-            state.LivingRoots.Add(Matrix4x4.TRS(world, regiment.transform.rotation, Vector3.one));
+            float bob = 0f;
+            if (frequency > 0f)
+            {
+                float cycle = Time.time * frequency + i * 0.47f;
+                bob = Mathf.Abs(Mathf.Sin(cycle)) * bobAmount;
+            }
+
+            world.y = PrototypeBootstrap.SampleGroundHeight(world.x, world.z) + 0.03f + bob;
+            Quaternion rotation = regiment.transform.rotation * Quaternion.Euler(lean, 0f, 0f);
+            state.LivingRoots.Add(Matrix4x4.TRS(world, rotation, Vector3.one));
         }
     }
 
@@ -450,14 +496,18 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
         Material trousers = team == BattleTeam.Denmark ? dkTrousers : prTrousers;
         Material trim = team == BattleTeam.Denmark ? red : white;
 
-        float torsoPitch = phase == SoldierPhase.Aim ? 6f : phase == SoldierPhase.Fire ? 9f : 0f;
-        Matrix4x4 torso = Part(new Vector3(0f, 1.03f, 0f), new Vector3(torsoPitch, 0f, 0f), new Vector3(0.50f, 0.68f, 0.30f));
+        bool moving = phase == SoldierPhase.Walk || phase == SoldierPhase.ForcedMarch || phase == SoldierPhase.Run;
+        float gaitFrequency = phase == SoldierPhase.Run ? 9.0f : phase == SoldierPhase.ForcedMarch ? 7.0f : 5.2f;
+        float gaitAmplitude = phase == SoldierPhase.Run ? 28f : phase == SoldierPhase.ForcedMarch ? 20f : 13f;
+        float swing = moving ? Mathf.Sin(Time.time * gaitFrequency) * gaitAmplitude : 0f;
 
-        Draw(cube, trousers, roots, Part(new Vector3(-0.10f, 0.40f, 0f), Vector3.zero, new Vector3(0.17f, 0.72f, 0.18f)));
-        Draw(cube, trousers, roots, Part(new Vector3(0.10f, 0.40f, 0f), Vector3.zero, new Vector3(0.17f, 0.72f, 0.18f)));
-        Draw(cube, black, roots, Part(new Vector3(-0.10f, 0.09f, 0.06f), Vector3.zero, new Vector3(0.18f, 0.18f, 0.28f)));
-        Draw(cube, black, roots, Part(new Vector3(0.10f, 0.09f, 0.06f), Vector3.zero, new Vector3(0.18f, 0.18f, 0.28f)));
-        Draw(cube, coat, roots, torso);
+        Draw(cube, trousers, roots, Part(new Vector3(-0.10f, 0.40f, 0f), new Vector3(swing, 0f, 0f), new Vector3(0.17f, 0.72f, 0.18f)));
+        Draw(cube, trousers, roots, Part(new Vector3(0.10f, 0.40f, 0f), new Vector3(-swing, 0f, 0f), new Vector3(0.17f, 0.72f, 0.18f)));
+        Draw(cube, black, roots, Part(new Vector3(-0.10f, 0.09f, 0.06f), new Vector3(swing * 0.35f, 0f, 0f), new Vector3(0.18f, 0.18f, 0.28f)));
+        Draw(cube, black, roots, Part(new Vector3(0.10f, 0.09f, 0.06f), new Vector3(-swing * 0.35f, 0f, 0f), new Vector3(0.18f, 0.18f, 0.28f)));
+
+        float torsoPitch = phase == SoldierPhase.Aim ? 6f : phase == SoldierPhase.Fire ? 9f : phase == SoldierPhase.Run ? 8f : phase == SoldierPhase.ForcedMarch ? 4f : 0f;
+        Draw(cube, coat, roots, Part(new Vector3(0f, 1.03f, 0f), new Vector3(torsoPitch, 0f, 0f), new Vector3(0.50f, 0.68f, 0.30f)));
         Draw(cube, trim, roots, Part(new Vector3(0f, 1.36f, 0.16f), Vector3.zero, new Vector3(0.42f, 0.10f, 0.045f)));
         Draw(cube, white, roots, Part(new Vector3(-0.065f, 1.06f, 0.17f), new Vector3(0f, 0f, -25f), new Vector3(0.055f, 0.78f, 0.040f)));
         Draw(cube, white, roots, Part(new Vector3(0.065f, 1.06f, 0.17f), new Vector3(0f, 0f, 25f), new Vector3(0.055f, 0.78f, 0.040f)));
@@ -468,10 +518,10 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
         Draw(sphere, trim, roots, Part(new Vector3(0f, 2.08f, 0f), Vector3.zero, new Vector3(0.10f, 0.13f, 0.10f)));
         Draw(sphere, brass, roots, Part(new Vector3(0f, 1.86f, 0.235f), Vector3.zero, new Vector3(0.055f, 0.055f, 0.025f)));
 
-        DrawWeaponAndArms(coat, roots, phase);
+        DrawWeaponAndArms(coat, roots, phase, swing);
     }
 
-    private void DrawWeaponAndArms(Material coat, List<Matrix4x4> roots, SoldierPhase phase)
+    private void DrawWeaponAndArms(Material coat, List<Matrix4x4> roots, SoldierPhase phase, float swing)
     {
         if (phase == SoldierPhase.Aim || phase == SoldierPhase.Fire)
         {
@@ -489,6 +539,18 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
             Draw(cube, coat, roots, Part(new Vector3(0.27f, 1.04f, 0.17f), new Vector3(0f, 0f, 12f), new Vector3(0.13f, 0.56f, 0.15f)));
             Draw(cube, wood, roots, Part(new Vector3(0.18f, 1.18f, 0.18f), new Vector3(0f, 0f, -4f), new Vector3(0.060f, 1.45f, 0.060f)));
             Draw(cube, steel, roots, Part(new Vector3(0.23f, 2.18f, 0.18f), new Vector3(0f, 0f, -4f), new Vector3(0.026f, 0.58f, 0.026f)));
+            return;
+        }
+
+        if (phase == SoldierPhase.Walk || phase == SoldierPhase.ForcedMarch || phase == SoldierPhase.Run)
+        {
+            float armScale = phase == SoldierPhase.Run ? 0.75f : 0.45f;
+            Draw(cube, coat, roots, Part(new Vector3(-0.31f, 1.00f, 0.02f), new Vector3(-swing * armScale, 0f, -7f), new Vector3(0.13f, 0.58f, 0.15f)));
+            Draw(cube, coat, roots, Part(new Vector3(0.31f, 1.00f, 0.02f), new Vector3(swing * armScale, 0f, 7f), new Vector3(0.13f, 0.58f, 0.15f)));
+
+            float rifleTilt = phase == SoldierPhase.Run ? -18f : phase == SoldierPhase.ForcedMarch ? -10f : -6f;
+            Draw(cube, wood, roots, Part(new Vector3(0.40f, 1.18f, 0.10f), new Vector3(rifleTilt, 0f, -8f), new Vector3(0.060f, 1.42f, 0.060f)));
+            Draw(cube, steel, roots, Part(new Vector3(0.50f, 2.14f, 0.22f), new Vector3(rifleTilt, 0f, -8f), new Vector3(0.026f, 0.62f, 0.026f)));
             return;
         }
 
@@ -511,6 +573,49 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
         Draw(sphere, skin, roots, Part(new Vector3(0f, 1.58f, 0f), Vector3.zero, new Vector3(0.27f, 0.29f, 0.27f)));
         Draw(cube, wood, roots, Part(new Vector3(0.48f, 1.12f, 0.12f), new Vector3(0f, 18f, -8f), new Vector3(0.055f, 1.35f, 0.055f)));
         Draw(cube, steel, roots, Part(new Vector3(0.68f, 2.00f, 0.12f), new Vector3(0f, 18f, -8f), new Vector3(0.024f, 0.55f, 0.024f)));
+    }
+
+    private static float GetMovementFrequency(SoldierPhase phase)
+    {
+        switch (phase)
+        {
+            case SoldierPhase.Walk:
+                return 5.2f;
+            case SoldierPhase.ForcedMarch:
+                return 7.0f;
+            case SoldierPhase.Run:
+                return 9.0f;
+            default:
+                return 0f;
+        }
+    }
+
+    private static float GetMovementBob(SoldierPhase phase)
+    {
+        switch (phase)
+        {
+            case SoldierPhase.Walk:
+                return 0.025f;
+            case SoldierPhase.ForcedMarch:
+                return 0.045f;
+            case SoldierPhase.Run:
+                return 0.075f;
+            default:
+                return 0f;
+        }
+    }
+
+    private static float GetMovementLean(SoldierPhase phase)
+    {
+        switch (phase)
+        {
+            case SoldierPhase.ForcedMarch:
+                return 2.5f;
+            case SoldierPhase.Run:
+                return 7.0f;
+            default:
+                return 0f;
+        }
     }
 
     private static Matrix4x4 Part(Vector3 position, Vector3 euler, Vector3 scale)
@@ -621,7 +726,13 @@ public sealed class PrototypeBattleVisuals09F7 : MonoBehaviour
 
         if (remove == null)
             return;
+
         for (int i = 0; i < remove.Count; i++)
-            states.Remove(remove[i]);
+        {
+            Regiment regiment = remove[i];
+            if (regiment != null && states.TryGetValue(regiment, out State state) && state.Smoke != null)
+                UnityEngine.Object.Destroy(state.Smoke.gameObject);
+            states.Remove(regiment);
+        }
     }
 }
