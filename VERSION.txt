@@ -1,50 +1,49 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f7
+Prototype version: v00.00.09f8
 Build status: TEST
-Build name: 190-MAN COMPANY + COMPACT RANGE + NARROW CONE + VOLLEY/RELOAD + WALK/FORCED/RUN + EXACT COLUMN BOUNDS
-Visible build marker: PROJECT 1864 | v00.00.09f7 TEST
+Build name: SHORTER RANGE + SHARED CONE SIDES + FORMATION-READY FIRE + MORALE-OFF HIT QA
+Visible build marker: PROJECT 1864 | v00.00.09f8 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale-QA + formation-ranks doctrine supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f7 - Compact musket-range test
+v00.00.09f8 - Shorter fire-distance test
 - Battlefield scale remains 1 Unity unit = 1 metre.
-- Current TEST fire distances are Close 40 m, Medium/Effective 80 m and Long/Maximum 115 m.
-- Long/Maximum is intentionally reduced from the 09f6 400 m visual test to match the desired tactical battlefield scale.
-- The visible fire sector is reduced from 120 degrees total to 70 degrees total (+/-35 degrees).
-- PrototypeFireArcGuard09F7 prevents the current 1v1 prototype from firing when its nearest in-range opponent is outside the new visible +/-35 degree sector.
-- These remain prototype gameplay/range values; later historical weapon profiles are data/research work.
+- Current TEST fire distances are now Close 35 m, Medium/Effective 70 m and Long/Maximum 100 m.
+- Long/Maximum is intentionally between the former 80 m Medium and 115 m Long visual lines from 09f7.
+- Short and Medium are shortened proportionally for a tighter tactical battlefield.
+- The fire sector remains 70 degrees total (+/-35 degrees).
+- PrototypeRangeTuning09F8 runs after the 09f7 range tuner and is the active 09f8 range authority.
 
-v00.00.09f7 - Volley, reload and black-powder smoke
-- Visible soldier states now include AWAIT, AIM, FIRE and RELOAD.
-- Aim raises the rifle toward the target-facing direction.
-- Fire uses a short recoil pose.
-- Reload returns the weapon to an upright loading position before the next shot.
-- A volley creates black-powder smoke across the full company frontage rather than from only a few isolated points.
-- Smoke remains in world space after emission, so a company moving later does not drag the old cloud with it.
+v00.00.09f8 - Shared cone side boundaries
+- Close, Medium and Long range fans now use the same left and right boundary directions.
+- Each fan originates across the full firing frontage instead of pinching inward from a single centre point.
+- The yellow and orange fan sides therefore align with the red Long fan side rays.
+- PrototypeFireVisuals09F8 runs after the 09f7 tactical visual layer and owns final range-fan geometry/visibility.
 
-v00.00.09f7 - Walking, forced march and rout running
-- Normal movement now has a visible walking gait rather than soldiers sliding over terrain.
-- Forced March is available with the G hotkey and the bottom-bar TVANG G button.
-- Danish current TEST speeds: normal walk 3.20 m/s, forced march 4.25 m/s, routed run 5.20 m/s.
-- Prussian current TEST speeds: normal walk 3.35 m/s, forced march 4.45 m/s, routed run 5.40 m/s.
-- Forced March adds 0.22 cohesion points/second on top of existing movement cohesion cost while the unit is moving.
-- Routed/panicked units automatically abandon Forced March and use the faster RUN state while fleeing.
-- Visible gait amplitude, body lean and weapon carry differ between Walk, Forced March and Run.
+v00.00.09f8 - Cone/fire hidden until formation is ready
+- Fire-range cones are hidden while the company is in Column.
+- When Column changes back to Line, cones remain hidden while the physical soldier slots reform.
+- Reform wait time is estimated from the furthest soldier-slot movement at the same 2.8 m/s visual reform speed used by the company renderer.
+- Firing is also temporarily blocked while in Column or during the Line reform window, keeping gameplay consistent with the visible cone state.
+- Once Line is physically ready, the cone and normal fire policy become available again.
 
-v00.00.09f7 - Casualty placement
-- New fallen soldiers are created from actual formation slots at the moment casualties are received.
-- Casualty placement has only about +/-0.30 m local jitter around the formation slot.
-- Fallen soldiers therefore appear in or immediately beside the line/column rather than several metres away.
-- Fallen visuals remain in world space when the surviving company moves on.
+v00.00.09f8 - Morale temporarily disabled for hit QA
+- Morale is locked to 100 during this TEST revision so accumulated morale loss does not obscure raw casualty testing.
+- Morale therefore does not accumulate between volleys during the 09f8 QA pass.
+- Cohesion remains active and still influences fire quality.
+- Distance accuracy remains active and continues to decline continuously with distance.
+- SHORT/MEDIUM/LONG are therefore still meaningfully different even though morale is temporarily bypassed.
+- New HITTEST-09F8 telemetry logs target, attacker, distance, range band, hits/losses, remaining strength and cohesion whenever casualties occur.
 
-v00.00.09f7 - Exact formation bounds
-- Selection and destination footprints are calculated from min/max of all current formation slots.
-- This fixes the 09f6 Column error where the rectangle was centred on the regiment pivot even though the marching column extends behind that pivot.
-- Line and Column selection rectangles now use the actual formation centre, width and depth.
-- Destination ghosts apply the same centre offset and therefore match the requested final formation.
-- The yellow selection orb follows the actual formation centre.
+v00.00.09f7 retained
+- Visible soldier states remain AWAIT -> AIM -> FIRE -> RELOAD.
+- Black-powder smoke remains distributed across the full firing frontage.
+- Normal WALK, Forced March and routed RUN states remain active.
+- G / TVANG G still toggles Forced March for selected Danish units.
+- Fallen soldiers are placed in or immediately beside actual formation slots with only small local jitter and remain where they fell.
+- Selection and destination footprints continue to use exact Line/Column slot bounds and correct formation-centre offsets.
 
 v00.00.09f6 retained
 - Long movement still changes Line -> Column and deploys Column -> Line near the final stop/contact.
@@ -60,19 +59,15 @@ v00.00.09f5 retained
 - F9 living/fallen display ratios remain 1:1 / 1:2 / 1:5 / 1:10.
 - Hover UI, bayonets, flags and compact upper-right battle clock remain retained.
 
-Primary v00.00.09f7 QA
+Primary v00.00.09f8 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f7 TEST.
-3. Selected Line and Column rectangles tightly surround the actual soldier formation.
-4. Column rectangle centre follows the physical column instead of the regiment pivot.
-5. Destination rectangle matches the final Line footprint and centre.
-6. Close/Medium/Long fans read approximately 40/80/115 m and total cone width is about 70 degrees.
-7. Long move visibly reforms Line -> Column and stop/contact reforms Column -> Line.
-8. Normal movement shows WALK animation.
-9. Toggle TVANG G / G and verify faster movement plus FORCED MARCH gait.
-10. Rout a company and verify faster RUN animation while fleeing.
-11. During a volley, soldiers visibly AIM -> FIRE -> RELOAD -> AWAIT.
-12. Black-powder smoke appears across the full firing frontage.
-13. New casualties fall in/next to current formation slots, not several metres away.
-14. Fallen bodies remain where they fell after the company moves away.
-15. River crossing still routes only through the fixed bridge.
+2. Build marker reads PROJECT 1864 | v00.00.09f8 TEST.
+3. Selected Line displays approximately 35/70/100 m Close/Medium/Long fans.
+4. Yellow, orange and red fan side boundaries follow the same +/-35 degree side rays.
+5. Give a long move: cone disappears when the company reforms into Column.
+6. At destination/contact: company reforms into Line; cone stays hidden until the estimated physical reform is complete, then reappears.
+7. Company cannot fire while in Column or during the Line reform window.
+8. Morale remains at 100 during the hit-count test.
+9. Fire at SHORT, MEDIUM and LONG distances and compare HITTEST-09F8 Console lines for distance/band/hits.
+10. Distance accuracy remains active; longer shots should on average produce fewer hits than shorter shots, all else equal.
+11. 190-man company, 3-rank 1851 Line, smoke/aim/fire/reload, Forced March, routed Run, exact selection/destination bounds and bridge-only river remain retained.
