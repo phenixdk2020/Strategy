@@ -3,6 +3,7 @@ using System.Reflection;
 using UnityEngine;
 
 // v00.00.09f3 visual formation/facing motion.
+// 09f8 tuning: stationary regiment facing speed reduced 30% from 24 to 16.8 deg/s.
 // Regiment.cs remains the combat/movement authority. This layer only replaces
 // instantaneous-looking formation/facing changes with visible representative-man
 // movement and a bounded physical turn of the regiment root while stationary.
@@ -28,7 +29,7 @@ public sealed class PrototypeFormationMotion09F3 : MonoBehaviour
 
     private const float FormationMoveSpeed = 2.15f;
     private const float SoldierTurnSpeed = 150f;
-    private const float RegimentTurnSpeed = 24f;
+    private const float RegimentTurnSpeed = 16.8f;
     private const float FormationArrival = 0.035f;
     private const float TurnArrivalDegrees = 0.20f;
 
@@ -51,7 +52,7 @@ public sealed class PrototypeFormationMotion09F3 : MonoBehaviour
         Debug.Log(
             "FORMATION-MOTION-09F3|Installed=True|" +
             "FormationMoveSpeed=" + FormationMoveSpeed.ToString("0.00") +
-            "|TurnSpeedDeg=" + RegimentTurnSpeed.ToString("0") +
+            "|TurnSpeedDeg=" + RegimentTurnSpeed.ToString("0.0") +
             "|TeleportRotation=False");
     }
 
