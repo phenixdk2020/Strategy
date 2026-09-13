@@ -1,53 +1,44 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f11
+Prototype version: v00.00.09f12
 Build status: TEST
-Build name: BRIDGE STATE-MACHINE FIX + HOUSE ROUTING + 4X BATTLEFIELD + EXTENDED RIVER
-Visible build marker: PROJECT 1864 | v00.00.09f11 TEST
+Build name: DIRECT ATTACK ROUTE AUTHORITY + BUILDING WAYPOINT FIX
+Visible build marker: PROJECT 1864 | v00.00.09f12 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + formation-ranks doctrine supplement
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 09f11 terrain supplement: docs/design-supplements/v00.00.09f11-terrain-pathfinding-map.md
+09f12 route-authority supplement: docs/design-supplements/v00.00.09f12-route-authority-fix.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f11 - Bridge phase-state repair
-- Fixes the bridge oscillation visible in the 09f10 recording where the unit repeatedly alternated APPROACH_BRIDGE and CROSS_BRIDGE.
-- Bridge traversal now uses a strict forward-only phase sequence: STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
-- Once CROSS_BRIDGE begins it cannot revert to APPROACH_BRIDGE.
-- Company remains in Column through the bridge corridor and normal formation logic resumes after the far staging point.
-- Existing bridge-only river rule remains active.
+v00.00.09f12 - Direct ATTACK route authority
+- Added PrototypeAttackRouteAuthority09F12 at execution order -5000 so terrain routing is resolved before normal Regiment movement.
+- A direct ANGREB target remains the strategic mission target, but forcedTarget tracking is temporarily suspended whenever the legal route requires the river/bridge router or the hard-building router.
+- River routing has first priority; approved building avoidance has second priority.
+- While a detour is active, Regiment.Update can no longer rewrite destination straight back to the enemy every frame.
+- When a clear legal approach exists again, the original forced target is restored automatically and normal attack closing/firing resumes.
 
-v00.00.09f11 - Approved hard-building routing
-- Added PrototypeStaticObstacleRouting09F11 without re-enabling the old unstable V1/V3/V4 obstacle navigation stack.
-- Farmhouse and Barn are now explicit hard blockers.
-- Their colliders remain enabled in the 1v1 isolation scenario.
-- If a destination route intersects one of these buildings, the unit inserts automatic corner detour waypoints and then resumes the original final destination.
-- Line uses a larger clearance reflecting its ~48 m frontage; Column uses a narrower clearance.
-- River/bridge routing has priority over static-building routing.
-- Trees and fences deliberately remain pass-through until their terrain behaviour is explicitly approved.
+v00.00.09f12 - Building waypoint persistence
+- PrototypeStaticObstacleRouting09F11 now distinguishes current steering waypoint, already-known final destination and a genuinely new external destination.
+- Repeating the same final destination no longer clears the detour queue.
+- Farmhouse/Barn detours can therefore progress through corner 1 -> corner 2 -> original final destination instead of repeatedly rebuilding corner 1.
+- RequiresDetour() is exposed for the attack-route authority so direct attack orders obey the same approved hard blockers as normal MOVE orders.
 
-v00.00.09f11 - Battlefield expansion
-- Battlefield dimensions changed from 360 x 240 m to 1440 x 960 m.
-- This is 4x larger in each linear dimension and 16x the former ground area.
-- Prototype scale remains 1 Unity unit = 1 metre.
-- Ground mesh uses 288 x 192 cells to limit prototype cost on the much larger map.
-- RTS camera bounds expanded to roughly +/-710 m x and +/-470 m z.
-- Camera movement/zoom/far clip adjusted for the larger battlefield.
-
-v00.00.09f11 - River expansion
-- River visual now spans almost the full 960 m map depth instead of only the former ~240 m battlefield.
-- Visible river width increased from about 2.8 m to 4.4 m, matching the existing ~2.2 m hard-blocker half-width.
-- The fixed bridge remains the only legal crossing.
+v00.00.09f11 retained - Bridge/map/terrain
+- Bridge traversal remains a forward-only state sequence: STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
+- Farmhouse and Barn remain hard blockers; trees and fences remain pass-through.
+- Battlefield remains 1440 x 960 m with scale 1 Unity unit = 1 metre.
+- River remains extended/widened across the expanded map and bridge-only for legal crossing.
+- RTS camera bounds/zoom/far clip remain expanded for the larger battlefield.
 
 v00.00.09f10 retained
 - Enemy inside Long/MaximumRange => remain/deploy in Line except when a higher-priority bridge crossing requires Column.
 - Fighting withdrawal controls remain TRÆK -> MED / LONG / UD.
 - Controlled withdrawal remains Line, covering fire, ~10 m backsteps and ~1.70 m/s backward speed.
-- Canonical unit/officer behaviour document remains docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md.
 
 v00.00.09f9 retained
-- Explicit ANGREB and offensive Officer AI preserve attack intent while legal bridge steering owns the physical route.
 - Officer engagement-range autonomy and current combat QA accuracy remain retained.
+- Particle velocity repair remains active for black-powder smoke.
 
 v00.00.09f8 retained
 - Current TEST ranges remain Close 35 m, Medium/Effective 70 m and Long/Maximum 100 m.
@@ -64,14 +55,12 @@ v00.00.09f5/f6 retained
 - F9 living/fallen display ratios remain 1:1 / 1:2 / 1:5 / 1:10.
 - Long movement may use Column outside combat-contact rules.
 
-Primary v00.00.09f11 QA
+Primary v00.00.09f12 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f11 TEST.
-3. Repeat the bridge route from the 09f10 video: phase telemetry must progress forward and never alternate APPROACH_BRIDGE/CROSS_BRIDGE.
-4. Verify the unit crosses the bridge in Column and clears the far staging point before normal Line deployment rules resume.
-5. Give a destination directly through Farmhouse; unit must route around it and continue to the final destination.
+2. Build marker reads PROJECT 1864 | v00.00.09f12 TEST.
+3. Give direct ANGREB against the enemy on the opposite river bank: the company must route toward the fixed bridge before normal attack closing resumes.
+4. Repeated OpenWaterPrevented=True warnings must not be the normal mechanism used to keep the unit out of the river.
+5. Give a normal MOVE destination through Farmhouse: the company must pass corner 1, then corner 2, then continue to the original final destination.
 6. Repeat through Barn.
-7. Verify Tree and FencePost remain pass-through in 09f11.
-8. Traverse the expanded 1440 x 960 m map with the camera.
-9. Verify the extended/wider river remains visible through the expanded battlefield and cannot be crossed outside the fixed bridge.
-10. Existing 35/70/100 m fire ranges, 16.8 deg/s facing, 190-man/3-rank Line, fighting withdrawal and Officer AI behaviour remain retained.
+7. Give ANGREB with Farmhouse/Barn between attacker and target: target intent must be preserved while the company routes around the building, then normal attack behaviour resumes automatically.
+8. Existing 190-man/3-rank company, 35/70/100 m QA ranges, 16.8 deg/s facing, fighting withdrawal, forced march and Officer AI rules remain retained.
