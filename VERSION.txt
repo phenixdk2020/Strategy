@@ -1,81 +1,65 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f8
+Prototype version: v00.00.09f9
 Build status: TEST
-Build name: SHORTER RANGE + SHARED CONE SIDES + FORMATION-READY FIRE + MORALE-OFF HIT QA + SLOWER FACING
-Visible build marker: PROJECT 1864 | v00.00.09f8 TEST
+Build name: OFFICER RANGE AUTONOMY + HIGHER QA HIT RATE + PARTICLE VELOCITY FIX
+Visible build marker: PROJECT 1864 | v00.00.09f9 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA + formation-ranks doctrine supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f8 - Shorter fire-distance test
+v00.00.09f9 - Officer engagement-range autonomy retained
+- F9 fire policy remains a firing permission / maximum trigger range rather than a mandatory standoff band.
+- MEDIUM therefore means the company may open fire out to Medium range; an AI officer may still decide to close into the Close band before engaging.
+- Officer preferred engagement range continues to be derived from doctrine, officer tactical skill, aggressiveness and decision noise.
+- No forced MEDIUM/CLOSE/LONG standoff override is added in 09f9.
+
+v00.00.09f9 - Higher hit-rate QA
+- The prior 1-3 casualties at Close were traced to the existing volley formula: only 58 percent of current strength count as firing men and prototype baseAccuracy was approximately 0.014.
+- 09f9 temporarily raises QA base accuracy to 0.050 for Denmark and 0.052 for Prussia.
+- The existing continuous distance accuracy curve is retained, so closer fire should still produce substantially more hits than Medium and Long fire.
+- Morale remains locked to 100 from 09f8 for this QA pass; cohesion remains active.
+- HITTEST-09F8 telemetry remains the primary comparison output for actual distance band and casualties.
+
+v00.00.09f9 - Particle velocity repair
+- PrototypeCombatQa09F9 repairs BlackPowderSmoke09F7 Velocity over Lifetime XYZ curves so all three axes use TwoConstants mode.
+- X and Z remain zero; Y retains a gentle randomized 0.10-0.45 upward smoke drift.
+- This targets the Unity console message: Particle Velocity curves must all be in the same mode.
+
+v00.00.09f8 retained
 - Battlefield scale remains 1 Unity unit = 1 metre.
-- Current TEST fire distances are now Close 35 m, Medium/Effective 70 m and Long/Maximum 100 m.
-- Long/Maximum is intentionally between the former 80 m Medium and 115 m Long visual lines from 09f7.
-- Short and Medium are shortened proportionally for a tighter tactical battlefield.
-- The fire sector remains 70 degrees total (+/-35 degrees).
-- PrototypeRangeTuning09F8 runs after the 09f7 range tuner and is the active 09f8 range authority.
-
-v00.00.09f8 - Shared cone side boundaries
-- Close, Medium and Long range fans now use the same left and right boundary directions.
-- Each fan originates across the full firing frontage instead of pinching inward from a single centre point.
-- The yellow and orange fan sides therefore align with the red Long fan side rays.
-- PrototypeFireVisuals09F8 runs after the 09f7 tactical visual layer and owns final range-fan geometry/visibility.
-
-v00.00.09f8 - Cone/fire hidden until formation is ready
-- Fire-range cones are hidden while the company is in Column.
-- When Column changes back to Line, cones remain hidden while the physical soldier slots reform.
-- Reform wait time is estimated from the furthest soldier-slot movement at the same 2.8 m/s visual reform speed used by the company renderer.
-- Firing is also temporarily blocked while in Column or during the Line reform window, keeping gameplay consistent with the visible cone state.
-- Once Line is physically ready, the cone and normal fire policy become available again.
-
-v00.00.09f8 - Morale temporarily disabled for hit QA
-- Morale is locked to 100 during this TEST revision so accumulated morale loss does not obscure raw casualty testing.
-- Morale therefore does not accumulate between volleys during the 09f8 QA pass.
-- Cohesion remains active and still influences fire quality.
-- Distance accuracy remains active and continues to decline continuously with distance.
-- SHORT/MEDIUM/LONG are therefore still meaningfully different even though morale is temporarily bypassed.
-- New HITTEST-09F8 telemetry logs target, attacker, distance, range band, hits/losses, remaining strength and cohesion whenever casualties occur.
-
-v00.00.09f8 - Slower stationary facing
-- Stationary formation turning is reduced by 30 percent compared with 09f7.
-- Previous stationary facing speed: 24.0 degrees/second.
-- Current TEST stationary facing speed: 16.8 degrees/second.
-- This applies to stationary left/right facing changes and final-facing animation.
-- Normal movement steering remains owned by the movement system and is not slowed by this tuning.
+- Current TEST ranges remain Close 35 m, Medium/Effective 70 m and Long/Maximum 100 m.
+- Fire sector remains 70 degrees total (+/-35 degrees).
+- Yellow/orange/red fan sides share the same side rays.
+- Cones and firing are hidden/blocked while in Column or while reforming into Line.
+- Morale remains locked to 100 for hit QA while cohesion and distance accuracy remain active.
+- Stationary facing remains 16.8 degrees/second, 30 percent slower than 09f7.
 
 v00.00.09f7 retained
 - Visible soldier states remain AWAIT -> AIM -> FIRE -> RELOAD.
 - Black-powder smoke remains distributed across the full firing frontage.
 - Normal WALK, Forced March and routed RUN states remain active.
 - G / TVANG G still toggles Forced March for selected Danish units.
-- Fallen soldiers are placed in or immediately beside actual formation slots with only small local jitter and remain where they fell.
-- Selection and destination footprints continue to use exact Line/Column slot bounds and correct formation-centre offsets.
+- Fallen soldiers are placed in or immediately beside actual formation slots and remain where they fell.
+- Selection and destination footprints continue to use exact Line/Column slot bounds.
 
 v00.00.09f6 retained
-- Long movement still changes Line -> Column and deploys Column -> Line near the final stop/contact.
-- Player and AI movement share the same march-column policy.
+- Long movement changes Line -> Column and deploys Column -> Line near final stop/contact.
 - River routing remains bridge-only and scenery remains pass-through.
-- Selection boxes remain terrain-following on all four edges.
 
 v00.00.09f5 retained
 - Active Danish and Prussian test companies are normalised to 190 men.
 - Danish 1851 line baseline remains 3 ranks, approximately 64 + 63 + 63 at full strength.
-- Full-strength three-rank frontage remains approximately 48 m.
-- Two-rank line remains documented as a later doctrine/regulation research option.
 - F9 living/fallen display ratios remain 1:1 / 1:2 / 1:5 / 1:10.
 - Hover UI, bayonets, flags and compact upper-right battle clock remain retained.
 
-Primary v00.00.09f8 QA
+Primary v00.00.09f9 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f8 TEST.
-3. Selected Line displays approximately 35/70/100 m Close/Medium/Long fans.
-4. Yellow, orange and red fan side boundaries follow the same +/-35 degree side rays.
-5. Give a long move: cone disappears when the company reforms into Column.
-6. At destination/contact: company reforms into Line; cone stays hidden until the estimated physical reform is complete, then reappears.
-7. Company cannot fire while in Column or during the Line reform window.
-8. Morale remains at 100 during the hit-count test.
-9. Fire at SHORT, MEDIUM and LONG distances and compare HITTEST-09F8 Console lines for distance/band/hits.
-10. Distance accuracy remains active; longer shots should on average produce fewer hits than shorter shots, all else equal.
-11. Stationary left/right facing turns at approximately 16.8 degrees/second, 30 percent slower than 09f7.
-12. 190-man company, 3-rank 1851 Line, smoke/aim/fire/reload, Forced March, routed Run, exact selection/destination bounds and bridge-only river remain retained.
+2. Build marker reads PROJECT 1864 | v00.00.09f9 TEST.
+3. Verify the Particle Velocity curves warning no longer repeats after smoke systems initialise.
+4. Leave AI ON with MEDIUM selected and confirm the officer may choose to move inside Close range before engaging.
+5. Confirm the F9 MEDIUM button remains selected; the AI must not silently rewrite FirePolicy to CLOSE.
+6. Fire several volleys at Close and compare casualties with the former 1-3 baseline.
+7. Compare HITTEST telemetry at Close, Medium and Long; distance differentiation must remain visible.
+8. Morale stays at 100 while cohesion remains active.
+9. 35/70/100 m ranges, formation-ready cone, 16.8 deg/s facing, 190-man/3-rank company, volley animations, Forced March and bridge-only river remain retained.
