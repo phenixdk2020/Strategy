@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// PROJECT 1864 v00.00.10k status overlay for the imagery-only campaign map.
+/// PROJECT 1864 v00.00.10k1 status overlay for the imagery-only campaign map.
 /// Shows World Imagery streaming plus streamed 3D elevation status.
 /// </summary>
 [DefaultExecutionOrder(30000)]
@@ -22,7 +22,7 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignWorldImageryOverlayV010I>() != null)
             return;
 
-        GameObject go = new GameObject("PROJECT1864_WorldImageryOverlay_v000010k");
+        GameObject go = new GameObject("PROJECT1864_WorldImageryOverlay_v000010k1");
         DontDestroyOnLoad(go);
         go.AddComponent<CampaignWorldImageryOverlayV010I>();
     }
@@ -90,7 +90,7 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
         DrawOpaque(new Rect(0f, 0f, 228f, 42f), new Color(0.035f, 0.075f, 0.095f, 0.99f));
         GUI.Box(
             new Rect(8f, 8f, 212f, 31f),
-            "PROJECT 1864 | v00.00.10k",
+            "PROJECT 1864 | v00.00.10k1",
             badgeStyle);
 
         string status = worldRaster != null ? worldRaster.Status : "INITIALISING";
