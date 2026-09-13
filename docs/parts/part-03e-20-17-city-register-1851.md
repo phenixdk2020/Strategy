@@ -18,10 +18,16 @@ Alle byerne skal findes på strategikortet, men de må ikke alle udbygges ens.
 | Klasse | Baseline | Tilladt udvikling | Tung militær udbygning |
 | --- | --- | --- | --- |
 | **A — Development City** | normalt mindst 4.000 indb. | Fuld by-/infrastrukturudvikling efter øvrige krav | Mulig, hvis nationale regler, ressourcer og historiske rammer tillader det |
-| **B — Regional Town** | 2.000–3.999 indb. | Handel, lager, vej/havn, mindre industri og lokal logistik | **Nej som normal byggeoption** |
-| **C — Minor Town** | under 2.000 indb. | Synlig/klikbar; lokal handel, havn/færge, mindre lager/håndværk | **Nej** — ingen ny kaserne, arsenal, større depot, våbenfabrik eller permanent fæstning som fri spillerudbygning |
+| **B — Regional Town** | 2.000–3.999 indb. | Handel, lager, vej/havn, mindre industri og lokal logistik | **Nej** — ingen ny kaserne, arsenal, større militært depot, våbenfabrik eller permanent fæstning som normal spillerbygning |
+| **C — Minor Town** | under 2.000 indb. | Synlig/klikbar; lokal handel, havn/færge, mindre lager/håndværk | **Nej** — ingen ny kaserne, arsenal, større militært depot, våbenfabrik eller permanent fæstning som spillerbygning |
 
-Historisk dokumenterede anlæg er en undtagelse: hvis en B- eller C-by faktisk havde fx. fæstning, batteri, garnison eller depot ved scenariestart, må det eksistere som et **fixed/special building**. Det giver ikke fri ret til at bygge flere tunge anlæg.
+### Bindende bygge-regel for mindre byer
+
+**B- og C-byer skal være fuldt repræsenteret på kampagnekortet**, men deres tilstedeværelse gør dem ikke til frie militære byggepladser. Spilleren kan ikke vælge en B- eller C-by og opføre en ny kaserne, arsenal, større militært depot, våbenfabrik eller permanent fæstning dér gennem det normale byggeinterface.
+
+De mindre byer kan fortsat have og udvikle civile/lokale funktioner som handel, havn/færge, lager, håndværk, lokal industri, vej- og senere jernbaneforbindelser, hvor de øvrige systemregler tillader det. **Kun A — Development City** kan som normal regel kvalificere til ny tung militær byudbygning, og også dér kræves de relevante nationale, økonomiske, teknologiske og historiske forudsætninger.
+
+Historisk dokumenterede anlæg er en undtagelse: hvis en B- eller C-by faktisk havde fx fæstning, batteri, garnison, kaserne eller depot ved scenariestart, må det eksistere som et **fixed/special building**. Det giver ikke fri ret til at bygge flere tunge anlæg.
 
 ## City data model
 
@@ -146,7 +152,7 @@ Registeret er startstate. Byer/settlements kan vokse, få havn/station/industri 
 
 ## Campaign3-implementeringsregel
 
-Når v10l implementeres skal alle 68 købstæder eksistere som city-noder; 3D-visual størrelse følger population/tier; C-byer er små men synlige/klikbare; B-byer tydeligere regionale noder; A-byer de største 3D-klynger. City-panelet skal vise population, klasse og kun kildebelagte special buildings. Tung militær konstruktion skal håndhæve tier-reglerne.
+Når v10l implementeres skal alle 68 købstæder eksistere som city-noder; 3D-visual størrelse følger population/tier; C-byer er små men synlige/klikbare; B-byer tydeligere regionale noder; A-byer de største 3D-klynger. City-panelet skal vise population, klasse og kun kildebelagte special buildings. **B- og C-byer må ikke tilbyde nye kaserner, arsenaler, større militære depoter, våbenfabrikker eller permanente fæstninger i det normale byggeinterface. Kun A-byer kan kvalificere til disse byggeoptioner efter øvrige regler.** Historiske anlæg i B/C håndteres som fixed/special buildings.
 
 ## Kilder
 
