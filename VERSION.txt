@@ -1,9 +1,9 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10i
-Build status: WORLD IMAGERY STREAMING PILOT
-Build name: CAMPAIGN3 WORLD IMAGERY 10I
+Prototype version: v00.00.10j
+Build status: IMAGERY ONLY CAMPAIGN / WORLD STREAMING
+Build name: CAMPAIGN3 WORLD IMAGERY ONLY 10J
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10i-world-imagery
+Work branch: work/channel-campaign3-v10j-imagery-only
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
@@ -13,83 +13,82 @@ LINEAGE:
 - v00.00.10f = 11-style visual lab
 - v00.00.10g = 11 independent basemap provider architecture
 - v00.00.10h = raster loading/resume + unified UI hotfix
-- v00.00.10i = provider 9 world imagery streaming / dynamic LOD pilot
+- v00.00.10i = provider 9 World Imagery streaming / dynamic LOD pilot
+- v00.00.10j = World Imagery selected as the sole Campaign3 runtime basemap
 
 ROLLBACK:
+- v10i before imagery-only decision: backup/channel-campaign3-v10i-before-imagery-only-20260913
 - v10h before world imagery: backup/channel-campaign3-v10h-before-world-imagery-20260912
 - v10g: backup/channel-campaign3-v10g-before-raster-ui-fix-20260912
 - v10f: backup/channel-campaign3-v10f-before-true11-20260911
 - previous Campaign3 v13n3: backup/channel-campaign3-v13n3-before-maplab11-20260911
 
-v10i PURPOSE:
-- Promote provider 9 Imagery from a fixed Denmark rectangle to the first camera-driven world basemap pilot.
-- Keep the other ten basemap candidates available for comparison.
-- Preserve historical/gameplay data as separate WGS84 layers; modern imagery is presentation/reference only.
-- Prove that the campaign camera can move from Denmark to Europe and a world overview without changing scene.
+v10j DECISION:
+- The 11-basemap comparison lab is retired from the active Campaign3 runtime.
+- Former provider 9 World Imagery is the selected campaign basemap.
+- Campaign3 no longer creates or exposes runtime roots/buttons for DEM, Cesium, ArcGIS Topographic, MapTiler, historical WMS, QGIS baked, procedural, OSM, diorama or HOI4 basemap candidates.
+- M / [ / ] / Shift+F1...F11 provider switching is removed from the active campaign runtime.
+- Old provider implementation files remain in the repository for history/rollback but are not instantiated by v10j.
 
-PROVIDER 9 WORLD STREAMING:
-- Source remains Esri World Imagery XYZ tiles for the prototype comparison layer.
-- The visible tile set is calculated from camera center, aspect ratio and orthographic zoom.
-- Dynamic LOD selects Web-Mercator zoom levels z2 through z12.
-- Tile budget is capped at 96 visible/requested tiles by lowering LOD when necessary.
+WORLD IMAGERY RUNTIME:
+- Source: Esri World Imagery XYZ service for the current development prototype.
+- Camera-driven world streaming is retained from v10i.
+- Dynamic Web-Mercator LOD uses z2 through z12.
+- Maximum visible/requested tile budget remains 96 tiles.
 - Up to 8 tile requests run concurrently.
 - Tiles nearest the camera center are requested first.
-- New tile generations are built hidden and atomically swapped in only when complete.
-- The previous generation stays visible while a replacement LOD/area loads.
-- Camera movement during a pending generation invalidates that generation and rebuilds after a short stability delay.
-- Runtime-created mesh/material/texture objects are explicitly released when an old generation is replaced.
-- Existing persistent provider cache is reused by zoom/x/y.
+- New generations load hidden and atomically replace the previous visible generation.
+- Persistent zoom/x/y cache is retained.
+- Runtime-created textures, materials and meshes are released when old generations are replaced.
 
-WORLD CAMERA:
-- Starts at Denmark: 10.20 E / 56.10 N, orthographic size 43.
+WORLD CAMERA CONTROLS:
 - Home = Denmark overview.
 - PageUp = Europe overview.
 - End = world overview.
 - WASD / arrow keys = pan.
 - Middle mouse drag = grab/pan.
 - Mouse wheel = zoom.
-- Longitude is currently clamped to -179.5..179.5 and latitude to -80..80 for the pilot.
+- Start center remains 10.20 E / 56.10 N.
 
-LOD BANDS:
-- World overview: z2-z4.
-- Continental/Europe: approximately z4-z6.
-- Country/Denmark: approximately z7-z8.
-- Regional/local: z9-z12.
-- The tile-budget guard may lower one or more levels on wide aspect ratios.
+UI:
+- v10j removes the TRUE 11 BASEMAPS status panel and all 11 basemap buttons.
+- The imagery status overlay remains and now identifies the map simply as WORLD IMAGERY / CAMPAIGN MAP.
+- The obsolete Natural Earth map-info box is visually replaced with current World Imagery/WGS84 information.
+- Campaign clock, speed controls, selection panels and gameplay markers remain owned by GrandCampaignBootstrap.
+
+HISTORICAL DATA CONTRACT:
+- World Imagery is a modern visual/reference surface only.
+- It is not treated as 1851 historical truth.
+- 1851 political borders, settlements, roads, railways, ports, land use, buildings and military infrastructure remain separate gameplay/historical layers.
+- WGS84 coordinates remain the authoritative identity for those layers.
 
 PROJECTION NOTE:
-- Gameplay coordinates remain WGS84.
-- Provider 9 imagery tiles are Web Mercator source tiles and are placed into the existing Denmark-first linear Unity WGS84 render projection.
-- This is sufficient for the world-streaming technology pilot but is NOT the final global projection architecture.
-- Dateline wrapping, polar treatment, globe curvature and floating-origin support remain future work before a production global campaign.
-
-HISTORICAL GUARDRAIL:
-- Satellite/aerial imagery is modern and must never be treated as 1851 map truth.
-- 1851 political borders, settlements, roads, railways, ports, land use and military infrastructure remain separate historical layers.
-- Imagery may eventually be hidden/repainted beneath historical land-use overlays while retaining the same streaming engine.
+- The current renderer still places Web-Mercator source tiles into the Denmark-first linear Unity WGS84 render projection.
+- This is acceptable for the current technology prototype but is not the final production world projection.
+- Dateline wrapping, globe curvature, polar handling and floating-origin support remain later global-map work.
 
 LICENSING GUARDRAIL:
-- v10i streams imagery for development comparison and uses a local cache.
-- Do not package or redistribute a bulk offline copy of World Imagery with a release build without a separate licensing review.
-- Attribution remains visible through the provider UI.
+- v10j streams World Imagery for development/prototype use and retains the local cache behaviour.
+- Do not redistribute a bulk offline imagery copy in a release build without a dedicated provider/licensing review.
+- Attribution must remain visible/available in the production implementation.
 
-FILES:
-- Assets/Scripts/Campaign/CampaignRasterBasemapV010G.cs now contains provider-9 world streaming mode.
-- Assets/Scripts/Campaign/CampaignWorldImageryOverlayV010I.cs adds the visible v10i badge, world status and controls.
-- docs/parts/part-09-42-CAMPAIGN-V10I-WORLD-IMAGERY.md documents architecture and QA.
+FILES CHANGED FOR v10j:
+- Assets/Scripts/Campaign/CampaignMapStyleSwitcher.cs is now an imagery-only bootstrap despite its legacy filename.
+- Assets/Scripts/Campaign/CampaignWorldImageryOverlayV010I.cs now presents the v10j imagery-only UI despite its legacy filename.
+- docs/parts/part-09-43-CAMPAIGN-V10J-IMAGERY-ONLY.md records the design decision and QA.
 
 QA GATES:
 1. Project compiles in Unity 6000.6.0f1.
-2. Select provider 9 and confirm v00.00.10i badge appears.
-3. Denmark view loads completely and Limfjorden remains visible.
-4. Zoom in/out across at least three LOD bands and confirm the old map remains visible until replacement tiles are ready.
-5. Pan from Denmark toward Germany/Sweden and confirm new imagery streams in.
-6. PageUp shows a Europe overview with a lower LOD.
-7. End shows a world overview at low LOD.
-8. Home returns to Denmark.
-9. Switch from provider 9 to another local provider and confirm the previous Denmark camera is restored.
-10. Switch back to provider 9 and confirm its world center/zoom state persists.
-11. Verify no growing duplicate tile roots remain after repeated pan/zoom cycles.
-12. Verify campaign clock and existing Denmark gameplay markers remain functional at Denmark-scale zoom.
+2. Enter Play mode and confirm v00.00.10j appears.
+3. Confirm World Imagery starts automatically; no basemap selection is required.
+4. Confirm there is no TRUE 11 BASEMAPS panel.
+5. Confirm there are no 1-11 basemap buttons at the bottom.
+6. Confirm Home returns to Denmark and Limfjorden remains clearly visible.
+7. Confirm PageUp shows Europe and End shows the world overview.
+8. Confirm WASD/arrows, middle-mouse drag and mouse wheel pan/zoom the imagery map.
+9. Confirm imagery LOD changes while the previous generation remains visible until replacement tiles are ready.
+10. Confirm campaign clock, speed controls, selected army/zone and Denmark gameplay markers still work.
+11. Confirm Natural Earth geometry and sea-board are not visible behind imagery.
+12. Confirm no non-imagery basemap roots are created at runtime.
 
 QA state: IMPLEMENTED IN WORK BRANCH / AWAITS UNITY 6.6 COMPILE + PLAY MODE QA
