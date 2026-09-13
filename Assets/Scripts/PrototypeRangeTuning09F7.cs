@@ -6,7 +6,7 @@ using UnityEngine;
 [DefaultExecutionOrder(-11400)]
 public sealed class PrototypeRangeTuning09F7 : MonoBehaviour
 {
-    public const float EffectiveRangeMetres = 75f;
+    public const float EffectiveRangeMetres = 80f;
     public const float MaximumRangeMetres = 115f;
     public const float FireArcHalfAngleDegrees = 35f;
 
@@ -55,7 +55,7 @@ public sealed class PrototypeRangeTuning09F7 : MonoBehaviour
     private void Start()
     {
         Debug.Log(
-            "RANGE-09F7|Installed=True|Close=" + (EffectiveRangeMetres * 0.5f).ToString("0.0") +
+            "RANGE-09F7|Installed=True|Close=" + (EffectiveRangeMetres * 0.5f).ToString("0") +
             "m|Medium=" + EffectiveRangeMetres.ToString("0") +
             "m|Long=" + MaximumRangeMetres.ToString("0") +
             "m|ConeTotal=" + (FireArcHalfAngleDegrees * 2f).ToString("0") + "deg");
