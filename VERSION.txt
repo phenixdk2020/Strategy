@@ -1,93 +1,77 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f10
+Prototype version: v00.00.09f11
 Build status: TEST
-Build name: ENEMY-IN-LONG STAYS LINE + FIGHTING WITHDRAWAL + CANONICAL UNIT/OFFICER RULES
-Visible build marker: PROJECT 1864 | v00.00.09f10 TEST
+Build name: BRIDGE STATE-MACHINE FIX + HOUSE ROUTING + 4X BATTLEFIELD + EXTENDED RIVER
+Visible build marker: PROJECT 1864 | v00.00.09f11 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + formation-ranks doctrine supplement
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
+09f11 terrain supplement: docs/design-supplements/v00.00.09f11-terrain-pathfinding-map.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f10 - Enemy inside Long => stay in Line
-- Automatic march-column policy now uses each unit's actual MaximumRange as the combat deployment boundary.
-- If the nearest valid enemy is within Long/MaximumRange, the unit must remain in or deploy to Line.
-- Changing fire policy LONG -> MEDIUM/CLOSE does not by itself allow Column when the enemy is already inside Long.
-- An explicit ANGREB order inside Long therefore manoeuvres in Line rather than reforming into Column.
-- Active bridge routing is the current explicit exception: a legal river crossing may force Column until the far staging point has been cleared.
+v00.00.09f11 - Bridge phase-state repair
+- Fixes the bridge oscillation visible in the 09f10 recording where the unit repeatedly alternated APPROACH_BRIDGE and CROSS_BRIDGE.
+- Bridge traversal now uses a strict forward-only phase sequence: STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
+- Once CROSS_BRIDGE begins it cannot revert to APPROACH_BRIDGE.
+- Company remains in Column through the bridge corridor and normal formation logic resumes after the far staging point.
+- Existing bridge-only river rule remains active.
 
-v00.00.09f10 - Controlled fighting withdrawal
-- Added three bottom-bar withdrawal controls: TRÆK -> MED, TRÆK -> LONG and TRÆK -> UD.
-- MED target is current EffectiveRange (currently 70 m in QA).
-- LONG target is approximately two thirds into the Medium->Maximum interval (currently about 90 m).
-- UD target is MaximumRange + 15 m (currently about 115 m).
-- Fighting withdrawal is controlled combat movement, not rout.
-- Unit remains in Line and faces the nearest valid threat.
-- Sequence alternates stationary covering-fire pauses with approximately 10 m backward steps.
-- Backward speed is approximately 1.70 m/s.
-- During the actual backstep fire policy is temporarily HOLD; during stationary covering-fire phases it temporarily uses LONG permission.
-- The previous fire policy is restored when the order completes.
-- Explicit withdrawal takes priority over Officer AI. Officer AI is left OFF when the order completes so an Offensive officer cannot immediately undo the retreat; player may re-enable AI deliberately.
-- Fighting withdrawal does not automatically reverse-march through the bridge. If the next local backstep would enter open water, the withdrawal halts instead.
+v00.00.09f11 - Approved hard-building routing
+- Added PrototypeStaticObstacleRouting09F11 without re-enabling the old unstable V1/V3/V4 obstacle navigation stack.
+- Farmhouse and Barn are now explicit hard blockers.
+- Their colliders remain enabled in the 1v1 isolation scenario.
+- If a destination route intersects one of these buildings, the unit inserts automatic corner detour waypoints and then resumes the original final destination.
+- Line uses a larger clearance reflecting its ~48 m frontage; Column uses a narrower clearance.
+- River/bridge routing has priority over static-building routing.
+- Trees and fences deliberately remain pass-through until their terrain behaviour is explicitly approved.
 
-v00.00.09f10 - Canonical behaviour rules document
-- Added docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md.
-- This document is now the consolidated source of truth for unit scale, formations, movement, terrain, fire policy, casualties, player orders, fighting withdrawal and AI-officer behaviour.
-- It explicitly separates implemented runtime rules, temporary QA exceptions and approved future design rules.
-- Future behaviour changes should update this document together with code/version notes.
+v00.00.09f11 - Battlefield expansion
+- Battlefield dimensions changed from 360 x 240 m to 1440 x 960 m.
+- This is 4x larger in each linear dimension and 16x the former ground area.
+- Prototype scale remains 1 Unity unit = 1 metre.
+- Ground mesh uses 288 x 192 cells to limit prototype cost on the much larger map.
+- RTS camera bounds expanded to roughly +/-710 m x and +/-470 m z.
+- Camera movement/zoom/far clip adjusted for the larger battlefield.
 
-v00.00.09f9 retained - Bridge-aware ATTACK routing
-- Explicit ANGREB/AttackTarget and offensive Officer AI check river routing before engagement-range logic.
-- An enemy being physically close across the river no longer causes OrderAttack() to overwrite the bridge route with a direct destination.
-- The strategic target remains unchanged while temporary bridge staging/entry/exit points own physical movement.
-- Crossing route phases remain STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
-- The company stays in Column until the far staging point has been cleared.
+v00.00.09f11 - River expansion
+- River visual now spans almost the full 960 m map depth instead of only the former ~240 m battlefield.
+- Visible river width increased from about 2.8 m to 4.4 m, matching the existing ~2.2 m hard-blocker half-width.
+- The fixed bridge remains the only legal crossing.
 
-v00.00.09f9 retained - Officer/combat QA
-- F9 fire policy remains a firing permission / maximum trigger range rather than a mandatory standoff band.
-- MEDIUM means the company may open fire out to Medium; an AI officer may still choose to close farther.
-- Officer preferred engagement range remains derived from doctrine, Tactical Skill, aggressiveness and decision noise.
-- 09f9 QA base accuracy remains 0.050 for Denmark and 0.052 for Prussia.
-- Morale remains locked to 100 for the current hit-rate QA pass; cohesion remains active.
-- Particle velocity repair remains active for black-powder smoke.
+v00.00.09f10 retained
+- Enemy inside Long/MaximumRange => remain/deploy in Line except when a higher-priority bridge crossing requires Column.
+- Fighting withdrawal controls remain TRÆK -> MED / LONG / UD.
+- Controlled withdrawal remains Line, covering fire, ~10 m backsteps and ~1.70 m/s backward speed.
+- Canonical unit/officer behaviour document remains docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md.
+
+v00.00.09f9 retained
+- Explicit ANGREB and offensive Officer AI preserve attack intent while legal bridge steering owns the physical route.
+- Officer engagement-range autonomy and current combat QA accuracy remain retained.
 
 v00.00.09f8 retained
-- Battlefield scale remains 1 Unity unit = 1 metre.
 - Current TEST ranges remain Close 35 m, Medium/Effective 70 m and Long/Maximum 100 m.
 - Fire sector remains 70 degrees total (+/-35 degrees).
-- Yellow/orange/red fan sides share the same side rays.
-- Cones and firing are hidden/blocked while in Column or while reforming into Line.
+- Morale remains locked to 100 for the current hit-rate QA pass; cohesion remains active.
 - Stationary facing remains 16.8 degrees/second.
 
 v00.00.09f7 retained
-- Visible soldier states remain AWAIT -> AIM -> FIRE -> RELOAD.
-- Black-powder smoke remains distributed across the full firing frontage.
-- Normal WALK, Forced March and routed RUN states remain active.
-- G / TVANG G still toggles Forced March for selected Danish units.
-- Fallen soldiers are placed in or immediately beside actual formation slots and remain where they fell.
-- Selection and destination footprints continue to use exact Line/Column slot bounds.
+- AWAIT -> AIM -> FIRE -> RELOAD visuals, frontage smoke, WALK / Forced March / routed RUN, close casualty placement and exact formation footprints remain retained.
 
-v00.00.09f6 retained
-- Long movement changes Line -> Column only outside the combat deployment rule.
-- River routing remains bridge-only and scenery remains pass-through.
-
-v00.00.09f5 retained
-- Active Danish and Prussian test companies are normalised to 190 men.
-- Danish 1851 line baseline remains 3 ranks, approximately 64 + 63 + 63 at full strength.
+v00.00.09f5/f6 retained
+- Active test companies remain 190 men.
+- Danish 1851 Line baseline remains 3 ranks, approximately 64 + 63 + 63.
 - F9 living/fallen display ratios remain 1:1 / 1:2 / 1:5 / 1:10.
-- Hover UI, bayonets, flags and compact upper-right battle clock remain retained.
+- Long movement may use Column outside combat-contact rules.
 
-Primary v00.00.09f10 QA
+Primary v00.00.09f11 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f10 TEST.
-3. Put the Danish company at 70-100 m from the enemy, select MEDIUM, then issue ANGREB: it must stay/deploy in Line and must not reform into Column.
-4. Move from beyond 100 m with no bridge route: long movement may still use Column.
-5. Cross the river with an attack route: bridge routing may force Column even when Euclidean enemy distance is inside Long, then release to normal Line rules after far staging.
-6. Test TRÆK -> MED from closer than 70 m: unit remains in Line, fires while stationary, backs in short steps, and stops around 70 m.
-7. Test TRÆK -> LONG: unit stops around 90 m.
-8. Test TRÆK -> UD: unit stops around 115 m.
-9. During each backstep the company must keep its front toward the threat and must not shoot while physically moving backward.
-10. Between backsteps it may fire covering volleys with normal aim/fire/reload visuals and frontage smoke.
-11. On completion previous fire policy is restored and Officer AI remains OFF until deliberately re-enabled.
-12. Attempt withdrawal toward open water: order must halt instead of walking backward into the river.
-13. Existing 35/70/100 m ranges, formation-ready cone, 16.8 deg/s facing, 190-man/3-rank company, casualty placement, Forced March and bridge-only routing remain retained.
+2. Build marker reads PROJECT 1864 | v00.00.09f11 TEST.
+3. Repeat the bridge route from the 09f10 video: phase telemetry must progress forward and never alternate APPROACH_BRIDGE/CROSS_BRIDGE.
+4. Verify the unit crosses the bridge in Column and clears the far staging point before normal Line deployment rules resume.
+5. Give a destination directly through Farmhouse; unit must route around it and continue to the final destination.
+6. Repeat through Barn.
+7. Verify Tree and FencePost remain pass-through in 09f11.
+8. Traverse the expanded 1440 x 960 m map with the camera.
+9. Verify the extended/wider river remains visible through the expanded battlefield and cannot be crossed outside the fixed bridge.
+10. Existing 35/70/100 m fire ranges, 16.8 deg/s facing, 190-man/3-rank Line, fighting withdrawal and Officer AI behaviour remain retained.
