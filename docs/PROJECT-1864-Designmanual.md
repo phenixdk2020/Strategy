@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.13**  
+**Aktuel designbaseline: v00.02.14**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
 **Aktuel campaign-workbranch: Campaign3 v00.00.10n1 ZONE OVERLAY + VERSION HOTFIX**
 
@@ -30,6 +30,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 10: 45 — Campaign3 v00.00.10m: 20 historiske zoner + 68 byer i runtime](parts/part-10-45-CAMPAIGN-V10M-ZONES-CITIES.md)
 - [Del 11: 46 — Campaign3 v00.00.10n: 1851 zone-overlay og polygonarkitektur](parts/part-11-46-CAMPAIGN-V10N-ZONE-OVERLAY.md)
 - [Del 12: 47 — Fælles sæson-, vegetation- og vejrsystem for Campaign + Battle](parts/part-12-47-SEASONS-WEATHER-CAMPAIGN-BATTLE.md)
+- [Del 13: 48 — National AI: økonomi, byggeri, hær, udstyr og mobilisering](parts/part-13-48-NATIONAL-AI-ECONOMY-MILITARY.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -46,7 +47,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 
 ## City Register 1851 — kanonisk campaign-baseline
 
-Designbaseline v00.02.13 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
+Designbaseline v00.02.14 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
 
 Byerne opdeles i **A — Development City**, **B — Regional Town** og **C — Minor Town**. B- og C-byer skal fortsat være synlige, klikbare og økonomisk/logistisk relevante, men de får ikke fri tung militær udbygning med fx kaserner, arsenaler, større militære depoter, våbenfabrikker eller permanente fæstninger. Historisk dokumenterede anlæg kan eksistere som fixed/special buildings uanset klasse.
 
@@ -95,6 +96,18 @@ Første runtime-slice skal være visuelt orienteret. Senere gameplay-effekter m�
 Den foreslåede første implementation er **Campaign3 v00.00.10o — Seasonal Visual Foundation**, med fælles `CampaignSeasonState`, fire årstider, `SnowCoverage`, `GroundWetness`, marktilstande, campaign-visualisering, miljødata i `BattleContext` og QA-overrides til test af årstider og snegrad.
 
 Den fulde designspecifikation ligger i [Del 12 / Fælles sæson-, vegetation- og vejrsystem](parts/part-12-47-SEASONS-WEATHER-CAMPAIGN-BATTLE.md).
+
+## National AI — økonomi, byggeri, hær og udstyr
+
+Designbaseline v00.02.14 fastlægger, at andre lande skal være fulde strategiske aktører. Et AI-land skal ikke kun flytte hære; det skal gennem en `NationalAIDirector` prioritere budget, byggeri, industri, våbenproduktion/import, rekruttering, træning, mobilisering, udstyr og fordeling af styrker mellem theatres.
+
+AI-landene bruger **samme regler og samme begrænsninger som spilleren**. Nye regimenter kræver manpower, organisation, officerer/NCO'er, våben, uniformer, træning og tid. Artilleri kræver faktiske pjecer og ammunition; kavaleri og transport kræver heste; mobilisering må ikke teleportere en kampklar hær til fronten. Tilsvarende tager kaserner, arsenaler, depoter, fortifikationer, jernbaner, havne, hospitaler, stalde/remount-faciliteter og industri reel tid og ressourcer at opføre.
+
+Hvert land får en datadrevet `NationAIProfile` med historisk rekrutteringssystem, force-structure bias, doktrin, training priority, equipment policy, industrial/infrastructure policy, finansiel risikotolerance og mobiliseringsadfærd. Historiske forhold fungerer som priors, men AI skal kunne reagere på alternativ campaign-udvikling frem for at følge en fast build order.
+
+National AI skal konkret kunne svare på tre spørgsmål: **Hvad bygger vi? Hvilken hær vil vi have? Hvad skal den udrustes med?** Beslutningerne tages ud fra manpower, budget, lagre, produktionskapacitet, træning, transport, geografiske trusler, losses, readiness og forventede krigsskuepladser. Strategisk difficulty må primært ændre planlægningskvalitet og decision noise — ikke give gratis ressourcer, perfekt intelligence eller skjulte combat-bonusser.
+
+Den fulde designspecifikation ligger i [Del 13 / National AI: økonomi, byggeri, hær, udstyr og mobilisering](parts/part-13-48-NATIONAL-AI-ECONOMY-MILITARY.md).
 
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
@@ -174,6 +187,7 @@ Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan besky
 
 ## Versionshistorik
 
+- **v00.02.14 / National AI Design** — strategisk AI udvidet med et eksplicit `NationalAIDirector`-lag for alle AI-styrede lande. Landene bruger samme økonomi, manpower, construction, production, recruitment, training, equipment og logistics som spilleren. Datadrevne `NationAIProfile`-profiler styrer nationale forskelle i rekrutteringssystem, force mix, doktrin, træning, modernisering, industri, infrastruktur, finansiel risikotolerance og mobilisering. AI skal selv beslutte hvad landet bygger, hvilken hær det træner, og hvilket udstyr der produceres/indkøbes og fordeles. Historiske forhold er priors, ikke faste scripts; normal difficulty må ikke give gratis ressourcer, perfekt intelligence eller skjulte combat-bonusser.
 - **v00.02.13 / Seasonal Environment Design** — fælles `SeasonState` besluttet for Campaign + Battle. Campaign-datoen er autoritativ; BattleContext arver sæson, SeasonProgress, SnowCoverage, GroundWetness, vegetation og FieldState. Fire basisårstider fastlægges med særskilt snegrad, så vinter ikke automatisk betyder fuld sne. Sommer skal kunne vise både grønne og gule/modne kornmarker; efterår høstede marker og løvfald; forår tidlig grøn vækst og vådere jord. Første foreslåede runtime-slice er Campaign3 v00.00.10o Seasonal Visual Foundation. Gameplay-effekter kommer senere gennem movement, visibility, fatigue, traction og supply frem for direkte årstidsbonusser.
 - **v00.02.12 / Campaign3 v00.00.10n** — 20 ZONE-REG-01-zoner får zone-overlay/polygonarkitektur og `Z` toggle. Første geometri er eksplicit en centerbaseret prototype med `HistoricallyExactGeometry=false`, ikke historisk facit. Produktionsmålet er DigDag Amt og Region, hvor faktiske 1851-polygongrænser senere skal mappes til eksisterende ZoneIds uden at ændre city/save/simulation state. Hele v10m-kontrakten med 20 zoner, 68 byer, 290.565 checksum, A/B/C-regler, Land/Ferry-links og Esbjerg ude af startstate bevares.
 - **v00.02.11 / Campaign3 v00.00.10m** — CITY-REG-01 og ZONE-REG-01 implementeret i runtime. De 12 grove QA-zoner og 10 QA-byer er erstattet af 20 historiske 1851-zoner og 68 købstæder. Startup validerer 20/68/290.565, Esbjerg er fjernet fra startstate, alle byer får CityId/ZoneId/Population1850/tier/WGS84, B/C-byer blokeres gennem runtime-gaten for normal tung militær nybygning, city selection viser bydata, og zone-routing skelner mellem land- og færgelinks. QA-hæren bruger nu DK-Z11-VEJ. World Imagery/3D-terrain marker-kontrakten bevares.
