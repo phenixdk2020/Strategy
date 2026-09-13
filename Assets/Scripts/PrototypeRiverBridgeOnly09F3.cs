@@ -5,8 +5,8 @@ using UnityEngine;
 // v00.00.09f3 river-only navigation constraint, extended by v00.00.09f9.
 // Scenery remains pass-through. The stream is the only tactical movement barrier:
 // any route that would cross water is redirected through the fixed bridge at z=22.
-// v09f9 also exposes pre-movement steering for continuously tracked ATTACK targets,
-// so Regiment.Update cannot overwrite the bridge route with a direct water crossing.
+// v09f9 also exposes pre-movement steering for tracked ATTACK targets and uses
+// aligned bridge staging points so long infantry columns do not pivot across water.
 [DefaultExecutionOrder(5000)]
 public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 {
@@ -36,10 +36,12 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
     private const float BridgeHalfLengthX = 9.0f;
     private const float BridgeHalfWidthZ = 4.0f;
 
-    // v09f9: the old 11 m approach was too short for a 190-man company to visibly
-    // reform from three-rank Line into a six-wide marching Column before the bridge.
-    private const float BridgeApproachOffset = 24.0f;
-    private const float ApproachArrival = 2.0f;
+    // v09f9 bridge corridor. The company first reaches an outer staging point on
+    // the bridge axis, then advances straight toward the near bridge edge. This gives
+    // the 190-man column room to reform and align before any part reaches the water.
+    private const float BridgeStagingOffset = 32.0f;
+    private const float BridgeEntryOffset = 13.0f;
+    private const float PointArrival = 2.0f;
     private const float ExitClearDistance = 2.5f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -75,8 +77,9 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 
         Debug.Log(
             "RIVER-09F9|Installed=True|River=Blocked|Crossing=BridgeOnly|" +
-            "BridgeZ=22|ApproachOffset=" + BridgeApproachOffset.ToString("0") +
-            "m|AttackPreSteering=True|BridgeForcesColumn=True|SceneryObstacleWrites=False");
+            "BridgeZ=22|Staging=" + BridgeStagingOffset.ToString("0") +
+            "m|Entry=" + BridgeEntryOffset.ToString("0") +
+            "m|AttackPreSteering=True|BridgeForcesColumn=True|AlignedCorridor=True");
     }
 
     private void OnDestroy()
@@ -85,11 +88,6 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
             Instance = null;
     }
 
-    /// <summary>
-    /// Called by Regiment before UpdateMovement when a tracked attack target is active.
-    /// This is the critical v09f9 fix: the bridge steering target is resolved before the
-    /// regiment takes its movement step instead of after it has already stepped toward water.
-    /// </summary>
     public static bool TryGetAttackSteering(
         Regiment regiment,
         Vector3 requestedGoal,
@@ -173,13 +171,10 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
                 continue;
             }
 
-            // Safety net. Under normal v09f9 attack routing this should no longer fire.
             if (state.HasLastSafe)
             {
                 regiment.transform.position = state.LastSafePosition;
 
-                // Avoid flooding the Console if another future movement writer bypasses
-                // the bridge authority. One warning per unit per second is enough for QA.
                 if (Time.unscaledTime - state.LastWaterWarningAt >= 1f)
                 {
                     state.LastWaterWarningAt = Time.unscaledTime;
@@ -205,8 +200,6 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
         bool hasDestination = (bool)hasDestinationField.GetValue(regiment);
         if (!hasDestination)
         {
-            // Keep an active attack bridge route alive if Regiment briefly reaches an
-            // intermediate steering point. The attack pre-steering call will continue it.
             if (!state.BridgeRouteActive)
             {
                 state.HasGoal = false;
@@ -218,7 +211,6 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
         Vector3 rawDestination = (Vector3)destinationField.GetValue(regiment);
         rawDestination.y = 0f;
 
-        // A raw destination equal to our own previous steering point is not a new goal.
         bool rawIsOurSteering =
             state.HasGoal && NearlySame(rawDestination, state.LastSteeringTarget, 1.25f);
 
@@ -260,9 +252,6 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
             0f,
             BridgeZ);
 
-        // If no route is currently active, determine whether this final goal requires
-        // crossing open water. Same-bank routes that cut through a stream meander are
-        // also redirected through the fixed bridge.
         if (!state.BridgeRouteActive)
         {
             bool crossingRequired =
@@ -282,49 +271,65 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
                 state.StartSide = current.x < StreamCenterX(current.z) ? -1 : 1;
 
             state.BridgeRouteActive = true;
+            SetPhase(regiment, state, "STAGE_BRIDGE");
 
-            // The bridge is narrow enough that the 190-man company must approach
-            // and cross in marching column. Do this as soon as the route is identified,
-            // leaving the longer 24 m approach for visible physical reformation.
             if (regiment.Formation != RegimentFormation.Column)
                 regiment.SetFormation(RegimentFormation.Column);
 
             Debug.Log(
                 "RIVER-09F9|Unit=" + regiment.RegimentName +
                 "|BridgeRoute=True|StartSide=" + state.StartSide +
-                "|ColumnForced=True|Attack=" + continuousAttackGoal);
+                "|ColumnForced=True|Attack=" + continuousAttackGoal +
+                "|AlignedStaging=True");
         }
 
         if (regiment.Formation != RegimentFormation.Column)
             regiment.SetFormation(RegimentFormation.Column);
 
-        Vector3 entry = bridgeCenter + Vector3.right * (state.StartSide * BridgeApproachOffset);
-        Vector3 exit = bridgeCenter - Vector3.right * (state.StartSide * BridgeApproachOffset);
+        Vector3 nearStaging = bridgeCenter + Vector3.right * (state.StartSide * BridgeStagingOffset);
+        Vector3 nearEntry = bridgeCenter + Vector3.right * (state.StartSide * BridgeEntryOffset);
+        Vector3 farEntry = bridgeCenter - Vector3.right * (state.StartSide * BridgeEntryOffset);
+        Vector3 farStaging = bridgeCenter - Vector3.right * (state.StartSide * BridgeStagingOffset);
 
         int currentSide = GetBankSide(current);
         bool crossedToOtherBank = currentSide != 0 && currentSide != state.StartSide;
 
         if (!crossedToOtherBank)
         {
-            if (!IsBridgeZone(current) && PlanarDistance(current, entry) > ApproachArrival)
+            // First bring the pivot onto the bridge's z-axis well outside the river.
+            // The following run from staging -> entry is then straight along the bridge
+            // axis, so the long column turns on dry ground rather than over the water.
+            if (state.Phase == "STAGE_BRIDGE")
             {
-                steeringTarget = WithGroundHeight(entry);
+                if (PlanarDistance(current, nearStaging) > PointArrival)
+                {
+                    steeringTarget = WithGroundHeight(nearStaging);
+                    state.LastSteeringTarget = steeringTarget;
+                    return true;
+                }
+
+                SetPhase(regiment, state, "APPROACH_BRIDGE");
+            }
+
+            if (!IsBridgeZone(current) && PlanarDistance(current, nearEntry) > PointArrival)
+            {
+                steeringTarget = WithGroundHeight(nearEntry);
                 state.LastSteeringTarget = steeringTarget;
                 SetPhase(regiment, state, "APPROACH_BRIDGE");
                 return true;
             }
 
-            steeringTarget = WithGroundHeight(exit);
+            steeringTarget = WithGroundHeight(farEntry);
             state.LastSteeringTarget = steeringTarget;
             SetPhase(regiment, state, "CROSS_BRIDGE");
             return true;
         }
 
-        // Do not immediately fan back out on the far bridge edge. Keep the company
-        // in column until its centre has reached the far staging point.
-        if (PlanarDistance(current, exit) > ExitClearDistance)
+        // Keep marching straight on the bridge axis until the whole visual column has
+        // room to clear the crossing before Line deployment is allowed again.
+        if (PlanarDistance(current, farStaging) > ExitClearDistance)
         {
-            steeringTarget = WithGroundHeight(exit);
+            steeringTarget = WithGroundHeight(farStaging);
             state.LastSteeringTarget = steeringTarget;
             SetPhase(regiment, state, "EXIT_BRIDGE");
             return true;
@@ -357,8 +362,6 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
             return;
         }
 
-        // Tracked ATTACK targets may move every frame. Update their final goal without
-        // resetting StartSide/bridge phase while the crossing is already in progress.
         if (continuousAttackGoal)
         {
             state.FinalGoal = sanitized;
