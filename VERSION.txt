@@ -1,94 +1,90 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f4
+Prototype version: v00.00.09f5
 Build status: TEST
-Build name: 1V1 1-TO-1 MEN + 1-TO-1 FALLEN + DETAILED DANISH INFANTRY + DEFEND/ATTACK/CAPTURE + DANNEBROG/SJLR
-Visible build marker: PROJECT 1864 | v00.00.09f4 TEST is shown permanently in the upper-left corner during Play mode
+Build name: 190-MAN COMPANY + 1851 THREE-RANK LINE + BAYONETS + TRUE FOOTPRINT + HOVER UI
+Visible build marker: PROJECT 1864 | v00.00.09f5 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/order supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/footprint/hover + formation-ranks doctrine supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Built-in modules enabled: IMGUI, Particle System, Physics, Audio, ImageConversion
 
-v00.00.09f4 - Living men are 1:1 by default
-- Combat strength has always represented actual men; v09f4 now makes the default battlefield graphics match that number as well.
-- PrototypeBattleVisuals09F4 hides the old fixed 1:10 Soldier_* representative meshes and draws one detailed instanced soldier for each living man when display scale is 1:1.
-- F9 allows graphics-only display ratios 1:1, 1:2, 1:5 and 1:10. Changing the visual ratio never changes simulation strength, hit calculations, morale or casualties.
-- 1. Regiment therefore displays CurrentStrength individual soldier figures at 1:1 instead of ceil(CurrentStrength/10).
-- Formation slots are sampled consistently at reduced display ratios so changing performance scale does not change the regiment's intended footprint.
-- Telemetry prefix: VISUAL-09F4.
+v00.00.09f5 - Company-scale baseline
+- Current 1v1 test units now represent companies rather than full regiments.
+- Active Danish and Prussian test companies are normalised to 190 men.
+- Internal Regiment class/names are retained for compatibility, while UI identifies the units as companies.
+- At F9 living scale 1:1, one actual living man corresponds to one rendered soldier.
+- At F9 fallen scale 1:1, one actual loss corresponds to one persistent fallen visual.
+- PrototypeCompanyScale09F5 owns the 190-man TEST normalisation.
 
-v00.00.09f4 - Detailed Danish infantry graphics
-- Danish battlefield figures receive a much richer 1850s/1860s prototype silhouette based on the supplied reference image.
-- Visual components include dark navy tunic, light blue trousers, red collar/cuff/trim, white crossed leather belts, black shako, pompom/cockade detail, backpack, cartridge pouch, musket and bayonet.
-- The model is built from shared instanced primitive meshes so hundreds of 1:1 figures do not require thousands of independent GameObjects.
-- Prussian figures receive a corresponding dark-uniform prototype palette so both sides remain readable.
-- This is an in-engine prototype visual pass, not the final rigged/animated production character asset.
+v00.00.09f5 - 1851 three-rank line
+- Danish 1851 line infantry uses 3 ranks as the prototype baseline.
+- A full 190-man company therefore forms approximately 64 + 63 + 63 men.
+- Lateral spacing is approximately 0.75 m per man, giving a full-strength line frontage of approximately 48 m.
+- Two-rank line is not hardcoded as the 1851 default; it is documented as a later doctrine/regulation research and adoption option.
+- PrototypeBattleVisuals09F5 owns the three-rank 1:1 visual formation.
 
-v00.00.09f4 - Fallen men are 1:1 by default
-- PrototypeCasualtyVisualManager's old capped/ratio body renderer is runtime-disabled by the new visual layer.
-- Every actual strength loss creates an actual persistent fallen record at the regiment's battlefield position at the time of loss.
-- At F9 fallen scale 1:1, one loss produces one visible fallen soldier.
-- F9 can reduce fallen rendering to 1:2, 1:5 or 1:10 for performance while keeping the full underlying casualty record.
-- Fallen positions remain behind when the surviving regiment moves.
-- Telemetry prefix: CASUALTY-09F4.
+v00.00.09f5 - Battlefield metre scale and footprint
+- Tactical design assumption is 1 Unity world unit = 1 metre.
+- Soldier size, rank spacing, line frontage, march-column depth, collider, selected outline and range fans use the same metre-scale assumption.
+- PrototypeUnitFootprint09F5 derives BoxCollider dimensions from current strength and current formation.
+- The old circular selection disc is hidden.
+- Selected units receive a rectangular outline matching the real Line or Column footprint.
+- Close/Medium/Long range fans originate from the current formation frontage instead of the old fixed muzzle width.
 
-v00.00.09f4 - F9 visual controls
-- The existing KAMP F9 tuning panel gains a connected VISNING / TAKTISKE ORDRER section.
-- Vis soldater cycles 1:1 -> 1:2 -> 1:5 -> 1:10.
-- Vis faldne cycles independently through the same ratios.
-- VISNING = 1:1 restores both to the requested default.
-- Selected-unit feedback shows actual living men versus rendered living models and actual losses versus rendered fallen models.
-- Pointer isolation prevents clicks on the F9 extension from issuing battlefield orders.
-- Telemetry prefix: UI-09F4.
+v00.00.09f5 - Weapon and range visual
+- Danish soldiers retain the richer dark-blue/light-blue 1850s prototype uniform.
+- Musket/rifle is made visually clearer at tactical camera distance.
+- A fixed socket bayonet is visible on the weapon.
+- Current TEST range values are Close 100 m, Effective/Medium 200 m and Long/Maximum 400 m.
+- These are current prototype tuning values, not the final historical weapon database.
+- Final per-weapon ranges remain data-driven research work.
 
-v00.00.09f4 - Tactical orders
-- New explicit order modes are available from F9: FORSVAR HER, ANGRIB and EROBR HER.
-- FORSVAR HER: select unit(s), choose the order, then left-click terrain. Units march to the point, use Column for the longer approach, redeploy to Line near arrival, then enter Defensive Officer AI around the ordered position.
-- ANGRIB: select unit(s), choose the order, then left-click an enemy regiment. Selected units receive an explicit Offensive attack mission against that target.
-- EROBR HER: select unit(s), choose the order, then left-click terrain. Units march to the point, deploy and hold/defend the captured position.
-- Pending order mode is displayed at the top of the screen and ESC cancels it.
-- Existing v09f3 bridge-only river authority remains later in the frame and may temporarily redirect the movement steering through the fixed bridge without losing the original Defend/Capture objective.
-- Telemetry prefix: ORDER-09F4.
+v00.00.09f5 - Hover UI and text cleanup
+- Permanent floating TextMesh labels over formations are suppressed; the physical flags remain.
+- Hovering a unit shows a compact information box with unit name, nation, strength, fallen/losses, formation, current order/AI state, morale, cohesion, ammunition and weapon/range data.
+- Danish display name is 1. Kompagni - Sjællandske Livregiment.
+- Prussian display name is 8. Kompagni - Preussen.
+- Battle result logic now supports the 1v1 scenario rather than requiring four active regiments.
 
-v00.00.09f4 - Danish national flag and regimental standard
-- Older PrototypeNationalFlags09F2 and PrototypeRegimentalStandards runtime renderers are suppressed before they create duplicate placeholder flags.
-- Danish national flag is a clearly readable Dannebrog with white cross geometry on both front and rear faces; camera direction can no longer make it appear as a plain red flag.
-- Danish regimental standard uses a game-runtime derivative of the supplied SJLR.jpg reference on both faces, with dark-blue backing and gold finial.
-- Packages/manifest.json now includes the Unity ImageConversion module used to load the embedded reference texture.
-- Prussian units retain distinct black/white national and regimental identifiers.
-- Telemetry prefix: FLAG-09F4.
+v00.00.09f5 - Time controls
+- Battle clock and simulation speed controls are reduced in size.
+- Time controls are moved to the upper-right corner.
+- Existing hotkeys and simulation speeds are retained.
+
+Retained from v00.00.09f4
+- F9 living/fallen visual ratios 1:1 / 1:2 / 1:5 / 1:10.
+- Explicit FORSVAR HER / ANGRIB / EROBR HER tactical orders.
+- Dannebrog plus separate Danish regimental/company colour.
+- 1:1 casualty accounting remains simulation-authoritative.
 
 Retained from v00.00.09f3
-- Line/Column transitions are visibly animated instead of slot teleporting.
-- Stationary Z/X 15-degree facing commands are visually smoothed at approximately 24 degrees/second.
-- Trees, FencePost, Farmhouse and Barn remain pass-through and do not participate in tactical obstacle routing.
+- Line/Column changes visibly reform instead of teleporting slots.
+- Stationary facing changes are smoothed instead of instant 15-degree jumps.
+- Trees, fences, Farmhouse and Barn remain pass-through in the current navigation isolation baseline.
 - River/water remains blocked and may only be crossed through the fixed bridge at z=22.
-- PrototypeRiverBridgeOnly09F3 remains the sole tactical movement constraint.
 - Legacy V1/V3/V4/09A/recovery navigation writers remain runtime-disabled.
-- QA warning suppression for dormant obsolete navigation code remains retained.
 
 Retained from v00.00.09f2 / v00.00.09f1 / v00.00.09f
-- Exactly one Danish regiment (1. Regiment) and one Prussian regiment (8th Regiment) remain in the isolation scenario.
-- Prussian enemy AI starts HOLD / AI OFF and only begins after F5 or START FJENDE.
-- Bottom command bar remains docked against the lower edge.
-- LMB drag performs box selection; Shift adds; Ctrl toggles.
-- Long movement uses Column and deploys back toward Line near destination/contact.
-- Selected-unit directional 120-degree Close/Medium/Long range cone remains visible.
-- RMB destination/facing, Alt+RMB waypoints, F/C formation and Z/X facing remain retained.
-- Existing combat, weapon, morale, cohesion, ammunition and melee simulation remain unchanged by the 09f4 visual pass.
+- One Danish and one Prussian active test unit.
+- Enemy begins HOLD / AI OFF until activated.
+- Bottom command bar remains docked to the lower screen edge.
+- LMB drag box selection, Shift add and Ctrl toggle remain available.
+- Long movement uses Column and deploys toward Line near destination/contact.
+- Directional 120-degree fire cone remains available.
+- RMB movement/facing, Alt+RMB waypoint, F/C formation and Z/X facing remain available.
 
-Primary v00.00.09f4 QA
-1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f4 TEST.
-2. At default F9 display scales, 1. Regiment renders one soldier figure for every CurrentStrength man; 8th Regiment does the same.
-3. Danish figures visibly read as dark-blue/light-blue infantry with white crossbelts, red trim, shako, pack and musket/bayonet rather than simple capsule placeholders.
-4. Open KAMP F9: connected 09f4 section shows Vis soldater 1:1 and Vis faldne 1:1 plus FORSVAR HER / ANGRIB / EROBR HER.
-5. Change living scale to 1:10 and back to 1:1; simulation strength must not change.
-6. Cause N actual casualties at fallen scale 1:1: approximately N persistent fallen figures should be visible; changing fallen scale changes only rendering density.
-7. FORSVAR HER followed by a terrain click moves the selected Danish unit to the position and leaves it defending there.
-8. ANGRIB followed by a click on the Prussian regiment creates an explicit attack mission.
-9. EROBR HER followed by a terrain click moves to and holds the ordered point.
-10. Ground orders across the river away from the bridge still route through the fixed bridge at z=22.
-11. Danish national flag visibly contains the white Dannebrog cross from either side.
-12. The second Danish flag displays the supplied Sjællandske Livregiment reference standard rather than the old generic ribbon/placeholder.
-13. Enemy remains stationary until F5 / START FJENDE unless explicitly attacked by the player.
-14. Trees/buildings/fences remain pass-through and do not reintroduce the previous movement stalls.
+Primary v00.00.09f5 QA
+1. Unity compiles without red errors.
+2. Build marker reads PROJECT 1864 | v00.00.09f5 TEST.
+3. Both active companies start at 190 men.
+4. Danish line at full strength displays three ranks at 1:1.
+5. Musket/rifle and bayonet are visible from tactical zoom.
+6. No permanent floating formation/flag text remains.
+7. Hover shows strength and fallen count plus tactical status.
+8. Clock/speed control is compact and in the upper-right corner.
+9. Selection rectangle matches current formation footprint.
+10. Range fans originate from actual formation frontage and use the metre-scaled TEST ranges.
+11. Line <-> Column reform remains visibly animated.
+12. Objects remain pass-through without stalls.
+13. River remains bridge-only.
+14. Enemy remains on HOLD until explicitly activated.
