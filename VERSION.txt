@@ -1,90 +1,82 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f1
+Prototype version: v00.00.09f2
 Build status: TEST
-Build name: TACTICAL COMMAND TEST 09F1 - BOX SELECT + MARCH COLUMN + STALL RECOVERY
-Visible build marker: PROJECT 1864 | v00.00.09f1 TEST is shown permanently in the upper-left corner during Play mode
+Build name: 1V1 ISOLATION + TRANSPARENT SCENERY + ENEMY HOLD + BOTTOM BAR + DUAL FLAGS
+Visible build marker: PROJECT 1864 | v00.00.09f2 TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery supplement + 09f2 isolation supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 
-v00.00.09f1 - RTS box selection
-- LMB drag beyond 9 pixels shows a translucent marquee rectangle.
-- Normal drag replaces selection; Shift adds; Ctrl toggles.
-- Only non-routed Danish regiment centres are selected by the marquee.
-- Ordinary single-click selection remains owned by PlayerCommander.
-- Box selection changes selection only and never writes movement or combat orders.
-- Telemetry prefix: SELECT-09F1.
+v00.00.09f2 - 1v1 isolation scenario
+- Runtime scenario contains exactly one Danish and one Prussian infantry regiment.
+- Denmark keeps 1. Regiment.
+- Prussia keeps 8th Regiment.
+- PrototypeExpandedOOBManager is disabled before it can create the additional six QA regiments.
+- Start positions are simplified to approximately x=-105 and x=+105 at z=0, facing each other.
+- Telemetry prefix: SCENARIO-09F2.
 
-v00.00.09f1 - March column and deployment
-- Long manual PlayerCommander routes use Column while more than 14 m from the active waypoint.
-- Manual regiments deploy back to the route final formation when within 14 m of the active waypoint OR when the nearest enemy is within EffectiveRange + 12 m.
-- AI-controlled regiments use Column during longer MoveToPoint/Attack approaches and deploy to Line near destination/contact.
-- Navigation V3 may still temporarily force Column for hard obstacle/bridge passage.
-- Telemetry prefixes: MANUAL-FORMATION-09F1 and FORMATION-09F1-AI.
+v00.00.09f2 - Transparent movement baseline
+- All tactical obstacle/navigation steering layers are runtime-disabled for this QA build.
+- PrototypeBattlefieldNavigationManager: OFF.
+- PrototypeNavigationRecoveryManager: OFF.
+- PrototypeBattlefieldNavigationV3: OFF.
+- PrototypeBattlefieldNavigationV4: OFF.
+- PrototypeNavigation09AHotfix: OFF.
+- PrototypeNavigation09BTreePassThrough: OFF.
+- Trees, fence posts, Farmhouse and Barn are pass-through for movement.
+- River/water is also pass-through in this isolated QA baseline.
+- Scenery colliders are disabled; battlefield-ground and regiment selection colliders remain active.
+- Purpose: verify command/formation movement without pathfinding or obstacle-routing interference.
+- Telemetry prefix: NAV-AUTH with Build=v00.00.09f2 and Authority=DirectTransparent.
 
-v00.00.09f1 - Manual movement stall recovery
-- Active manual PlayerCommander routes with Officer AI OFF are monitored for useful movement progress.
-- If a regiment moves less than 0.45 m for 3.5 seconds while still more than 5 m from its waypoint, a controlled bypass waypoint is inserted into the existing route.
-- Bypass candidates use Navigation V3 Column validity/path penalty and reject unintended river crossings.
-- Recovery is limited to four inserted bypass waypoints per active route with a 4-second cooldown to reduce oscillation.
-- Navigation V3 remains the local steering owner; the recovery layer only modifies the higher-level route when a real stall is detected.
-- Telemetry prefix: MANUAL-ROUTE-09F1.
+v00.00.09f2 - Enemy start gate
+- Prussian Officer AI is forced to HOLD / AI OFF immediately after controller installation.
+- Enemy attack does not start automatically.
+- F5 or the bottom-bar START FJENDE button starts the Prussian AI.
+- The same control can stop the enemy again for repeatable QA.
+- Telemetry prefix: ENEMY-GATE-09F2.
 
-v00.00.09f1 - Soft visual obstacles
-- Decorative individual Trees remain pass-through.
-- Individual FencePost objects are now also pass-through instead of forming a chain of hard circular obstacles.
-- Farmhouse and Barn remain hard tactical obstacles.
-- River/water remains bridge-only.
-- Telemetry prefix: NAV-SOFT-09F1.
+v00.00.09f2 - Bottom command bar
+- The old raised 09f Officer AI bar is disabled after OfficerAIController installation.
+- Replacement command bar is docked directly against the physical bottom edge of the Game view with no 42 px bottom gap.
+- Controls retained: selected-unit AI ON/OFF, DEF/BAL/OFF doctrine, Z/X facing, KAMP F9, aggression and HOLD/CLOSE/MED/LONG fire policy.
+- New global control: START/STOP FJENDE [F5].
+- Pointer isolation prevents the bottom bar from issuing battlefield orders while its controls are used.
+- Telemetry prefix: UI-09F2.
 
-Retained v00.00.09f baseline
-- Scenario: Danish test regiments are defenders; Prussian test regiments are attackers.
-- TEST contains four Danish and four Prussian infantry regiments arranged in four starting lanes per side.
-- Regimental standards remain visual identity only and follow regiment position/facing.
-- Attack frontage deconfliction and obstacle-aware secondary frontage slots remain retained.
-- Movement V3 remains the single authoritative steering layer; Navigation V4 and 09A stay runtime-disabled.
-- Persistent obstacle detours preserve the original player/AI destination until the active obstacle is cleared.
-- LINE formations narrow to COLUMN for hard building/bridge passage and restore after the passage clears.
-- If a regiment centre is inside blocked tactical space, V3 emergency recovery moves it to the nearest legal Column-clearance position without discarding the original movement intent.
-- The stream remains non-traversable terrain except through the fixed bridge zone.
-- Battlefield tactical core remains 360x240.
-- Fire geometry remains a directional 120-degree forward fire fan; no 360-degree firing ring.
-- Range bands remain Close <= 50% EffectiveRange; Medium <= EffectiveRange; Long <= MaximumRange.
-- v00.00.09f range-fan fix remains retained: material alpha is 1.0 and translucency is applied through LineRenderer vertex colour, preventing the nearly invisible 09e double-alpha cone.
-- Fire policy remains HOLD / CLOSE / MEDIUM / LONG.
-- Combat tuning menu remains F9/KAMP F9.
-- Reload uses weapon profile base reload plus bounded regiment Experience modifier.
-- Ammunition model remains rounds-per-man with no automatic regeneration.
-- OfficerProfile + OfficerAIController remain attached to prototype regiments.
-- I toggles AI UNIT ON/OFF for selected Danish regiments.
-- Officer doctrine remains DEFENSIVE / BALANCED / OFFENSIVE.
-- Persistent VALGT/VALGT xN battlefield panel remains hidden; bottom command bar remains the main command surface.
-- UI clicks inside time/combat/command controls do not issue battlefield orders.
-- Ctrl/Shift single-click multi-selection remains retained in addition to the new box selection.
-- F/C manually select Line/Column; Z/X rotate facing.
-- RMB destination + drag facing, multi-unit centred frontage, Alt+RMB waypoints and route ghosts remain retained.
-- Casualty visuals, melee, smoke, morale/cohesion and current combat resolver remain unchanged by 09f1.
-- Enemy officers remain Offensive with Medium fire policy under the existing 09f baseline.
-- Difficulty F6/F7/F8 affects AI reaction/decision noise only, not combat stats.
-- Pause and x0.5/x1/x2/x5/x20 simulation-speed semantics remain retained.
+v00.00.09f2 - Dual flag identity
+- Each active regiment now displays a national flag plus the existing regimental standard.
+- Danish national flag uses a readable Dannebrog prototype.
+- Prussian national flag uses a readable black/white prototype.
+- Existing regimental standard/ribbon remains the second flag and regiment identifier.
+- Flag art remains QA/prototype art pending historical source validation.
+- Telemetry prefix: FLAG-09F2.
+
+Retained from v00.00.09f1
+- LMB drag beyond 9 pixels performs RTS box selection.
+- Shift+drag adds; Ctrl+drag toggles.
+- Long manual movement uses Column outside the deployment zone.
+- Manual movement deploys to the final formation within 14 m of destination or when the nearest enemy enters EffectiveRange + 12 m.
+- AI approach-formation policy remains available after enemy AI is started.
+- Selected-unit 120-degree Close/Medium/Long range cone remains retained from 09f.
+- RMB destination/facing, Alt+RMB waypoints, route ghosts, F/C formation and Z/X facing remain retained.
+- Existing combat, morale, cohesion, ammunition, melee and casualty systems remain unchanged.
 
 Known warnings
-- Unity 6.6 may still report CS0618 warnings for legacy FindObjectsByType<T>(FindObjectsSortMode) calls in older navigation helper files.
-- These are deprecation warnings, not compile errors, and are not the cause of the movement stalls addressed by 09f1.
-- Input Manager deprecation warning is also non-blocking; Input System migration remains a separate controls revision.
+- Unity 6.6 can still report CS0618 warnings for FindObjectsByType<T>(FindObjectsSortMode) calls inside legacy navigation helper files.
+- Those helper layers are runtime-disabled in v00.00.09f2 and the warnings are not the cause of movement stalls.
+- Input Manager deprecation warning is non-blocking; Input System migration remains a separate controls revision.
 
-Primary v00.00.09f1 QA
-1. Unity 6000.6.0f1 compiles without red errors.
-2. Visible marker reads PROJECT 1864 | v00.00.09f1 TEST.
-3. LMB drag displays a selection rectangle and selects all Danish regiment centres inside it.
-4. Shift+drag adds and Ctrl+drag toggles selection.
-5. Issue a long manual move: regiment changes to Column while travelling.
-6. Regiment deploys back to Line/final formation within 14 m of destination or when an enemy enters EffectiveRange + 12 m.
-7. AI-controlled long approaches also use Column outside their deployment zone.
-8. Trees and individual fence posts do not block movement.
-9. Farmhouse/Barn still cause V3 detours and the river remains bridge-only.
-10. If a manual regiment makes no useful progress for 3.5 seconds, Console should show MANUAL-ROUTE-09F1 with Recovery=True and an inserted bypass waypoint, or a bounded failure reason.
-11. Selected-unit 120-degree Close/Medium/Long range cone remains clearly visible and translucent.
-12. Existing 09f combat, Officer AI, commands and range behavior otherwise remain unchanged.
+Primary v00.00.09f2 QA
+1. Unity compiles without red errors.
+2. Visible marker reads PROJECT 1864 | v00.00.09f2 TEST.
+3. Exactly one Danish and one Prussian regiment are present.
+4. Prussian regiment remains stationary until F5 / START FJENDE is used.
+5. Danish regiment can be click-selected and box-selected.
+6. A long manual move changes the Danish regiment to Column and later deploys back to Line according to the retained 09f1 policy.
+7. Movement must continue straight through trees, fences, Farmhouse, Barn and river without navigation detours or bridge-routing loops.
+8. Bottom command bar touches the lower screen edge.
+9. Both regiments show a national flag and a regimental standard.
+10. F5 starts enemy Officer AI only after the player chooses to begin the enemy attack.
