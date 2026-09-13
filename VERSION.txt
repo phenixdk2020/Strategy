@@ -17,42 +17,10 @@ DESIGN BASELINE UPDATE:
 - Esbjerg is not a 1851 start city and must be removed from the current QA start state in v10l.
 - Separate registers remain required for Schleswig, Holstein, Lauenburg and strategic non-market-town settlements.
 
-LINEAGE:
-- v00.00.10e = Denmark campaign foundation / WGS84 gameplay scaffold
-- v00.00.10f = 11-style visual lab
-- v00.00.10g = 11 independent basemap provider architecture
-- v00.00.10h = raster loading/resume + unified UI hotfix
-- v00.00.10i = World Imagery streaming / dynamic LOD pilot
-- v00.00.10j = World Imagery selected as sole Campaign3 runtime basemap
-- v00.00.10k = streamed elevation deforms World Imagery into 3D terrain
-- v00.00.10k1 = Unity 6.6 EntityId compile hotfix for terrain tile tracking
-
-ROLLBACK:
-- v10k1 before clean UI/city work: backup/channel-campaign3-v10k1-before-clean-ui-city-20260913
-- v10j before 3D terrain: backup/channel-campaign3-v10j-before-3d-terrain-20260913
-- v10i before imagery-only decision: backup/channel-campaign3-v10i-before-imagery-only-20260913
-- v10h before world imagery: backup/channel-campaign3-v10h-before-world-imagery-20260912
-- v10g: backup/channel-campaign3-v10g-before-raster-ui-fix-20260912
-- v10f: backup/channel-campaign3-v10f-before-true11-20260911
-- previous Campaign3 v13n3: backup/channel-campaign3-v13n3-before-maplab11-20260911
-
-v10k PURPOSE:
-- Keep World Imagery as the only active Campaign3 basemap.
-- Add streamed elevation to the imagery meshes rather than displaying a separate terrain map.
-- Prove 3D relief, camera tilt and gameplay-marker height adaptation without changing campaign simulation.
-- Preserve v10i/v10j world streaming, LOD, tile cache and atomic imagery generation swap.
-
-v10k1 HOTFIX:
-- Replaces obsolete Object.GetInstanceID() tracking with Unity 6.6 EntityId throughout CampaignImageryTerrainV010K.
-- Dictionary/HashSet/coroutine/prune tracking uses EntityId end-to-end; no int compatibility shim.
-- No terrain, camera, imagery, LOD or gameplay behaviour changes intended.
-
-NEXT PLANNED POINTS AFTER v10k1:
-1. Implement v10l clean UI and remove temporary debug/status boxes from normal game view.
-2. Replace the 10 QA city markers with CITY-REG-01 city nodes and remove Esbjerg from 1851 start state.
-3. Add 3D city visuals scaled by development tier/population.
-4. Add click-to-open city panel with population, development class and sourced special buildings; Close hides panel.
-5. Begin territorial polygon zone design for conquest/owner/controller mechanics.
-6. Create CITY-REG-02/03/04 for Schleswig, Holstein and Lauenburg plus a strategic settlement register.
-
-QA state: v10k1 runtime compiled by user after EntityId hotfix; v10l design/city implementation pending.
+NEXT PLANNED POINTS:
+1. Implement v10l clean UI and remove temporary debug/status boxes.
+2. Replace QA cities with CITY-REG-01 nodes; remove Esbjerg from 1851 start.
+3. Add 3D city visuals scaled by tier/population.
+4. Add clickable city panel with population, tier and sourced special buildings.
+5. Begin territorial polygon zones for conquest/owner/controller.
+6. Create city registers for Schleswig, Holstein and Lauenburg.
