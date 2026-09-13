@@ -1,9 +1,9 @@
 using UnityEngine;
 
-// v00.00.09f TEST navigation authority.
-// Movement V3 remains the single authoritative tactical steering layer.
-// V4 and 09A stay disabled. 09B is allowed to run only as the approved
-// decorative-tree pass-through policy and does not own Regiment steering.
+// v00.00.09f2 TEST navigation authority.
+// Isolation baseline: scenery, buildings, fences, trees and river are deliberately
+// transparent to movement so formation/march behaviour can be tested independently
+// from obstacle routing. All legacy/V3/V4 navigation writers are disabled.
 [DefaultExecutionOrder(-32000)]
 public sealed class PrototypeNavigationV3Authority : MonoBehaviour
 {
@@ -15,35 +15,34 @@ public sealed class PrototypeNavigationV3Authority : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeNavigationV3Authority>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeNavigationV3Authority_v000009f");
+        GameObject root = new GameObject("PrototypeNavigationAuthority_v000009f2");
         Object.DontDestroyOnLoad(root);
         root.AddComponent<PrototypeNavigationV3Authority>();
     }
 
     private void Update()
     {
-        PrototypeBattlefieldNavigationV3 v3 =
-            Object.FindAnyObjectByType<PrototypeBattlefieldNavigationV3>();
-
-        if (v3 == null)
-            return;
-
-        if (!v3.enabled)
-            v3.enabled = true;
-
+        bool v1Disabled = DisableLayer<PrototypeBattlefieldNavigationManager>();
+        bool recoveryDisabled = DisableLayer<PrototypeNavigationRecoveryManager>();
+        bool v3Disabled = DisableLayer<PrototypeBattlefieldNavigationV3>();
         bool v4Disabled = DisableLayer<PrototypeBattlefieldNavigationV4>();
         bool hotfix09aDisabled = DisableLayer<PrototypeNavigation09AHotfix>();
-        bool treePassThroughEnabled = EnableLayer<PrototypeNavigation09BTreePassThrough>();
+        bool softPassDisabled = DisableLayer<PrototypeNavigation09BTreePassThrough>();
 
         if (announced)
             return;
 
         announced = true;
         Debug.Log(string.Format(
-            "NAV-AUTH|Build=v00.00.09f|Authority=V3|V4Disabled={0}|09ADisabled={1}|09BTreePassThroughEnabled={2}",
+            "NAV-AUTH|Build=v00.00.09f2|Authority=DirectTransparent|" +
+            "V1Disabled={0}|RecoveryDisabled={1}|V3Disabled={2}|V4Disabled={3}|" +
+            "09ADisabled={4}|09BDisabled={5}|SceneryBlocked=False|RiverBlocked=False",
+            v1Disabled,
+            recoveryDisabled,
+            v3Disabled,
             v4Disabled,
             hotfix09aDisabled,
-            treePassThroughEnabled));
+            softPassDisabled));
     }
 
     private static bool DisableLayer<T>() where T : Behaviour
@@ -54,18 +53,6 @@ public sealed class PrototypeNavigationV3Authority : MonoBehaviour
 
         if (layer.enabled)
             layer.enabled = false;
-
-        return true;
-    }
-
-    private static bool EnableLayer<T>() where T : Behaviour
-    {
-        T layer = Object.FindAnyObjectByType<T>();
-        if (layer == null)
-            return false;
-
-        if (!layer.enabled)
-            layer.enabled = true;
 
         return true;
     }
