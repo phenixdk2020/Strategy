@@ -1,80 +1,94 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f3
+Prototype version: v00.00.09f4
 Build status: TEST
-Build name: 1V1 SMOOTH FORMATIONS + SMOOTH FACING + BRIDGE-ONLY RIVER + CLEAN QA CONSOLE
-Visible build marker: PROJECT 1864 | v00.00.09f3 TEST is shown permanently in the upper-left corner during Play mode
+Build name: 1V1 1-TO-1 MEN + 1-TO-1 FALLEN + DETAILED DANISH INFANTRY + DEFEND/ATTACK/CAPTURE + DANNEBROG/SJLR
+Visible build marker: PROJECT 1864 | v00.00.09f4 TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery supplement + 09f2 isolation supplement + 09f3 movement/river supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/order supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Built-in modules enabled: IMGUI, Particle System, Physics, Audio
+Built-in modules enabled: IMGUI, Particle System, Physics, Audio, ImageConversion
 
-v00.00.09f3 - Visible formation transition
-- Line/Column changes no longer need to read as an instantaneous formation teleport.
-- PrototypeFormationMotion09F3 tracks representative Soldier_* transforms and moves them physically toward their new Line/Column slots with a bounded movement speed.
-- Formation changes caused by manual F/C, long-march Column policy and automatic deployment back to Line use the same visual transition.
-- Existing Regiment formation/combat state remains authoritative; the 09f3 layer changes presentation timing only.
-- Telemetry prefix: FORMATION-MOTION-09F3.
+v00.00.09f4 - Living men are 1:1 by default
+- Combat strength has always represented actual men; v09f4 now makes the default battlefield graphics match that number as well.
+- PrototypeBattleVisuals09F4 hides the old fixed 1:10 Soldier_* representative meshes and draws one detailed instanced soldier for each living man when display scale is 1:1.
+- F9 allows graphics-only display ratios 1:1, 1:2, 1:5 and 1:10. Changing the visual ratio never changes simulation strength, hit calculations, morale or casualties.
+- 1. Regiment therefore displays CurrentStrength individual soldier figures at 1:1 instead of ceil(CurrentStrength/10).
+- Formation slots are sampled consistently at reduced display ratios so changing performance scale does not change the regiment's intended footprint.
+- Telemetry prefix: VISUAL-09F4.
 
-v00.00.09f3 - Visible left/right facing change
-- Existing Z/X and bottom-bar 15-degree facing commands are retained.
-- Instant root-transform facing jumps are intercepted while the regiment is stationary.
-- Regiment facing now turns progressively at approximately 24 degrees/second.
-- Route-completion facing changes therefore also become visible physical turns instead of a one-frame snap.
-- Movement steering remains owned by existing movement/AI code and is not artificially slowed by this facing layer.
-- Telemetry prefix: FORMATION-TURN-09F3.
+v00.00.09f4 - Detailed Danish infantry graphics
+- Danish battlefield figures receive a much richer 1850s/1860s prototype silhouette based on the supplied reference image.
+- Visual components include dark navy tunic, light blue trousers, red collar/cuff/trim, white crossed leather belts, black shako, pompom/cockade detail, backpack, cartridge pouch, musket and bayonet.
+- The model is built from shared instanced primitive meshes so hundreds of 1:1 figures do not require thousands of independent GameObjects.
+- Prussian figures receive a corresponding dark-uniform prototype palette so both sides remain readable.
+- This is an in-engine prototype visual pass, not the final rigged/animated production character asset.
 
-v00.00.09f3 - Bridge-only river rule
-- The successful 09f2 pass-through result for scenery is retained: Trees, FencePost, Farmhouse and Barn do not block regiment movement.
-- River/water is no longer pass-through.
-- PrototypeRiverBridgeOnly09F3 is the sole tactical route constraint in this QA build.
-- A movement segment that would touch open water is redirected to the fixed bridge at z=22.
-- The regiment approaches the bridge on its own bank, crosses to the opposite bridge approach, then resumes the original final goal.
-- A hard safety guard restores the last legal position if any other system places the regiment centre in open water outside the bridge zone.
-- All legacy obstacle/pathfinding writers remain runtime-disabled so the previously reproduced scenery stalls cannot return through V1/V3/V4/09A/recovery layers.
-- Telemetry prefix: RIVER-09F3.
+v00.00.09f4 - Fallen men are 1:1 by default
+- PrototypeCasualtyVisualManager's old capped/ratio body renderer is runtime-disabled by the new visual layer.
+- Every actual strength loss creates an actual persistent fallen record at the regiment's battlefield position at the time of loss.
+- At F9 fallen scale 1:1, one loss produces one visible fallen soldier.
+- F9 can reduce fallen rendering to 1:2, 1:5 or 1:10 for performance while keeping the full underlying casualty record.
+- Fallen positions remain behind when the surviving regiment moves.
+- Telemetry prefix: CASUALTY-09F4.
 
-v00.00.09f3 - Navigation authority
-- PrototypeBattlefieldNavigationManager: OFF.
-- PrototypeNavigationRecoveryManager: OFF.
-- PrototypeBattlefieldNavigationV3: OFF.
-- PrototypeBattlefieldNavigationV4: OFF.
-- PrototypeNavigation09AHotfix: OFF.
-- PrototypeNavigation09BTreePassThrough: OFF.
-- PrototypeManualRouteRecovery09H4: OFF.
-- PrototypeRiverBridgeOnly09F3: ON and restricted to river/bridge enforcement only.
-- Telemetry: NAV-AUTH reports Build=v00.00.09f3, Authority=RiverBridgeOnly, SceneryBlocked=False, RiverBlocked=True and BridgeOnly=True.
+v00.00.09f4 - F9 visual controls
+- The existing KAMP F9 tuning panel gains a connected VISNING / TAKTISKE ORDRER section.
+- Vis soldater cycles 1:1 -> 1:2 -> 1:5 -> 1:10.
+- Vis faldne cycles independently through the same ratios.
+- VISNING = 1:1 restores both to the requested default.
+- Selected-unit feedback shows actual living men versus rendered living models and actual losses versus rendered fallen models.
+- Pointer isolation prevents clicks on the F9 extension from issuing battlefield orders.
+- Telemetry prefix: UI-09F4.
 
-v00.00.09f3 - QA warning cleanup
-- Dormant legacy navigation scripts still contain Unity 6.6-obsolete FindObjectsByType<T>(FindObjectsSortMode) calls but are not runtime authorities in this build.
-- Assets/csc.rsp suppresses CS0618 and CS0219 during this isolation branch so Console QA is not flooded by warnings from disabled compatibility code.
-- This is intentionally limited to compiler-warning cleanup for the current isolation branch; obsolete navigation code can be physically removed/refactored after the river-only baseline is accepted.
-- The Unity Input Manager deprecation message is separate from C# compiler warnings. Current runtime controls and bottom command bar still use legacy Input + IMGUI, so an Input System-only switch is not part of 09f3.
+v00.00.09f4 - Tactical orders
+- New explicit order modes are available from F9: FORSVAR HER, ANGRIB and EROBR HER.
+- FORSVAR HER: select unit(s), choose the order, then left-click terrain. Units march to the point, use Column for the longer approach, redeploy to Line near arrival, then enter Defensive Officer AI around the ordered position.
+- ANGRIB: select unit(s), choose the order, then left-click an enemy regiment. Selected units receive an explicit Offensive attack mission against that target.
+- EROBR HER: select unit(s), choose the order, then left-click terrain. Units march to the point, deploy and hold/defend the captured position.
+- Pending order mode is displayed at the top of the screen and ESC cancels it.
+- Existing v09f3 bridge-only river authority remains later in the frame and may temporarily redirect the movement steering through the fixed bridge without losing the original Defend/Capture objective.
+- Telemetry prefix: ORDER-09F4.
 
-Retained from v00.00.09f2
-- Exactly one Danish regiment (1. Regiment) and one Prussian regiment (8th Regiment).
+v00.00.09f4 - Danish national flag and regimental standard
+- Older PrototypeNationalFlags09F2 and PrototypeRegimentalStandards runtime renderers are suppressed before they create duplicate placeholder flags.
+- Danish national flag is a clearly readable Dannebrog with white cross geometry on both front and rear faces; camera direction can no longer make it appear as a plain red flag.
+- Danish regimental standard uses a game-runtime derivative of the supplied SJLR.jpg reference on both faces, with dark-blue backing and gold finial.
+- Packages/manifest.json now includes the Unity ImageConversion module used to load the embedded reference texture.
+- Prussian units retain distinct black/white national and regimental identifiers.
+- Telemetry prefix: FLAG-09F4.
+
+Retained from v00.00.09f3
+- Line/Column transitions are visibly animated instead of slot teleporting.
+- Stationary Z/X 15-degree facing commands are visually smoothed at approximately 24 degrees/second.
+- Trees, FencePost, Farmhouse and Barn remain pass-through and do not participate in tactical obstacle routing.
+- River/water remains blocked and may only be crossed through the fixed bridge at z=22.
+- PrototypeRiverBridgeOnly09F3 remains the sole tactical movement constraint.
+- Legacy V1/V3/V4/09A/recovery navigation writers remain runtime-disabled.
+- QA warning suppression for dormant obsolete navigation code remains retained.
+
+Retained from v00.00.09f2 / v00.00.09f1 / v00.00.09f
+- Exactly one Danish regiment (1. Regiment) and one Prussian regiment (8th Regiment) remain in the isolation scenario.
 - Prussian enemy AI starts HOLD / AI OFF and only begins after F5 or START FJENDE.
-- Bottom command bar remains physically docked at the lower screen edge.
-- Each regiment retains national flag plus regimental standard.
-- Scenery colliders remain disabled except battlefield-ground and regiment selection colliders.
-
-Retained from v00.00.09f1 / v00.00.09f
+- Bottom command bar remains docked against the lower edge.
 - LMB drag performs box selection; Shift adds; Ctrl toggles.
-- Long manual movement uses Column outside the deployment zone and returns to Line/final formation near destination/contact.
+- Long movement uses Column and deploys back toward Line near destination/contact.
 - Selected-unit directional 120-degree Close/Medium/Long range cone remains visible.
-- RMB destination/facing, Alt+RMB waypoints, route ghosts, F/C formation and Z/X facing remain retained.
-- Existing combat, morale, cohesion, ammunition, melee and casualty systems remain unchanged.
+- RMB destination/facing, Alt+RMB waypoints, F/C formation and Z/X facing remain retained.
+- Existing combat, weapon, morale, cohesion, ammunition and melee simulation remain unchanged by the 09f4 visual pass.
 
-Primary v00.00.09f3 QA
-1. Unity compiles without red errors.
-2. Visible marker reads PROJECT 1864 | v00.00.09f3 TEST.
-3. Only 1. Regiment and 8th Regiment are present.
-4. Enemy remains stationary until F5 / START FJENDE.
-5. Give 1. Regiment a long move: representative soldiers should visibly gather from Line into Column rather than jumping slots instantly.
-6. Near the destination/contact zone, representative soldiers should visibly spread from Column back into Line.
-7. With the regiment stationary, press Z or X: facing should turn progressively rather than snapping 15 degrees instantly.
-8. Trees, fences, Farmhouse and Barn remain pass-through and must not stall movement.
-9. Order a move to the opposite river bank away from the bridge: the regiment must route to the bridge at z=22, cross there, then continue toward the original destination.
-10. Regiment centre must never cross or remain in open water outside the bridge zone.
-11. Legacy CS0618/CS0219 compiler-warning spam should no longer clutter the QA Console.
-12. Input Manager deprecation may still be shown by Unity until the IMGUI/legacy-input control surface is migrated in a dedicated controls revision.
+Primary v00.00.09f4 QA
+1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f4 TEST.
+2. At default F9 display scales, 1. Regiment renders one soldier figure for every CurrentStrength man; 8th Regiment does the same.
+3. Danish figures visibly read as dark-blue/light-blue infantry with white crossbelts, red trim, shako, pack and musket/bayonet rather than simple capsule placeholders.
+4. Open KAMP F9: connected 09f4 section shows Vis soldater 1:1 and Vis faldne 1:1 plus FORSVAR HER / ANGRIB / EROBR HER.
+5. Change living scale to 1:10 and back to 1:1; simulation strength must not change.
+6. Cause N actual casualties at fallen scale 1:1: approximately N persistent fallen figures should be visible; changing fallen scale changes only rendering density.
+7. FORSVAR HER followed by a terrain click moves the selected Danish unit to the position and leaves it defending there.
+8. ANGRIB followed by a click on the Prussian regiment creates an explicit attack mission.
+9. EROBR HER followed by a terrain click moves to and holds the ordered point.
+10. Ground orders across the river away from the bridge still route through the fixed bridge at z=22.
+11. Danish national flag visibly contains the white Dannebrog cross from either side.
+12. The second Danish flag displays the supplied Sjællandske Livregiment reference standard rather than the old generic ribbon/placeholder.
+13. Enemy remains stationary until F5 / START FJENDE unless explicitly attacked by the player.
+14. Trees/buildings/fences remain pass-through and do not reintroduce the previous movement stalls.
