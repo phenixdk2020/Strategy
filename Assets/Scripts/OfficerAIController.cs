@@ -391,6 +391,25 @@ public sealed class OfficerAIController : MonoBehaviour
             return;
         }
 
+        // v00.00.09f9: bridge routing has priority over Euclidean engagement range.
+        // Without this guard, an enemy across the river can be physically close enough
+        // to trigger OrderAttack(), which then writes the target position directly and
+        // causes the regiment to walk into open water. Route to bridge entry/exit first.
+        if (PrototypeRiverBridgeOnly09F3.TryGetAttackSteering(
+                regiment,
+                target.transform.position,
+                out Vector3 bridgeSteering))
+        {
+            if (regiment.Formation != RegimentFormation.Column)
+                regiment.SetFormation(RegimentFormation.Column);
+
+            regiment.OrderMove(bridgeSteering);
+            SetStatus(
+                "MANOEUVRE/BRIDGE",
+                baseReason + " - attack route redirected through fixed bridge");
+            return;
+        }
+
         float distance = Vector3.Distance(regiment.transform.position, target.transform.position);
         float aggression01 = effectiveAggressiveness / 100f;
         float tactical01 = Officer.TacticalSkill / 100f;
