@@ -1,12 +1,28 @@
 PROJECT 1864 - Unity Battle Prototype
 Prototype version: v00.00.09f9
 Build status: TEST
-Build name: OFFICER RANGE AUTONOMY + HIGHER QA HIT RATE + PARTICLE VELOCITY FIX
+Build name: COMBAT QA + BRIDGE-AWARE ATTACK ROUTING + ALIGNED COLUMN CROSSING
 Visible build marker: PROJECT 1864 | v00.00.09f9 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + formation-ranks doctrine supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f9 - Bridge-aware ATTACK routing
+- Explicit ANGREB/AttackTarget and offensive Officer AI now check river routing before engagement-range logic.
+- An enemy being physically close across the river no longer causes OrderAttack() to overwrite the bridge route with a direct destination.
+- PrototypeRiverBridgeOnly09F3 exposes TryGetAttackSteering() so the officer can request legal bridge steering before issuing movement.
+- The strategic target remains unchanged while temporary bridge staging/entry/exit points own physical movement.
+- Normal attack logic resumes only after the far bridge staging point has been cleared.
+- Repeated OpenWaterPrevented/RestoredLastSafe warnings should no longer occur during a normal attack crossing.
+
+v00.00.09f9 - Aligned bridge-column visual pass
+- Any route requiring river crossing forces the 190-man company into Column before the bridge.
+- Crossing route phases are STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
+- Near/far staging points sit about 32 m from bridge centre; bridge entry points sit about 13 m from centre.
+- The company first reaches the bridge axis on dry ground, then advances straight through the crossing instead of pivoting a long column sideways over the water.
+- The company remains in Column until its centre reaches the far staging point; only then may normal Line deployment resume.
+- Open-water safety telemetry is retained as a last-resort guard and rate-limited if another future movement writer bypasses bridge authority.
 
 v00.00.09f9 - Officer engagement-range autonomy retained
 - F9 fire policy remains a firing permission / maximum trigger range rather than a mandatory standoff band.
@@ -57,9 +73,14 @@ Primary v00.00.09f9 QA
 1. Unity compiles without red errors.
 2. Build marker reads PROJECT 1864 | v00.00.09f9 TEST.
 3. Verify the Particle Velocity curves warning no longer repeats after smoke systems initialise.
-4. Leave AI ON with MEDIUM selected and confirm the officer may choose to move inside Close range before engaging.
-5. Confirm the F9 MEDIUM button remains selected; the AI must not silently rewrite FirePolicy to CLOSE.
-6. Fire several volleys at Close and compare casualties with the former 1-3 baseline.
-7. Compare HITTEST telemetry at Close, Medium and Long; distance differentiation must remain visible.
-8. Morale stays at 100 while cohesion remains active.
-9. 35/70/100 m ranges, formation-ready cone, 16.8 deg/s facing, 190-man/3-rank company, volley animations, Forced March and bridge-only river remain retained.
+4. Issue ANGREB against an enemy across the river: the attacking company must route to the bridge instead of walking into open water.
+5. Verify bridge phases progress STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
+6. Verify the company changes to Column before the crossing and stays in Column until the far staging point.
+7. Verify the long column aligns with the bridge axis before entering the water and does not pivot sideways across the river.
+8. Verify repeated OpenWaterPrevented=True warnings do not occur during a normal bridge crossing.
+9. Leave AI ON with MEDIUM selected and confirm the officer may choose to move inside Close range after the crossing before engaging.
+10. Confirm the F9 MEDIUM button remains selected; the AI must not silently rewrite FirePolicy to CLOSE.
+11. Fire several volleys at Close and compare casualties with the former 1-3 baseline.
+12. Compare HITTEST telemetry at Close, Medium and Long; distance differentiation must remain visible.
+13. Morale stays at 100 while cohesion remains active.
+14. 35/70/100 m ranges, formation-ready cone, 16.8 deg/s facing, 190-man/3-rank company, volley animations, Forced March and bridge-only river remain retained.
