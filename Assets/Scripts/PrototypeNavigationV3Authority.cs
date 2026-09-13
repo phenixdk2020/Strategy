@@ -1,9 +1,9 @@
 using UnityEngine;
 
-// v00.00.09f2 TEST navigation authority.
-// Isolation baseline: scenery, buildings, fences, trees and river are deliberately
-// transparent to movement so formation/march behaviour can be tested independently
-// from obstacle routing. All legacy/V3/V4 navigation writers are disabled.
+// v00.00.09f3 TEST navigation authority.
+// Scenery stays fully pass-through. All legacy obstacle/pathfinding writers are
+// disabled. PrototypeRiverBridgeOnly09F3 is the only tactical route constraint and
+// exists solely to enforce bridge-only river crossing.
 [DefaultExecutionOrder(-32000)]
 public sealed class PrototypeNavigationV3Authority : MonoBehaviour
 {
@@ -15,7 +15,7 @@ public sealed class PrototypeNavigationV3Authority : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeNavigationV3Authority>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeNavigationAuthority_v000009f2");
+        GameObject root = new GameObject("PrototypeNavigationAuthority_v000009f3");
         Object.DontDestroyOnLoad(root);
         root.AddComponent<PrototypeNavigationV3Authority>();
     }
@@ -28,21 +28,29 @@ public sealed class PrototypeNavigationV3Authority : MonoBehaviour
         bool v4Disabled = DisableLayer<PrototypeBattlefieldNavigationV4>();
         bool hotfix09aDisabled = DisableLayer<PrototypeNavigation09AHotfix>();
         bool softPassDisabled = DisableLayer<PrototypeNavigation09BTreePassThrough>();
+        bool manualRecoveryDisabled = DisableLayer<PrototypeManualRouteRecovery09H4>();
+
+        PrototypeRiverBridgeOnly09F3 riverOnly =
+            Object.FindAnyObjectByType<PrototypeRiverBridgeOnly09F3>();
+        bool riverOnlyActive = riverOnly != null && riverOnly.enabled;
 
         if (announced)
             return;
 
         announced = true;
         Debug.Log(string.Format(
-            "NAV-AUTH|Build=v00.00.09f2|Authority=DirectTransparent|" +
+            "NAV-AUTH|Build=v00.00.09f3|Authority=RiverBridgeOnly|" +
             "V1Disabled={0}|RecoveryDisabled={1}|V3Disabled={2}|V4Disabled={3}|" +
-            "09ADisabled={4}|09BDisabled={5}|SceneryBlocked=False|RiverBlocked=False",
+            "09ADisabled={4}|09BDisabled={5}|ManualRecoveryDisabled={6}|" +
+            "SceneryBlocked=False|RiverBlocked=True|BridgeOnly=True|RiverLayerActive={7}",
             v1Disabled,
             recoveryDisabled,
             v3Disabled,
             v4Disabled,
             hotfix09aDisabled,
-            softPassDisabled));
+            softPassDisabled,
+            manualRecoveryDisabled,
+            riverOnlyActive));
     }
 
     private static bool DisableLayer<T>() where T : Behaviour
