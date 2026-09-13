@@ -6,38 +6,27 @@ using Object = UnityEngine.Object;
 [DefaultExecutionOrder(-30000)]
 public sealed class GrandCampaignBootstrap : MonoBehaviour
 {
-    public enum CampaignNation
-    {
-        Denmark,
-        SwedenNorway,
-        Prussia,
-        Austria,
-        France,
-        UnitedKingdom,
-        Russia,
-        Netherlands,
-        Hanover,
-        Mecklenburg,
-        GermanConfederationOther
-    }
-
-    private enum MapZoomBand
-    {
-        Close,
-        Operational,
-        Strategic
-    }
+    public enum CampaignNation { Denmark, SwedenNorway, Prussia, Austria, France, UnitedKingdom, Russia, Netherlands, Hanover, Mecklenburg, GermanConfederationOther }
+    private enum MapZoomBand { Close, Operational, Strategic }
+    private enum RouteType { None, Land, Ferry }
 
     private sealed class Zone
     {
-        public string Id;
-        public string Name;
+        public CampaignDenmark1851Registry.ZoneDef Def;
         public CampaignNation Owner;
-        public float Longitude;
-        public float Latitude;
         public Vector2 Position;
-        public readonly List<string> Neighbours = new List<string>();
         public GameObject Visual;
+        public string Id => Def.Id;
+        public string Name => Def.Name;
+    }
+
+    private sealed class City
+    {
+        public CampaignDenmark1851Registry.CityDef Def;
+        public GameObject Visual;
+        public string Id => Def.Id;
+        public string Name => Def.Name;
+        public string ZoneId => Def.ZoneId;
     }
 
     private sealed class Army
@@ -47,39 +36,31 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         public CampaignNation Nation;
         public string CurrentZoneId;
         public string DestinationZoneId;
+        public RouteType Route;
         public float Progress;
         public int Strength;
         public GameObject Visual;
     }
 
-    private sealed class City
-    {
-        public string Name;
-        public float Longitude;
-        public float Latitude;
-        public GameObject Visual;
-    }
-
     public const bool CampaignModeEnabled = true;
+    public const string CampaignVersion = "v00.00.10m";
     public static GrandCampaignBootstrap Instance { get; private set; }
 
     private readonly Dictionary<string, Zone> zones = new Dictionary<string, Zone>();
-    private readonly Dictionary<string, Army> armies = new Dictionary<string, Army>();
-    private readonly List<CampaignNation> playableNations = new List<CampaignNation>();
+    private readonly Dictionary<string, City> citiesById = new Dictionary<string, City>();
     private readonly List<City> cities = new List<City>();
+    private readonly Dictionary<string, Army> armies = new Dictionary<string, Army>();
 
     private Camera campaignCamera;
     private CampaignNation playerNation = CampaignNation.Denmark;
     private bool nationChosen;
-    private Zone selectedZone;
-    private Army selectedArmy;
-
-    // Grand Campaign canonical start chosen for PROJECT 1864.
     private bool paused;
     private float campaignSpeed = 1f;
     private DateTime campaignTime = new DateTime(1851, 1, 1, 8, 0, 0);
-
     private MapZoomBand zoomBand = MapZoomBand.Operational;
+    private Zone selectedZone;
+    private City selectedCity;
+    private Army selectedArmy;
 
     private GUIStyle titleStyle;
     private GUIStyle smallStyle;
@@ -87,42 +68,39 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
     private GUIStyle cityStyle;
     private GUIStyle mapInfoStyle;
 
+    private Material zoneMaterial;
+    private Material cityMaterialA;
+    private Material cityMaterialB;
+    private Material cityMaterialC;
+    private Material armyMaterial;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void AutoCreate()
     {
-        if (Object.FindAnyObjectByType<GrandCampaignBootstrap>() != null)
-            return;
-
-        GameObject root = new GameObject("PROJECT1864_GrandCampaign_v000010e");
+        if (Object.FindAnyObjectByType<GrandCampaignBootstrap>() != null) return;
+        GameObject root = new GameObject("PROJECT1864_GrandCampaign_v000010m");
         DontDestroyOnLoad(root);
         root.AddComponent<GrandCampaignBootstrap>();
     }
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+
+        if (!CampaignDenmark1851Registry.Validate(out string error))
         {
-            Destroy(gameObject);
+            Debug.LogError("CAMPAIGN-10M|RegistryValid=False|Error=" + error);
+            enabled = false;
             return;
         }
 
-        Instance = this;
-        BuildPlayableNationList();
         BuildCampaignWorld();
     }
 
     private void OnDestroy()
     {
-        if (Instance == this)
-            Instance = null;
-    }
-
-    private void BuildPlayableNationList()
-    {
-        // v00.00.10e deliberately activates Denmark only. The enum/data contract
-        // keeps the already-decided future nations, but we do not expose empty
-        // countries until the Denmark vertical slice is proven.
-        playableNations.Add(CampaignNation.Denmark);
+        if (Instance == this) Instance = null;
     }
 
     private void BuildCampaignWorld()
@@ -131,29 +109,36 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         RenderSettings.fog = false;
         RenderSettings.ambientLight = new Color(0.60f, 0.62f, 0.64f);
 
+        CreateMaterials();
         CreateCamera();
         CreateLight();
         CreateSeaBoard();
         CreateRealDenmarkGeography();
         CreateZones();
         CreateCities();
-        CreateArmies();
+        AddArmy("DK-ARMY-QA", "Dansk hær — QA", CampaignNation.Denmark, "DK-Z11-VEJ", 24000);
 
         Debug.Log(string.Format(
-            "CAMPAIGN-10E|Installed=True|Start=1851-01-01|Geo=WGS84|Source=NaturalEarth50m|Focus=Denmark|Zones={0}|Cities={1}|Armies={2}|DEM=False",
-            zones.Count,
-            cities.Count,
-            armies.Count));
+            "CAMPAIGN-10M|Installed=True|Registry=ZONE-REG-01+CITY-REG-01|Zones={0}|Cities={1}|UrbanPopulation1850={2}|Start=1851-01-01",
+            zones.Count, cities.Count, UrbanPopulation()));
+    }
+
+    private void CreateMaterials()
+    {
+        zoneMaterial = CreateMaterial(new Color(0.76f, 0.64f, 0.24f), "ZoneMarker_1851");
+        cityMaterialA = CreateMaterial(new Color(0.95f, 0.88f, 0.55f), "City_A_1851");
+        cityMaterialB = CreateMaterial(new Color(0.84f, 0.84f, 0.75f), "City_B_1851");
+        cityMaterialC = CreateMaterial(new Color(0.70f, 0.72f, 0.68f), "City_C_1851");
+        armyMaterial = CreateMaterial(new Color(0.76f, 0.18f, 0.18f), "Army_Denmark_QA");
     }
 
     private void CreateCamera()
     {
         Camera existing = Camera.main;
-        if (existing != null)
-            existing.gameObject.SetActive(false);
+        if (existing != null) existing.gameObject.SetActive(false);
 
-        GameObject cameraObject = new GameObject("Grand Campaign Camera");
-        campaignCamera = cameraObject.AddComponent<Camera>();
+        GameObject go = new GameObject("Grand Campaign Camera");
+        campaignCamera = go.AddComponent<Camera>();
         campaignCamera.tag = "MainCamera";
         campaignCamera.orthographic = true;
         campaignCamera.orthographicSize = 43f;
@@ -161,17 +146,17 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         campaignCamera.farClipPlane = 300f;
         campaignCamera.backgroundColor = new Color(0.16f, 0.29f, 0.40f);
         campaignCamera.clearFlags = CameraClearFlags.SolidColor;
-        cameraObject.transform.position = new Vector3(11f, 95f, 1f);
-        cameraObject.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+        go.transform.position = new Vector3(11f, 95f, 1f);
+        go.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
     }
 
-    private void CreateLight()
+    private static void CreateLight()
     {
-        GameObject lightObject = new GameObject("Campaign Sun");
-        Light light = lightObject.AddComponent<Light>();
+        GameObject go = new GameObject("Campaign Sun");
+        Light light = go.AddComponent<Light>();
         light.type = LightType.Directional;
         light.intensity = 1.05f;
-        lightObject.transform.rotation = Quaternion.Euler(55f, -25f, 0f);
+        go.transform.rotation = Quaternion.Euler(55f, -25f, 0f);
     }
 
     private void CreateSeaBoard()
@@ -180,11 +165,9 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         sea.name = "Grand Campaign Sea";
         sea.transform.position = new Vector3(10f, -0.45f, 0f);
         sea.transform.localScale = new Vector3(170f, 0.8f, 105f);
-        sea.GetComponent<Renderer>().sharedMaterial =
-            CreateMaterial(new Color(0.18f, 0.34f, 0.47f), "CampaignSea");
-        Collider collider = sea.GetComponent<Collider>();
-        if (collider != null)
-            Destroy(collider);
+        sea.GetComponent<Renderer>().sharedMaterial = CreateMaterial(new Color(0.18f, 0.34f, 0.47f), "CampaignSea");
+        Collider c = sea.GetComponent<Collider>();
+        if (c != null) Destroy(c);
     }
 
     private void CreateRealDenmarkGeography()
@@ -196,148 +179,86 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
     private void CreateZones()
     {
-        // Gameplay-zone centres are a v10e operational scaffold over real geography.
-        // They are NOT historical administrative borders. Polygon borders come later.
-        AddZone("DK-VEN", "Vendsyssel", CampaignNation.Denmark, 9.88f, 57.36f);
-        AddZone("DK-NJ", "Nordjylland", CampaignNation.Denmark, 9.45f, 56.86f);
-        AddZone("DK-MJ", "Midtjylland", CampaignNation.Denmark, 9.25f, 56.28f);
-        AddZone("DK-VJ", "Vestjylland", CampaignNation.Denmark, 8.70f, 55.82f);
-        AddZone("DK-OJ", "Østjylland", CampaignNation.Denmark, 10.03f, 56.10f);
-        AddZone("DK-SJ", "Sydjylland", CampaignNation.Denmark, 9.25f, 55.25f);
-        AddZone("DK-FYN", "Fyn", CampaignNation.Denmark, 10.30f, 55.34f);
-        AddZone("DK-NSJ", "Nordsjælland", CampaignNation.Denmark, 12.13f, 55.94f);
-        AddZone("DK-KBH", "København", CampaignNation.Denmark, 12.5683f, 55.6761f);
-        AddZone("DK-SSJ", "Sydsjælland", CampaignNation.Denmark, 11.82f, 55.28f);
-        AddZone("DK-LF", "Lolland-Falster", CampaignNation.Denmark, 11.62f, 54.78f);
-        AddZone("DK-BOR", "Bornholm", CampaignNation.Denmark, 14.91f, 55.12f);
-
-        Link("DK-VEN", "DK-NJ");
-        Link("DK-NJ", "DK-MJ");
-        Link("DK-MJ", "DK-VJ");
-        Link("DK-MJ", "DK-OJ");
-        Link("DK-VJ", "DK-SJ");
-        Link("DK-OJ", "DK-SJ");
-        Link("DK-SJ", "DK-FYN");
-        Link("DK-FYN", "DK-NSJ");
-        Link("DK-FYN", "DK-SSJ");
-        Link("DK-NSJ", "DK-KBH");
-        Link("DK-NSJ", "DK-SSJ");
-        Link("DK-SSJ", "DK-LF");
-        Link("DK-KBH", "DK-SSJ");
-
-        // Bornholm is intentionally disconnected in land-march routing. Sea
-        // transport becomes a separate naval/transport route system later.
-    }
-
-    private void AddZone(
-        string id,
-        string name,
-        CampaignNation owner,
-        float longitude,
-        float latitude)
-    {
-        Vector3 world = CampaignGeoProjection.Project(longitude, latitude, 0.42f);
-        Zone zone = new Zone
+        foreach (CampaignDenmark1851Registry.ZoneDef def in CampaignDenmark1851Registry.Zones)
         {
-            Id = id,
-            Name = name,
-            Owner = owner,
-            Longitude = longitude,
-            Latitude = latitude,
-            Position = new Vector2(world.x, world.z)
-        };
+            Vector3 world = CampaignGeoProjection.Project(def.Longitude, def.Latitude, 0.42f);
+            Zone zone = new Zone
+            {
+                Def = def,
+                Owner = CampaignNation.Denmark,
+                Position = new Vector2(world.x, world.z)
+            };
 
-        GameObject markerObject = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        markerObject.name = "ZONE_" + id;
-        markerObject.transform.position = world;
-        markerObject.transform.localScale = new Vector3(1.25f, 0.11f, 1.25f);
-        markerObject.GetComponent<Renderer>().sharedMaterial =
-            CreateMaterial(new Color(0.76f, 0.64f, 0.24f), "ZoneMarker_" + id);
-        GrandCampaignZoneMarker marker = markerObject.AddComponent<GrandCampaignZoneMarker>();
-        marker.Initialize(id);
-        zone.Visual = markerObject;
-
-        zones[id] = zone;
-    }
-
-    private void Link(string a, string b)
-    {
-        if (!zones.ContainsKey(a) || !zones.ContainsKey(b))
-            return;
-        if (!zones[a].Neighbours.Contains(b)) zones[a].Neighbours.Add(b);
-        if (!zones[b].Neighbours.Contains(a)) zones[b].Neighbours.Add(a);
+            GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            visual.name = "ZONE_" + def.Id;
+            visual.transform.position = world;
+            visual.transform.localScale = new Vector3(0.95f, 0.10f, 0.95f);
+            visual.GetComponent<Renderer>().sharedMaterial = zoneMaterial;
+            visual.AddComponent<GrandCampaignZoneMarker>().Initialize(def.Id);
+            zone.Visual = visual;
+            zones[def.Id] = zone;
+        }
     }
 
     private void CreateCities()
     {
-        AddCity("Aalborg", 9.9217f, 57.0488f);
-        AddCity("Viborg", 9.4020f, 56.4532f);
-        AddCity("Aarhus", 10.2039f, 56.1629f);
-        AddCity("Esbjerg", 8.4594f, 55.4765f);
-        AddCity("Kolding", 9.4722f, 55.4904f);
-        AddCity("Fredericia", 9.7526f, 55.5657f);
-        AddCity("Odense", 10.4024f, 55.4038f);
-        AddCity("København", 12.5683f, 55.6761f);
-        AddCity("Næstved", 11.7609f, 55.2299f);
-        AddCity("Rønne", 14.7066f, 55.1009f);
-    }
-
-    private void AddCity(string name, float longitude, float latitude)
-    {
-        GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        visual.name = "CITY_" + name;
-        visual.transform.position = CampaignGeoProjection.Project(longitude, latitude, 0.48f);
-        visual.transform.localScale = new Vector3(0.36f, 0.10f, 0.36f);
-        visual.GetComponent<Renderer>().sharedMaterial =
-            CreateMaterial(new Color(0.87f, 0.84f, 0.72f), "CityMarker_" + name);
-        Collider collider = visual.GetComponent<Collider>();
-        if (collider != null)
-            Destroy(collider);
-
-        cities.Add(new City
+        foreach (CampaignDenmark1851Registry.CityDef def in CampaignDenmark1851Registry.Cities)
         {
-            Name = name,
-            Longitude = longitude,
-            Latitude = latitude,
-            Visual = visual
-        });
+            if (!zones.ContainsKey(def.ZoneId))
+            {
+                Debug.LogError("CAMPAIGN-10M|CitySkipped=True|City=" + def.Name + "|UnknownZone=" + def.ZoneId);
+                continue;
+            }
+
+            GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            visual.name = "CITY_" + def.Id;
+            visual.transform.position = CampaignGeoProjection.Project(def.Longitude, def.Latitude, 0.48f);
+            float scale = CityScale(def);
+            visual.transform.localScale = new Vector3(scale, 0.10f, scale);
+            visual.GetComponent<Renderer>().sharedMaterial = CityMaterial(def.Tier);
+            visual.AddComponent<GrandCampaignCityMarker>().Initialize(def.Id);
+
+            City city = new City { Def = def, Visual = visual };
+            cities.Add(city);
+            citiesById[def.Id] = city;
+        }
     }
 
-    private void CreateArmies()
+    private static float CityScale(CampaignDenmark1851Registry.CityDef def)
     {
-        // QA formation only: location/strength is not yet presented as researched
-        // 1 January 1851 OOB. Stable ID and movement state are the test target.
-        AddArmy("DK-ARMY-QA", "Dansk hær — QA", CampaignNation.Denmark, "DK-SJ", 24000);
+        float baseScale = def.Tier == CampaignDenmark1851Registry.CityTier.A ? 0.52f :
+                          def.Tier == CampaignDenmark1851Registry.CityTier.B ? 0.38f : 0.27f;
+        float boost = Mathf.Clamp((Mathf.Log10(Mathf.Max(300, def.Population1850)) - 3f) * 0.12f, 0f, 0.28f);
+        return baseScale + boost;
     }
 
-    private void AddArmy(
-        string id,
-        string name,
-        CampaignNation nation,
-        string zoneId,
-        int strength)
+    private Material CityMaterial(CampaignDenmark1851Registry.CityTier tier)
+    {
+        if (tier == CampaignDenmark1851Registry.CityTier.A) return cityMaterialA;
+        if (tier == CampaignDenmark1851Registry.CityTier.B) return cityMaterialB;
+        return cityMaterialC;
+    }
+
+    private void AddArmy(string id, string name, CampaignNation nation, string zoneId, int strength)
     {
         if (!zones.TryGetValue(zoneId, out Zone zone))
+        {
+            Debug.LogError("CAMPAIGN-10M|ArmySkipped=True|Army=" + id + "|UnknownZone=" + zoneId);
             return;
+        }
 
-        GameObject token = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        token.name = "ARMY_" + id;
-        token.transform.position = ZoneWorldPosition(zone) + new Vector3(0f, 1.05f, 0f);
-        token.transform.localScale = new Vector3(1.65f, 0.42f, 1.65f);
-        token.GetComponent<Renderer>().sharedMaterial =
-            CreateMaterial(new Color(0.76f, 0.18f, 0.18f), "Army_" + id);
-        GrandCampaignArmyMarker marker = token.AddComponent<GrandCampaignArmyMarker>();
-        marker.Initialize(id);
+        GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        visual.name = "ARMY_" + id;
+        visual.transform.position = ZoneWorldPosition(zone) + new Vector3(0f, 1.05f, 0f);
+        visual.transform.localScale = new Vector3(1.65f, 0.42f, 1.65f);
+        visual.GetComponent<Renderer>().sharedMaterial = armyMaterial;
+        visual.AddComponent<GrandCampaignArmyMarker>().Initialize(id);
 
         armies[id] = new Army
         {
-            Id = id,
-            Name = name,
-            Nation = nation,
-            CurrentZoneId = zoneId,
-            DestinationZoneId = string.Empty,
-            Strength = strength,
-            Visual = token
+            Id = id, Name = name, Nation = nation, CurrentZoneId = zoneId,
+            DestinationZoneId = string.Empty, Route = RouteType.None,
+            Strength = strength, Visual = visual
         };
     }
 
@@ -351,8 +272,7 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
     private void HandleCamera()
     {
-        if (campaignCamera == null)
-            return;
+        if (campaignCamera == null) return;
 
         Vector3 p = campaignCamera.transform.position;
         float pan = 27f * Time.unscaledDeltaTime * Mathf.Max(0.75f, campaignCamera.orthographicSize / 43f);
@@ -368,53 +288,52 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         if (Mathf.Abs(wheel) > 0.01f)
             campaignCamera.orthographicSize = Mathf.Clamp(campaignCamera.orthographicSize - wheel * 3.5f, 17f, 67f);
 
-        MapZoomBand nextBand = campaignCamera.orthographicSize <= 29f
-            ? MapZoomBand.Close
-            : campaignCamera.orthographicSize <= 49f
-                ? MapZoomBand.Operational
-                : MapZoomBand.Strategic;
-
-        if (nextBand != zoomBand)
+        MapZoomBand next = campaignCamera.orthographicSize <= 29f ? MapZoomBand.Close :
+                           campaignCamera.orthographicSize <= 49f ? MapZoomBand.Operational : MapZoomBand.Strategic;
+        if (next != zoomBand)
         {
-            zoomBand = nextBand;
+            zoomBand = next;
             Debug.Log("CAMPAIGN-ZOOM|Band=" + zoomBand + "|SemanticZoomFoundation=True");
         }
 
         foreach (Army army in armies.Values)
         {
-            if (army.Visual == null)
-                continue;
             float scale = zoomBand == MapZoomBand.Close ? 1.35f : zoomBand == MapZoomBand.Operational ? 1.65f : 2.20f;
-            army.Visual.transform.localScale = new Vector3(scale, 0.42f, scale);
+            if (army.Visual != null) army.Visual.transform.localScale = new Vector3(scale, 0.42f, scale);
         }
     }
 
     private void HandleSelectionAndOrders()
     {
-        if (!nationChosen || campaignCamera == null)
-            return;
+        if (!nationChosen || campaignCamera == null) return;
 
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = campaignCamera.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, 300f))
             {
-                GrandCampaignArmyMarker armyMarker = hit.collider.GetComponent<GrandCampaignArmyMarker>();
-                if (armyMarker != null && armies.TryGetValue(armyMarker.ArmyId, out Army army))
+                GrandCampaignArmyMarker am = hit.collider.GetComponent<GrandCampaignArmyMarker>();
+                if (am != null && armies.TryGetValue(am.ArmyId, out Army army) && army.Nation == playerNation)
                 {
-                    if (army.Nation == playerNation)
-                    {
-                        selectedArmy = army;
-                        selectedZone = zones[army.CurrentZoneId];
-                    }
+                    selectedArmy = army;
+                    selectedCity = null;
+                    selectedZone = zones[army.CurrentZoneId];
                     return;
                 }
 
-                GrandCampaignZoneMarker zoneMarker = hit.collider.GetComponent<GrandCampaignZoneMarker>();
-                if (zoneMarker != null && zones.TryGetValue(zoneMarker.ZoneId, out Zone zone))
+                GrandCampaignCityMarker cm = hit.collider.GetComponent<GrandCampaignCityMarker>();
+                if (cm != null && citiesById.TryGetValue(cm.CityId, out City city))
                 {
-                    selectedZone = zone;
+                    selectedCity = city;
+                    selectedZone = zones[city.ZoneId];
                     return;
+                }
+
+                GrandCampaignZoneMarker zm = hit.collider.GetComponent<GrandCampaignZoneMarker>();
+                if (zm != null && zones.TryGetValue(zm.ZoneId, out Zone zone))
+                {
+                    selectedCity = null;
+                    selectedZone = zone;
                 }
             }
         }
@@ -422,32 +341,31 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         if (Input.GetMouseButtonDown(1) && selectedArmy != null)
         {
             Ray ray = campaignCamera.ScreenPointToRay(Input.mousePosition);
-            if (!Physics.Raycast(ray, out RaycastHit hit, 300f))
-                return;
+            if (!Physics.Raycast(ray, out RaycastHit hit, 300f)) return;
 
             GrandCampaignZoneMarker marker = hit.collider.GetComponent<GrandCampaignZoneMarker>();
-            if (marker == null || !zones.TryGetValue(marker.ZoneId, out Zone destination))
-                return;
+            if (marker == null || !zones.TryGetValue(marker.ZoneId, out Zone destination)) return;
 
             Zone current = zones[selectedArmy.CurrentZoneId];
-            if (!current.Neighbours.Contains(destination.Id))
+            RouteType route = GetRouteType(current.Def, destination.Id);
+            if (route == RouteType.None)
             {
-                Debug.Log(string.Format(
-                    "CAMPAIGN-MOVE|Army={0}|From={1}|To={2}|Accepted=False|Reason=NotAdjacentOrSeaRouteMissing",
-                    selectedArmy.Id,
-                    current.Id,
-                    destination.Id));
+                Debug.Log("CAMPAIGN-MOVE|Army=" + selectedArmy.Id + "|From=" + current.Id + "|To=" + destination.Id + "|Accepted=False|Reason=NotAdjacent");
                 return;
             }
 
             selectedArmy.DestinationZoneId = destination.Id;
+            selectedArmy.Route = route;
             selectedArmy.Progress = 0f;
-            Debug.Log(string.Format(
-                "CAMPAIGN-MOVE|Army={0}|From={1}|To={2}|Accepted=True|Geo=WGS84Projected",
-                selectedArmy.Id,
-                current.Id,
-                destination.Id));
+            Debug.Log("CAMPAIGN-MOVE|Army=" + selectedArmy.Id + "|From=" + current.Id + "|To=" + destination.Id + "|Accepted=True|RouteType=" + route);
         }
+    }
+
+    private static RouteType GetRouteType(CampaignDenmark1851Registry.ZoneDef from, string destinationId)
+    {
+        if (Array.IndexOf(from.LandNeighbours, destinationId) >= 0) return RouteType.Land;
+        if (Array.IndexOf(from.FerryNeighbours, destinationId) >= 0) return RouteType.Ferry;
+        return RouteType.None;
     }
 
     private void UpdateCampaignTime()
@@ -457,181 +375,107 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha2)) { campaignSpeed = 5f; paused = false; }
         if (Input.GetKeyDown(KeyCode.Alpha3)) { campaignSpeed = 20f; paused = false; }
         if (Input.GetKeyDown(KeyCode.Alpha4)) { campaignSpeed = 100f; paused = false; }
-
-        if (paused)
-            return;
-
-        double minutes = Time.unscaledDeltaTime * 12.0 * campaignSpeed;
-        campaignTime = campaignTime.AddMinutes(minutes);
+        if (!paused) campaignTime = campaignTime.AddMinutes(Time.unscaledDeltaTime * 12.0 * campaignSpeed);
     }
 
     private void UpdateArmies()
     {
-        if (paused)
-            return;
+        if (paused) return;
 
         foreach (Army army in armies.Values)
         {
-            if (string.IsNullOrEmpty(army.DestinationZoneId))
-                continue;
-            if (!zones.TryGetValue(army.CurrentZoneId, out Zone from) ||
-                !zones.TryGetValue(army.DestinationZoneId, out Zone to))
-                continue;
+            if (string.IsNullOrEmpty(army.DestinationZoneId)) continue;
+            if (!zones.TryGetValue(army.CurrentZoneId, out Zone from) || !zones.TryGetValue(army.DestinationZoneId, out Zone to)) continue;
 
-            // First slice uses projected geographic distance only. Road/terrain,
-            // rail, weather, fatigue and staff quality are later modifiers.
-            float travelHours = Mathf.Max(5f, Vector2.Distance(from.Position, to.Position) * 0.85f);
-            float hoursPerRealSecond = 0.2f * campaignSpeed;
-            army.Progress += Time.unscaledDeltaTime * hoursPerRealSecond / travelHours;
+            float multiplier = army.Route == RouteType.Ferry ? 1.35f : 1f;
+            float hours = Mathf.Max(5f, Vector2.Distance(from.Position, to.Position) * 0.85f * multiplier);
+            army.Progress += Time.unscaledDeltaTime * (0.2f * campaignSpeed) / hours;
 
             Vector3 start = ZoneWorldPosition(from) + new Vector3(0f, 1.05f, 0f);
             Vector3 end = ZoneWorldPosition(to) + new Vector3(0f, 1.05f, 0f);
             army.Visual.transform.position = Vector3.Lerp(start, end, Mathf.Clamp01(army.Progress));
 
-            if (army.Progress < 1f)
-                continue;
+            if (army.Progress < 1f) continue;
 
             army.CurrentZoneId = to.Id;
             army.DestinationZoneId = string.Empty;
+            army.Route = RouteType.None;
             army.Progress = 0f;
             army.Visual.transform.position = end;
-
-            Debug.Log(string.Format(
-                "CAMPAIGN-MOVE|Army={0}|Arrived=True|Zone={1}|Time={2:yyyy-MM-dd HH:mm}",
-                army.Id,
-                to.Id,
-                campaignTime));
-
-            CheckForContact(army, to);
+            Debug.Log("CAMPAIGN-MOVE|Army=" + army.Id + "|Arrived=True|Zone=" + to.Id + "|Time=" + campaignTime.ToString("yyyy-MM-dd HH:mm"));
         }
     }
 
-    private void CheckForContact(Army arriving, Zone zone)
-    {
-        foreach (Army other in armies.Values)
-        {
-            if (other == arriving || other.Nation == arriving.Nation)
-                continue;
-            if (other.CurrentZoneId != zone.Id || !string.IsNullOrEmpty(other.DestinationZoneId))
-                continue;
+    private static Vector3 ZoneWorldPosition(Zone zone) => new Vector3(zone.Position.x, 0.42f, zone.Position.y);
 
-            paused = true;
-            Debug.Log(string.Format(
-                "CAMPAIGN-CONTACT|Zone={0}|Attacker={1}|Defender={2}|BattlePrompt=True",
-                zone.Id,
-                arriving.Name,
-                other.Name));
-            return;
-        }
+    public bool CanBuildHeavyMilitaryInCity(string cityId)
+    {
+        return citiesById.TryGetValue(cityId, out City city) && city.Def.AllowsHeavyMilitaryConstruction;
     }
 
-    private static Vector3 ZoneWorldPosition(Zone zone)
+    private int UrbanPopulation()
     {
-        return new Vector3(zone.Position.x, 0.42f, zone.Position.y);
+        int sum = 0;
+        foreach (City city in cities) sum += city.Def.Population1850;
+        return sum;
     }
 
     private void EnsureStyles()
     {
-        if (titleStyle != null)
-            return;
+        if (titleStyle != null) return;
 
-        titleStyle = new GUIStyle(GUI.skin.box)
-        {
-            fontSize = 13,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter
-        };
+        titleStyle = new GUIStyle(GUI.skin.box) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
         titleStyle.normal.textColor = Color.white;
-
-        smallStyle = new GUIStyle(GUI.skin.box)
-        {
-            fontSize = 10,
-            alignment = TextAnchor.MiddleLeft
-        };
+        smallStyle = new GUIStyle(GUI.skin.box) { fontSize = 10, alignment = TextAnchor.UpperLeft, wordWrap = true };
         smallStyle.normal.textColor = Color.white;
-
-        zoneStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 9,
-            fontStyle = FontStyle.Bold,
-            alignment = TextAnchor.MiddleCenter
-        };
+        zoneStyle = new GUIStyle(GUI.skin.label) { fontSize = 9, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
         zoneStyle.normal.textColor = Color.white;
-
-        cityStyle = new GUIStyle(GUI.skin.label)
-        {
-            fontSize = 9,
-            alignment = TextAnchor.MiddleLeft
-        };
+        cityStyle = new GUIStyle(GUI.skin.label) { fontSize = 9, alignment = TextAnchor.MiddleLeft };
         cityStyle.normal.textColor = new Color(0.95f, 0.94f, 0.84f);
-
-        mapInfoStyle = new GUIStyle(GUI.skin.box)
-        {
-            fontSize = 9,
-            alignment = TextAnchor.MiddleLeft
-        };
+        mapInfoStyle = new GUIStyle(GUI.skin.box) { fontSize = 9, alignment = TextAnchor.MiddleLeft };
         mapInfoStyle.normal.textColor = Color.white;
     }
 
     private void OnGUI()
     {
         EnsureStyles();
-
-        if (!nationChosen)
-        {
-            DrawNationSelection();
-            return;
-        }
-
+        if (!nationChosen) { DrawNationSelection(); return; }
         DrawTopBar();
         DrawSelectionPanel();
         DrawMapInfo();
         DrawZoneLabels();
-        if (zoomBand == MapZoomBand.Close)
-            DrawCityLabels();
+        DrawCityLabels();
     }
 
     private void DrawNationSelection()
     {
-        float width = 430f;
-        float height = 150f;
-        Rect panel = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+        Rect panel = new Rect((Screen.width - 460f) * 0.5f, (Screen.height - 160f) * 0.5f, 460f, 160f);
         GUI.Box(panel, string.Empty);
         GUI.Box(new Rect(panel.x + 10f, panel.y + 10f, panel.width - 20f, 34f), "GRAND CAMPAIGN — 1. JANUAR 1851", titleStyle);
-        GUI.Label(new Rect(panel.x + 25f, panel.y + 50f, panel.width - 50f, 22f), "v10e bygger Danmark som første real-geography vertical slice.");
+        GUI.Label(new Rect(panel.x + 25f, panel.y + 50f, panel.width - 50f, 35f), "v10m: 20 historiske zoner + alle 68 købstæder fra CITY-REG-01.");
 
-        if (GUI.Button(new Rect(panel.x + 55f, panel.y + 82f, panel.width - 110f, 34f), "START SOM DANMARK"))
+        if (GUI.Button(new Rect(panel.x + 55f, panel.y + 96f, panel.width - 110f, 34f), "START SOM DANMARK"))
         {
-            playerNation = CampaignNation.Denmark;
             nationChosen = true;
-            SelectFirstArmyForNation();
-            Debug.Log("CAMPAIGN-NATION|Player=Denmark|Start=1851-01-01|Geo=NaturalEarth50m");
-        }
-    }
-
-    private void SelectFirstArmyForNation()
-    {
-        foreach (Army army in armies.Values)
-        {
-            if (army.Nation != playerNation)
-                continue;
-            selectedArmy = army;
-            selectedZone = zones[army.CurrentZoneId];
-            return;
+            foreach (Army army in armies.Values)
+            {
+                if (army.Nation != playerNation) continue;
+                selectedArmy = army;
+                selectedZone = zones[army.CurrentZoneId];
+                break;
+            }
+            Debug.Log("CAMPAIGN-NATION|Player=Denmark|Registry=ZONE-REG-01+CITY-REG-01");
         }
     }
 
     private void DrawTopBar()
     {
-        Rect bar = new Rect(230f, 8f, Mathf.Max(520f, Mathf.Min(780f, Screen.width - 240f)), 31f);
+        Rect bar = new Rect(230f, 8f, Mathf.Max(520f, Mathf.Min(820f, Screen.width - 240f)), 31f);
         GUI.Box(bar, string.Empty);
-
         string state = paused ? "PAUSE" : "x" + campaignSpeed.ToString("0");
-        GUI.Label(
-            new Rect(bar.x + 8f, bar.y + 6f, 330f, 20f),
-            campaignTime.ToString("dd MMM yyyy HH:mm") + " | " + state + " | Danmark");
+        GUI.Label(new Rect(bar.x + 8f, bar.y + 6f, 390f, 20f), campaignTime.ToString("dd MMM yyyy HH:mm") + " | " + state + " | Danmark | " + CampaignVersion);
 
-        float x = bar.x + 340f;
+        float x = bar.x + 400f;
         if (GUI.Button(new Rect(x, bar.y + 4f, 70f, 23f), paused ? "FORTSÆT" : "PAUSE")) paused = !paused;
         x += 74f;
         if (GUI.Button(new Rect(x, bar.y + 4f, 48f, 23f), "x1")) { campaignSpeed = 1f; paused = false; }
@@ -645,70 +489,70 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
     private void DrawSelectionPanel()
     {
-        Rect panel = new Rect(8f, 42f, 310f, 144f);
+        Rect panel = new Rect(8f, 42f, 360f, selectedCity != null ? 230f : 166f);
         GUI.Box(panel, string.Empty);
 
-        string zoneText = selectedZone != null
-            ? string.Format(
-                "Zone: {0} ({1})\nWGS84: {2:0.0000}°E, {3:0.0000}°N\nNaboer: {4}",
-                selectedZone.Name,
-                selectedZone.Id,
-                selectedZone.Longitude,
-                selectedZone.Latitude,
-                string.Join(", ", selectedZone.Neighbours))
-            : "Zone: ingen";
-        GUI.Box(new Rect(panel.x + 6f, panel.y + 6f, panel.width - 12f, 70f), zoneText, smallStyle);
+        string zoneText = selectedZone == null ? "Zone: ingen" :
+            "Zone: " + selectedZone.Name + "\nID: " + selectedZone.Id +
+            "\nLand: " + JoinOrDash(selectedZone.Def.LandNeighbours) +
+            "\nFærge: " + JoinOrDash(selectedZone.Def.FerryNeighbours);
+        GUI.Box(new Rect(panel.x + 6f, panel.y + 6f, panel.width - 12f, 84f), zoneText, smallStyle);
 
-        string armyText = selectedArmy != null
-            ? string.Format(
-                "Formation: {0}\nStyrke: {1:N0} [QA]\nRMB på nabozone = marchordre",
-                selectedArmy.Name,
-                selectedArmy.Strength)
-            : "Formation: ingen valgt";
-        GUI.Box(new Rect(panel.x + 6f, panel.y + 80f, panel.width - 12f, 57f), armyText, smallStyle);
+        float y = panel.y + 94f;
+        if (selectedCity != null)
+        {
+            string rule = selectedCity.Def.AllowsHeavyMilitaryConstruction
+                ? "Tung militær udbygning: mulig efter øvrige krav"
+                : "Tung militær udbygning: BLOKERET (fixed/special undtaget)";
+            string cityText = "By: " + selectedCity.Name + " | Klasse " + selectedCity.Def.Tier +
+                "\nIndbyggere 1850: " + selectedCity.Def.Population1850.ToString("N0") +
+                "\nZone: " + selectedCity.ZoneId + "\n" + rule;
+            GUI.Box(new Rect(panel.x + 6f, y, panel.width - 12f, 74f), cityText, smallStyle);
+            y += 78f;
+        }
+
+        string armyText = selectedArmy == null ? "Formation: ingen valgt" :
+            "Formation: " + selectedArmy.Name + "\nStyrke: " + selectedArmy.Strength.ToString("N0") +
+            " [QA] | Zone: " + selectedArmy.CurrentZoneId + "\nRMB på direkte land-/færgezone = marchordre";
+        GUI.Box(new Rect(panel.x + 6f, y, panel.width - 12f, 62f), armyText, smallStyle);
     }
+
+    private static string JoinOrDash(string[] items) => items == null || items.Length == 0 ? "—" : string.Join(", ", items);
 
     private void DrawMapInfo()
     {
-        Rect box = new Rect(8f, Screen.height - 76f, 395f, 68f);
-        GUI.Box(
-            box,
-            "REAL GEO: Natural Earth 1:50m | CRS: WGS84\n" +
-            "Aktiv detaljeregion: Danmark | Zoom: " + zoomBand + "\n" +
-            "Zonecentre = gameplay scaffold | DEM + 1851 historiske grænser/infrastruktur følger",
+        Rect box = new Rect(8f, Screen.height - 82f, 485f, 74f);
+        GUI.Box(box,
+            "1851 DATA: ZONE-REG-01 = 20 zoner | CITY-REG-01 = 68 købstæder\n" +
+            "Urban population checksum: " + UrbanPopulation().ToString("N0") + " | Zoom: " + zoomBand + "\n" +
+            "A = Development City | B/C = ingen fri tung militær udbygning",
             mapInfoStyle);
     }
 
     private void DrawZoneLabels()
     {
-        if (campaignCamera == null || zoomBand == MapZoomBand.Strategic)
-            return;
-
+        if (campaignCamera == null || zoomBand == MapZoomBand.Strategic) return;
         foreach (Zone zone in zones.Values)
         {
             Vector3 screen = campaignCamera.WorldToScreenPoint(ZoneWorldPosition(zone) + new Vector3(0f, 0.3f, 0f));
-            if (screen.z <= 0f)
-                continue;
-
-            float y = Screen.height - screen.y;
-            GUI.Label(new Rect(screen.x - 58f, y - 12f, 116f, 20f), zone.Name, zoneStyle);
+            if (screen.z <= 0f) continue;
+            GUI.Label(new Rect(screen.x - 90f, Screen.height - screen.y - 12f, 180f, 20f), zone.Name, zoneStyle);
         }
     }
 
     private void DrawCityLabels()
     {
-        if (campaignCamera == null)
-            return;
+        if (campaignCamera == null || zoomBand == MapZoomBand.Strategic) return;
 
         foreach (City city in cities)
         {
-            if (city.Visual == null)
-                continue;
+            if (city.Visual == null) continue;
+            if (zoomBand == MapZoomBand.Operational && city.Def.Tier != CampaignDenmark1851Registry.CityTier.A) continue;
+
             Vector3 screen = campaignCamera.WorldToScreenPoint(city.Visual.transform.position);
-            if (screen.z <= 0f)
-                continue;
-            float y = Screen.height - screen.y;
-            GUI.Label(new Rect(screen.x + 5f, y - 9f, 105f, 18f), city.Name, cityStyle);
+            if (screen.z <= 0f) continue;
+            string text = zoomBand == MapZoomBand.Close ? city.Name + " [" + city.Def.Tier + "]" : city.Name;
+            GUI.Label(new Rect(screen.x + 5f, Screen.height - screen.y - 9f, 135f, 18f), text, cityStyle);
         }
     }
 
