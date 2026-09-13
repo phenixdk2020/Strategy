@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.11**  
+**Aktuel designbaseline: v00.02.12**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10m HISTORICAL ZONES + 68 CITY RUNTIME**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n ZONE OVERLAY FOUNDATION**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -28,6 +28,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
 - [Del 10: 45 — Campaign3 v00.00.10m: 20 historiske zoner + 68 byer i runtime](parts/part-10-45-CAMPAIGN-V10M-ZONES-CITIES.md)
+- [Del 11: 46 — Campaign3 v00.00.10n: 1851 zone-overlay og polygonarkitektur](parts/part-11-46-CAMPAIGN-V10N-ZONE-OVERLAY.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -44,7 +45,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 
 ## City Register 1851 — kanonisk campaign-baseline
 
-Designbaseline v00.02.11 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
+Designbaseline v00.02.12 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
 
 Byerne opdeles i **A — Development City**, **B — Regional Town** og **C — Minor Town**. B- og C-byer skal fortsat være synlige, klikbare og økonomisk/logistisk relevante, men de får ikke fri tung militær udbygning med fx kaserner, arsenaler, større militære depoter, våbenfabrikker eller permanente fæstninger. Historisk dokumenterede anlæg kan eksistere som fixed/special buildings uanset klasse.
 
@@ -63,6 +64,18 @@ Zonerne skelner nu mellem `LandNeighbours` og `FerryNeighbours`. Første runtime
 City-markørernes størrelse følger tier plus en begrænset populationseffekt. A-byer får labels på operational zoom, mens alle A/B/C-byer vises med labels ved close zoom. `ZONE_`, `CITY_` og `ARMY_`-præfikserne bevares, så den eksisterende World Imagery/3D-terrain marker-height pipeline fortsat kan identificere gameplay-objekterne. Den danske QA-hær starter nu i `DK-Z11-VEJ` i stedet for den udgåede `DK-SJ`-scaffold.
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 10 / Campaign3 v00.00.10m](parts/part-10-45-CAMPAIGN-V10M-ZONES-CITIES.md).
+
+## Campaign3 v00.00.10n — zone-overlay foundation
+
+Designbaseline v00.02.12 gør de 20 `ZONE-REG-01`-zoner visuelt læselige som territoriale områder. `CampaignZoneOverlayV010N` opretter lukkede boundary-loops for alle 20 zoner og kan toggles samlet med `Z`, uden at overlayet får colliders eller ændrer simulation state.
+
+Zoneidentiteterne er kanoniske, men **v10n-geometrien er ikke historisk facit**. Første overlay bruger centerbaserede, ikke-overlappende sektorer inden for fem geografiske grupper som kontrolleret render-/UI-prototype. Runtime metadata sætter derfor `HistoricallyExactGeometry=false` og `GeometryMode=PROTOTYPE_CENTRE_DERIVED_SECTORS`.
+
+Den planlagte produktionskilde er **DigDag — Amt og Region**, som dækker dansk historisk-administrativ geografi fra ca. 1660 og frem. Når de faktiske 1851-polygongrænser importeres, skal de mappes til eksisterende `ZONE-REG-01` IDs. CityId, ZoneId, save-state, økonomi, rekruttering og owner/controller må ikke skulle ændres, blot fordi den midlertidige visualiseringsgeometri udskiftes med kildebelagt geometri.
+
+v10n bevarer hele v10m-runtimekontrakten: 20 zoner, 68 byer, checksum 290.565, Esbjerg ude af startstate, A/B/C-building-regler, separate Land/Ferry-links og QA-hæren i `DK-Z11-VEJ`. World Imagery og streamed 3D terrain ændres ikke af zoneoverlayet.
+
+Den fulde implementerings- og QA-specifikation ligger i [Del 11 / Campaign3 v00.00.10n](parts/part-11-46-CAMPAIGN-V10N-ZONE-OVERLAY.md).
 
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
@@ -142,6 +155,7 @@ Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan besky
 
 ## Versionshistorik
 
+- **v00.02.12 / Campaign3 v00.00.10n** — 20 ZONE-REG-01-zoner får zone-overlay/polygonarkitektur og `Z` toggle. Første geometri er eksplicit en centerbaseret prototype med `HistoricallyExactGeometry=false`, ikke historisk facit. Produktionsmålet er DigDag Amt og Region, hvor faktiske 1851-polygongrænser senere skal mappes til eksisterende ZoneIds uden at ændre city/save/simulation state. Hele v10m-kontrakten med 20 zoner, 68 byer, 290.565 checksum, A/B/C-regler, Land/Ferry-links og Esbjerg ude af startstate bevares.
 - **v00.02.11 / Campaign3 v00.00.10m** — CITY-REG-01 og ZONE-REG-01 implementeret i runtime. De 12 grove QA-zoner og 10 QA-byer er erstattet af 20 historiske 1851-zoner og 68 købstæder. Startup validerer 20/68/290.565, Esbjerg er fjernet fra startstate, alle byer får CityId/ZoneId/Population1850/tier/WGS84, B/C-byer blokeres gennem runtime-gaten for normal tung militær nybygning, city selection viser bydata, og zone-routing skelner mellem land- og færgelinks. QA-hæren bruger nu DK-Z11-VEJ. World Imagery/3D-terrain marker-kontrakten bevares.
 - **v00.02.10 / ZONE-REG-01** — territorialt 1851-zone-lag fastlagt for Kongeriget Danmark. Alle 68 CITY-REG-01-købstæder har nu bindende `ZoneId` og historisk zone-navn. Første baseline består af 20 zoner, primært samtidens amter, med København som særskilt hovedstadszone og Skanderborg Amt bevaret som separat 1851-zone. Zoner bliver regionalt simulationslag for landbefolkning, rekruttering, skat, produktion, supply, infrastruktur, owner/controller og occupation state. City-tier A/B/C forbliver separat og B/C-byer får fortsat ikke fri tung militær udbygning.
 - **v00.02.09 / CITY-REG-01** — Kongeriget Danmarks 68 købstæder ved 1851-starten fastlagt med folketal fra 1. februar 1850. A/B/C-udviklingsklasser indført. Alle mindre købstæder findes på kortet, men B/C-byer får ikke fri tung militær udbygning; historisk dokumenterede anlæg kan eksistere som fixed/special buildings. Esbjerg er ikke en 1851-startby. Slesvig/Holsten/Lauenborg og strategiske ikke-købstads-settlements får separate registre.
