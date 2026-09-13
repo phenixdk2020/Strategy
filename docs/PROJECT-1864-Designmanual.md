@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.10**  
+**Aktuel designbaseline: v00.02.11**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10l CLEAN UI + 3D CITIES**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10m HISTORICAL ZONES + 68 CITY RUNTIME**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -27,6 +27,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 6: 29–36 — Milepæle, immediate prototype sequence, vertical slice, risici, datarelationer, historisk grounding og designbeslutninger](parts/part-06-29-36.md)
 - [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
+- [Del 10: 45 — Campaign3 v00.00.10m: 20 historiske zoner + 68 byer i runtime](parts/part-10-45-CAMPAIGN-V10M-ZONES-CITIES.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -43,13 +44,25 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 
 ## City Register 1851 — kanonisk campaign-baseline
 
-Designbaseline v00.02.10 fastlægger CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
+Designbaseline v00.02.11 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
 
 Byerne opdeles i **A — Development City**, **B — Regional Town** og **C — Minor Town**. B- og C-byer skal fortsat være synlige, klikbare og økonomisk/logistisk relevante, men de får ikke fri tung militær udbygning med fx kaserner, arsenaler, større militære depoter, våbenfabrikker eller permanente fæstninger. Historisk dokumenterede anlæg kan eksistere som fixed/special buildings uanset klasse.
 
-Fra v00.02.10 har hver by et bindende `ZoneId`. Første zonebaseline følger 1851's historiske amtsstruktur som regionalt simulationslag. Den omfatter **20 zoner** for Kongeriget Danmark, inklusive særskilt København Stad og separat Skanderborg Amt. Zonerne skal senere bære regional population, landbefolkning, rekruttering, skat, produktion, supply, infrastruktur, owner/controller og occupation state. City-tier og zone-state er separate: en lille by bliver ikke militær Development City, blot fordi den ligger i en vigtig zone.
+Hver by har et bindende `ZoneId`. Første zonebaseline følger 1851's historiske amtsstruktur som regionalt simulationslag. Den omfatter **20 zoner** for Kongeriget Danmark, inklusive særskilt København Stad og separat Skanderborg Amt. Zonerne skal senere bære regional population, landbefolkning, rekruttering, skat, produktion, supply, infrastruktur, owner/controller og occupation state. City-tier og zone-state er separate: en lille by bliver ikke militær Development City, blot fordi den ligger i en vigtig zone.
 
-Det fulde byregister, folketal, udviklingsklasser og zone-tilknytning ligger i [Del 3E / CITY-REG-01](parts/part-03e-20-17-city-register-1851.md). Den fulde zone-model ligger i [Del 3F / ZONE-REG-01](parts/part-03f-20-18-territorial-zones-1851.md). Esbjerg er ikke en 1851-startby og skal derfor ikke indgå i den kanoniske startstate.
+Det fulde byregister, folketal, udviklingsklasser og zone-tilknytning ligger i [Del 3E / CITY-REG-01](parts/part-03e-20-17-city-register-1851.md). Den fulde zone-model ligger i [Del 3F / ZONE-REG-01](parts/part-03f-20-18-territorial-zones-1851.md). Esbjerg er ikke en 1851-startby og indgår derfor ikke i den kanoniske startstate.
+
+## Campaign3 v00.00.10m — runtime-implementering af zoner og byer
+
+Designbaseline v00.02.11 flytter CITY-REG-01 og ZONE-REG-01 fra dokumenteret design til faktisk Campaign3-runtime på `work/channel-campaign3-v10m-zone-city-runtime`. Den tidligere hardcodede liste med 12 grove QA-zoner og 10 QA-byer er erstattet af et separat `CampaignDenmark1851Registry`, der indeholder de 20 kanoniske zoner og samtlige 68 købstæder.
+
+Runtime-registret validerer ved startup **20 zoner, 68 byer og urban population checksum 290.565**. Hver by har `CityId`, `ZoneId`, `Population1850`, A/B/C-tier og WGS84-nodeposition. Byerne er klikbare, city-panelet viser klasse, folketal og zone, og `CanBuildHeavyMilitaryInCity(cityId)` udgør den bindende API-gate for senere construction UI. B/C returnerer ikke normal tilladelse til tung militær udbygning; historiske fixed/special buildings forbliver en separat datakategori.
+
+Zonerne skelner nu mellem `LandNeighbours` og `FerryNeighbours`. Første runtime-model accepterer direkte march gennem begge typer, men færgeforbindelser får en simpel ekstra tidsomkostning. Dette er bevidst kun en prototype; havnekapacitet, fartøjer, vejr, blokade og fjendtlig interdiction skal senere erstatte den simple ferry multiplier. Bornholm får ingen kunstig landforbindelse.
+
+City-markørernes størrelse følger tier plus en begrænset populationseffekt. A-byer får labels på operational zoom, mens alle A/B/C-byer vises med labels ved close zoom. `ZONE_`, `CITY_` og `ARMY_`-præfikserne bevares, så den eksisterende World Imagery/3D-terrain marker-height pipeline fortsat kan identificere gameplay-objekterne. Den danske QA-hær starter nu i `DK-Z11-VEJ` i stedet for den udgåede `DK-SJ`-scaffold.
+
+Den fulde implementerings- og QA-specifikation ligger i [Del 10 / Campaign3 v00.00.10m](parts/part-10-45-CAMPAIGN-V10M-ZONES-CITIES.md).
 
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
@@ -129,6 +142,7 @@ Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan besky
 
 ## Versionshistorik
 
+- **v00.02.11 / Campaign3 v00.00.10m** — CITY-REG-01 og ZONE-REG-01 implementeret i runtime. De 12 grove QA-zoner og 10 QA-byer er erstattet af 20 historiske 1851-zoner og 68 købstæder. Startup validerer 20/68/290.565, Esbjerg er fjernet fra startstate, alle byer får CityId/ZoneId/Population1850/tier/WGS84, B/C-byer blokeres gennem runtime-gaten for normal tung militær nybygning, city selection viser bydata, og zone-routing skelner mellem land- og færgelinks. QA-hæren bruger nu DK-Z11-VEJ. World Imagery/3D-terrain marker-kontrakten bevares.
 - **v00.02.10 / ZONE-REG-01** — territorialt 1851-zone-lag fastlagt for Kongeriget Danmark. Alle 68 CITY-REG-01-købstæder har nu bindende `ZoneId` og historisk zone-navn. Første baseline består af 20 zoner, primært samtidens amter, med København som særskilt hovedstadszone og Skanderborg Amt bevaret som separat 1851-zone. Zoner bliver regionalt simulationslag for landbefolkning, rekruttering, skat, produktion, supply, infrastruktur, owner/controller og occupation state. City-tier A/B/C forbliver separat og B/C-byer får fortsat ikke fri tung militær udbygning.
 - **v00.02.09 / CITY-REG-01** — Kongeriget Danmarks 68 købstæder ved 1851-starten fastlagt med folketal fra 1. februar 1850. A/B/C-udviklingsklasser indført. Alle mindre købstæder findes på kortet, men B/C-byer får ikke fri tung militær udbygning; historisk dokumenterede anlæg kan eksistere som fixed/special buildings. Esbjerg er ikke en 1851-startby. Slesvig/Holsten/Lauenborg og strategiske ikke-købstads-settlements får separate registre.
 - **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile` på alle fire regimenter; `I` toggler player delegation; Defensive/Balanced/Offensive doctrine og 0–100 commander aggression intent; preussiske Officer AI-angribere med preferred-range/manoeuvre/stabilise adfærd; directional 120° infantry fire fan; HOLD/CLOSE/MEDIUM/LONG fire discipline; continuous closer-is-easier accuracy; battlefield 360x240; Pause/x0,5/x1/x2/x5/x20 og battle clock. v00.00.08 reload/0-hit/`Ramte N`/casualty-visual skal fortsat regressionsbestå. De senere besluttede systemer omfatter segmenteret fire eligibility, fysiske HQ-entities, semantic zoom, courier/order progress/interception, højere formation templates, fysisk battle resupply, night/overnight logistics, udvidet cavalry/dragoon model og fog of war/scouts/gradvis HQ command effectiveness. v00.00.09 er TEST og må først promoveres efter Unity compile/Play acceptance.
