@@ -1,82 +1,80 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f2
+Prototype version: v00.00.09f3
 Build status: TEST
-Build name: 1V1 ISOLATION + TRANSPARENT SCENERY + ENEMY HOLD + BOTTOM BAR + DUAL FLAGS
-Visible build marker: PROJECT 1864 | v00.00.09f2 TEST is shown permanently in the upper-left corner during Play mode
+Build name: 1V1 SMOOTH FORMATIONS + SMOOTH FACING + BRIDGE-ONLY RIVER + CLEAN QA CONSOLE
+Visible build marker: PROJECT 1864 | v00.00.09f3 TEST is shown permanently in the upper-left corner during Play mode
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery supplement + 09f2 isolation supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery supplement + 09f2 isolation supplement + 09f3 movement/river supplement
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Built-in modules enabled: IMGUI, Particle System, Physics, Audio
 
-v00.00.09f2 - 1v1 isolation scenario
-- Runtime scenario contains exactly one Danish and one Prussian infantry regiment.
-- Denmark keeps 1. Regiment.
-- Prussia keeps 8th Regiment.
-- PrototypeExpandedOOBManager is disabled before it can create the additional six QA regiments.
-- Start positions are simplified to approximately x=-105 and x=+105 at z=0, facing each other.
-- Telemetry prefix: SCENARIO-09F2.
+v00.00.09f3 - Visible formation transition
+- Line/Column changes no longer need to read as an instantaneous formation teleport.
+- PrototypeFormationMotion09F3 tracks representative Soldier_* transforms and moves them physically toward their new Line/Column slots with a bounded movement speed.
+- Formation changes caused by manual F/C, long-march Column policy and automatic deployment back to Line use the same visual transition.
+- Existing Regiment formation/combat state remains authoritative; the 09f3 layer changes presentation timing only.
+- Telemetry prefix: FORMATION-MOTION-09F3.
 
-v00.00.09f2 - Transparent movement baseline
-- All tactical obstacle/navigation steering layers are runtime-disabled for this QA build.
+v00.00.09f3 - Visible left/right facing change
+- Existing Z/X and bottom-bar 15-degree facing commands are retained.
+- Instant root-transform facing jumps are intercepted while the regiment is stationary.
+- Regiment facing now turns progressively at approximately 24 degrees/second.
+- Route-completion facing changes therefore also become visible physical turns instead of a one-frame snap.
+- Movement steering remains owned by existing movement/AI code and is not artificially slowed by this facing layer.
+- Telemetry prefix: FORMATION-TURN-09F3.
+
+v00.00.09f3 - Bridge-only river rule
+- The successful 09f2 pass-through result for scenery is retained: Trees, FencePost, Farmhouse and Barn do not block regiment movement.
+- River/water is no longer pass-through.
+- PrototypeRiverBridgeOnly09F3 is the sole tactical route constraint in this QA build.
+- A movement segment that would touch open water is redirected to the fixed bridge at z=22.
+- The regiment approaches the bridge on its own bank, crosses to the opposite bridge approach, then resumes the original final goal.
+- A hard safety guard restores the last legal position if any other system places the regiment centre in open water outside the bridge zone.
+- All legacy obstacle/pathfinding writers remain runtime-disabled so the previously reproduced scenery stalls cannot return through V1/V3/V4/09A/recovery layers.
+- Telemetry prefix: RIVER-09F3.
+
+v00.00.09f3 - Navigation authority
 - PrototypeBattlefieldNavigationManager: OFF.
 - PrototypeNavigationRecoveryManager: OFF.
 - PrototypeBattlefieldNavigationV3: OFF.
 - PrototypeBattlefieldNavigationV4: OFF.
 - PrototypeNavigation09AHotfix: OFF.
 - PrototypeNavigation09BTreePassThrough: OFF.
-- Trees, fence posts, Farmhouse and Barn are pass-through for movement.
-- River/water is also pass-through in this isolated QA baseline.
-- Scenery colliders are disabled; battlefield-ground and regiment selection colliders remain active.
-- Purpose: verify command/formation movement without pathfinding or obstacle-routing interference.
-- Telemetry prefix: NAV-AUTH with Build=v00.00.09f2 and Authority=DirectTransparent.
+- PrototypeManualRouteRecovery09H4: OFF.
+- PrototypeRiverBridgeOnly09F3: ON and restricted to river/bridge enforcement only.
+- Telemetry: NAV-AUTH reports Build=v00.00.09f3, Authority=RiverBridgeOnly, SceneryBlocked=False, RiverBlocked=True and BridgeOnly=True.
 
-v00.00.09f2 - Enemy start gate
-- Prussian Officer AI is forced to HOLD / AI OFF immediately after controller installation.
-- Enemy attack does not start automatically.
-- F5 or the bottom-bar START FJENDE button starts the Prussian AI.
-- The same control can stop the enemy again for repeatable QA.
-- Telemetry prefix: ENEMY-GATE-09F2.
+v00.00.09f3 - QA warning cleanup
+- Dormant legacy navigation scripts still contain Unity 6.6-obsolete FindObjectsByType<T>(FindObjectsSortMode) calls but are not runtime authorities in this build.
+- Assets/csc.rsp suppresses CS0618 and CS0219 during this isolation branch so Console QA is not flooded by warnings from disabled compatibility code.
+- This is intentionally limited to compiler-warning cleanup for the current isolation branch; obsolete navigation code can be physically removed/refactored after the river-only baseline is accepted.
+- The Unity Input Manager deprecation message is separate from C# compiler warnings. Current runtime controls and bottom command bar still use legacy Input + IMGUI, so an Input System-only switch is not part of 09f3.
 
-v00.00.09f2 - Bottom command bar
-- The old raised 09f Officer AI bar is disabled after OfficerAIController installation.
-- Replacement command bar is docked directly against the physical bottom edge of the Game view with no 42 px bottom gap.
-- Controls retained: selected-unit AI ON/OFF, DEF/BAL/OFF doctrine, Z/X facing, KAMP F9, aggression and HOLD/CLOSE/MED/LONG fire policy.
-- New global control: START/STOP FJENDE [F5].
-- Pointer isolation prevents the bottom bar from issuing battlefield orders while its controls are used.
-- Telemetry prefix: UI-09F2.
+Retained from v00.00.09f2
+- Exactly one Danish regiment (1. Regiment) and one Prussian regiment (8th Regiment).
+- Prussian enemy AI starts HOLD / AI OFF and only begins after F5 or START FJENDE.
+- Bottom command bar remains physically docked at the lower screen edge.
+- Each regiment retains national flag plus regimental standard.
+- Scenery colliders remain disabled except battlefield-ground and regiment selection colliders.
 
-v00.00.09f2 - Dual flag identity
-- Each active regiment now displays a national flag plus the existing regimental standard.
-- Danish national flag uses a readable Dannebrog prototype.
-- Prussian national flag uses a readable black/white prototype.
-- Existing regimental standard/ribbon remains the second flag and regiment identifier.
-- Flag art remains QA/prototype art pending historical source validation.
-- Telemetry prefix: FLAG-09F2.
-
-Retained from v00.00.09f1
-- LMB drag beyond 9 pixels performs RTS box selection.
-- Shift+drag adds; Ctrl+drag toggles.
-- Long manual movement uses Column outside the deployment zone.
-- Manual movement deploys to the final formation within 14 m of destination or when the nearest enemy enters EffectiveRange + 12 m.
-- AI approach-formation policy remains available after enemy AI is started.
-- Selected-unit 120-degree Close/Medium/Long range cone remains retained from 09f.
+Retained from v00.00.09f1 / v00.00.09f
+- LMB drag performs box selection; Shift adds; Ctrl toggles.
+- Long manual movement uses Column outside the deployment zone and returns to Line/final formation near destination/contact.
+- Selected-unit directional 120-degree Close/Medium/Long range cone remains visible.
 - RMB destination/facing, Alt+RMB waypoints, route ghosts, F/C formation and Z/X facing remain retained.
 - Existing combat, morale, cohesion, ammunition, melee and casualty systems remain unchanged.
 
-Known warnings
-- Unity 6.6 can still report CS0618 warnings for FindObjectsByType<T>(FindObjectsSortMode) calls inside legacy navigation helper files.
-- Those helper layers are runtime-disabled in v00.00.09f2 and the warnings are not the cause of movement stalls.
-- Input Manager deprecation warning is non-blocking; Input System migration remains a separate controls revision.
-
-Primary v00.00.09f2 QA
+Primary v00.00.09f3 QA
 1. Unity compiles without red errors.
-2. Visible marker reads PROJECT 1864 | v00.00.09f2 TEST.
-3. Exactly one Danish and one Prussian regiment are present.
-4. Prussian regiment remains stationary until F5 / START FJENDE is used.
-5. Danish regiment can be click-selected and box-selected.
-6. A long manual move changes the Danish regiment to Column and later deploys back to Line according to the retained 09f1 policy.
-7. Movement must continue straight through trees, fences, Farmhouse, Barn and river without navigation detours or bridge-routing loops.
-8. Bottom command bar touches the lower screen edge.
-9. Both regiments show a national flag and a regimental standard.
-10. F5 starts enemy Officer AI only after the player chooses to begin the enemy attack.
+2. Visible marker reads PROJECT 1864 | v00.00.09f3 TEST.
+3. Only 1. Regiment and 8th Regiment are present.
+4. Enemy remains stationary until F5 / START FJENDE.
+5. Give 1. Regiment a long move: representative soldiers should visibly gather from Line into Column rather than jumping slots instantly.
+6. Near the destination/contact zone, representative soldiers should visibly spread from Column back into Line.
+7. With the regiment stationary, press Z or X: facing should turn progressively rather than snapping 15 degrees instantly.
+8. Trees, fences, Farmhouse and Barn remain pass-through and must not stall movement.
+9. Order a move to the opposite river bank away from the bridge: the regiment must route to the bridge at z=22, cross there, then continue toward the original destination.
+10. Regiment centre must never cross or remain in open water outside the bridge zone.
+11. Legacy CS0618/CS0219 compiler-warning spam should no longer clutter the QA Console.
+12. Input Manager deprecation may still be shown by Unity until the IMGUI/legacy-input control surface is migrated in a dedicated controls revision.
