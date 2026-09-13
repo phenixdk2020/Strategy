@@ -12,7 +12,12 @@ public sealed class PrototypeCombatQa09F9 : MonoBehaviour
     public const float DanishQaAccuracy = 0.050f;
     public const float PrussianQaAccuracy = 0.052f;
 
-    private readonly HashSet<int> fixedParticleSystems = new HashSet<int>();
+    // Unity 6.6 marks Object.GetInstanceID() obsolete at error level.
+    // We only need to remember which particle systems have already been repaired,
+    // so keep the actual component references instead of relying on an internal ID.
+    private readonly HashSet<ParticleSystem> fixedParticleSystems =
+        new HashSet<ParticleSystem>();
+
     private FieldInfo baseAccuracyField;
     private bool accuracyApplied;
 
@@ -85,7 +90,7 @@ public sealed class PrototypeCombatQa09F9 : MonoBehaviour
 
         foreach (ParticleSystem ps in systems)
         {
-            if (ps == null || fixedParticleSystems.Contains(ps.GetInstanceID()))
+            if (ps == null || fixedParticleSystems.Contains(ps))
                 continue;
 
             if (!ps.name.Contains("BlackPowderSmoke09F7"))
@@ -101,7 +106,7 @@ public sealed class PrototypeCombatQa09F9 : MonoBehaviour
             velocity.y = new ParticleSystem.MinMaxCurve(0.10f, 0.45f);
             velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
-            fixedParticleSystems.Add(ps.GetInstanceID());
+            fixedParticleSystems.Add(ps);
             Debug.Log(
                 "PARTICLE-FIX-09F9|Object=" + ps.name +
                 "|VelocityMode=TwoConstantsXYZ|Fixed=True");
