@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.12**  
+**Aktuel designbaseline: v00.02.13**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10n ZONE OVERLAY FOUNDATION**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n1 ZONE OVERLAY + VERSION HOTFIX**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -29,6 +29,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
 - [Del 10: 45 — Campaign3 v00.00.10m: 20 historiske zoner + 68 byer i runtime](parts/part-10-45-CAMPAIGN-V10M-ZONES-CITIES.md)
 - [Del 11: 46 — Campaign3 v00.00.10n: 1851 zone-overlay og polygonarkitektur](parts/part-11-46-CAMPAIGN-V10N-ZONE-OVERLAY.md)
+- [Del 12: 47 — Fælles sæson-, vegetation- og vejrsystem for Campaign + Battle](parts/part-12-47-SEASONS-WEATHER-CAMPAIGN-BATTLE.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -45,7 +46,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 
 ## City Register 1851 — kanonisk campaign-baseline
 
-Designbaseline v00.02.12 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
+Designbaseline v00.02.13 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
 
 Byerne opdeles i **A — Development City**, **B — Regional Town** og **C — Minor Town**. B- og C-byer skal fortsat være synlige, klikbare og økonomisk/logistisk relevante, men de får ikke fri tung militær udbygning med fx kaserner, arsenaler, større militære depoter, våbenfabrikker eller permanente fæstninger. Historisk dokumenterede anlæg kan eksistere som fixed/special buildings uanset klasse.
 
@@ -76,6 +77,24 @@ Den planlagte produktionskilde er **DigDag — Amt og Region**, som dækker dans
 v10n bevarer hele v10m-runtimekontrakten: 20 zoner, 68 byer, checksum 290.565, Esbjerg ude af startstate, A/B/C-building-regler, separate Land/Ferry-links og QA-hæren i `DK-Z11-VEJ`. World Imagery og streamed 3D terrain ændres ikke af zoneoverlayet.
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 11 / Campaign3 v00.00.10n](parts/part-11-46-CAMPAIGN-V10N-ZONE-OVERLAY.md).
+
+## Fælles sæson-, vegetation- og vejrsystem — Campaign + Battle
+
+Designbaseline v00.02.13 fastlægger, at **campaign map og taktiske 3D-slag skal bruge samme miljøstate**. Campaign-datoen er autoritativ, og et slag skal arve sæson, snegrad, jordfugtighed, vegetation og marktilstand gennem `BattleContext`. Campaign og Battle må ikke have uafhængige sæsonberegninger.
+
+Første model bruger fire basisårstider — `Winter`, `Spring`, `Summer` og `Autumn` — men årstiden er kun én del af state. `SnowCoverage` og `GroundWetness` er separate 0–1-værdier. En dansk vinterdag kan derfor være snefri, våd, let snedækket eller kraftigt snedækket; vinter må **ikke** automatisk betyde fuld hvid snedækning.
+
+Landbrugslandskabet får egne states som `BareField`, `SpringGrowth`, `SummerGreen`, `SummerYellowGrain`, `Harvested`, `WinterDormant` og `SnowCovered`. Især sommeren skal kunne vise en mosaik af grønne områder og **gule/modne kornmarker**, mens efteråret gradvist viser høstede marker, gul/brun vegetation og mere bar jord.
+
+På campaign map påvirker miljøstate primært terrain tint, vegetation, marker og sne-overlay uden at skjule World Imagery, byer, hære eller zonegrænser. På battle map oversættes samme state til højere detalje: terrænmaterialer, sne/frost, træer og løv, markmaterialer, jord/mudder og senere atmosfære og aktivt vejr.
+
+Geografien og permanente bygninger forbliver persistente. Et cached battle map ved eksempelvis Aalborg skal derfor kunne bruges både i juli og januar ved at genindlæse den aktuelle miljøstate frem for at gemme en permanent sommer- eller vinterversion af stedet.
+
+Første runtime-slice skal være visuelt orienteret. Senere gameplay-effekter må komme gennem konkrete mekanismer som movement, traction, visibility, fatigue og supply: våd/mudret jord kan eksempelvis hæmme artilleri og vogne, tæt sommervegetation kan påvirke observation, og vinterløv kan ændre LOS. Der må ikke gives vilkårlige direkte combat-bonuser alene på grund af årstiden.
+
+Den foreslåede første implementation er **Campaign3 v00.00.10o — Seasonal Visual Foundation**, med fælles `CampaignSeasonState`, fire årstider, `SnowCoverage`, `GroundWetness`, marktilstande, campaign-visualisering, miljødata i `BattleContext` og QA-overrides til test af årstider og snegrad.
+
+Den fulde designspecifikation ligger i [Del 12 / Fælles sæson-, vegetation- og vejrsystem](parts/part-12-47-SEASONS-WEATHER-CAMPAIGN-BATTLE.md).
 
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
@@ -155,6 +174,7 @@ Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan besky
 
 ## Versionshistorik
 
+- **v00.02.13 / Seasonal Environment Design** — fælles `SeasonState` besluttet for Campaign + Battle. Campaign-datoen er autoritativ; BattleContext arver sæson, SeasonProgress, SnowCoverage, GroundWetness, vegetation og FieldState. Fire basisårstider fastlægges med særskilt snegrad, så vinter ikke automatisk betyder fuld sne. Sommer skal kunne vise både grønne og gule/modne kornmarker; efterår høstede marker og løvfald; forår tidlig grøn vækst og vådere jord. Første foreslåede runtime-slice er Campaign3 v00.00.10o Seasonal Visual Foundation. Gameplay-effekter kommer senere gennem movement, visibility, fatigue, traction og supply frem for direkte årstidsbonusser.
 - **v00.02.12 / Campaign3 v00.00.10n** — 20 ZONE-REG-01-zoner får zone-overlay/polygonarkitektur og `Z` toggle. Første geometri er eksplicit en centerbaseret prototype med `HistoricallyExactGeometry=false`, ikke historisk facit. Produktionsmålet er DigDag Amt og Region, hvor faktiske 1851-polygongrænser senere skal mappes til eksisterende ZoneIds uden at ændre city/save/simulation state. Hele v10m-kontrakten med 20 zoner, 68 byer, 290.565 checksum, A/B/C-regler, Land/Ferry-links og Esbjerg ude af startstate bevares.
 - **v00.02.11 / Campaign3 v00.00.10m** — CITY-REG-01 og ZONE-REG-01 implementeret i runtime. De 12 grove QA-zoner og 10 QA-byer er erstattet af 20 historiske 1851-zoner og 68 købstæder. Startup validerer 20/68/290.565, Esbjerg er fjernet fra startstate, alle byer får CityId/ZoneId/Population1850/tier/WGS84, B/C-byer blokeres gennem runtime-gaten for normal tung militær nybygning, city selection viser bydata, og zone-routing skelner mellem land- og færgelinks. QA-hæren bruger nu DK-Z11-VEJ. World Imagery/3D-terrain marker-kontrakten bevares.
 - **v00.02.10 / ZONE-REG-01** — territorialt 1851-zone-lag fastlagt for Kongeriget Danmark. Alle 68 CITY-REG-01-købstæder har nu bindende `ZoneId` og historisk zone-navn. Første baseline består af 20 zoner, primært samtidens amter, med København som særskilt hovedstadszone og Skanderborg Amt bevaret som separat 1851-zone. Zoner bliver regionalt simulationslag for landbefolkning, rekruttering, skat, produktion, supply, infrastruktur, owner/controller og occupation state. City-tier A/B/C forbliver separat og B/C-byer får fortsat ikke fri tung militær udbygning.
