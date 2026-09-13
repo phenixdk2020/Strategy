@@ -2,11 +2,11 @@ using UnityEngine;
 
 public sealed class RTSCameraController : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 52f;
+    [SerializeField] private float moveSpeed = 110f;
     [SerializeField] private float rotateSpeed = 75f;
-    [SerializeField] private float zoomStep = 3.2f;
+    [SerializeField] private float zoomStep = 7.5f;
     [SerializeField] private float minHeight = 16f;
-    [SerializeField] private float maxHeight = 125f;
+    [SerializeField] private float maxHeight = 420f;
 
     private void Update()
     {
@@ -15,7 +15,6 @@ public sealed class RTSCameraController : MonoBehaviour
 
     private void HandleCameraInput()
     {
-        // Camera input is presentation and remains independent of battle timeScale.
         float dt = Time.unscaledDeltaTime;
 
         float horizontal = 0f;
@@ -69,8 +68,8 @@ public sealed class RTSCameraController : MonoBehaviour
         }
 
         Vector3 p = transform.position;
-        p.x = Mathf.Clamp(p.x, -178f, 178f);
-        p.z = Mathf.Clamp(p.z, -118f, 118f);
+        p.x = Mathf.Clamp(p.x, -710f, 710f);
+        p.z = Mathf.Clamp(p.z, -470f, 470f);
         p.y = Mathf.Clamp(p.y, minHeight, maxHeight);
         transform.position = p;
     }
