@@ -2,21 +2,21 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 // v00.00.09f24
 // Major mission commitment/authority guard.
 //
-// Fixes two observed problems:
-// 1) a new Major order could leave a company physically executing an older destination;
-// 2) a company could declare itself "arrived" early simply because an enemy entered
-//    fire range, even though the displayed Major destination box was still several
-//    metres away.
+// Fixes observed problems where a new Major order could leave a company physically
+// executing an older destination, and where companies could declare themselves arrived
+// early because an enemy entered fire range even though the visible destination box had
+// not yet been reached.
 //
 // While a Major-owned company is travelling to its assigned slot, local Officer AI
-// decision-making is temporarily paused. AIEnabled itself remains ON, so UI/authority
-// semantics are unchanged. Terrain/bridge routers remain free to replace the raw
-// strategic destination with legal steering waypoints.
+// Update is temporarily paused. AIEnabled itself remains ON, preserving the unified UI
+// and authority model. Terrain/bridge routers may still replace the strategic goal with
+// legal steering waypoints.
 [DefaultExecutionOrder(650)]
 public sealed class PrototypeMajorMissionCommitment09F24 : MonoBehaviour
 {
@@ -59,7 +59,7 @@ public sealed class PrototypeMajorMissionCommitment09F24 : MonoBehaviour
 
         MajorOrder09F18 order = (MajorOrder09F18)lastOrderField.GetValue(major);
         Vector3 orderPoint = (Vector3)lastOrderPointField.GetValue(major);
-        string signature = BuildSignature(order, orderPoint);
+        string signature = BuildSignature(order, orderPoint, missions);
         bool newMajorOrder = signature != lastOrderSignature;
 
         HashSet<OfficerAIController> activeThisFrame = new HashSet<OfficerAIController>();
@@ -81,14 +81,13 @@ public sealed class PrototypeMajorMissionCommitment09F24 : MonoBehaviour
             float distance = PlanarDistance(regiment.transform.position, goal);
 
             if (newMajorOrder)
-            {
                 HardReplaceOldExecution(regiment, controller, mission, goal, facing, missionOrder);
-            }
 
             if (distance > ExactArrival)
             {
-                // Never allow fire-range proximity to masquerade as arrival at the
-                // displayed formation box. The destination box is the promised slot.
+                // The box is the promised final slot. Enemy proximity may affect fire
+                // behaviour later, but it must not silently convert a not-yet-reached
+                // destination into an arrived mission.
                 WriteBool(mission, "Arrived", false);
                 WriteFloat(mission, "NextAssert", 0f);
 
@@ -98,10 +97,9 @@ public sealed class PrototypeMajorMissionCommitment09F24 : MonoBehaviour
                     PauseController(controller);
                 }
 
-                // Major.UpdateMissions can issue OrderHold() because of its old
-                // canStopToFight rule. If that removed the active destination, restore
-                // the strategic goal. Do not overwrite an existing destination here:
-                // it may be a legal bridge/building steering waypoint.
+                // Major.UpdateMissions can still issue OrderHold() from the legacy
+                // canStopToFight branch. Restore the strategic goal only if no current
+                // destination exists. Never overwrite a live bridge/building waypoint.
                 if (!HasDestination(regiment))
                     regiment.OrderMove(goal);
 
@@ -150,7 +148,6 @@ public sealed class PrototypeMajorMissionCommitment09F24 : MonoBehaviour
         missionsField = majorType.GetField("missions", flags);
         lastOrderField = majorType.GetField("lastOrder", flags);
         lastOrderPointField = majorType.GetField("lastOrderPoint", flags);
-
         clearPlayerRouteMethod = majorType.GetMethod("ClearPlayerRoute", flags);
 
         Type regimentType = typeof(Regiment);
@@ -171,26 +168,25 @@ public sealed class PrototypeMajorMissionCommitment09F24 : MonoBehaviour
         Vector3 facing,
         MajorOrder09F18 order)
     {
-        // Remove a stale direct-player route/ghost if one still exists.
         if (clearPlayerRouteMethod != null)
             clearPlayerRouteMethod.Invoke(major, new object[] { regiment });
 
-        // Remove any old direct attack target. The new Major mission is authoritative.
         if (regimentForcedTargetField != null)
             regimentForcedTargetField.SetValue(regiment, null);
 
         WriteBool(mission, "Arrived", false);
         WriteFloat(mission, "NextAssert", 0f);
 
-        // Stop the old execution state first, then write the new strategic destination.
-        regiment.OrderHold();
-        regiment.OrderMove(goal);
-
+        // Flush old local AI mission first. Then write the new strategic movement so
+        // the Hold reset cannot accidentally erase the replacement destination.
         if (controller != null)
         {
-            activeControllerReset(controller, order);
+            ResetControllerIntent(controller, order);
             PauseController(controller);
         }
+
+        regiment.OrderHold();
+        regiment.OrderMove(goal);
 
         PrototypeMajorOrderVisuals09F18 visuals = PrototypeMajorOrderVisuals09F18.Instance;
         if (visuals != null)
@@ -205,13 +201,11 @@ public sealed class PrototypeMajorMissionCommitment09F24 : MonoBehaviour
         }
     }
 
-    private static void activeControllerReset(OfficerAIController controller, MajorOrder09F18 order)
+    private static void ResetControllerIntent(OfficerAIController controller, MajorOrder09F18 order)
     {
         if (controller == null)
             return;
 
-        // Keep the same unified AI state, but remove the previous local mission before
-        // the new Major destination is executed.
         controller.SetHoldMission();
 
         if (order == MajorOrder09F18.AttackHere)
@@ -265,17 +259,26 @@ public sealed class PrototypeMajorMissionCommitment09F24 : MonoBehaviour
 
     private bool HasDestination(Regiment regiment)
     {
-        if (regiment == null)
-            return false;
-        if (regimentHasDestinationField == null)
+        if (regiment == null || regimentHasDestinationField == null)
             return false;
         object value = regimentHasDestinationField.GetValue(regiment);
         return value is bool && (bool)value;
     }
 
-    private static string BuildSignature(MajorOrder09F18 order, Vector3 point)
+    private static string BuildSignature(MajorOrder09F18 order, Vector3 point, IDictionary missions)
     {
-        return order + "|" + Mathf.RoundToInt(point.x * 4f) + ":" + Mathf.RoundToInt(point.z * 4f);
+        unchecked
+        {
+            int missionIdentity = 17;
+            foreach (DictionaryEntry entry in missions)
+            {
+                if (entry.Value != null)
+                    missionIdentity = missionIdentity * 31 + RuntimeHelpers.GetHashCode(entry.Value);
+            }
+
+            return order + "|" + Mathf.RoundToInt(point.x * 4f) + ":" + Mathf.RoundToInt(point.z * 4f) +
+                   "|M=" + missions.Count + "|E=" + missionIdentity;
+        }
     }
 
     private static MajorOrder09F18 ReadOrder(object mission)
