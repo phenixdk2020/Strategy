@@ -67,8 +67,12 @@ public sealed class PrototypeWithdrawalControllerV010N5 : MonoBehaviour
         if (regiment == null || regiment.IsRouted)
             return;
 
-        RallyPoint = rallyPoint;
-        RallyPoint.y = PrototypeBootstrap.SampleGroundHeight(RallyPoint.x, RallyPoint.z) + 0.10f;
+        Vector3 resolvedRallyPoint = rallyPoint;
+        resolvedRallyPoint.y = PrototypeBootstrap.SampleGroundHeight(
+            resolvedRallyPoint.x,
+            resolvedRallyPoint.z) + 0.10f;
+        RallyPoint = resolvedRallyPoint;
+
         HasRallyPoint = true;
         CaptureOfficerControl();
 
