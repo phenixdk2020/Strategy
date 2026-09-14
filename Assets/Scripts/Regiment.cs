@@ -556,7 +556,10 @@ public sealed class Regiment : MonoBehaviour
         if (FirePolicy == RegimentFirePolicy.HoldFire)
             return EffectiveRange * 0.70f;
 
-        return Mathf.Max(4f, GetFireTriggerRange() * 0.92f);
+        // v00.00.09f22: the selected CLOSE/MEDIUM/LONG range line is the actual
+        // engagement threshold. Do not march an extra 8% inside the displayed line
+        // before allowing the first volley.
+        return Mathf.Max(4f, GetFireTriggerRange());
     }
 
     private float GetRangeAccuracyMultiplier(float distance)
