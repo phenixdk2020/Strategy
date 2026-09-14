@@ -4,15 +4,17 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// Campaign3 compact contextual zone information panel.
+/// Compact contextual zone information panel.
 ///
-/// v10n5 selection priority:
-/// 1) exact city marker (city identity is authoritative),
-/// 2) actual visible zone polygon under the mouse,
-/// 3) zone-centre marker only as a fallback if polygon resolution fails.
+/// n6c selection contract:
+/// 1) exact city marker -> canonical City.ZoneId,
+/// 2) confirm the click is inside current Denmark zone geometry,
+/// 3) resolve ownership from the same canonical city + zone-centre sites used by
+///    the multi-site zone partition,
+/// 4) never substitute a nearby zone-centre collider for an area click.
 ///
-/// This prevents a nearby zone-centre collider from reporting Hjørring/Aalborg
-/// when the mouse is visibly inside the neighbouring Thisted/Viborg polygon.
+/// This removes the old failure mode where a click near Vejle/Aalborg/Hjørring
+/// could inherit the identity of an unrelated centre marker.
 /// </summary>
 [DefaultExecutionOrder(24000)]
 public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
@@ -24,12 +26,14 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
     }
 
     private const string ZoneOverlayRootName = "ZONE_OVERLAY_1851_LAND_CLIPPED";
+    private const float CampaignPlaneY = 0.74f;
 
     private readonly List<ZoneArea> zoneAreas = new List<ZoneArea>();
     private CampaignDenmark1851Registry.ZoneDef selectedZone;
     private CampaignDenmark1851Registry.CityDef selectedCity;
     private bool visible;
     private bool zoneGeometryReady;
+    private bool resolverQaLogged;
 
     private GUIStyle panelStyle;
     private GUIStyle titleStyle;
@@ -52,6 +56,21 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         if (!zoneGeometryReady)
             TryLoadZoneAreas();
 
+        if (zoneGeometryReady && !resolverQaLogged)
+        {
+            resolverQaLogged = true;
+            CampaignZoneOwnershipResolverV010N6C.ValidateCanonicalSites(
+                out int cityCorrect,
+                out int centreCorrect);
+            Debug.Log(
+                CampaignBuildInfo.LogTag +
+                "|ZoneOwnershipResolver=True" +
+                "|Mode=" + CampaignZoneOwnershipResolverV010N6C.ResolverMode +
+                "|CityCanonical=" + cityCorrect + "/" + CampaignDenmark1851Registry.Cities.Length +
+                "|ZoneCentreCanonical=" + centreCorrect + "/" + CampaignDenmark1851Registry.Zones.Length +
+                "|MarkerFallback=False");
+        }
+
         if (GrandCampaignBootstrap.Instance == null || Camera.main == null)
             return;
 
@@ -62,90 +81,96 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         if (IsUiArea(guiMouse))
             return;
 
-        if (TryResolveSelection(Camera.main, out CampaignDenmark1851Registry.ZoneDef zone, out CampaignDenmark1851Registry.CityDef city))
-        {
-            selectedZone = zone;
-            selectedCity = city;
-            visible = true;
+        if (!TryResolveSelection(
+                Camera.main,
+                out CampaignDenmark1851Registry.ZoneDef zone,
+                out CampaignDenmark1851Registry.CityDef city,
+                out string source))
+            return;
 
-            if (!CampaignHudStateV010N2.HudVisible)
-                CampaignHudStateV010N2.ToggleHud();
+        selectedZone = zone;
+        selectedCity = city;
+        visible = true;
 
-            // The large legacy INFO boxes stay closed during normal map clicking.
-            if (CampaignHudStateV010N2.SelectionEnabled)
-                CampaignHudStateV010N2.ToggleSelectionPanel();
+        if (!CampaignHudStateV010N2.HudVisible)
+            CampaignHudStateV010N2.ToggleHud();
 
-            Debug.Log(
-                CampaignBuildInfo.LogTag + "|ZoneInfo=True|Zone=" + selectedZone.Id +
-                "|City=" + (selectedCity != null ? selectedCity.Id : "-") +
-                "|Source=PolygonFirstMapClick");
-        }
+        // Normal zone clicking must never reopen the large legacy selection boxes.
+        if (CampaignHudStateV010N2.SelectionEnabled)
+            CampaignHudStateV010N2.ToggleSelectionPanel();
+
+        Debug.Log(
+            CampaignBuildInfo.LogTag + "|ZoneInfo=True|Zone=" + selectedZone.Id +
+            "|City=" + (selectedCity != null ? selectedCity.Id : "-") +
+            "|Source=" + source);
     }
 
     private bool TryResolveSelection(
         Camera camera,
         out CampaignDenmark1851Registry.ZoneDef zone,
-        out CampaignDenmark1851Registry.CityDef city)
+        out CampaignDenmark1851Registry.CityDef city,
+        out string source)
     {
         zone = null;
         city = null;
+        source = "None";
 
         Ray ray = camera.ScreenPointToRay(Input.mousePosition);
-        GrandCampaignZoneMarker fallbackZoneMarker = null;
 
-        // City markers remain authoritative because City.ZoneId is canonical data.
-        // Zone-centre markers are remembered only as a last-resort fallback; they
-        // must not override the area polygon under the mouse.
+        // A city hit is exact canonical data and always wins.
         RaycastHit[] hits = Physics.RaycastAll(ray, 500f);
         Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         for (int h = 0; h < hits.Length; h++)
         {
-            RaycastHit hit = hits[h];
-            GrandCampaignCityMarker cityMarker = hit.collider.GetComponent<GrandCampaignCityMarker>();
-            if (cityMarker != null)
+            GrandCampaignCityMarker cityMarker = hits[h].collider.GetComponent<GrandCampaignCityMarker>();
+            if (cityMarker == null)
+                continue;
+
+            city = FindCity(cityMarker.CityId);
+            if (city == null)
+                continue;
+
+            zone = FindZone(city.ZoneId);
+            if (zone != null)
             {
-                city = FindCity(cityMarker.CityId);
-                if (city != null)
-                {
-                    zone = FindZone(city.ZoneId);
-                    return zone != null;
-                }
-            }
-
-            if (fallbackZoneMarker == null)
-                fallbackZoneMarker = hit.collider.GetComponent<GrandCampaignZoneMarker>();
-        }
-
-        if (zoneGeometryReady && zoneAreas.Count > 0)
-        {
-            Plane campaignPlane = new Plane(Vector3.up, new Vector3(0f, 0.74f, 0f));
-            if (campaignPlane.Raycast(ray, out float enter))
-            {
-                Vector3 world = ray.GetPoint(enter);
-                Vector2 point = new Vector2(world.x, world.z);
-
-                for (int i = 0; i < zoneAreas.Count; i++)
-                {
-                    ZoneArea area = zoneAreas[i];
-                    if (!PointInPolygon(point, area.WorldPolygon))
-                        continue;
-
-                    zone = FindZone(area.ZoneId);
-                    if (zone != null)
-                        return true;
-                }
+                source = "CanonicalCity";
+                return true;
             }
         }
 
-        // Fallback only. This preserves the ability to click an isolated zone-centre
-        // marker if polygon geometry is temporarily unavailable during startup.
-        if (fallbackZoneMarker != null)
+        if (!zoneGeometryReady || zoneAreas.Count == 0)
+            return false;
+
+        Plane campaignPlane = new Plane(Vector3.up, new Vector3(0f, CampaignPlaneY, 0f));
+        if (!campaignPlane.Raycast(ray, out float enter))
+            return false;
+
+        Vector3 world = ray.GetPoint(enter);
+        Vector2 worldPoint = new Vector2(world.x, world.z);
+
+        // The zone polygons are also our Denmark/land guard. A click in open sea
+        // must not receive the nearest Amt simply because a site exists nearby.
+        bool insideZoneGeometry = false;
+        for (int i = 0; i < zoneAreas.Count; i++)
         {
-            zone = FindZone(fallbackZoneMarker.ZoneId);
-            return zone != null;
+            if (!PointInPolygon(worldPoint, zoneAreas[i].WorldPolygon))
+                continue;
+            insideZoneGeometry = true;
+            break;
         }
 
-        return false;
+        if (!insideZoneGeometry)
+            return false;
+
+        if (!CampaignZoneOwnershipResolverV010N6C.TryResolveWorld(world, out string resolvedZoneId))
+            return false;
+
+        zone = FindZone(resolvedZoneId);
+        if (zone == null)
+            return false;
+
+        source = "CanonicalMultiSiteOwnership";
+        return true;
     }
 
     private void TryLoadZoneAreas()
@@ -179,8 +204,9 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         if (zoneGeometryReady)
         {
             Debug.Log(
-                CampaignBuildInfo.LogTag + "|ZoneInfoGeometry=True|PolygonParts=" + zoneAreas.Count +
-                "|Resolver=CityThenPointInActualOverlayPolygonThenMarkerFallback");
+                CampaignBuildInfo.LogTag +
+                "|ZoneInfoGeometry=True|PolygonParts=" + zoneAreas.Count +
+                "|Resolver=CityThenCanonicalMultiSite|MarkerFallback=False");
         }
     }
 
@@ -191,7 +217,6 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
 
         bool inside = false;
         int j = polygon.Count - 1;
-
         for (int i = 0; i < polygon.Count; i++)
         {
             Vector2 pi = polygon[i];
@@ -209,7 +234,6 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
             }
             j = i;
         }
-
         return inside;
     }
 
