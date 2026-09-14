@@ -1,86 +1,49 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f26
+Prototype version: v00.00.09f27
 Build status: TEST
-Build name: UNDER-FIRE REACTION + MISSION SUSPENSION
-Visible build marker: PROJECT 1864 | v00.00.09f26 TEST
+Build name: TWO BATTALIONS + SHARED MAJOR COMMAND CORE
+Visible build marker: PROJECT 1864 | v00.00.09f27 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1-09f25 retained + 09f26 under-fire reaction supplement
+Design manual baseline: v00.02.08 + tactical design supplements through 09f27
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
-09f22 design supplement: docs/design-supplements/v00.00.09f22-major-formation-selection-hud.md
-09f23 design supplement: docs/design-supplements/v00.00.09f23-authority-and-formation-slot-safety.md
-09f24 design supplement: docs/design-supplements/v00.00.09f24-major-mission-destination-authority.md
-09f25 design supplement: docs/design-supplements/v00.00.09f25-charge-local-authority-command-zone.md
 09f26 design supplement: docs/design-supplements/v00.00.09f26-under-fire-reaction.md
+09f27 design supplement: docs/design-supplements/v00.00.09f27-two-battalions-shared-major-core.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f26 - Under-fire reaction / mission suspension
-- AI ON company moving under a parent/local AI mission now reacts to a fresh hostile-fire event when a valid enemy is inside its own Long/MaximumRange.
-- Reaction is SUSPEND, not DELETE: the company stops, deploys Line, faces the local threat and returns fire when its existing fire policy permits.
-- HOLD FIRE remains authoritative and is never silently broken by the reaction layer.
-- A shorter CLOSE/MEDIUM fire policy may be temporarily widened to LONG solely for the local return-fire reaction; the previous fire policy is restored afterward.
-- Parent Major mission remains stored. After a quiet period the reaction layer releases control and the normal parent/local Officer AI may resume the original mission.
-- AI OFF remains literal player authority: B-282 does not auto-cancel a direct player movement order.
-- Active bridge passage is a critical exception: reaction is deferred until the bridge route has cleared, avoiding formations stopping in the bridge throat.
-- Console telemetry prefix: UNDER-FIRE-09F26.
+v00.00.09f27 - Two battalions / two Majors
+- Adds a second Danish battalion with four additional company-scale infantry units.
+- Danish hierarchy now contains 8 companies split 4 + 4 under Major A and Major B.
+- Both Majors are physical selectable HQs with 3 horses each.
+- Both Majors use the SAME PrototypeRegimentHierarchy09F27 controller, UI, mission planner, reserve/flank logic and authority rules.
+- The legacy single-Major control stack is disabled at runtime after F27 installs to avoid two competing authority systems.
+- Both Major HUDs use the same 90 px full-width bottom HUD and six commands: ANGRIB HER / FORSVAR HER / RYK FREM / TILBAGETRÆK / SAML / HOLD.
+- Each Major has AI ON/OFF plus DEF/BAL/OFF doctrine.
+- New Major orders reclaim subordinate companies and set company AI ON; direct company orders may still detach companies through the established AI OFF/manual authority rule.
+- Formation slots use the shared F23 collision-safe endpoint resolver and unique slot assignment by minimum total march distance.
+- Each Major shows subordinate command links and 320/450 m command-zone rings when selected.
+- Major dynamic HQ advance is applied independently to both battalions.
+- Console telemetry prefixes: HQ-09F27, HQ-ORDER-09F27, HQ-SLOT-09F27, HQ-ZONE-09F27, AI-AUTHORITY-09F27.
 
-v00.00.09f26 - Roadmap gate after Regiment control
-- Regiment-control milestone remains: 2 Majors, 4 companies per Major, 1 Oberstløjtnant and working Oberstløjtnant -> Major -> Kaptajn authority.
-- Once that control chain is stable, do NOT immediately continue upward to Brigade/Division.
-- Next combined-arms milestone is DRAGOONS: mounted movement, dismount, fire, remount, charge/melee and Dragoon AI using the same command/authority model.
-- Next after Dragoons is CANNON BATTERY: movement/unlimber, arcs/range/ammunition, artillery damage and battery AI.
-- Dragoons and artillery must reuse common destination, authority, command-zone and later order-delay systems rather than becoming parallel control stacks.
+Retained from v00.00.09f26
+- AI ON moving companies may suspend movement under confirmed hostile fire, deploy Line and return fire while preserving the parent mission.
+- Active bridge passage defers under-fire reaction until the bridge route clears.
+- AI OFF remains direct player authority.
 
 Retained from v00.00.09f25
-- Manual order followed by AI ON means local Captain authority; the old Major assignment is not resurrected.
-- Only a NEW Major order may reclaim a manually detached company.
-- Explicit infantry CHARGE [V] closes beyond ranged stop distance with HOLD FIRE and transitions to melee contact.
-- Charge momentum and FRONT/FLANK/REAR melee modifiers remain.
-- Major HQ dynamic advance remains active with preferred roughly 145-165 m standoff behind battalion centre/front during active movement.
-- Major command-zone MVP remains: IN COMMAND <=320 m, EXTENDED <=450 m, OUT OF COMMAND >450 m; command distance affects reaction/coordination, not weapon accuracy/range.
+- Infantry CHARGE and melee approach remain.
+- Manual order followed by AI ON means local Captain authority until a NEW Major order reclaims the company.
+- Command-zone principle affects command/reaction rather than weapon accuracy.
 
-Retained from v00.00.09f24
-- Selected Major-owned company can inspect its current Major path and destination footprint.
-- New Major order is a hard replacement of old physical route/attack execution.
-- Displayed Major destination box remains authoritative; exact arrival tolerance approximately 4.5 m.
-
-Retained from v00.00.09f23
-- Direct player company orders detach from Major authority before PlayerCommander handles the same input frame.
-- Major/manual Line formations use shared collision-safe reserved company slots.
-- Major slots and manual group slots cannot overlap one another or Farmhouse/Barn footprints.
-- Manual group slots are assigned by minimum total march distance.
-
-Retained from v00.00.09f22
-- Major ANGRIB HER is objective-centred and front companies use nearest unique slots.
-- Expanded 5000 m company selection remains.
-- Building endpoint legality guard remains.
-- Direct OrderAttack stop range remains aligned with selected CLOSE/MEDIUM/LONG fire trigger range.
-- Major and company command HUD use the same low-profile full-width bottom-panel concept.
-
-Retained from v00.00.09f21-v00.00.09f18
-- Manual attack authority isolation remains.
-- Company selection may take UI authority from Major.
-- Major mission remains commander intent; doctrine changes execution style rather than silently replacing mission.
-- Major may choose front/reserve/flank according to known situation; reserve/flank are never mandatory.
-- Major and companies use unified AI vocabulary: AI ON/OFF and DEF/BAL/OFF.
-- Major may be moved manually; direct manual HQ movement sets Major AI OFF.
-
-Retained from v00.00.09f15-v00.00.09f14
-- Battlefield 2880 x 1920 m, camera minimum height 9.5 m, river width 5.5 m and bridge-only crossing.
-- Physical Major HQ with three horses.
-- Four Danish company-scale units under the Major.
-- B-271 ranged lethality defaults retained.
-- Destination facing chevron, musket volley audio, 1:1 fallen support and procedural WALK animation retained.
-
-Primary v00.00.09f26 QA
-1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f26 TEST.
-2. Major gives RYK FREM/ANGRIB/FORSVAR mission so one AI ON company is physically moving.
-3. Let an enemy volley hit that company while the enemy is within the company's Long range.
-4. Company must stop, deploy Line, face the threat and return fire if policy is not HOLD.
-5. Major destination/mission must remain preserved; it must not be deleted by the local contact reaction.
-6. After hostile fire becomes quiet for the reaction window, company must be released back to its parent/local Officer AI and may resume the preserved mission.
-7. Repeat with company AI OFF and a direct manual movement order: it must NOT automatically cancel the player's route solely because it is fired upon.
-8. Repeat during an active bridge crossing: company must not stop in the bridge throat; reaction should defer until crossing is clear if the threat remains valid.
-9. Verify previous CLOSE/MEDIUM/LONG/HOLD policy is restored after reaction.
-10. Regression: f25 CHARGE/melee, local Captain authority, Major HQ movement and command-zone rings still function.
+Primary v00.00.09f27 QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f27 TEST.
+2. Verify 8 Danish company-scale units exist: 4 under Major A and 4 under Major B.
+3. Verify two physical Major HQs exist and both can be selected by click/drag.
+4. Select Major A and issue FORSVAR HER. Only 1. Battalion companies should receive that battalion mission.
+5. Select Major B and issue RYK FREM/ANGRIB HER. Only 2. Battalion companies should receive that mission.
+6. Verify both Majors expose the exact same HUD, six orders, AI toggle and doctrine controls.
+7. Verify selected Major shows links only to its four companies and command-zone rings around its own HQ.
+8. Give one company a direct manual order. It should detach from its Major; a NEW Major order should reclaim it.
+9. Verify company destination boxes remain visible when selecting the company itself.
+10. Regression-test F26 under-fire reaction and F25 charge/melee on companies in BOTH battalions.
