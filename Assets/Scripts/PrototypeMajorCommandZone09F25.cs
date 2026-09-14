@@ -196,10 +196,10 @@ public sealed class PrototypeMajorCommandZone09F25 : MonoBehaviour
             if (PlanarDistance(hq, safe) < RelocationTrigger)
                 continue;
 
-            // Current HQ movement is straight-line. Until HQ-specific route planning is
-            // added, only issue a relocation with a clear path. This prevents the Major
-            // from walking through buildings/open river just to preserve command radius.
-            if (PrototypeNavigationRecoveryManager.HasObstacleBetween(hq, safe, RegimentFormation.Column))
+            // HQ movement is currently straight-line. Test only HARD blockers here.
+            // Trees/fences remain pass-through in the active terrain design and must
+            // therefore not freeze HQ advance merely because old recovery code scores them.
+            if (!HqPathClear(hq, safe))
                 continue;
 
             chosen = safe;
@@ -222,6 +222,45 @@ public sealed class PrototypeMajorCommandZone09F25 : MonoBehaviour
                   "|BattalionCenter=" + battalionCenter.x.ToString("0") + "," + battalionCenter.z.ToString("0") +
                   "|FarthestCompany=" + farthest.ToString("0") +
                   "|MajorAI=ON");
+    }
+
+    private static bool HqPathClear(Vector3 start, Vector3 end)
+    {
+        float distance = PlanarDistance(start, end);
+        int samples = Mathf.Clamp(Mathf.CeilToInt(distance / 4f), 2, 128);
+
+        for (int i = 0; i <= samples; i++)
+        {
+            float t = i / (float)samples;
+            Vector3 p = Vector3.Lerp(start, end, t);
+
+            if (Mathf.Abs(p.x) > PrototypeBootstrap.BattlefieldHalfWidth - 8f ||
+                Mathf.Abs(p.z) > PrototypeBootstrap.BattlefieldHalfDepth - 8f)
+                return false;
+
+            float riverX = PrototypeBootstrap.StreamCenterX(p.z);
+            bool inBridgeZone = Mathf.Abs(p.z - 22f) <= 8f;
+            if (Mathf.Abs(p.x - riverX) <= 4.7f && !inBridgeZone)
+                return false;
+
+            Vector3 probe = new Vector3(
+                p.x,
+                PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 1.0f,
+                p.z);
+            Collider[] hits = Physics.OverlapSphere(probe, 1.8f);
+            foreach (Collider hit in hits)
+            {
+                if (hit == null)
+                    continue;
+                string name = hit.gameObject.name;
+                string root = hit.transform.root != null ? hit.transform.root.name : string.Empty;
+                if (name.Contains("Farmhouse") || name.Contains("Barn") ||
+                    root.Contains("Farmhouse") || root.Contains("Barn"))
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     private void ApplyCommandDelay()
