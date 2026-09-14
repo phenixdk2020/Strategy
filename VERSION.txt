@@ -1,89 +1,96 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f14
+Prototype version: v00.00.09f15
 Build status: TEST
-Build name: B-271 RANGED LETHALITY CALIBRATION - 20-30 CLOSE HIT TARGET
-Visible build marker: PROJECT 1864 | v00.00.09f14 TEST
+Build name: MAJOR HQ + 2 DANISH COMPANIES + 4X AREA MAP + CLOSER ZOOM + UI PASS
+Visible build marker: PROJECT 1864 | v00.00.09f15 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + 09f15 Major HQ/map/UI + formation-ranks doctrine supplement
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
 Current B-271 notes: docs/backlog/B-271-RANGED-COMBAT-CALIBRATION-NOTES.md
-09f14 design supplement: docs/design-supplements/v00.00.09f14-combat-lethality-calibration.md
+09f15 design supplement: docs/design-supplements/v00.00.09f15-major-hq-map-ui.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f14 - B-271 ranged lethality calibration ACTIVE
-- Object/path detours from B-270 are retained; current user test reports obstacle avoidance appears to work correctly.
-- Ranged lethality is now the active tuning gate.
-- F9 default BaseHit increased from 1.40% to 12.00%.
-- CLOSE factor increased from x1.75 to x2.00.
-- MEDIUM factor changed from x1.00 to x1.10.
-- LONG factor increased from x0.30 to x0.55.
-- Firing fraction remains 58%.
-- F9 BaseHit slider maximum increased to 20.00% so the new QA profile is actually adjustable in the panel.
-- STANDARD now restores the new 09f14 QA defaults.
+v00.00.09f15 - Battlefield / camera
+- Battlefield changed from 1440 x 960 m to 2880 x 1920 m.
+- This is 2x each linear dimension = 4x battlefield area.
+- Terrain mesh keeps roughly 5 m cells and uses UInt32 indices.
+- Camera minimum height reduced from 16 m to 9.5 m for substantially closer inspection of soldiers, horses and animation.
+- Camera bounds now derive from PrototypeBootstrap battlefield constants rather than the old hardcoded limits.
+- First environment polish pass adds warmer lighting, soft shadows, richer ground/water/road tones, fuller tree crowns and simple farmhouse detail.
 
-v00.00.09f14 - Expected centerline for a fresh 190-man company
-- 190 men x 58% gives about 110 firing men.
-- At full quality, CLOSE centerline is about 26.4 expected hits.
-- MEDIUM centerline is about 14.5 expected hits.
-- LONG centerline is about 7.3 expected hits.
-- Actual results still vary with random spread and active quality factors.
-- These are QA/gameplay calibration targets, not final historical weapon-profile values.
+v00.00.09f15 - Wider river / bridge
+- Visual river width increased from 4.4 m to 5.5 m.
+- River hard-blocker half-width increased to 2.75 m to match the visual river.
+- Bridge remains the only legal open-water crossing.
+- Bridge visual and river navigation now share PrototypeBootstrap.StreamCenterX.
+- Long-route river sampling is dynamic so the larger battlefield cannot skip the narrow river between coarse samples.
 
-v00.00.09f14 - Legacy 16-hit ceiling calibration layer
-- Regiment.FireVolley still contains a legacy hard ceiling of 16 resolved hits.
-- Added PrototypeLethalityCalibration09F14 at execution order 37100.
-- The layer only supplements a volley if the original kernel actually reaches the 16-hit ceiling.
-- It never reduces or rewrites uncapped lower-hit volleys.
-- Supplemental hits are physically limited by firing men and target strength.
-- Original volley shock is not applied twice; supplemental hits use zero extra shock.
-- This is explicitly temporary until the authoritative hit resolver is cleaned up and the legacy 16-hit ceiling is removed from the kernel.
+v00.00.09f15 - Active company-scale test OOB
+- Denmark now keeps two active company-scale units: internal IDs 1. Regiment and 5. Regiment.
+- UI presents them as 1. Kompagni and 2. Kompagni.
+- Prussia keeps 8th Regiment as the single opposing company-scale test unit.
+- All three active units are normalized to 190 men before the existing 09f8 range tuning layer applies.
 
-v00.00.09f14 - Definitive calibration telemetry
-- Existing VOLLEY-QA-09F13 remains for raw/kernel telemetry and audio.
-- New definitive line is VOLLEY-CAL-09F14.
-- It logs shooter, target, actual distance, band, firing men, BaseHit, range factor, quality, Expected, KernelHits, ExtraHits, TotalHits and TargetRemaining.
-- For B-271 tuning, use TotalHits from VOLLEY-CAL-09F14.
-- Run at least 10-20 comparable salves per range band before the next tuning decision.
+v00.00.09f15 - Major battalion HQ
+- Added PrototypeMajorHQ09F15.
+- Physical HQ is a Danish Major with a mounted officer, three total horses and a small HQ/Dannebrog marker.
+- Major HQ has NO autonomous AI in this build.
+- Selecting Major shows a yellow HQ selection ring and direct command-links to both Danish companies.
+- Major is not registered as a combat Regiment and therefore does not alter victory conditions.
 
-v00.00.09f14 - Later weapon-model direction
-- Final ranged combat must not use one universal accuracy curve.
-- Weapon profiles shall later distinguish at least older smoothbore muskets from rifled/tapriffel/Minié-like weapons and other relevant systems.
-- Each weapon profile can then own its own distance/accuracy behavior while common formation, quality, smoke, cover and movement factors remain shared.
+v00.00.09f15 - Major HQ UI
+- Added PrototypeUiTheme09F15 for a darker olive/brass command-panel look.
+- Major receives a dedicated HQ panel rather than the company combat panel.
+- HQ panel shows HQ AI OFF, 3 horses, both subordinate companies, strength/losses and current Major mission.
+- Targeted Major orders display an order prompt plus a terrain target-circle preview.
 
-v00.00.09f13 retained - Destination facing / telemetry / audio / fallen control
-- Destination footprint keeps the final-facing chevron.
-- Procedural 3D black-powder volley audio remains active.
-- F9 'Tab pr. synligt lig' still supports 1:1 and is synchronized with the active renderer.
+v00.00.09f15 - Six Major orders
+- ANGRIB HER: distribute companies across a battalion frontage and advance toward the chosen area; local enemy contact can convert to direct attack.
+- FORSVAR HER: distribute companies around the selected defensive area and hold in Line after arrival.
+- TILBAGETRÆK HERTIL: organized battalion-level fallback MVP to the selected area.
+- RYK FREM HERTIL: advance the battalion to the selected area without an automatic storm order.
+- HOLD POSITION: cancel active Major missions and hold both companies.
+- SAML HER: concentrate both companies more tightly around the selected point.
+- Subordinate Danish OfficerAIControllers are kept OFF when a Major order is issued so the Major command layer remains authoritative in this first prototype.
+
+v00.00.09f15 - Officer hierarchy documented
+- Company leader = Kaptajn.
+- Battalion leader = Major.
+- Regiment leader = Oberstløjtnant.
+- Brigade leader = Oberst.
+- Division leader = Generalmajor.
+- The design manual notes that historical command appointments could be filled by officers one grade below the normal level after losses or shortages.
+- Courier/order delay remains later work; the approved visual model uses a small rider marker moving along the command-link, not a terrain-pathfinding horse.
+
+v00.00.09f14 retained - B-271 ranged lethality calibration
+- F9 defaults remain BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55 and firing fraction 58%.
+- Fresh 190-man CLOSE centerline remains about 26 expected hits before random/quality variation.
+- PrototypeLethalityCalibration09F14 still supplements the old 16-hit kernel ceiling only when that ceiling is reached.
+- Use VOLLEY-CAL-09F14 TotalHits for B-271 tuning.
+
+v00.00.09f13 retained
+- Destination facing chevron remains active.
+- Procedural 3D musket volley audio remains active.
+- F9 fallen control still supports 1:1.
 - Existing procedural WALK / Forced March / routed RUN animation remains active.
 
-v00.00.09f12 retained - Route/pathfinding authority
-- Direct ANGREB retains the enemy as mission target while river/building routing owns physical steering when required.
-- Farmhouse/Barn detour waypoints persist and overlapping hard-building clearance is treated as a combined obstacle cluster.
+v00.00.09f12 retained
+- Direct attack route authority remains active.
+- Farmhouse/Barn detours and overlapping blocker-cluster routing remain active.
 - Bridge traversal remains STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
 
-v00.00.09f11 retained - Expanded battlefield
-- Battlefield remains 1440 x 960 m, scale 1 Unity unit = 1 metre.
-- River remains extended/widened across the expanded map and bridge-only for legal crossing.
-- Farmhouse and Barn are hard blockers; trees and fences remain pass-through for now.
-
-v00.00.09f10 retained
-- Enemy inside Long/MaximumRange => remain/deploy in Line except when bridge passage requires Column.
-- Fighting withdrawal controls remain TRÆK -> MED / LONG / UD.
-
-v00.00.09f8/f9 retained
-- Current TEST ranges remain Close 35 m, Medium/Effective 70 m and Long/Maximum 100 m.
-- Fire sector remains 70 degrees total (+/-35 degrees).
-- Morale remains locked to 100 for the current hit-rate QA pass; cohesion remains active.
-- Stationary facing remains 16.8 degrees/second.
-
-Primary v00.00.09f14 QA
+Primary v00.00.09f15 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f14 TEST.
-3. F9 STANDARD shows BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55 and firing fraction 58%.
-4. Place fresh companies at CLOSE and collect at least 10-20 VOLLEY-CAL-09F14 lines.
-5. Compare TotalHits rather than only the legacy VOLLEY-QA-09F13 Hits value.
-6. Fresh ~190-man CLOSE salves should center roughly in the 20-30 hit region, subject to random/quality variation.
-7. Repeat later at MEDIUM and LONG to establish measured distributions before further tuning.
-8. Confirm pathfinding/object detours, bridge routing, destination chevron, musket audio, 1:1 fallen and WALK animation did not regress.
+2. Build marker reads PROJECT 1864 | v00.00.09f15 TEST.
+3. Camera can zoom closer than 09f14 and cannot move outside the expanded battlefield bounds.
+4. Battlefield reports 2880 x 1920 m.
+5. River looks slightly wider and open-water crossing is still impossible away from the bridge.
+6. Two Danish companies and one Prussian company are active, each normalized to 190 men.
+7. Major HQ is visible behind the Danish line with three horses and HQ flag.
+8. Clicking Major shows the dedicated HQ panel and command-links to both Danish companies.
+9. Test each targeted Major order: ANGRIB HER / FORSVAR HER / TILBAGETRÆK HERTIL / RYK FREM HERTIL / SAML HER.
+10. HOLD POSITION immediately cancels current Major missions and holds both companies.
+11. Recheck farmhouse/barn detours and bridge routing on the expanded battlefield.
+12. Recheck VOLLEY-CAL-09F14, musket audio, destination chevron, 1:1 fallen and WALK animation for regressions.
