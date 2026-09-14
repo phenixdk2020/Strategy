@@ -1,8 +1,6 @@
 using UnityEngine;
 
-// v00.00.09f3 fixed bridge visual.
-// The old navigation managers used to create the bridge as a side effect. They are
-// disabled in 09f3, so the bridge visual is now owned independently from navigation.
+// v00.00.09f3 fixed bridge visual, aligned to the 09f15 river curve.
 [DefaultExecutionOrder(-5000)]
 public sealed class PrototypeBridgeVisual09F3 : MonoBehaviour
 {
@@ -26,28 +24,28 @@ public sealed class PrototypeBridgeVisual09F3 : MonoBehaviour
             return;
         }
 
-        float x = StreamCenterX(BridgeZ);
+        float x = PrototypeBootstrap.StreamCenterX(BridgeZ);
         float y = PrototypeBootstrap.SampleGroundHeight(x, BridgeZ) + 0.24f;
 
         GameObject bridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
         bridge.name = "PrototypeBridge_v009f3";
         bridge.transform.position = new Vector3(x, y, BridgeZ);
-        bridge.transform.localScale = new Vector3(16f, 0.28f, 6.2f);
+        bridge.transform.localScale = new Vector3(17.5f, 0.30f, 6.4f);
         bridge.GetComponent<Renderer>().sharedMaterial =
             PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.38f, 0.28f, 0.16f),
-                "BridgeDeck09F3");
+                new Color(0.34f, 0.235f, 0.125f),
+                "BridgeDeck09F15");
 
         Collider collider = bridge.GetComponent<Collider>();
         if (collider != null)
             Destroy(collider);
 
-        CreateRail(bridge.transform, -2.75f);
-        CreateRail(bridge.transform, 2.75f);
+        CreateRail(bridge.transform, -2.82f);
+        CreateRail(bridge.transform, 2.82f);
 
         Debug.Log(
-            "BRIDGE-09F3|Created=True|Z=22|NavigationCollider=False|" +
-            "RiverRuleOwner=PrototypeRiverBridgeOnly09F3");
+            "BRIDGE-09F15|Created=True|Z=22|NavigationCollider=False|" +
+            "RiverWidth=5.5m|RiverRuleOwner=PrototypeRiverBridgeOnly09F3");
     }
 
     private static void CreateRail(Transform bridge, float localZ)
@@ -55,20 +53,15 @@ public sealed class PrototypeBridgeVisual09F3 : MonoBehaviour
         GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
         rail.name = "BridgeRail";
         rail.transform.SetParent(bridge, false);
-        rail.transform.localPosition = new Vector3(0f, 1.8f, localZ / 6.2f);
+        rail.transform.localPosition = new Vector3(0f, 1.8f, localZ / 6.4f);
         rail.transform.localScale = new Vector3(1f, 8f, 0.05f);
         rail.GetComponent<Renderer>().sharedMaterial =
             PrototypeBootstrap.CreateSharedMaterial(
-                new Color(0.25f, 0.16f, 0.08f),
-                "BridgeRail09F3");
+                new Color(0.22f, 0.135f, 0.065f),
+                "BridgeRail09F15");
 
         Collider collider = rail.GetComponent<Collider>();
         if (collider != null)
             Destroy(collider);
-    }
-
-    private static float StreamCenterX(float z)
-    {
-        return Mathf.Sin(z * 0.065f) * 4.8f;
     }
 }
