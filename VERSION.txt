@@ -1,12 +1,12 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n6b
-Build status: PROPOSAL 3 CITY ART / TRANSPARENT BILLBOARD ICONS
-Build name: CAMPAIGN3 PROPOSAL 3 CITY ART 10N6B
+Prototype version: v00.00.10n6c
+Build status: CITY ART ASSET FIX + DETERMINISTIC ZONE OWNERSHIP
+Build name: CAMPAIGN3 CITY ART + ZONE OWNERSHIP HOTFIX 10N6C
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n6b-proposal3-city-art
+Work branch: work/channel-campaign3-v10n6c-city-zone-hotfix
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.20
+Design baseline: v00.02.21
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
@@ -16,86 +16,85 @@ LINEAGE:
 - v00.00.10n5 = tactical withdrawal + city-anchored prototype zone partition refinements
 - v00.00.10n6 = procedural Proposal 3 miniature-city prototype
 - v00.00.10n6a = CS1612 withdrawal rally-point compile hotfix
-- v00.00.10n6b = authored transparent Proposal 3 A/B/C city art
+- v00.00.10n6b = authored transparent Proposal 3 A/B/C city-art runtime
+- v00.00.10n6c = valid city PNG payloads + deterministic canonical zone ownership resolver
 
 ROLLBACK:
+- before v10n6c: backup/channel-campaign3-before-v10n6c-city-zone-hotfix-20260914
 - before v10n6b: backup/channel-campaign3-before-v10n6b-proposal3-city-art-20260914
 - before v10n6a: backup/channel-campaign3-before-v10n6a-withdrawal-compile-hotfix-20260914
-- before v10n6: backup/channel-campaign3-v10n5-before-v10n6-isometric-city-icons-20260914
 
-V10N6B PURPOSE:
-- Replace the blocky procedural n6 city miniatures with authored Proposal 3 city artwork.
-- Give A/B/C settlements a consistent painterly isometric campaign-map language.
-- Remove the visible green procedural town plate.
-- Keep transparency outside each settlement footprint.
-- Keep CITY-REG-01 identity, labels, population, ZoneId, click identity and movement semantics unchanged.
-- Hide the visible round zone-centre discs while retaining their metadata/collider fallback.
+V10N6C ROOT CAUSE / FIX:
+1. CITY ART
+- n6b runtime log showed Proposal3CityArt=False / MissingTexture for A, B and C.
+- The promoted n6b PNG payloads were not the intended valid Proposal 3 resources.
+- n6c replaces all three Resources PNG files with valid transparent 256x256 Proposal 3 assets.
+- CampaignCityIconV010N6 now retries resource import at 1 second intervals and logs a missing-texture state only once instead of every frame.
+- Successful resource load logs the texture dimensions.
+- The visible icon child is CITY_ICON_PROPOSAL3_10N6C.
+- Legacy procedural n6 and previous n6b icon children are removed when the n6c art installs.
+- Old round city rendering remains disabled; one invisible BoxCollider remains the click target.
+
+2. ZONE / AMT CLICK OWNERSHIP
+- n6b log showed raw land-clipped polygon coverage of only 53/68 canonical city anchors and 19/20 zone centres.
+- The failures are concentrated on coastal/island points where the coarse Natural Earth 1:50m land mask does not contain the canonical city coordinate.
+- n6c separates CLICK OWNERSHIP from coarse land-mask coverage.
+- Exact city clicks always resolve through canonical City.ZoneId.
+- Area clicks use CampaignZoneOwnershipResolverV010N6C and the same canonical city + zone-centre influence sites as the prototype multi-site partition.
+- Zone-centre collider fallback is removed from normal area selection.
+- Open-sea clicks are rejected by the existing land-clipped zone geometry guard.
+- Resolver QA independently checks all canonical city sites and zone-centre sites.
+
+IMPORTANT GEOMETRY GUARDRAIL:
+- The visible Amt lines are still PROTOTYPE_LAND_CLIPPED_MULTI_SITE_VORONOI.
+- Resolver consistency is NOT a claim that the lines are historically exact 1851 borders.
+- The Natural Earth 1:50m coastline remains too coarse for several small coastal details.
+- Source-backed DigDag Amt/Region polygons remain the required production geometry.
 
 PROPOSAL 3 CITY ART:
-1. C - MINOR TOWN
-- Small transparent cutout settlement.
-- Approximately 2-3 buildings.
-- Smallest campaign-map footprint.
+- C: smallest settlement icon, approximately 2-3 buildings.
+- B: regional-town icon, approximately 5-6 buildings plus church.
+- A: largest development-city icon, approximately 10-15 buildings, church and stronger civic centre.
+- Transparent outside the irregular settlement footprint; no green square TownGround.
+- Population gives only limited scale variation inside each A/B/C tier.
 
-2. B - REGIONAL TOWN
-- Medium transparent cutout town.
-- Approximately 5-6 buildings plus church.
-- Regional-town visual weight.
-
-3. A - DEVELOPMENT CITY
-- Large transparent cutout town.
-- Approximately 10-15 buildings, church and stronger civic centre.
-- Largest campaign-map footprint.
-
-CITY ICON RUNTIME:
-- CampaignCityIconV010N6 now implements the n6b sprite/billboard renderer.
-- PNG assets load from Assets/Resources/Campaign/CityIcons.
-- CITY_* root and GrandCampaignCityMarker remain authoritative.
-- Existing round city renderer is disabled.
-- Legacy CITY_ICON_ISOMETRIC_10N6 procedural child is removed when present.
-- No TownGround/green square is created.
-- A single invisible BoxCollider remains the click target.
-- Visible child is CITY_ICON_PROPOSAL3_10N6B.
-- Sprite artwork billboards toward Camera.main.
-- Population only gives limited scale variation inside each A/B/C tier.
-- Round GrandCampaignZoneMarker renderers are hidden; collider/data fallback remains available.
-
-CITY ART ASSETS:
-- Assets/Resources/Campaign/CityIcons/City_C_Proposal3.png
-- Assets/Resources/Campaign/CityIcons/City_B_Proposal3.png
+FILES ADDED/CHANGED IN V10N6C:
 - Assets/Resources/Campaign/CityIcons/City_A_Proposal3.png
+- Assets/Resources/Campaign/CityIcons/City_B_Proposal3.png
+- Assets/Resources/Campaign/CityIcons/City_C_Proposal3.png
+- Assets/Scripts/Campaign/CampaignCityIconV010N6.cs
+- Assets/Scripts/Campaign/CampaignZoneOwnershipResolverV010N6C.cs
+- Assets/Scripts/Campaign/CampaignZoneOwnershipResolverV010N6C.cs.meta
+- Assets/Scripts/Campaign/CampaignZoneInfoPanelV010N3.cs
+- Assets/Scripts/Campaign/CampaignBuildInfo.cs
+- VERSION.txt
+- docs/parts/part-20-55-CAMPAIGN-V10N6C-CITY-ZONE-HOTFIX.md
+- docs/PROJECT-1864-Designmanual.md
 
-RETAINED N6A/N5 SYSTEMS:
-- CS1612 RallyPoint hotfix retained.
-- TILBAGETRÆK HERTIL retained.
-- Fighting withdrawal retained.
-- BRYD KONTAKT retained.
-- Existing morale rout remains a separate uncontrolled state.
-
-ZONE FOUNDATION:
-- Current zone geometry is still PROTOTYPE_LAND_CLIPPED_MULTI_SITE_VORONOI.
-- Zone selection follows the current polygon before zone-centre fallback.
-- n6b does NOT claim exact historical 1851 Amt geometry.
-- DigDag/source-backed historical Amt polygons remain the production target.
+RETAINED SYSTEMS:
+- 20 ZONE-REG-01 zones / 68 CITY-REG-01 cities / 290565 urban population checksum.
+- n6a RallyPoint CS1612 hotfix.
+- TILBAGETRÆK HERTIL / fighting withdrawal / BRYD KONTAKT.
+- World Imagery + streamed 3D terrain.
+- A/B/C construction rules and city/zone identities.
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. Badge/topbar show v00.00.10n6b.
-3. All 68 CITY-REG-01 cities still exist.
-4. Every city gets CITY_ICON_PROPOSAL3_10N6B.
-5. C/B/A use their correct Proposal 3 PNG artwork.
-6. No old round city cylinder is visibly rendered.
-7. No procedural TownGround/green square is visible.
-8. Transparent area around the PNG does not obscure the satellite basemap.
-9. Visible round zone-centre discs are hidden.
-10. Zone-centre data/collider fallback is retained.
-11. Left-click city identity remains correct.
-12. RMB on a city still resolves movement to its ZoneId.
-13. Labels remain associated with their existing city/zone roots.
-14. 20 zones / 68 cities / urban population checksum 290565 remains unchanged.
-15. n6a withdrawal CS1612 hotfix remains intact.
-16. TILBAGETRÆK HERTIL / fighting withdrawal / BRYD KONTAKT regressions pass.
+2. Badge/topbar show v00.00.10n6c.
+3. Log contains Proposal3TexturesLoaded=True with A/B/C dimensions.
+4. Log contains Proposal3CityArt=True and Cities=68.
+5. C/B/A city icons are visible and visually distinct.
+6. No round city cylinder and no green TownGround are visible.
+7. Transparent city-art background does not obscure World Imagery.
+8. Direct city click returns the city's canonical ZoneId.
+9. Area click uses Source=CanonicalMultiSiteOwnership.
+10. Normal area selection never uses a GrandCampaignZoneMarker collider fallback.
+11. Resolver QA should report CityCanonical=68/68 and ZoneCentreCanonical=20/20.
+12. Open-sea click does not select an Amt.
+13. Vejle/Aalborg/Hjørring/Thisted/Viborg click regressions are retested.
+14. 20 zones / 68 cities / population 290565 validation remains unchanged.
+15. Raw land-mask coverage warnings may remain until historical/coastline GIS replacement; do not confuse these with resolver QA.
+16. Withdrawal orders regressions pass.
 17. World Imagery and streamed 3D terrain remain functional.
-18. Zone-click identity is retested separately; current geometry remains prototype rather than historical Amt facit.
 
-QA state: V10N6B IMPLEMENTED / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N6C IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
