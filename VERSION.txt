@@ -1,107 +1,101 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n6a
-Build status: ISOMETRIC CITY ICONS + WITHDRAWAL COMPILE HOTFIX
-Build name: CAMPAIGN3 ISOMETRIC CITY ICONS 10N6A
+Prototype version: v00.00.10n6b
+Build status: PROPOSAL 3 CITY ART / TRANSPARENT BILLBOARD ICONS
+Build name: CAMPAIGN3 PROPOSAL 3 CITY ART 10N6B
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n6a-withdrawal-compile-hotfix
+Work branch: work/channel-campaign3-v10n6b-proposal3-city-art
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.19
+Design baseline: v00.02.20
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
 - v00.00.10n2 = persistent HUD cleanup + land-clipped non-overlap zone partition
 - v00.00.10n3 = crisp zone-line render + compact contextual zone info
-- v00.00.10n4 = clean HUD default + polygon-accurate zone selection + shared-border renderer
+- v00.00.10n4 = clean HUD default + polygon-based zone selection + shared-border renderer
 - v00.00.10n5 = tactical withdrawal + city-anchored prototype zone partition refinements
-- v00.00.10n6 = Proposal 3 isometric miniature city icons
-- v00.00.10n6a = CS1612 compile hotfix for withdrawal rally-point assignment
+- v00.00.10n6 = procedural Proposal 3 miniature-city prototype
+- v00.00.10n6a = CS1612 withdrawal rally-point compile hotfix
+- v00.00.10n6b = authored transparent Proposal 3 A/B/C city art
 
 ROLLBACK:
+- before v10n6b: backup/channel-campaign3-before-v10n6b-proposal3-city-art-20260914
 - before v10n6a: backup/channel-campaign3-before-v10n6a-withdrawal-compile-hotfix-20260914
 - before v10n6: backup/channel-campaign3-v10n5-before-v10n6-isometric-city-icons-20260914
-- before v10n5: backup/channel-campaign3-before-v10n5-withdrawal-orders-20260914
-- before v10n4: backup/channel-campaign3-before-v10n4-hud-zone-lines-20260914
 
-V10N6A HOTFIX:
-- Fixes Unity/C# error CS1612 in PrototypeWithdrawalControllerV010N5.BeginWithdrawal().
-- RallyPoint is a Vector3 property, so RallyPoint.y cannot be modified directly.
-- The incoming rallyPoint is now copied to a local Vector3 named resolvedRallyPoint.
-- Ground height is applied to resolvedRallyPoint.y.
-- The complete Vector3 is then assigned once to RallyPoint.
-- No withdrawal behaviour or tuning values are intentionally changed by this hotfix.
+V10N6B PURPOSE:
+- Replace the blocky procedural n6 city miniatures with authored Proposal 3 city artwork.
+- Give A/B/C settlements a consistent painterly isometric campaign-map language.
+- Remove the visible green procedural town plate.
+- Keep transparency outside each settlement footprint.
+- Keep CITY-REG-01 identity, labels, population, ZoneId, click identity and movement semantics unchanged.
+- Hide the visible round zone-centre discs while retaining their metadata/collider fallback.
 
-V10N6 PURPOSE:
-- Replace round city cylinders with Proposal 3 - Isometric Miniature Town visuals.
-- Keep CITY-REG-01 data, city positions, labels, click identity and movement semantics unchanged.
-- Preserve n5 withdrawal work and the latest city-anchored prototype zone partition.
-
-ISOMETRIC CITY VISUAL STANDARD:
+PROPOSAL 3 CITY ART:
 1. C - MINOR TOWN
-- 3 small procedural houses.
-- Small square/diamond town footprint.
-- Sparse vegetation.
-- Smallest icon scale.
+- Small transparent cutout settlement.
+- Approximately 2-3 buildings.
+- Smallest campaign-map footprint.
 
 2. B - REGIONAL TOWN
-- 6 houses.
-- Church with nave, tower and pointed spire.
-- Medium settlement footprint.
-- Medium icon scale.
+- Medium transparent cutout town.
+- Approximately 5-6 buildings plus church.
+- Regional-town visual weight.
 
 3. A - DEVELOPMENT CITY
-- 12 houses.
-- Church with tower/spire.
-- Larger civic/administrative building.
-- Densest footprint and largest icon scale.
+- Large transparent cutout town.
+- Approximately 10-15 buildings, church and stronger civic centre.
+- Largest campaign-map footprint.
 
 CITY ICON RUNTIME:
-- CampaignCityIconV010N6 runs after campaign world creation.
-- Existing CITY_* root and GrandCampaignCityMarker remain authoritative.
-- Old round city renderer is disabled.
-- Old collider(s) are disabled.
-- Root transform scale is reset to 1:1.
-- A simple invisible BoxCollider becomes the click surface.
-- Visible miniature is child CITY_ICON_ISOMETRIC_10N6.
-- Individual buildings have no colliders.
-- House variation is deterministic from CityId.
-- Shared materials are reused across all cities.
-- Population gives only limited scale variation inside the A/B/C tier.
+- CampaignCityIconV010N6 now implements the n6b sprite/billboard renderer.
+- PNG assets load from Assets/Resources/Campaign/CityIcons.
+- CITY_* root and GrandCampaignCityMarker remain authoritative.
+- Existing round city renderer is disabled.
+- Legacy CITY_ICON_ISOMETRIC_10N6 procedural child is removed when present.
+- No TownGround/green square is created.
+- A single invisible BoxCollider remains the click target.
+- Visible child is CITY_ICON_PROPOSAL3_10N6B.
+- Sprite artwork billboards toward Camera.main.
+- Population only gives limited scale variation inside each A/B/C tier.
+- Round GrandCampaignZoneMarker renderers are hidden; collider/data fallback remains available.
 
-RETAINED N5 TACTICAL WITHDRAWAL:
-- TILBAGETRÆK HERTIL establishes a common rally point.
-- Units outside contact march directly to the rally point.
-- Units in combat use fighting withdrawal before rally march.
-- BRYD KONTAKT is a controlled emergency disengagement order.
+CITY ART ASSETS:
+- Assets/Resources/Campaign/CityIcons/City_C_Proposal3.png
+- Assets/Resources/Campaign/CityIcons/City_B_Proposal3.png
+- Assets/Resources/Campaign/CityIcons/City_A_Proposal3.png
+
+RETAINED N6A/N5 SYSTEMS:
+- CS1612 RallyPoint hotfix retained.
+- TILBAGETRÆK HERTIL retained.
+- Fighting withdrawal retained.
+- BRYD KONTAKT retained.
 - Existing morale rout remains a separate uncontrolled state.
 
-RETAINED / REFINED ZONE FOUNDATION:
-- Prototype zone partition uses city + zone-centre anchors rather than one centre point only.
-- Zone selection prefers city marker, then actual polygon, with zone centre only as fallback.
-- Zone geometry remains prototype and is NOT exact historical 1851 border data.
+ZONE FOUNDATION:
+- Current zone geometry is still PROTOTYPE_LAND_CLIPPED_MULTI_SITE_VORONOI.
+- Zone selection follows the current polygon before zone-centre fallback.
+- n6b does NOT claim exact historical 1851 Amt geometry.
 - DigDag/source-backed historical Amt polygons remain the production target.
 
-FILES CHANGED IN V10N6A:
-- Assets/Scripts/PrototypeWithdrawalControllerV010N5.cs
-- Assets/Scripts/Campaign/CampaignBuildInfo.cs
-- VERSION.txt
-
 QA GATES:
-1. Unity 6000.6.0f1 compiles without CS1612 at PrototypeWithdrawalControllerV010N5.cs line 71.
-2. Badge/topbar show v00.00.10n6a.
-3. TILBAGETRÆK HERTIL still records a terrain-height-adjusted RallyPoint.
-4. Fighting withdrawal still transitions to RallyMarch when clear.
-5. BRYD KONTAKT behaviour is unchanged.
-6. All 68 CITY-REG-01 cities still exist.
-7. No old round city cylinder is visibly rendered.
-8. Every city root gets CITY_ICON_ISOMETRIC_10N6.
-9. C towns show 3 houses and are visually smallest.
-10. B towns show 6 houses + church.
-11. A cities show 12 houses + church + civic centre and are visually largest.
-12. Left-click city identity remains correct.
-13. RMB on city still resolves movement to the city's zone.
-14. 20 zones / 68 cities / urban population 290565 validation remains unchanged.
-15. Vejle/Aalborg/Hjørring/Thisted/Viborg zone-selection regressions are retested.
-16. World Imagery and streamed 3D terrain remain functional.
+1. Unity 6000.6.0f1 compiles without errors.
+2. Badge/topbar show v00.00.10n6b.
+3. All 68 CITY-REG-01 cities still exist.
+4. Every city gets CITY_ICON_PROPOSAL3_10N6B.
+5. C/B/A use their correct Proposal 3 PNG artwork.
+6. No old round city cylinder is visibly rendered.
+7. No procedural TownGround/green square is visible.
+8. Transparent area around the PNG does not obscure the satellite basemap.
+9. Visible round zone-centre discs are hidden.
+10. Zone-centre data/collider fallback is retained.
+11. Left-click city identity remains correct.
+12. RMB on a city still resolves movement to its ZoneId.
+13. Labels remain associated with their existing city/zone roots.
+14. 20 zones / 68 cities / urban population checksum 290565 remains unchanged.
+15. n6a withdrawal CS1612 hotfix remains intact.
+16. TILBAGETRÆK HERTIL / fighting withdrawal / BRYD KONTAKT regressions pass.
+17. World Imagery and streamed 3D terrain remain functional.
+18. Zone-click identity is retested separately; current geometry remains prototype rather than historical Amt facit.
 
-QA state: V10N6A IMPLEMENTED / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N6B IMPLEMENTED / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
