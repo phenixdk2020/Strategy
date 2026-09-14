@@ -1,8 +1,6 @@
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f2 bottom command bar and enemy start gate.
-// Replaces the old raised 09f IMGUI bar after OfficerAIController installation.
 [DefaultExecutionOrder(-9500)]
 public sealed class PrototypeBottomCommandBar09F2 : MonoBehaviour
 {
@@ -24,6 +22,11 @@ public sealed class PrototypeBottomCommandBar09F2 : MonoBehaviour
 
         GameObject root = new GameObject("PrototypeBottomCommandBar_v000009f2");
         root.AddComponent<PrototypeBottomCommandBar09F2>();
+    }
+
+    private static bool UseLookPack()
+    {
+        return PrototypeKampRebuildLook09V.HideLegacyBottomBar && PrototypeKampRebuildLook09V.Instance != null;
     }
 
     private void Update()
@@ -141,6 +144,12 @@ public sealed class PrototypeBottomCommandBar09F2 : MonoBehaviour
 
     private void UpdatePointerIsolation()
     {
+        if (UseLookPack())
+        {
+            RestorePointerComponents();
+            return;
+        }
+
         Vector2 guiPoint = new Vector2(Input.mousePosition.x, Screen.height - Input.mousePosition.y);
         bool overPanel = GetPanelRect().Contains(guiPoint);
 
@@ -210,12 +219,14 @@ public sealed class PrototypeBottomCommandBar09F2 : MonoBehaviour
 
     private void OnGUI()
     {
+        if (UseLookPack())
+            return;
+
         EnsureStyles();
 
         Rect panel = GetPanelRect();
         GUI.Box(panel, string.Empty, panelStyle);
 
-        const float gap = 3f;
         const float buttonH = 27f;
         float x = 5f;
         float y = panel.y + 3f;
@@ -268,7 +279,6 @@ public sealed class PrototypeBottomCommandBar09F2 : MonoBehaviour
                 PrototypeCombatTuningManager.Instance.TogglePanel();
         }
 
-        // Second row: aggression and fire policy. It starts at the physical bottom edge.
         x = 5f;
         y = panel.y + 33f;
 
