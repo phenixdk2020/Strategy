@@ -1,49 +1,63 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f27
+Prototype version: v00.00.09f28
 Build status: TEST
-Build name: TWO BATTALIONS + SHARED MAJOR COMMAND CORE
-Visible build marker: PROJECT 1864 | v00.00.09f27 TEST
+Build name: REGIMENTAL HQ + OBERSTLOJTNANT COMMAND CHAIN
+Visible build marker: PROJECT 1864 | v00.00.09f28 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + tactical design supplements through 09f27
+Design manual baseline: v00.02.08 + tactical design supplements through 09f28
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
-09f26 design supplement: docs/design-supplements/v00.00.09f26-under-fire-reaction.md
 09f27 design supplement: docs/design-supplements/v00.00.09f27-two-battalions-shared-major-core.md
+09f28 design supplement: docs/design-supplements/v00.00.09f28-regimental-hq-command-chain.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f27 - Two battalions / two Majors
-- Adds a second Danish battalion with four additional company-scale infantry units.
-- Danish hierarchy now contains 8 companies split 4 + 4 under Major A and Major B.
-- Both Majors are physical selectable HQs with 3 horses each.
-- Both Majors use the SAME PrototypeRegimentHierarchy09F27 controller, UI, mission planner, reserve/flank logic and authority rules.
-- The legacy single-Major control stack is disabled at runtime after F27 installs to avoid two competing authority systems.
-- Both Major HUDs use the same 90 px full-width bottom HUD and six commands: ANGRIB HER / FORSVAR HER / RYK FREM / TILBAGETRÆK / SAML / HOLD.
-- Each Major has AI ON/OFF plus DEF/BAL/OFF doctrine.
-- New Major orders reclaim subordinate companies and set company AI ON; direct company orders may still detach companies through the established AI OFF/manual authority rule.
-- Formation slots use the shared F23 collision-safe endpoint resolver and unique slot assignment by minimum total march distance.
-- Each Major shows subordinate command links and 320/450 m command-zone rings when selected.
-- Major dynamic HQ advance is applied independently to both battalions.
-- Console telemetry prefixes: HQ-09F27, HQ-ORDER-09F27, HQ-SLOT-09F27, HQ-ZONE-09F27, AI-AUTHORITY-09F27.
+v00.00.09f28 - Physical Regimental HQ / Oberstløjtnant
+- Adds one physical selectable Regimental HQ commanded by Oberstløjtnant.
+- Canonical runtime chain is now: Oberstløjtnant -> Major A/Major B -> 8 company-scale infantry units.
+- Regimental HQ has 4 horses and its own full-width 90 px bottom HUD.
+- Regimental HQ exposes AI ON/OFF, DEF/BAL/OFF doctrine and the same six mission verbs: ANGRIB HER / FORSVAR HER / RYK FREM / TILBAGETRÆK / SAML / HOLD.
+- Regimental orders are NOT sent directly to companies. F28 assigns battalion objectives to the two Majors; the shared F27 Major core translates those objectives into company missions.
+- New Regimental order reclaims both Majors into higher-command authority by setting their battalion AI ON through the F27 shared core.
+- Battalion objectives are assigned to nearest Major to reduce route crossing.
+- First regiment dispositions: 2 abreast, 1 forward + 1 reserve, or 1 forward + 1 flank depending on mission, doctrine and known enemy count.
+- Offensive doctrine may select a battalion flank when the known enemy picture is limited; Defensive/Balanced may preserve a regimental reserve.
+- Regimental AI first-pass: with AI ON and no explicit mission, OFF doctrine may attack nearest known enemy; otherwise it establishes a defensive mission around regiment centre.
+- Explicit player regimental mission remains commander intent and is not churned every AI think cycle.
+- Regimental HQ dynamically follows the two Majors in bounds when AI is ON, normally around 360 m behind their midpoint/front direction.
+- Regimental command visual bands: IN COMMAND <=800 m, EXTENDED <=1100 m, OUT OF COMMAND >1100 m. First F28 pass visualises these bands; courier/delivery delay remains later B-288 work.
+- Selecting Regimental HQ shows command links to the two Majors; selecting a Major continues to show only its four company links.
+- Console telemetry prefixes: REG-HQ-09F28, REG-ORDER-09F28, REG-AI-09F28, REG-AUTHORITY-09F28.
+
+Retained from v00.00.09f27
+- Two battalions, two physical Majors and eight Danish companies.
+- Both Majors use the same shared controller/HUD/authority model.
+- Collision-safe Major slots and minimum-total-distance company assignment remain.
+- Direct manual company override remains below the Major level.
 
 Retained from v00.00.09f26
-- AI ON moving companies may suspend movement under confirmed hostile fire, deploy Line and return fire while preserving the parent mission.
-- Active bridge passage defers under-fire reaction until the bridge route clears.
-- AI OFF remains direct player authority.
+- AI ON moving companies react to confirmed hostile fire by suspending movement and returning fire while preserving the parent mission.
 
 Retained from v00.00.09f25
-- Infantry CHARGE and melee approach remain.
-- Manual order followed by AI ON means local Captain authority until a NEW Major order reclaims the company.
-- Command-zone principle affects command/reaction rather than weapon accuracy.
+- Infantry CHARGE/melee baseline and local Captain authority remain.
 
-Primary v00.00.09f27 QA
-1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f27 TEST.
-2. Verify 8 Danish company-scale units exist: 4 under Major A and 4 under Major B.
-3. Verify two physical Major HQs exist and both can be selected by click/drag.
-4. Select Major A and issue FORSVAR HER. Only 1. Battalion companies should receive that battalion mission.
-5. Select Major B and issue RYK FREM/ANGRIB HER. Only 2. Battalion companies should receive that mission.
-6. Verify both Majors expose the exact same HUD, six orders, AI toggle and doctrine controls.
-7. Verify selected Major shows links only to its four companies and command-zone rings around its own HQ.
-8. Give one company a direct manual order. It should detach from its Major; a NEW Major order should reclaim it.
-9. Verify company destination boxes remain visible when selecting the company itself.
-10. Regression-test F26 under-fire reaction and F25 charge/melee on companies in BOTH battalions.
+Primary v00.00.09f28 QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f28 TEST.
+2. Verify physical HQ hierarchy: 1 Oberstløjtnant + 2 Majorer + 8 companies.
+3. Select Oberstløjtnant HQ by click and by drag-box.
+4. Verify Regimental HUD uses AI ON/OFF + DEF/BAL/OFF + six standard mission buttons.
+5. Issue FORSVAR HER. Both Majors must receive distinct battalion objectives and then position their own four companies.
+6. Issue RYK FREM. Battalion objective assignment should choose the nearest Major/slot pairing rather than unnecessary crossing.
+7. Issue ANGRIB HER with BAL doctrine and limited enemy count; verify the regimental planner may use one battalion forward and one reserve.
+8. Repeat ANGRIB HER with OFF doctrine; verify the planner may use one battalion as a flank when conditions allow.
+9. Select Regimental HQ: see links to both Majors and 800/1100 m command-zone rings. Select Major: see only its company links/320/450 m rings.
+10. Manually move one Major: its battalion AI goes OFF. A NEW Oberstløjtnant order should reclaim that Major and issue a fresh battalion mission.
+11. With Regimental AI ON and no explicit mission, verify it creates an initial defend/attack mission according to doctrine and enemy knowledge.
+12. Move both battalions forward far enough; Regimental HQ should relocate forward in a later bound rather than remain at spawn.
+13. Regression-test manual company authority, F26 under-fire reaction and F25 charge/melee under the new hierarchy.
+
+Next milestone after Regiment-control QA
+- Stabilise F28 command chain first.
+- Then implement/test Dragoons as B-290.
+- Then implement/test Kanonbatteri/Artilleri as B-291.
+- Do not prioritise Brigade/Division HQ before combined-arms Regiment control is proven.
