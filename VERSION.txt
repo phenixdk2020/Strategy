@@ -1,115 +1,95 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n3
-Build status: ZONE LINE POLISH + COMPACT ZONE INFO
-Build name: CAMPAIGN3 ZONE LINE POLISH + COMPACT INFO 10N3
+Prototype version: v00.00.10n4
+Build status: HUD DEFAULT + POLYGON SELECTION + SHARED INTERNAL ZONE BORDER HOTFIX
+Build name: CAMPAIGN3 HUD + ZONE SELECTION + SHARED BORDER HOTFIX 10N4
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n3-zone-polish-info
+Work branch: work/channel-campaign3-v10n4-hud-zone-lines
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.16
+Design baseline: v00.02.17
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
-- v00.00.10e = Denmark campaign foundation / WGS84 gameplay scaffold
-- v00.00.10f = 11-style visual lab
-- v00.00.10g = 11 independent basemap provider architecture
-- v00.00.10h = raster loading/resume + unified UI hotfix
-- v00.00.10i = World Imagery streaming / dynamic LOD pilot
-- v00.00.10j = World Imagery selected as sole Campaign3 runtime basemap
-- v00.00.10k = streamed elevation deforms World Imagery into 3D terrain
-- v00.00.10k1 = Unity 6.6 EntityId compile hotfix
 - v00.00.10m = canonical 1851 zone/city runtime: 20 zones + 68 cities
 - v00.00.10n = zone overlay/polygon architecture
 - v00.00.10n1 = central current-build identity / stale badge hotfix
 - v00.00.10n2 = persistent HUD cleanup + land-clipped global non-overlap zone partition
-- v00.00.10n3 = crisp internal zone-line render + compact contextual zone info
+- v00.00.10n3 = crisp line experiment + compact contextual zone info
+- v00.00.10n4 = legacy INFO default-off + polygon-accurate zone selection + shared-border-only renderer
 
 ROLLBACK:
+- before v10n4: backup/channel-campaign3-before-v10n4-hud-zone-lines-20260914
+- before v10n3 promotion: backup/channel-campaign3-before-v10n3-promotion-20260914
 - before v10n3: backup/channel-campaign3-before-v10n3-zone-polish-info-20260914
 - before v10n2: backup/channel-campaign3-before-v10n2-ui-coastline-20260914
-- before v10n promotion: backup/channel-campaign3-before-v10n1-promotion-20260913
-- before v10n: backup/channel-campaign3-v10m-before-v10n-zone-overlay-20260913
 
-V10N3 PURPOSE:
-- Make visible zone borders thinner, sharper and less fuzzy.
-- Remove exact duplicate/shared border rendering.
-- Stop drawing the yellow zone overlay along the outer coastline envelope in normal view.
-- Preserve the v10n2 land-clipped non-overlap prototype as the geometry source.
-- Add a small contextual zone information card in the upper-left corner on map selection.
+V10N4 FIXES:
+1. LARGE INFO BOXES DEFAULT CLOSED
+- CampaignHudState performs a one-time v10n4 PlayerPrefs migration.
+- Legacy selected-zone/city/formation INFO panel starts hidden even if n2/n3 stored it as visible.
+- Technical debug panels also start hidden.
+- Compact contextual zone card remains the normal click response.
+- INFO/F2 can still explicitly open/close the legacy detailed panel.
+- F4 now resets to HUD visible + legacy INFO hidden + debug hidden.
 
-ZONE LINE POLISH:
-- New CampaignZoneLinePolishV010N3 runs after the v10n2 overlay is built.
-- Reads the v10n2 polygon loops rather than replacing the zone data model.
-- Snaps visible endpoints to a small common world grid.
-- Canonicalises segment direction and deduplicates identical segments.
-- Renders unique internal segments with a thinner opaque line.
-- Removes cap/corner smoothing from the polished render layer.
-- Detects segments aligned with the current DNK_Coast_* envelope and omits them from the yellow zone overlay.
-- The basemap/coastline therefore defines the coastal edge instead of a second yellow outline.
-- Original v10n2 polygon LineRenderers remain as prototype geometry but are disabled after the n3 polished layer is built.
-- Z continues to toggle the complete overlay hierarchy, including the n3 polished child layer.
+2. CORRECT ZONE IDENTITY ON MAP CLICK
+- n3 nearest-centre click resolution has been removed.
+- CampaignZoneInfoPanel now reads the actual source polygon loops from ZONE_OVERLAY_1851_LAND_CLIPPED.
+- Each polygon part retains CampaignZoneOverlayMetadataV010N.ZoneId.
+- Map clicks are resolved by PointInPolygon against the actual displayed prototype area.
+- A click inside Vejle Amt therefore resolves DK-Z11-VEJ rather than a geographically unrelated centre such as Aalborg.
+- City-marker and explicit zone-marker clicks still have priority and use their authoritative IDs.
 
-COMPACT ZONE INFO:
-- New CampaignZoneInfoPanelV010N3 appears after clicking a zone marker, city marker, or Danish land area.
-- Danish land-area clicks resolve the nearest ZONE-REG-01 centre using the same current prototype partition principle.
-- Compact card shows ZoneId, zone name, number of cities, A/B/C distribution, summed 1850 urban population, city names, land neighbours and ferry neighbours.
-- Direct city clicks also show selected city, tier, population and heavy military construction rule.
-- The compact card has an X close button.
-- A map click restores the HUD if minimal HUD was active, because explicit selection should reveal context.
-- During normal map selection, the old large INFO/F2 panel is closed automatically.
-- INFO/F2 can still reopen the legacy detailed panel, which replaces rather than overlaps the compact card.
+3. REMOVE LONG ZONE-LINE SPURS / WATER FRAGMENTS
+- CampaignZoneLinePolish now records the distinct ZoneIds owning each snapped source segment.
+- Only a segment shared by at least TWO DIFFERENT zones is rendered.
+- Single-owner polygon edges are omitted from the yellow administrative-border layer.
+- This removes outer coastline edges, water/clipping fragments and the long one-sided spurs seen in n3.
+- Original v10n2 polygon loops remain present as hidden geometry/data.
+- Z still toggles the complete zone overlay hierarchy.
 
 HISTORICAL / GEOGRAPHY GUARDRAIL:
-- v10n3 is visual/UI polish only; it does NOT make the centre-derived borders historically exact.
-- ZONE-REG-01 IDs remain canonical.
-- v10n2/v10n3 geometry remains PROTOTYPE_LAND_CLIPPED_GLOBAL_VORONOI-based.
-- The current land/coast scaffold remains Natural Earth 1:50m and is still simplified relative to World Imagery.
-- Small fjords, harbours, sounds and other hydrology may therefore still need a later higher-detail geographic source.
-- Production historical boundaries remain targeted at source-backed historical polygons such as DigDag Amt/Region while preserving ZoneId/save/simulation state.
+- v10n4 fixes selection/render consistency only.
+- Current zone polygons are still centre-derived prototype geometry, not exact 1851 administrative boundaries.
+- ZONE-REG-01 identity remains canonical.
+- Natural Earth 1:50m remains a simplified coastline scaffold.
+- Production historical geometry remains targeted at source-backed data such as DigDag Amt/Region while preserving ZoneId/save/simulation state.
 
-V10M/V10N CONTRACT RETAINED:
+RETAINED CONTRACT:
 - 20 ZONE-REG-01 zones.
 - 68 CITY-REG-01 market towns.
-- Startup urban population checksum 290,565.
+- Urban population checksum 290,565.
 - Esbjerg absent from 1851 start state.
-- A/B/C city/build rules unchanged.
-- Land/Ferry neighbour routing unchanged.
-- RMB on city marker movement fix retained.
-- QA army remains in DK-Z11-VEJ.
-- World Imagery remains the basemap.
-- Streamed 3D terrain remains separate from zone ownership geometry.
+- A/B/C build rules unchanged.
+- Land/Ferry routing unchanged.
+- RMB-on-city movement fix retained.
+- World Imagery and streamed 3D terrain unchanged.
 
-FILES ADDED/CHANGED IN V10N3:
+FILES CHANGED IN V10N4:
 - Assets/Scripts/Campaign/CampaignBuildInfo.cs
-- Assets/Scripts/Campaign/CampaignZoneLinePolishV010N3.cs
-- Assets/Scripts/Campaign/CampaignZoneLinePolishV010N3.cs.meta
+- Assets/Scripts/Campaign/CampaignHudStateV010N2.cs
 - Assets/Scripts/Campaign/CampaignZoneInfoPanelV010N3.cs
-- Assets/Scripts/Campaign/CampaignZoneInfoPanelV010N3.cs.meta
+- Assets/Scripts/Campaign/CampaignZoneLinePolishV010N3.cs
 - VERSION.txt
 - docs/PROJECT-1864-Designmanual.md
-- docs/parts/part-15-50-CAMPAIGN-V10N3-ZONE-POLISH-INFO.md
+- docs/parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. Top-left badge and campaign top bar show v00.00.10n3.
-3. v10n2 zone overlay still builds all 20 zone identities before polish.
-4. CAMPAIGN-10N3 log reports ZoneLinePolish=True.
-5. Internal zone borders remain visible and are thinner/sharper than v10n2.
-6. Identical shared segments render once rather than accumulating visually.
-7. Yellow coast-envelope segments are omitted from the normal zone overlay.
-8. Z toggles the entire zone overlay including polished lines.
-9. Clicking a zone marker opens the compact zone card.
-10. Clicking a city marker opens zone card + selected city info.
-11. Clicking Danish land can resolve a prototype zone and open the card.
-12. Clicking outside Danish land does not open a zone card.
-13. Compact card X closes it.
-14. INFO/F2 replaces the compact card with legacy detailed info without intentional overlap.
-15. City count / A-B-C count / population shown in card agree with CITY-REG-01 data.
-16. 20 zones / 68 cities / 290565 startup validation remains unchanged.
-17. Zone/city/army selection and RMB movement regress without breakage.
-18. A/B/C heavy military construction rules remain unchanged.
-19. World Imagery and streamed 3D terrain still load.
-20. Esbjerg remains absent from the 1851 start state.
-21. Documentation still marks current zone geometry as prototype, not historical facit.
+2. Badge/topbar show v00.00.10n4.
+3. On first n4 run, the large legacy INFO boxes are closed.
+4. Debug boxes are closed by default.
+5. INFO/F2 can still explicitly open the detailed legacy panel.
+6. F4 resets to the clean default state.
+7. Click Vejle-area polygon and verify DK-Z11-VEJ / Vejle Amt.
+8. Click Aalborg-area polygon and verify DK-Z16-AAL / Aalborg Amt.
+9. Repeat selection across all visible zones; no nearest-centre misidentification.
+10. Direct city click resolves its registered ZoneId.
+11. Yellow line layer contains only borders shared by two distinct zones.
+12. Long one-sided vertical/diagonal spur segments from n3 are absent.
+13. Outer coastline is not drawn as a yellow administrative zone border.
+14. Z toggles the overlay.
+15. 20 zones / 68 cities / 290565 validation remains unchanged.
+16. World Imagery / 3D terrain / movement regress without breakage.
 
-QA state: V10N3 IMPLEMENTED ON WORK BRANCH / AWAITS UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N4 IMPLEMENTED ON WORK BRANCH / AWAITS UNITY 6.6 COMPILE + PLAY MODE QA
