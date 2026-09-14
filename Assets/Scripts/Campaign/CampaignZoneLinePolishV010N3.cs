@@ -5,11 +5,10 @@ using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// Campaign3 v00.00.10n3 visual polish for the v10n2 land-clipped zone overlay.
-/// Rebuilds the visible border layer as snapped, unique INTERNAL zone segments.
-/// Coastline-envelope segments are omitted because the basemap/coast itself already
-/// defines the outer edge of a coastal zone. This removes double-drawn fuzzy lines
-/// and the most obvious yellow fragments in water/coastal gaps.
+/// Campaign3 v00.00.10n4 visual polish for the land-clipped zone overlay.
+/// Rebuilds the visible border layer as snapped INTERNAL borders shared by at least
+/// two different ZONE-REG-01 polygons. Single-owner polygon edges are deliberately
+/// omitted, which removes coast/water fragments and long one-sided spur segments.
 ///
 /// Historical guardrail: this only polishes the current prototype geometry. It does
 /// not make the centre-derived borders historically exact.
@@ -69,17 +68,16 @@ public sealed class CampaignZoneLinePolishV010N3 : MonoBehaviour
     {
         public Vector3 A;
         public Vector3 B;
-        public int SeenCount;
+        public readonly HashSet<string> ZoneIds = new HashSet<string>();
+        public int RawOccurrences;
     }
 
     private const string SourceRootName = "ZONE_OVERLAY_1851_LAND_CLIPPED";
-    private const string GeographyRootName = "GEO_Denmark_NaturalEarth50m";
-    private const string PolishRootName = "ZONE_LINES_10N3_POLISHED";
+    private const string PolishRootName = "ZONE_LINES_10N4_SHARED_INTERNAL";
 
     private const float SnapWorld = 0.0030f;
-    private const float CoastTolerance = 0.075f;
     private const float MinSegmentLength = 0.018f;
-    private const float LineWidth = 0.027f;
+    private const float LineWidth = 0.026f;
     private const float RenderY = 0.755f;
 
     private bool built;
@@ -91,7 +89,7 @@ public sealed class CampaignZoneLinePolishV010N3 : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignZoneLinePolishV010N3>() != null)
             return;
 
-        GameObject go = new GameObject("PROJECT1864_ZONE_LINE_POLISH_v000010n3");
+        GameObject go = new GameObject("PROJECT1864_ZONE_LINE_POLISH_CURRENT");
         DontDestroyOnLoad(go);
         go.AddComponent<CampaignZoneLinePolishV010N3>();
     }
@@ -107,27 +105,35 @@ public sealed class CampaignZoneLinePolishV010N3 : MonoBehaviour
             return;
 
         GameObject source = GameObject.Find(SourceRootName);
-        GameObject geography = GameObject.Find(GeographyRootName);
-        if (source == null || geography == null)
+        if (source == null)
             return;
 
-        BuildPolishedLayer(source, geography);
+        BuildPolishedLayer(source);
         built = true;
     }
 
-    private void BuildPolishedLayer(GameObject sourceRoot, GameObject geographyRoot)
+    private void BuildPolishedLayer(GameObject sourceRoot)
     {
-        List<Vector2[]> coastChains = ReadCoastChains(geographyRoot);
         Dictionary<SegmentKey, SegmentData> unique = new Dictionary<SegmentKey, SegmentData>();
 
         LineRenderer[] sourceLines = sourceRoot.GetComponentsInChildren<LineRenderer>(true);
         int rawSegments = 0;
-        int coastSegmentsSkipped = 0;
         int tinySegmentsSkipped = 0;
+        int linesWithoutZoneMetadata = 0;
 
         for (int l = 0; l < sourceLines.Length; l++)
         {
             LineRenderer sourceLine = sourceLines[l];
+            CampaignZoneOverlayMetadataV010N metadata = sourceLine.GetComponent<CampaignZoneOverlayMetadataV010N>();
+
+            // Ignore previously generated polish layers or any unrelated renderer.
+            // Only authoritative v10n2 polygon loops carry zone metadata.
+            if (metadata == null || string.IsNullOrEmpty(metadata.ZoneId))
+            {
+                linesWithoutZoneMetadata++;
+                continue;
+            }
+
             int count = sourceLine.positionCount;
             if (count < 2)
                 continue;
@@ -148,63 +154,67 @@ public sealed class CampaignZoneLinePolishV010N3 : MonoBehaviour
                     continue;
                 }
 
-                if (IsCoastEnvelopeSegment(a, b, coastChains))
-                {
-                    coastSegmentsSkipped++;
-                    continue;
-                }
-
                 SegmentKey key = new SegmentKey(a, b);
-                if (unique.TryGetValue(key, out SegmentData existing))
+                if (!unique.TryGetValue(key, out SegmentData data))
                 {
-                    existing.SeenCount++;
-                    continue;
+                    data = new SegmentData { A = a, B = b };
+                    unique[key] = data;
                 }
 
-                unique[key] = new SegmentData
-                {
-                    A = a,
-                    B = b,
-                    SeenCount = 1
-                };
+                data.RawOccurrences++;
+                data.ZoneIds.Add(metadata.ZoneId);
             }
         }
 
         GameObject polishedRoot = new GameObject(PolishRootName);
         polishedRoot.transform.SetParent(sourceRoot.transform, false);
 
-        int rendered = 0;
-        int deduplicated = 0;
+        int renderedShared = 0;
+        int singleOwnerSkipped = 0;
+        int duplicateOccurrences = 0;
+
         foreach (KeyValuePair<SegmentKey, SegmentData> pair in unique)
         {
             SegmentData segment = pair.Value;
-            if (segment.SeenCount > 1)
-                deduplicated += segment.SeenCount - 1;
+            duplicateOccurrences += Mathf.Max(0, segment.RawOccurrences - 1);
 
-            CreateSegment(polishedRoot.transform, segment.A, segment.B, rendered + 1);
-            rendered++;
+            // The crucial v10n4 rule: an internal administrative border must be
+            // owned by at least two DIFFERENT zone polygons. Single-owner edges are
+            // polygon exteriors/coast fragments or one-sided clipping artifacts.
+            if (segment.ZoneIds.Count < 2)
+            {
+                singleOwnerSkipped++;
+                continue;
+            }
+
+            CreateSegment(polishedRoot.transform, segment.A, segment.B, renderedShared + 1);
+            renderedShared++;
         }
 
-        // v10n2 polygon lines remain as authoritative prototype geometry but are not
-        // rendered once the polished n3 segment layer has been constructed.
+        // Keep source polygons as geometry/data, but render only the n4 shared-border layer.
         for (int i = 0; i < sourceLines.Length; i++)
-            sourceLines[i].enabled = false;
+        {
+            if (sourceLines[i].GetComponent<CampaignZoneOverlayMetadataV010N>() != null)
+                sourceLines[i].enabled = false;
+        }
 
         Debug.Log(
             CampaignBuildInfo.LogTag +
             "|ZoneLinePolish=True" +
+            "|Rule=SharedByTwoDistinctZones" +
             "|RawSegments=" + rawSegments +
-            "|RenderedInternalSegments=" + rendered +
-            "|DuplicateSegmentsRemoved=" + deduplicated +
-            "|CoastEnvelopeSegmentsSkipped=" + coastSegmentsSkipped +
+            "|RenderedSharedInternalSegments=" + renderedShared +
+            "|SingleOwnerSegmentsSkipped=" + singleOwnerSkipped +
+            "|DuplicateOccurrences=" + duplicateOccurrences +
             "|TinySegmentsSkipped=" + tinySegmentsSkipped +
+            "|NonZoneRenderersIgnored=" + linesWithoutZoneMetadata +
             "|SnapWorld=" + SnapWorld.ToString("0.0000") +
             "|Width=" + LineWidth.ToString("0.000"));
     }
 
     private void CreateSegment(Transform parent, Vector3 a, Vector3 b, int index)
     {
-        GameObject go = new GameObject("ZONE_LINE_10N3_" + index.ToString("D4"));
+        GameObject go = new GameObject("ZONE_LINE_10N4_" + index.ToString("D4"));
         go.transform.SetParent(parent, false);
 
         LineRenderer line = go.AddComponent<LineRenderer>();
@@ -227,68 +237,6 @@ public sealed class CampaignZoneLinePolishV010N3 : MonoBehaviour
         line.SetPosition(1, b);
     }
 
-    private static List<Vector2[]> ReadCoastChains(GameObject geographyRoot)
-    {
-        List<Vector2[]> result = new List<Vector2[]>();
-        LineRenderer[] coastLines = geographyRoot.GetComponentsInChildren<LineRenderer>(true);
-
-        for (int i = 0; i < coastLines.Length; i++)
-        {
-            LineRenderer line = coastLines[i];
-            if (!line.gameObject.name.StartsWith("DNK_Coast_", StringComparison.Ordinal))
-                continue;
-
-            Vector3[] world = new Vector3[line.positionCount];
-            line.GetPositions(world);
-            Vector2[] chain = new Vector2[world.Length];
-            for (int p = 0; p < world.Length; p++)
-                chain[p] = new Vector2(world[p].x, world[p].z);
-
-            if (chain.Length >= 2)
-                result.Add(chain);
-        }
-
-        return result;
-    }
-
-    private static bool IsCoastEnvelopeSegment(Vector3 a3, Vector3 b3, List<Vector2[]> coastChains)
-    {
-        Vector2 a = new Vector2(a3.x, a3.z);
-        Vector2 b = new Vector2(b3.x, b3.z);
-        Vector2 midpoint = (a + b) * 0.5f;
-
-        for (int c = 0; c < coastChains.Count; c++)
-        {
-            Vector2[] chain = coastChains[c];
-            for (int i = 0; i < chain.Length; i++)
-            {
-                Vector2 p = chain[i];
-                Vector2 q = chain[(i + 1) % chain.Length];
-                if (DistancePointToSegment(midpoint, p, q) <= CoastTolerance)
-                {
-                    Vector2 segmentDirection = (b - a).normalized;
-                    Vector2 coastDirection = (q - p).normalized;
-                    float parallel = Mathf.Abs(Vector2.Dot(segmentDirection, coastDirection));
-                    if (parallel >= 0.92f)
-                        return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static float DistancePointToSegment(Vector2 point, Vector2 a, Vector2 b)
-    {
-        Vector2 ab = b - a;
-        float lengthSq = ab.sqrMagnitude;
-        if (lengthSq < 0.0000001f)
-            return Vector2.Distance(point, a);
-
-        float t = Mathf.Clamp01(Vector2.Dot(point - a, ab) / lengthSq);
-        return Vector2.Distance(point, a + ab * t);
-    }
-
     private static Vector3 Snap(Vector3 point)
     {
         point.x = Mathf.Round(point.x / SnapWorld) * SnapWorld;
@@ -309,7 +257,7 @@ public sealed class CampaignZoneLinePolishV010N3 : MonoBehaviour
 
         return new Material(shader)
         {
-            name = "ZONE_BOUNDARY_1851_POLISHED_10N3",
+            name = "ZONE_BOUNDARY_1851_SHARED_INTERNAL_10N4",
             color = new Color(1.00f, 0.78f, 0.10f, 1.00f)
         };
     }
