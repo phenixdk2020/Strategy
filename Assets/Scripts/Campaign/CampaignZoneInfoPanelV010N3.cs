@@ -4,10 +4,15 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// Campaign3 v00.00.10n4 compact contextual zone information panel.
-/// Zone selection is resolved from the ACTUAL visible prototype polygon geometry,
-/// not from a nearest-zone-centre approximation. This keeps click identity aligned
-/// with the map area the player is actually pointing at.
+/// Campaign3 compact contextual zone information panel.
+///
+/// v10n5 selection priority:
+/// 1) exact city marker (city identity is authoritative),
+/// 2) actual visible zone polygon under the mouse,
+/// 3) zone-centre marker only as a fallback if polygon resolution fails.
+///
+/// This prevents a nearby zone-centre collider from reporting Hjørring/Aalborg
+/// when the mouse is visibly inside the neighbouring Thisted/Viborg polygon.
 /// </summary>
 [DefaultExecutionOrder(24000)]
 public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
@@ -73,7 +78,7 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
             Debug.Log(
                 CampaignBuildInfo.LogTag + "|ZoneInfo=True|Zone=" + selectedZone.Id +
                 "|City=" + (selectedCity != null ? selectedCity.Id : "-") +
-                "|Source=PolygonMapClick");
+                "|Source=PolygonFirstMapClick");
         }
     }
 
@@ -86,10 +91,16 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         city = null;
 
         Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+        GrandCampaignZoneMarker fallbackZoneMarker = null;
 
-        // Exact marker clicks have highest priority.
-        if (Physics.Raycast(ray, out RaycastHit hit, 500f))
+        // City markers remain authoritative because City.ZoneId is canonical data.
+        // Zone-centre markers are remembered only as a last-resort fallback; they
+        // must not override the area polygon under the mouse.
+        RaycastHit[] hits = Physics.RaycastAll(ray, 500f);
+        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        for (int h = 0; h < hits.Length; h++)
         {
+            RaycastHit hit = hits[h];
             GrandCampaignCityMarker cityMarker = hit.collider.GetComponent<GrandCampaignCityMarker>();
             if (cityMarker != null)
             {
@@ -101,35 +112,37 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
                 }
             }
 
-            GrandCampaignZoneMarker zoneMarker = hit.collider.GetComponent<GrandCampaignZoneMarker>();
-            if (zoneMarker != null)
+            if (fallbackZoneMarker == null)
+                fallbackZoneMarker = hit.collider.GetComponent<GrandCampaignZoneMarker>();
+        }
+
+        if (zoneGeometryReady && zoneAreas.Count > 0)
+        {
+            Plane campaignPlane = new Plane(Vector3.up, new Vector3(0f, 0.74f, 0f));
+            if (campaignPlane.Raycast(ray, out float enter))
             {
-                zone = FindZone(zoneMarker.ZoneId);
-                return zone != null;
+                Vector3 world = ray.GetPoint(enter);
+                Vector2 point = new Vector2(world.x, world.z);
+
+                for (int i = 0; i < zoneAreas.Count; i++)
+                {
+                    ZoneArea area = zoneAreas[i];
+                    if (!PointInPolygon(point, area.WorldPolygon))
+                        continue;
+
+                    zone = FindZone(area.ZoneId);
+                    if (zone != null)
+                        return true;
+                }
             }
         }
 
-        if (!zoneGeometryReady || zoneAreas.Count == 0)
-            return false;
-
-        // Resolve the mouse to campaign X/Z and test the actual v10n2/v10n4
-        // polygon parts. This replaces the incorrect nearest-centre shortcut from n3.
-        Plane campaignPlane = new Plane(Vector3.up, new Vector3(0f, 0.74f, 0f));
-        if (!campaignPlane.Raycast(ray, out float enter))
-            return false;
-
-        Vector3 world = ray.GetPoint(enter);
-        Vector2 point = new Vector2(world.x, world.z);
-
-        for (int i = 0; i < zoneAreas.Count; i++)
+        // Fallback only. This preserves the ability to click an isolated zone-centre
+        // marker if polygon geometry is temporarily unavailable during startup.
+        if (fallbackZoneMarker != null)
         {
-            ZoneArea area = zoneAreas[i];
-            if (!PointInPolygon(point, area.WorldPolygon))
-                continue;
-
-            zone = FindZone(area.ZoneId);
-            if (zone != null)
-                return true;
+            zone = FindZone(fallbackZoneMarker.ZoneId);
+            return zone != null;
         }
 
         return false;
@@ -167,7 +180,7 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         {
             Debug.Log(
                 CampaignBuildInfo.LogTag + "|ZoneInfoGeometry=True|PolygonParts=" + zoneAreas.Count +
-                "|Resolver=PointInActualOverlayPolygon");
+                "|Resolver=CityThenPointInActualOverlayPolygonThenMarkerFallback");
         }
     }
 
