@@ -1,7 +1,7 @@
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f5 company-scale baseline, extended by v00.00.09f15.
+// v00.00.09f5 company-scale baseline, extended by v00.00.09f17.
 // Internal regiment identifiers remain for compatibility, while the active test units
 // represent ~190-man companies on a 1 Unity unit = 1 metre battlefield scale.
 [DefaultExecutionOrder(-11500)]
@@ -24,7 +24,7 @@ public sealed class PrototypeCompanyScale09F5 : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeCompanyScale09F5>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeCompanyScale_v000009f5");
+        GameObject root = new GameObject("PrototypeCompanyScale_v000009f17");
         root.AddComponent<PrototypeCompanyScale09F5>();
     }
 
@@ -40,7 +40,7 @@ public sealed class PrototypeCompanyScale09F5 : MonoBehaviour
         if (initialStrengthField == null || currentStrengthField == null ||
             effectiveRangeField == null || maximumRangeField == null)
         {
-            Debug.LogError("COMPANY-09F5|Installed=False|Reason=RegimentBackingFieldsMissing");
+            Debug.LogError("COMPANY-09F17|Installed=False|Reason=RegimentBackingFieldsMissing");
             enabled = false;
         }
     }
@@ -51,7 +51,7 @@ public sealed class PrototypeCompanyScale09F5 : MonoBehaviour
             return;
 
         BattleManager battle = BattleManager.Instance;
-        if (battle == null || battle.Regiments == null || battle.Regiments.Count < 3)
+        if (battle == null || battle.Regiments == null || battle.Regiments.Count < 5)
             return;
 
         int changed = 0;
@@ -63,6 +63,8 @@ public sealed class PrototypeCompanyScale09F5 : MonoBehaviour
             bool activeCompany =
                 regiment.RegimentName == "1. Regiment" ||
                 regiment.RegimentName == "5. Regiment" ||
+                regiment.RegimentName == "2. Regiment" ||
+                regiment.RegimentName == "3. Regiment" ||
                 regiment.RegimentName == "8th Regiment";
 
             if (!activeCompany)
@@ -76,12 +78,12 @@ public sealed class PrototypeCompanyScale09F5 : MonoBehaviour
             changed++;
         }
 
-        if (changed < 3)
+        if (changed < 5)
             return;
 
         applied = true;
         Debug.Log(
-            "COMPANY-09F15|Applied=True|Companies=3|Denmark=2|Prussia=1|Strength=190|Scale=1u=1m|" +
+            "COMPANY-09F17|Applied=True|Companies=5|Denmark=4|Prussia=1|Strength=190|Scale=1u=1m|" +
             "Close=" + (EffectiveRangeMetres * 0.5f).ToString("0") +
             "m|Effective=" + EffectiveRangeMetres.ToString("0") +
             "m|Long=" + LongRangeMetres.ToString("0") + "m");
