@@ -29,7 +29,7 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
-        if (Object.FindAnyObjectByType<PrototypeGroupLineSpacing09F17>() != null)
+        if (UnityEngine.Object.FindAnyObjectByType<PrototypeGroupLineSpacing09F17>() != null)
             return;
 
         GameObject root = new GameObject("PrototypeGroupLineSpacing_v000009f23");
@@ -125,8 +125,6 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
         if (routes == null)
             return;
 
-        // Build the requested slots first. Obstacle correction stays on the drawn line
-        // whenever possible and each accepted footprint is reserved immediately.
         List<Vector3> safeSlots = new List<Vector3>();
         List<Vector3> reserved = new List<Vector3>();
         float centerIndex = (selected.Count - 1) * 0.5f;
@@ -153,8 +151,6 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
             if (depthFallback) depthFallbacks++;
         }
 
-        // Do not bind slots by regiment list order. Pick the assignment that minimizes
-        // total squared march distance, so units naturally take the closest free slot.
         int[] assignment = BestAssignment(selected, safeSlots);
         int adjusted = 0;
 
