@@ -95,6 +95,10 @@ public sealed class BattleManager : MonoBehaviour
         if (GetTimeControlRect().Contains(guiPoint))
             return true;
 
+        PrototypeMajorHQ09F15 majorHQ = PrototypeMajorHQ09F15.Instance;
+        if (majorHQ != null && majorHQ.IsPointerOverControls(mousePosition))
+            return true;
+
         OfficerAIPrototypeManager aiManager = OfficerAIPrototypeManager.Instance;
         if (aiManager != null && aiManager.IsPointerOverControls(mousePosition))
             return true;
@@ -160,7 +164,7 @@ public sealed class BattleManager : MonoBehaviour
         }
         else if (!danesActive)
         {
-            resultMessage = "DANSK NEDERLAG - kompagniet er slået ud";
+            resultMessage = "DANSK NEDERLAG - kompagnierne er slået ud";
             SetPaused(true);
         }
     }
@@ -288,6 +292,9 @@ public sealed class BattleManager : MonoBehaviour
 
         if (regiment.Team == BattleTeam.Denmark && regiment.RegimentName == "1. Regiment")
             return "1. Kompagni - Sjællandske Livregiment";
+
+        if (regiment.Team == BattleTeam.Denmark && regiment.RegimentName == "5. Regiment")
+            return "2. Kompagni - Sjællandske Livregiment";
 
         if (regiment.Team == BattleTeam.Prussia && regiment.RegimentName == "8th Regiment")
             return "8. Kompagni - Preussen";
