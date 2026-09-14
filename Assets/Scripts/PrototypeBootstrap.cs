@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public sealed class PrototypeBootstrap : MonoBehaviour
 {
-    public const float BattlefieldWidth = 1440f;
-    public const float BattlefieldDepth = 960f;
+    // v00.00.09f15: 4x battlefield area versus 09f14 (2x each linear dimension).
+    public const float BattlefieldWidth = 2880f;
+    public const float BattlefieldDepth = 1920f;
     public const float BattlefieldHalfWidth = BattlefieldWidth * 0.5f;
     public const float BattlefieldHalfDepth = BattlefieldDepth * 0.5f;
 
@@ -25,10 +27,11 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     private void BuildBattlefield()
     {
         Application.targetFrameRate = 120;
-        RenderSettings.ambientLight = new Color(0.55f, 0.57f, 0.53f);
+        QualitySettings.shadowDistance = 260f;
+        RenderSettings.ambientLight = new Color(0.50f, 0.54f, 0.48f);
         RenderSettings.fog = true;
-        RenderSettings.fogColor = new Color(0.66f, 0.70f, 0.72f);
-        RenderSettings.fogDensity = 0.0012f;
+        RenderSettings.fogColor = new Color(0.62f, 0.68f, 0.72f);
+        RenderSettings.fogDensity = 0.00072f;
 
         CreateLighting();
         CreateCamera();
@@ -48,37 +51,37 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             BattleTeam.Denmark,
             620,
             false,
-            new Vector3(-104f, 0f, -34f),
-            Quaternion.Euler(0f, 88f, 0f));
+            new Vector3(-220f, 0f, -54f),
+            Quaternion.Euler(0f, 90f, 0f));
 
         CreateRegiment(
             "5. Regiment",
             BattleTeam.Denmark,
             585,
             false,
-            new Vector3(-100f, 0f, 36f),
-            Quaternion.Euler(0f, 78f, 0f));
+            new Vector3(-220f, 0f, 54f),
+            Quaternion.Euler(0f, 90f, 0f));
 
         CreateRegiment(
             "8th Regiment",
             BattleTeam.Prussia,
             610,
             true,
-            new Vector3(104f, 0f, -28f),
-            Quaternion.Euler(0f, -92f, 0f));
+            new Vector3(220f, 0f, 0f),
+            Quaternion.Euler(0f, -90f, 0f));
 
         CreateRegiment(
             "18th Regiment",
             BattleTeam.Prussia,
             560,
             true,
-            new Vector3(112f, 0f, 50f),
+            new Vector3(260f, 0f, 92f),
             Quaternion.Euler(0f, -105f, 0f),
             new Vector3(18f, 0f, 72f));
 
         Debug.Log(
-            "MAP-09F11|Size=" + BattlefieldWidth.ToString("0") + "x" + BattlefieldDepth.ToString("0") +
-            "m|Previous=360x240|LinearScale=4x|AreaScale=16x|RiverExtended=True");
+            "MAP-09F15|Size=" + BattlefieldWidth.ToString("0") + "x" + BattlefieldDepth.ToString("0") +
+            "m|Previous=1440x960|LinearScale=2x|AreaScale=4x|RiverWidth=5.5m|VisualPolish=True");
     }
 
     private void CreateLighting()
@@ -86,9 +89,10 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         GameObject lightObject = new GameObject("Sun");
         Light sun = lightObject.AddComponent<Light>();
         sun.type = LightType.Directional;
-        sun.intensity = 1.15f;
-        sun.color = new Color(1f, 0.94f, 0.83f);
-        lightObject.transform.rotation = Quaternion.Euler(48f, -32f, 0f);
+        sun.intensity = 1.22f;
+        sun.color = new Color(1f, 0.94f, 0.82f);
+        sun.shadows = LightShadows.Soft;
+        lightObject.transform.rotation = Quaternion.Euler(47f, -31f, 0f);
     }
 
     private void CreateCamera()
@@ -97,9 +101,11 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         Camera camera = cameraObject.AddComponent<Camera>();
         camera.tag = "MainCamera";
         camera.fieldOfView = 48f;
-        camera.nearClipPlane = 0.3f;
-        camera.farClipPlane = 3500f;
-        cameraObject.transform.position = new Vector3(-18f, 86f, -122f);
+        camera.nearClipPlane = 0.2f;
+        camera.farClipPlane = 7000f;
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.backgroundColor = new Color(0.57f, 0.67f, 0.75f);
+        cameraObject.transform.position = new Vector3(-32f, 94f, -148f);
         cameraObject.transform.rotation = Quaternion.Euler(39f, 4f, 0f);
         cameraObject.AddComponent<AudioListener>();
         cameraObject.AddComponent<RTSCameraController>();
@@ -107,10 +113,9 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
     private void CreateGround()
     {
-        // 4x linear battlefield dimensions. Mesh density is intentionally reduced to
-        // ~5 m per cell so the expanded QA map remains light enough for the prototype.
-        const int xSegments = 288;
-        const int zSegments = 192;
+        // Keep roughly 5 m terrain cells on the 2x-linear 09f15 battlefield.
+        const int xSegments = 576;
+        const int zSegments = 384;
         const float width = BattlefieldWidth;
         const float depth = BattlefieldDepth;
 
@@ -149,7 +154,8 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         Mesh mesh = new Mesh
         {
-            name = "PrototypeBattlefieldMesh_v09f11_1440x960",
+            name = "PrototypeBattlefieldMesh_v09f15_2880x1920",
+            indexFormat = IndexFormat.UInt32,
             vertices = vertices,
             triangles = triangles,
             uv = uvs
@@ -163,7 +169,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         mf.sharedMesh = mesh;
 
         MeshRenderer mr = ground.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = CreateSharedMaterial(new Color(0.32f, 0.42f, 0.20f), "Grass");
+        mr.sharedMaterial = CreateSharedMaterial(new Color(0.285f, 0.385f, 0.18f), "Grass09F15");
 
         MeshCollider mc = ground.AddComponent<MeshCollider>();
         mc.sharedMesh = mesh;
@@ -179,26 +185,26 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             -((x - 56f) * (x - 56f) / 4300f +
               (z - 54f) * (z - 54f) / 1900f));
 
-        float rolls = 0.9f * Mathf.Sin(x * 0.032f) * Mathf.Cos(z * 0.046f);
+        float broadRolls = 1.25f * Mathf.Sin(x * 0.010f) * Mathf.Cos(z * 0.013f);
+        float fineRolls = 0.75f * Mathf.Sin(x * 0.032f) * Mathf.Cos(z * 0.046f);
         float streamX = StreamCenterX(z);
-        float streamDip = -1.2f * Mathf.Exp(-((x - streamX) * (x - streamX)) / 180f);
+        float streamDip = -1.35f * Mathf.Exp(-((x - streamX) * (x - streamX)) / 230f);
 
-        return ridge + northHill + rolls + streamDip;
+        return ridge + northHill + broadRolls + fineRolls + streamDip;
     }
 
     public static float StreamCenterX(float z)
     {
-        return Mathf.Sin(z * 0.065f) * 4.8f;
+        return Mathf.Sin(z * 0.035f) * 7.5f + Mathf.Sin(z * 0.008f) * 3.0f;
     }
 
     private void CreateStream()
     {
-        Material water = CreateSharedMaterial(new Color(0.18f, 0.40f, 0.52f), "Water");
+        Material water = CreateSharedMaterial(new Color(0.12f, 0.32f, 0.46f), "Water09F15");
         Vector3 previous = Vector3.zero;
 
-        // Extended from ~236 m to ~944 m so the river spans the new 4x-deep map.
-        const int points = 237;
-        const float startZ = -472f;
+        const int points = 477;
+        const float startZ = -952f;
         const float stepZ = 4f;
 
         for (int i = 0; i < points; i++)
@@ -208,7 +214,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             Vector3 p = new Vector3(x, SampleGroundHeight(x, z) + 0.07f, z);
 
             if (i > 0)
-                CreateSegment("Stream", previous, p, 4.4f, 0.06f, water);
+                CreateSegment("Stream", previous, p, 5.5f, 0.065f, water);
 
             previous = p;
         }
@@ -216,21 +222,21 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
     private void CreateRoad()
     {
-        Material road = CreateSharedMaterial(new Color(0.55f, 0.43f, 0.28f), "Road");
+        Material road = CreateSharedMaterial(new Color(0.50f, 0.38f, 0.23f), "Road09F15");
         Vector3 previous = Vector3.zero;
 
-        const int points = 241;
-        const float startX = -704f;
+        const int points = 481;
+        const float startX = -1408f;
         const float stepX = 5.87f;
 
         for (int i = 0; i < points; i++)
         {
             float x = startX + i * stepX;
-            float z = 22f + Mathf.Sin(x * 0.028f) * 5.2f;
+            float z = 22f + Mathf.Sin(x * 0.014f) * 8.2f;
             Vector3 p = new Vector3(x, SampleGroundHeight(x, z) + 0.10f, z);
 
             if (i > 0)
-                CreateSegment("Road", previous, p, 4.8f, 0.05f, road);
+                CreateSegment("Road", previous, p, 5.4f, 0.055f, road);
 
             previous = p;
         }
@@ -253,8 +259,10 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
     private void CreateFarmstead()
     {
-        Material wall = CreateSharedMaterial(new Color(0.78f, 0.74f, 0.64f), "FarmWall");
-        Material roof = CreateSharedMaterial(new Color(0.28f, 0.20f, 0.14f), "FarmRoof");
+        Material wall = CreateSharedMaterial(new Color(0.76f, 0.70f, 0.58f), "FarmWall09F15");
+        Material roof = CreateSharedMaterial(new Color(0.25f, 0.16f, 0.11f), "FarmRoof09F15");
+        Material timber = CreateSharedMaterial(new Color(0.20f, 0.12f, 0.07f), "FarmTimber09F15");
+        Material glass = CreateSharedMaterial(new Color(0.20f, 0.29f, 0.31f), "FarmWindow09F15");
         Vector3 basePos = new Vector3(-82f, SampleGroundHeight(-82f, -54f), -54f);
 
         GameObject house = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -271,6 +279,10 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         roofBlock.GetComponent<Renderer>().sharedMaterial = roof;
         Destroy(roofBlock.GetComponent<Collider>());
 
+        CreateFarmDetail(basePos + new Vector3(0f, 1.1f, -2.53f), new Vector3(1.0f, 2.1f, 0.16f), timber, "FarmDoor");
+        CreateFarmDetail(basePos + new Vector3(-2.2f, 1.7f, -2.55f), new Vector3(1.0f, 0.9f, 0.12f), glass, "FarmWindow");
+        CreateFarmDetail(basePos + new Vector3(2.2f, 1.7f, -2.55f), new Vector3(1.0f, 0.9f, 0.12f), glass, "FarmWindow");
+
         GameObject barn = GameObject.CreatePrimitive(PrimitiveType.Cube);
         barn.name = "Barn";
         barn.transform.position = new Vector3(
@@ -281,16 +293,26 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         barn.GetComponent<Renderer>().sharedMaterial = wall;
     }
 
+    private void CreateFarmDetail(Vector3 position, Vector3 scale, Material material, string name)
+    {
+        GameObject detail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        detail.name = name;
+        detail.transform.position = position;
+        detail.transform.localScale = scale;
+        detail.GetComponent<Renderer>().sharedMaterial = material;
+        Destroy(detail.GetComponent<Collider>());
+    }
+
     private void CreateVegetation()
     {
         Random.InitState(1864);
 
-        for (int i = 0; i < 420; i++)
+        for (int i = 0; i < 900; i++)
         {
-            float x = Random.Range(-700f, 700f);
-            float z = Random.Range(-460f, 460f);
+            float x = Random.Range(-1420f, 1420f);
+            float z = Random.Range(-940f, 940f);
 
-            bool nearStream = Mathf.Abs(x - StreamCenterX(z)) < 10f;
+            bool nearStream = Mathf.Abs(x - StreamCenterX(z)) < 12f;
             bool nearFarm =
                 x < -62f &&
                 x > -98f &&
@@ -302,19 +324,21 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
             CreateTree(
                 new Vector3(x, SampleGroundHeight(x, z), z),
-                Random.Range(0.8f, 1.35f));
+                Random.Range(0.78f, 1.42f));
         }
     }
 
     private void CreateTree(Vector3 position, float scale)
     {
-        Material trunkMat = CreateSharedMaterial(new Color(0.24f, 0.16f, 0.10f), "TreeTrunk");
-        Material crownMat = CreateSharedMaterial(new Color(0.17f, 0.31f, 0.13f), "TreeCrown");
+        Material trunkMat = CreateSharedMaterial(new Color(0.22f, 0.14f, 0.075f), "TreeTrunk09F15");
+        Material crownMat = CreateSharedMaterial(new Color(0.145f, 0.285f, 0.105f), "TreeCrown09F15");
+        Material crownLightMat = CreateSharedMaterial(new Color(0.20f, 0.35f, 0.14f), "TreeCrownLight09F15");
 
         GameObject root = new GameObject("Tree");
         root.transform.position = position;
 
         GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        trunk.name = "TreeTrunk";
         trunk.transform.SetParent(root.transform, false);
         trunk.transform.localPosition = new Vector3(0f, 1.5f * scale, 0f);
         trunk.transform.localScale = new Vector3(0.28f * scale, 1.5f * scale, 0.28f * scale);
@@ -322,16 +346,25 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         Destroy(trunk.GetComponent<Collider>());
 
         GameObject crown = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        crown.name = "TreeCrown";
         crown.transform.SetParent(root.transform, false);
-        crown.transform.localPosition = new Vector3(0f, 4.1f * scale, 0f);
-        crown.transform.localScale = new Vector3(2.3f * scale, 3.0f * scale, 2.3f * scale);
+        crown.transform.localPosition = new Vector3(0f, 4.0f * scale, 0f);
+        crown.transform.localScale = new Vector3(2.35f * scale, 2.65f * scale, 2.35f * scale);
         crown.GetComponent<Renderer>().sharedMaterial = crownMat;
         Destroy(crown.GetComponent<Collider>());
+
+        GameObject upper = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        upper.name = "TreeCrown";
+        upper.transform.SetParent(root.transform, false);
+        upper.transform.localPosition = new Vector3(0.35f * scale, 5.35f * scale, -0.15f * scale);
+        upper.transform.localScale = new Vector3(1.75f * scale, 1.85f * scale, 1.75f * scale);
+        upper.GetComponent<Renderer>().sharedMaterial = crownLightMat;
+        Destroy(upper.GetComponent<Collider>());
     }
 
     private void CreateFences()
     {
-        Material wood = CreateSharedMaterial(new Color(0.30f, 0.22f, 0.13f), "Fence");
+        Material wood = CreateSharedMaterial(new Color(0.28f, 0.19f, 0.10f), "Fence09F15");
 
         CreateFenceLine(
             new Vector3(-126f, 0f, -14f),
