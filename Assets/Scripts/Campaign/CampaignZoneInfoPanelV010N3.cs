@@ -56,6 +56,11 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
             selectedCity = city;
             visible = true;
 
+            // Clicking the map should always be able to reveal the compact card,
+            // even if the user previously switched to minimal HUD.
+            if (!CampaignHudStateV010N2.HudVisible)
+                CampaignHudStateV010N2.ToggleHud();
+
             // v10n3 compact card replaces the large legacy INFO panel during normal
             // map selection. INFO/F2 can still reopen the detailed legacy panel.
             if (CampaignHudStateV010N2.SelectionEnabled)
@@ -166,9 +171,10 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         {
             Vector2 pi = polygon[i];
             Vector2 pj = polygon[j];
+            float denominator = pj.y - pi.y;
             bool crosses = ((pi.y > point.y) != (pj.y > point.y)) &&
-                (point.x < (pj.x - pi.x) * (point.y - pi.y) /
-                Mathf.Max(0.0000001f, pj.y - pi.y) + pi.x);
+                Mathf.Abs(denominator) > 0.0000001f &&
+                (point.x < (pj.x - pi.x) * (point.y - pi.y) / denominator + pi.x);
             if (crosses)
                 inside = !inside;
             j = i;
