@@ -1,17 +1,29 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f20
+Prototype version: v00.00.09f21
 Build status: TEST
-Build name: MAJOR SELECTION HANDOFF + COMMANDER INTENT LOCK + IMMEDIATE DOCTRINE RESPONSE
-Visible build marker: PROJECT 1864 | v00.00.09f20 TEST
+Build name: MANUAL ATTACK AUTHORITY ISOLATION + MAJOR/PLAYER ATTACK-LANE SEPARATION
+Visible build marker: PROJECT 1864 | v00.00.09f21 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1-09f17 retained + 09f18 unified officer AI/command authority + 09f19 discretionary reserve/flank judgement + 09f20 selection/intent/doctrine fix
+Design manual baseline: v00.02.08 + 09f1-09f17 retained + 09f18 unified officer AI/command authority + 09f19 discretionary reserve/flank judgement + 09f20 selection/intent/doctrine fix + 09f21 manual attack authority isolation
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
 09f18 design supplement: docs/design-supplements/v00.00.09f18-unified-ai-command-authority.md
 09f19 design supplement: docs/design-supplements/v00.00.09f19-discretionary-reserve.md
 09f20 design supplement: docs/design-supplements/v00.00.09f20-selection-intent-doctrine.md
+09f21 design supplement: docs/design-supplements/v00.00.09f21-manual-attack-authority.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f21 - Manual attack authority isolation
+- Fixed the case where one manually detached company attacked a designated enemy, fired once, then turned and marched toward an unrelated lane position.
+- Root cause: the legacy 09f17 attack-lane layer grouped ALL Danish companies sharing the same forcedTarget, including Major/AI-controlled companies and direct player-controlled companies.
+- Major/AI ON companies are now excluded from the manual attack-lane planner.
+- A single player-controlled AI OFF company is never converted into a formation attack lane and retains its direct designated target.
+- Manual attack lanes are now eligible only for 2+ CURRENTLY SELECTED Danish companies that are all under direct manual control (AI OFF) and share the same target.
+- Multi-company manual lane movement temporarily suspends forcedTarget only while moving to separate lane slots; OrderAttack is restored at lane arrival or when the target is already inside useful fire range.
+- New direct player input clears any stale manual-lane assignment before the new order is processed.
+- River/bridge and hard-building legality layers remain authoritative and are not bypassed.
+- Console telemetry: ATTACK-LANES-09F21.
 
 v00.00.09f20 - Major/company selection handoff
 - Fixed selection authority after selecting the Major.
@@ -59,7 +71,7 @@ v00.00.09f18 retained - Unified AI authority
 Retained from v00.00.09f17
 - Four Danish company-scale units under the Major.
 - Manual multi-company Line spacing 60 m centre-to-centre.
-- Manual multi-company attack-lane safety remains for direct player attacks.
+- Manual multi-company attack-lane safety remains for direct player attacks, now authority-isolated by 09f21.
 
 Retained from v00.00.09f15-v00.00.09f14
 - Battlefield 2880 x 1920 m, camera minimum height 9.5 m, river width 5.5 m and bridge-only crossing.
@@ -67,14 +79,15 @@ Retained from v00.00.09f15-v00.00.09f14
 - B-271 ranged lethality defaults: BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55, firing fraction 58%.
 - Destination facing chevron, musket volley audio, 1:1 fallen support and procedural WALK animation.
 
-Primary v00.00.09f20 QA
-1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f20 TEST.
-2. Select Major, then single-click a Danish company: Major panel must close and company bottom UI must appear.
-3. Select Major, then drag a box around one or more Danish companies: Major must deselect and the companies must be selected normally.
-4. Selecting a company alone must NOT turn company AI OFF.
-5. Give the selected company a manual move/H/F/C/Z/X order: company AI must turn OFF and detach from the current Major mission.
-6. Select Major again, switch Major AI ON and issue FORSVAR HER at a visible location.
-7. Wait more than the old 6-second ThinkMajor interval: the Major must continue the player-issued FORSVAR mission rather than replace it with an autonomous attack/advance.
-8. While that FORSVAR mission is active, press OFF then DEF doctrine: the objective must remain the same; the mission must not be discarded.
-9. Test Major AI ON with no explicit Major mission: changing doctrine to DEF must immediately establish a defensive posture rather than continuing a previous offensive task.
-10. Recheck 4v1 reserve/flank decision, obstacle-safe endpoints and old manual-route clearing.
+Primary v00.00.09f21 QA
+1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f21 TEST.
+2. Put Major AI ON and let one or more Major-controlled companies engage the Prussian test unit.
+3. Select ONE Danish company and manually right-click that same Prussian target.
+4. The selected company AI must switch OFF and detach from the Major mission.
+5. It must keep the manually designated target; it must NOT fire once and then turn/march toward another company's attack lane.
+6. Leave the target inside range/arc and verify the manual company can fire repeated volleys according to reload time.
+7. Select TWO Danish companies and manually attack the same target: both become AI OFF and may use separate 60 m side-by-side manual lanes.
+8. After lane arrival they must restore OrderAttack and continue fighting rather than stopping at the lane destination.
+9. Give either manual company a new direct move/hold/etc. order and verify stale lane authority does not pull it back.
+10. Give the Major a NEW order and verify the companies can be reclaimed with AI ON according to the unified authority rule.
+11. Recheck bridge-only crossing and Farmhouse/Barn detours.
