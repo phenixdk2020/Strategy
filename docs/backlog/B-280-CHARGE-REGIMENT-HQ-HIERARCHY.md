@@ -90,13 +90,84 @@ A lower level may temporarily react to local contact, but must retain the parent
 
 Do not require courier delay for first Regimental-HQ gameplay, but architecture must preserve a future order lifecycle between Oberstløjtnant and Majors. Later couriers physically carry delayed orders and can be delayed/lost/intercepted.
 
-## B-289 — Gate before Dragoons
+## B-289 — Dynamic HQ advance / Command Zone
+
+HQ must not remain at its original start position while subordinate formations advance hundreds of metres. During movement and especially attack, HQ positions are dynamic tactical positions.
+
+### Major / Battalion HQ movement
+
+- The Major follows the battalion in bounds rather than continuously hugging the front line.
+- During an attack the Major should normally remain behind the active company line, but advance when the battalion front moves far enough forward.
+- HQ relocation is a tactical action: choose a new safe HQ anchor, move there, then reassess command links.
+- Major should avoid known enemy frontage, open water, blocked terrain and obviously exposed positions.
+- If the battalion halts to fight, the Major should normally halt behind/near its centre or reserve rather than continue forward through the line.
+- If the battalion retreats, the Major should displace rearward as part of the mission.
+
+### Oberstløjtnant / Regimental HQ movement
+
+- Regimental HQ follows both battalions at a larger standoff than either Major.
+- It should prefer a position from which both Majors remain inside useful command reach.
+- If one battalion advances much farther than the other, the Regimental HQ must balance safety against maintaining communication to both.
+- It may displace forward in bounds as the regiment advances and rearward during withdrawal.
+
+### Command Zone is not primarily a weapon-stat bonus
+
+Being outside command reach should mainly degrade **command and coordination**, not musket accuracy directly.
+
+Suggested affected systems:
+- increased order/reaction delay;
+- slower Officer AI reassessment;
+- slower reserve reassignment and flank coordination;
+- reduced cohesion recovery / reorganisation rate;
+- slower morale recovery after shock;
+- higher chance of delayed/stale information later under fog of war;
+- courier travel time / order delivery once courier lifecycle is enabled.
+
+Do **not** use a crude immediate accuracy penalty simply because a company is outside HQ radius.
+
+### Prototype command quality bands
+
+Use continuous distance/quality later, but first implementation may expose three bands:
+
+- `IN COMMAND` — normal command quality;
+- `EXTENDED` — moderate delay/coordination penalty;
+- `OUT OF COMMAND` — significant delay and weaker coordination, but unit remains functional under its local Captain.
+
+A company outside Major range does not become helpless: the Kaptajn keeps local control and can defend, fire, react to contact and execute the last received mission. What is lost is fast coordination with higher HQ.
+
+Likewise, a Major outside Regimental HQ range still commands its battalion locally, but receives new regimental intent more slowly/less reliably.
+
+### Prototype positioning concept
+
+Initial QA values, subject to tuning:
+
+- Major preferred position during normal attack: roughly 100–220 m behind battalion fighting line/centre.
+- Major command quality begins degrading progressively beyond roughly 300–400 m from subordinate companies.
+- Oberstløjtnant preferred position: roughly 250–500 m behind/among the two battalion centres.
+- Regimental command quality may begin degrading beyond roughly 700–900 m to a Major.
+
+These are gameplay prototype values, not final historical measurements.
+
+### Visualisation
+
+When an HQ is selected:
+- show direct subordinate links;
+- optionally show a subtle command-zone ring/band;
+- subordinate UI may show `IN COMMAND`, `EXTENDED` or `OUT OF COMMAND`;
+- do not leave command-zone overlays permanently visible because that would clutter the battlefield.
+
+### Important authority rule
+
+Automatic HQ movement changes **HQ position**, not the commander mission. A Major ordered to defend/attack keeps the mission while relocating its physical HQ to remain useful. The same applies to the Oberstløjtnant relative to the two Majors.
+
+## Gate before Dragoons
 
 Dragoons remain blocked until these are stable enough to reuse:
 1. infantry CHARGE;
 2. melee resolution;
 3. under-fire reaction;
 4. two battalions / two Majors;
-5. Oberstløjtnant → Major command chain.
+5. Oberstløjtnant → Major command chain;
+6. basic dynamic HQ positioning / command reach.
 
 Then proceed to mounted/dismounted Dragoon implementation, Dragoon AI and later artillery.
