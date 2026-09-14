@@ -82,8 +82,19 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
     public static void ToggleSelectionPanel()
     {
         EnsureLoaded();
-        selectionPanel = !selectionPanel;
-        if (selectionPanel) hudVisible = true;
+
+        // If minimal HUD is active, INFO/F2 should restore the information panel
+        // instead of first toggling its saved state off invisibly.
+        if (!hudVisible)
+        {
+            hudVisible = true;
+            selectionPanel = true;
+        }
+        else
+        {
+            selectionPanel = !selectionPanel;
+        }
+
         Save();
         LogState("F2/INFO");
     }
@@ -91,8 +102,17 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
     public static void ToggleDebugPanels()
     {
         EnsureLoaded();
-        debugPanels = !debugPanels;
-        if (debugPanels) hudVisible = true;
+
+        if (!hudVisible)
+        {
+            hudVisible = true;
+            debugPanels = true;
+        }
+        else
+        {
+            debugPanels = !debugPanels;
+        }
+
         Save();
         LogState("F3/DEBUG");
     }
