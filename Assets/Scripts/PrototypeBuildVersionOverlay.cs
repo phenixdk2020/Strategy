@@ -5,7 +5,7 @@ using UnityEngine;
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
-    private const string BuildChannel = "TACTICAL TEST";
+    private const string BuildChannel = "CAMPAIGN3";
     private GUIStyle style;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
