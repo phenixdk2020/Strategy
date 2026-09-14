@@ -1,12 +1,10 @@
 using UnityEngine;
 
-// Small always-visible TEST build marker so screenshots immediately reveal
-// which prototype revision is running. Bump the suffix for every TEST delivery.
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
-    public const string BuildVersion = "v00.00.09f19";
-    public const string BuildChannel = "TEST";
+    public const string BuildVersion = "v00.00.09f19L";
+    public const string BuildChannel = "REBUILD";
 
     private GUIStyle style;
 
@@ -35,7 +33,7 @@ public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
         EnsureStyle();
         GUI.depth = -1000;
         GUI.Box(
-            new Rect(8f, 8f, 206f, 24f),
+            new Rect(8f, 98f, 228f, 24f),
             "PROJECT 1864 | " + BuildVersion + " " + BuildChannel,
             style);
     }
