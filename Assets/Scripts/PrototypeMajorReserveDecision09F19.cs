@@ -115,11 +115,12 @@ public sealed class PrototypeMajorReserveDecision09F19 : MonoBehaviour
         if (reserve == null || !missions.Contains(reserve))
             return;
 
-        string key = orderText + "|" + enemy.GetInstanceID() + "|" + reserve.GetInstanceID();
+        Vector3 center = MissionCenter(missions, active);
+        string key = orderText + "|" + enemy.RegimentName + "|" + reserve.RegimentName +
+                     "|" + Mathf.RoundToInt(center.x / 5f) + ":" + Mathf.RoundToInt(center.z / 5f);
         if (lastAppliedKey == key)
             return;
 
-        Vector3 center = MissionCenter(missions, active);
         Vector3 forward = MissionFacing(missions, active, enemy.transform.position - center);
         Vector3 lateral = Vector3.Cross(Vector3.up, forward).normalized;
 
