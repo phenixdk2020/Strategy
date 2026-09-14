@@ -1,10 +1,10 @@
 PROJECT 1864 - Unity Battle Prototype
 Prototype version: v00.00.09f17
 Build status: TEST
-Build name: FOUR-COMPANY BATTALION + RESERVE/FLANK AI + SIDE-BY-SIDE GROUP LINE FIX
+Build name: FOUR-COMPANY BATTALION + RESERVE/FLANK AI + SIDE-BY-SIDE GROUP LINE + ATTACK LANES
 Visible build marker: PROJECT 1864 | v00.00.09f17 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + 09f15 Major HQ/map/UI + 09f16 HQ usability/formation + 09f17 four-company reserve/flank/group-line
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + 09f15 Major HQ/map/UI + 09f16 HQ usability/formation + 09f17 four-company reserve/flank/group-line/attack-lanes
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
@@ -17,6 +17,15 @@ v00.00.09f17 - Manual multi-company Line order fix
 - The existing PlayerCommander route objects are corrected after the order is created, preserving route/pathfinding/ghost behavior instead of replacing the movement system.
 - Group destination preview is also expanded to the true multi-company frontage.
 - Expected result: 2, 3 or 4 selected companies line up SIDE BY SIDE, not on top of each other.
+
+v00.00.09f17 - Formation-level attack lanes
+- Reproduced second QA issue: multiple companies ordered to ATTACK the same enemy all chased the same target transform and collapsed on top of each other.
+- Added PrototypeFormationAttackLanes09F17.
+- When 2+ Danish companies share the same attack target, the order is converted to one common firing line with separate company lanes.
+- Lane spacing is 60 m, matching the side-by-side group Line rule.
+- The attack line stops at the shortest active fire-policy range among the attacking companies (bounded to 28-88 m), so all companies can engage without converging on the enemy center.
+- Each company moves to its own lane in Line formation; Regiment.OrderMove clears the shared forced target that caused the overlap.
+- This applies to both manual multi-selection ATTACK and Major-issued attacks once multiple companies share the same target.
 
 v00.00.09f17 - Four-company Danish battalion
 - Scenario now creates/keeps four Danish company-scale maneuver units under the Major.
@@ -61,10 +70,11 @@ Primary v00.00.09f17 QA
 2. Build marker reads PROJECT 1864 | v00.00.09f17 TEST.
 3. Select TWO companies and issue a normal group Line destination: they must finish side by side with ~12 m interval, not overlap.
 4. Repeat with THREE and FOUR selected companies; the group preview and final line must expand accordingly.
-5. Confirm four Danish companies spawn at 190 men each and can be selected individually/multi-selected.
-6. Select Major: panel lists all four companies and four command-links are visible.
-7. HQ AI defaults OFF; manual Major FORSVAR HER should use all four companies on one common front.
-8. Turn HQ AI ON and allow an enemy to approach: Major should be able to use 3-front + 1-reserve organization.
-9. Under good battalion condition and suitable distance, watch for FLANKE-RESERVE in the HQ panel and HQ-AI-09F17 / HQ-RESERVE-09F17 console lines.
-10. Recheck bridge/building routing while moving a multi-company line and while Major orders are active.
-11. Recheck VOLLEY-CAL-09F14, musket audio, destination chevron, 1:1 fallen and WALK animation for regressions.
+5. Select TWO or more companies and ATTACK the same enemy: they must form separate attack lanes side by side instead of converging on one point.
+6. Confirm four Danish companies spawn at 190 men each and can be selected individually/multi-selected.
+7. Select Major: panel lists all four companies and four command-links are visible.
+8. HQ AI defaults OFF; manual Major FORSVAR HER should use all four companies on one common front.
+9. Turn HQ AI ON and allow an enemy to approach: Major should be able to use 3-front + 1-reserve organization.
+10. Under good battalion condition and suitable distance, watch for FLANKE-RESERVE in the HQ panel and HQ-AI-09F17 / HQ-RESERVE-09F17 console lines.
+11. Recheck bridge/building routing while moving a multi-company line and while Major orders are active.
+12. Recheck VOLLEY-CAL-09F14, musket audio, destination chevron, 1:1 fallen and WALK animation for regressions.
