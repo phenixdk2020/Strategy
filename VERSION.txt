@@ -1,37 +1,54 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f24
+Prototype version: v00.00.09f25
 Build status: TEST
-Build name: MAJOR ORDER REPLACEMENT + EXACT DESTINATION COMMITMENT + COMPANY MISSION VISIBILITY
-Visible build marker: PROJECT 1864 | v00.00.09f24 TEST
+Build name: INFANTRY CHARGE + LOCAL CAPTAIN AUTHORITY + DYNAMIC MAJOR COMMAND ZONE
+Visible build marker: PROJECT 1864 | v00.00.09f25 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1-09f23 retained + 09f24 mission/destination authority
+Design manual baseline: v00.02.08 + 09f1-09f24 retained + 09f25 charge/authority/command-zone supplement
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
-Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
+Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f22 design supplement: docs/design-supplements/v00.00.09f22-major-formation-selection-hud.md
 09f23 design supplement: docs/design-supplements/v00.00.09f23-authority-and-formation-slot-safety.md
 09f24 design supplement: docs/design-supplements/v00.00.09f24-major-mission-destination-authority.md
+09f25 design supplement: docs/design-supplements/v00.00.09f25-charge-local-authority-command-zone.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f24 - Selected company can inspect its Major destination
-- Major mission path/footprint visuals are no longer visible only while the Major itself is selected.
-- If one or more subordinate companies are selected and they still belong to the active Major mission, each selected company shows its own current path and destination footprint.
-- Selecting a company does not detach it; only a direct manual order does that.
-- Manual AI-OFF companies still lose the Major mission visual as intended.
+v00.00.09f25 - Local Captain authority after manual AI ON
+- Fixes the regression where a company detached by a manual player order could resurrect its OLD Major assignment when AI was switched ON again.
+- AI ON after a manual order now means local Captain AI, not automatic return to the previous Major destination.
+- The stale lastAssignments entry is invalidated before the Major controller can reapply it.
+- If a PlayerCommander manual movement route is still active, AIEnabled remains ON but OfficerAI Update is temporarily paused until that route completes.
+- Only a NEW Major order may reclaim the company into battalion command.
+- Console telemetry: AI-AUTHORITY-09F25.
 
-v00.00.09f24 - New Major order is a hard replacement
-- Every newly created Major mission set receives a new execution identity, even if the player repeats the same order at the same map point.
-- On a new Major order, stale direct-player routes/ghosts are cleared, old direct attack targets are removed and the old local Officer-AI mission is flushed before the new destination is written.
-- The new order therefore replaces the previous live execution instead of coexisting with it.
-- Console telemetry: HQ-COMMIT-09F24.
+v00.00.09f25 - Infantry CHARGE + melee approach
+- Selected Danish companies receive an explicit CHARGE [V] command and enemy target-pick mode.
+- CHARGE is not normal OrderAttack: it ignores musket stop range and closes toward physical contact.
+- Direct player charge releases Major authority and sets company AI OFF.
+- Charging infantry uses HOLD FIRE, Line in open approach and temporary Column where the existing bridge router requires it.
+- Prototype charge speed: Denmark 4.80 m/s, Prussia 5.00 m/s; charge adds extra cohesion cost while closing.
+- At approximately 7.2 m contact, movement stops and the existing PrototypeMeleeCombatManager owns melee contact/casualty resolution.
+- Previous fire policy is restored when the charge ends because the target breaks/routes or the attacker routes.
+- Existing terrain/bridge routing remains authoritative during the approach.
+- Console telemetry: CHARGE-09F25.
 
-v00.00.09f24 - Destination box is authoritative
-- A Major-owned company may not mark itself arrived merely because an enemy enters fire range while the displayed destination box is still several metres away.
-- Exact arrival tolerance is approximately 4.5 m from the assigned company slot.
-- While travelling, local Officer-AI Update is temporarily paused but AIEnabled remains ON.
-- The strategic goal is restored only when no active movement destination exists, so bridge/building steering waypoints are not overwritten.
-- When the exact slot is reached, local Officer AI is released again.
-- This fixes the observed case where companies stopped short of the yellow/blue destination boxes.
+v00.00.09f25 - Dynamic Major HQ advance / command zone MVP
+- Major HQ no longer has to remain indefinitely at its original position while an AI-controlled battalion advances.
+- With Major AI ON and active ATTACK/ADVANCE/DEFEND mission, HQ reviews its physical position every 2.5 seconds.
+- When subordinate companies have moved far enough forward, HQ attempts a safe relocation in bounds, normally roughly 145-165 m behind battalion centre/front direction.
+- HQ relocation preserves the Major mission; it changes HQ position only.
+- The first HQ movement pass only accepts a clear straight route and refuses relocation through known blockers/open river. HQ-specific bridge/path planning remains later work.
+- Prototype command bands: IN COMMAND <= 320 m, EXTENDED <= 450 m, OUT OF COMMAND > 450 m.
+- EXTENDED/OUT OF COMMAND add reaction/AI decision delay only. They do NOT reduce musket accuracy or weapon range.
+- Selecting the Major shows 320/450 m command-zone rings; selecting a subordinate company shows its current command band and distance to HQ in the bottom HUD.
+- Console telemetry: HQ-ZONE-09F25.
+
+Retained from v00.00.09f24
+- Selected Major-owned company can inspect its current Major path and destination footprint.
+- New Major order is a hard replacement of old physical route/attack execution.
+- Displayed Major destination box remains authoritative; units do not count as arrived merely because an enemy enters fire range.
+- Exact arrival tolerance remains approximately 4.5 m.
 
 Retained from v00.00.09f23
 - Direct player company orders detach from Major authority before PlayerCommander handles the same input frame.
@@ -60,7 +77,7 @@ Retained from v00.00.09f19
 
 Retained from v00.00.09f18
 - Major and companies use unified AI vocabulary: AI ON/OFF and DEF/BAL/OFF.
-- Direct manual company order sets company AI OFF; a new Major order reclaims subordinate companies and switches them AI ON.
+- Direct manual company order sets company AI OFF; a NEW Major order may reclaim subordinate companies and switch them AI ON.
 - Major can be moved manually and doing so switches Major AI OFF.
 
 Retained from v00.00.09f15-v00.00.09f14
@@ -70,16 +87,18 @@ Retained from v00.00.09f15-v00.00.09f14
 - B-271 ranged lethality defaults: BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55, firing fraction 58%.
 - Destination facing chevron, musket volley audio, 1:1 fallen support and procedural WALK animation.
 
-Primary v00.00.09f24 QA
-1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f24 TEST.
-2. Give Major FORSVAR HER and wait until the four company destinations are visible.
-3. Select one company without issuing a manual order: its current Major path and destination box must remain visible.
-4. Select several companies without ordering them: all selected Major-owned companies must show their own destination footprints.
-5. Give Major a second, clearly different FORSVAR HER destination before the first mission is complete.
-6. The old physical movement/attack execution must stop and the new Major destination must take over immediately.
-7. Repeat the same Major order at the same point; it must still count as a fresh replacement order.
-8. Companies must continue to the displayed destination boxes instead of stopping early at fire range.
-9. Final arrival should be within approximately 4.5 m of the assigned slot.
-10. Verify building/bridge routing is still respected while exact destination commitment is active.
-11. Verify a direct manual company order still switches AI OFF and removes that company's Major mission visual.
-12. Recheck 4v1 reserve/flank judgement, direct manual attack authority and collision-safe formation slots.
+Primary v00.00.09f25 QA
+1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f25 TEST.
+2. Major: FORSVAR HER. Give one company a direct manual move in the opposite direction; AI must switch OFF and the manual route must win.
+3. While that manual route is still active, toggle that company's AI ON. It must continue the player route and must NOT return to its previous Major slot/bridge route.
+4. After the manual route completes, the local Captain AI may reassess from the new position without reviving the stale Major objective.
+5. Give the Major a NEW order. The company may now be reclaimed into Major authority and receive the new mission.
+6. Select one Danish company, press V/CHARGE and click a Prussian company. Charge must close beyond normal fire-stop range with HOLD FIRE.
+7. Charge must respect bridge-only crossing and hard obstacle routing.
+8. At physical contact, the charge must stop and the existing melee manager must resolve melee without formations simply walking through one another.
+9. When the target routes/breaks, previous fire policy must be restored.
+10. With Major AI ON during ATTACK/ADVANCE, move the battalion far enough forward and verify the physical Major HQ relocates forward in a later bound rather than remaining at the original start point.
+11. Major HQ must refuse an automatic relocation that would require a direct path through blocked terrain/open river.
+12. Select Major: command-zone rings should appear. Select one subordinate company: bottom HUD should report IN COMMAND / EXTENDED / OUT OF COMMAND plus distance.
+13. EXTENDED/OUT OF COMMAND must affect command reaction delay only; weapon accuracy/range must remain unchanged.
+14. Recheck f24 exact destination commitment, collision-safe slots and Major order replacement.
