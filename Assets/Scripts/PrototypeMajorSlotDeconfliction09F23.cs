@@ -31,7 +31,7 @@ public sealed class PrototypeMajorSlotDeconfliction09F23 : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
-        if (Object.FindAnyObjectByType<PrototypeMajorSlotDeconfliction09F23>() == null)
+        if (UnityEngine.Object.FindAnyObjectByType<PrototypeMajorSlotDeconfliction09F23>() == null)
             new GameObject("PrototypeMajorSlotDeconfliction_v000009f23").AddComponent<PrototypeMajorSlotDeconfliction09F23>();
     }
 
@@ -109,7 +109,7 @@ public sealed class PrototypeMajorSlotDeconfliction09F23 : MonoBehaviour
 
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
             if (controller != null && !controller.AIEnabled)
-                continue; // manual authority always wins.
+                continue;
 
             front.Add(regiment);
         }
@@ -163,8 +163,6 @@ public sealed class PrototypeMajorSlotDeconfliction09F23 : MonoBehaviour
             UpdateSavedAssignment(regiment, goal, facing, false, false);
         }
 
-        // Reserve is part of the same footprint reservation set. A reserve/flank may
-        // keep its tactical intent, but it may not collapse onto a front company.
         if (reserve != null && missions.Contains(reserve))
         {
             object mission = missions[reserve];
@@ -296,7 +294,7 @@ public sealed class PrototypeMajorSlotDeconfliction09F23 : MonoBehaviour
         else if (controller == null)
             regiment.OrderMove(goal);
         else
-            return; // AI OFF is manual control: never steal authority.
+            return;
 
         PrototypeMajorOrderVisuals09F18 visuals = PrototypeMajorOrderVisuals09F18.Instance;
         if (visuals != null)
