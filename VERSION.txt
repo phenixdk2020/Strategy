@@ -1,95 +1,91 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n4
-Build status: HUD DEFAULT + POLYGON SELECTION + SHARED INTERNAL ZONE BORDER HOTFIX
-Build name: CAMPAIGN3 HUD + ZONE SELECTION + SHARED BORDER HOTFIX 10N4
+Prototype version: v00.00.10n5
+Build status: TACTICAL WITHDRAWAL ORDERS
+Build name: CAMPAIGN3 TACTICAL WITHDRAWAL ORDERS 10N5
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n4-hud-zone-lines
+Work branch: work/channel-campaign3-v10n5-withdrawal-orders
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.17
+Design baseline: v00.02.18
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
-- v00.00.10m = canonical 1851 zone/city runtime: 20 zones + 68 cities
-- v00.00.10n = zone overlay/polygon architecture
-- v00.00.10n1 = central current-build identity / stale badge hotfix
-- v00.00.10n2 = persistent HUD cleanup + land-clipped global non-overlap zone partition
-- v00.00.10n3 = crisp line experiment + compact contextual zone info
-- v00.00.10n4 = legacy INFO default-off + polygon-accurate zone selection + shared-border-only renderer
+- v00.00.10n2 = persistent HUD cleanup + land-clipped non-overlap zone partition
+- v00.00.10n3 = crisp zone-line render + compact contextual zone info
+- v00.00.10n4 = clean HUD default + polygon-accurate zone selection + shared-border renderer
+- v00.00.10n5 = tactical withdrawal / fighting withdrawal / break-contact prototype
 
 ROLLBACK:
+- before v10n5: backup/channel-campaign3-before-v10n5-withdrawal-orders-20260914
 - before v10n4: backup/channel-campaign3-before-v10n4-hud-zone-lines-20260914
-- before v10n3 promotion: backup/channel-campaign3-before-v10n3-promotion-20260914
-- before v10n3: backup/channel-campaign3-before-v10n3-zone-polish-info-20260914
-- before v10n2: backup/channel-campaign3-before-v10n2-ui-coastline-20260914
 
-V10N4 FIXES:
-1. LARGE INFO BOXES DEFAULT CLOSED
-- CampaignHudState performs a one-time v10n4 PlayerPrefs migration.
-- Legacy selected-zone/city/formation INFO panel starts hidden even if n2/n3 stored it as visible.
-- Technical debug panels also start hidden.
-- Compact contextual zone card remains the normal click response.
-- INFO/F2 can still explicitly open/close the legacy detailed panel.
-- F4 now resets to HUD visible + legacy INFO hidden + debug hidden.
+V10N5 PURPOSE:
+- Add a controlled withdrawal order with a player-selected rally point.
+- Units not in combat contact march directly toward the rally point.
+- Units in combat contact use a fighting-withdrawal cycle: back away while facing the enemy, halt briefly to fire, then continue withdrawing until clear.
+- Add BRYD KONTAKT as a separate emergency disengagement order.
+- Keep uncontrolled morale rout/flight separate from player-ordered withdrawal.
 
-2. CORRECT ZONE IDENTITY ON MAP CLICK
-- n3 nearest-centre click resolution has been removed.
-- CampaignZoneInfoPanel now reads the actual source polygon loops from ZONE_OVERLAY_1851_LAND_CLIPPED.
-- Each polygon part retains CampaignZoneOverlayMetadataV010N.ZoneId.
-- Map clicks are resolved by PointInPolygon against the actual displayed prototype area.
-- A click inside Vejle Amt therefore resolves DK-Z11-VEJ rather than a geographically unrelated centre such as Aalborg.
-- City-marker and explicit zone-marker clicks still have priority and use their authoritative IDs.
+TACTICAL COMMANDS:
+1. TILBAGETRÆK HERTIL
+- Select one or more Danish regiments.
+- Press the TILBAGETRÆK HERTIL control.
+- Click a terrain point to define a common rally point.
+- Units outside combat contact enter RallyMarch and move directly to the rally point.
+- Units inside combat contact enter FightingWithdrawal first.
+- FightingWithdrawal alternates short backward movement phases and short firing/holding phases.
+- During fighting withdrawal the regiment keeps its frontage toward the nearest threat instead of turning its back.
+- Once safely outside mutual effective engagement distance for a confirmation interval, the unit switches to RallyMarch.
 
-3. REMOVE LONG ZONE-LINE SPURS / WATER FRAGMENTS
-- CampaignZoneLinePolish now records the distinct ZoneIds owning each snapped source segment.
-- Only a segment shared by at least TWO DIFFERENT zones is rendered.
-- Single-owner polygon edges are omitted from the yellow administrative-border layer.
-- This removes outer coastline edges, water/clipping fragments and the long one-sided spurs seen in n3.
-- Original v10n2 polygon loops remain present as hidden geometry/data.
-- Z still toggles the complete zone overlay hierarchy.
+2. BRYD KONTAKT
+- Applies immediately to the currently selected Danish regiments.
+- Fire policy is temporarily forced to HOLD while disengaging.
+- Unit turns away from the nearest threat and uses an emergency speed boost to leave engagement range.
+- If the unit already has a rally point, it continues toward that rally point after contact is broken.
+- If no rally point exists, it halts after safely disengaging.
+- Original fire policy is restored after disengagement.
 
-HISTORICAL / GEOGRAPHY GUARDRAIL:
-- v10n4 fixes selection/render consistency only.
-- Current zone polygons are still centre-derived prototype geometry, not exact 1851 administrative boundaries.
-- ZONE-REG-01 identity remains canonical.
-- Natural Earth 1:50m remains a simplified coastline scaffold.
-- Production historical geometry remains targeted at source-backed data such as DigDag Amt/Region while preserving ZoneId/save/simulation state.
+3. ROUT / FLUGT REMAINS SEPARATE
+- Existing Regiment.IsRouted and morale-triggered Route() remain the uncontrolled rout state.
+- FightingWithdrawal and BreakContact are controlled orders and do not mark the unit routed.
 
-RETAINED CONTRACT:
-- 20 ZONE-REG-01 zones.
-- 68 CITY-REG-01 market towns.
-- Urban population checksum 290,565.
-- Esbjerg absent from 1851 start state.
-- A/B/C build rules unchanged.
-- Land/Ferry routing unchanged.
-- RMB-on-city movement fix retained.
-- World Imagery and streamed 3D terrain unchanged.
+OFFICER AI INTERACTION:
+- A withdrawal order temporarily takes direct control from OfficerAIController if AI UNIT is enabled.
+- Officer AI is restored after the controlled withdrawal order completes, provided the regiment has not routed.
+- This is a prototype bridge until the later HQ/order-delay system represents withdrawal as a native officer mission.
 
-FILES CHANGED IN V10N4:
+UI:
+- PrototypeWithdrawalCommandManagerV010N5 adds a compact withdrawal command strip above the existing Officer AI command panel.
+- TILBAGETRÆK HERTIL arms the next terrain click as rally-point selection.
+- BRYD KONTAKT issues immediate emergency disengagement.
+- Status text shows armed target count / active withdrawals.
+
+FILES ADDED/CHANGED IN V10N5:
+- Assets/Scripts/PrototypeWithdrawalControllerV010N5.cs
+- Assets/Scripts/PrototypeWithdrawalControllerV010N5.cs.meta
+- Assets/Scripts/PrototypeWithdrawalCommandManagerV010N5.cs
+- Assets/Scripts/PrototypeWithdrawalCommandManagerV010N5.cs.meta
+- Assets/Scripts/PrototypeBuildVersionOverlay.cs
 - Assets/Scripts/Campaign/CampaignBuildInfo.cs
-- Assets/Scripts/Campaign/CampaignHudStateV010N2.cs
-- Assets/Scripts/Campaign/CampaignZoneInfoPanelV010N3.cs
-- Assets/Scripts/Campaign/CampaignZoneLinePolishV010N3.cs
 - VERSION.txt
 - docs/PROJECT-1864-Designmanual.md
-- docs/parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md
+- docs/parts/part-17-52-CAMPAIGN-V10N5-TACTICAL-WITHDRAWAL.md
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. Badge/topbar show v00.00.10n4.
-3. On first n4 run, the large legacy INFO boxes are closed.
-4. Debug boxes are closed by default.
-5. INFO/F2 can still explicitly open the detailed legacy panel.
-6. F4 resets to the clean default state.
-7. Click Vejle-area polygon and verify DK-Z11-VEJ / Vejle Amt.
-8. Click Aalborg-area polygon and verify DK-Z16-AAL / Aalborg Amt.
-9. Repeat selection across all visible zones; no nearest-centre misidentification.
-10. Direct city click resolves its registered ZoneId.
-11. Yellow line layer contains only borders shared by two distinct zones.
-12. Long one-sided vertical/diagonal spur segments from n3 are absent.
-13. Outer coastline is not drawn as a yellow administrative zone border.
-14. Z toggles the overlay.
-15. 20 zones / 68 cities / 290565 validation remains unchanged.
-16. World Imagery / 3D terrain / movement regress without breakage.
+2. Campaign/tactical build badge shows v00.00.10n5.
+3. Select a Danish regiment outside enemy range; TILBAGETRÆK HERTIL + terrain click sends it directly to the rally point.
+4. Select a Danish regiment in combat range; the same order starts FightingWithdrawal instead of immediately turning away.
+5. FightingWithdrawal visibly alternates backward movement and firing/holding phases.
+6. Regiment continues facing the threat during the controlled withdrawal movement phase.
+7. Once clear, the regiment changes to RallyMarch and travels to the selected rally point.
+8. BRYD KONTAKT forces HOLD FIRE during emergency disengagement.
+9. BRYD KONTAKT turns the regiment away from the nearest enemy and moves faster than normal march.
+10. Original fire policy is restored after contact is broken.
+11. A unit with an existing rally point continues toward it after BRYD KONTAKT succeeds.
+12. A unit without a rally point halts after successful BRYD KONTAKT.
+13. Routed units ignore controlled withdrawal orders and continue existing rout behaviour.
+14. Officer AI enabled before the order is restored after completion.
+15. Existing normal move, attack, hold, formation, fire-policy and campaign systems regress without breakage.
 
-QA state: V10N4 IMPLEMENTED ON WORK BRANCH / AWAITS UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N5 IMPLEMENTED / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
