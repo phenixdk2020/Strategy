@@ -16,8 +16,11 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
 
     private bool installed;
     private GUIStyle panelStyle;
+    private GUIStyle headerStyle;
     private GUIStyle labelStyle;
-    private GUIStyle sectionStyle;
+    private GUIStyle mutedStyle;
+    private GUIStyle buttonStyle;
+    private GUIStyle accentStyle;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -25,7 +28,7 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
         if (Object.FindAnyObjectByType<OfficerAIPrototypeManager>() != null)
             return;
 
-        GameObject managerObject = new GameObject("OfficerAIPrototypeManager_v00.00.09");
+        GameObject managerObject = new GameObject("OfficerAIPrototypeManager_v00.00.09f16");
         managerObject.AddComponent<OfficerAIPrototypeManager>();
     }
 
@@ -36,7 +39,6 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
     }
 
@@ -50,19 +52,13 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
     {
         if (!installed)
             TryInstallOfficerAI();
-
         if (!installed)
             return;
 
-        if (Input.GetKeyDown(KeyCode.F6))
-            SetDifficulty(OfficerAIDifficulty.Easy);
-        if (Input.GetKeyDown(KeyCode.F7))
-            SetDifficulty(OfficerAIDifficulty.Normal);
-        if (Input.GetKeyDown(KeyCode.F8))
-            SetDifficulty(OfficerAIDifficulty.Hard);
-
-        if (Input.GetKeyDown(KeyCode.I))
-            ToggleSelectedAI();
+        if (Input.GetKeyDown(KeyCode.F6)) SetDifficulty(OfficerAIDifficulty.Easy);
+        if (Input.GetKeyDown(KeyCode.F7)) SetDifficulty(OfficerAIDifficulty.Normal);
+        if (Input.GetKeyDown(KeyCode.F8)) SetDifficulty(OfficerAIDifficulty.Hard);
+        if (Input.GetKeyDown(KeyCode.I)) ToggleSelectedAI();
     }
 
     private void TryInstallOfficerAI()
@@ -77,14 +73,12 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
                 continue;
 
             DisableLegacyRegimentAI(regiment);
-
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
             if (controller == null)
                 controller = regiment.gameObject.AddComponent<OfficerAIController>();
 
             bool enemyControlled = regiment.Team == BattleTeam.Prussia;
             Vector3? initialWaypoint = null;
-
             if (regiment.RegimentName == "18th Regiment")
                 initialWaypoint = new Vector3(18f, 0f, 72f);
 
@@ -92,7 +86,7 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
         }
 
         installed = true;
-        Debug.Log("AI-DIAG|System=v00.00.09|SharedOfficerCore=Installed|Scenario=DenmarkDefends-PrussiaAttacks|Difficulty=Normal");
+        Debug.Log("AI-DIAG|System=v00.00.09f16|SharedOfficerCore=Installed|CompactBottomUI=True|Difficulty=Normal");
     }
 
     private static void DisableLegacyRegimentAI(Regiment regiment)
@@ -125,15 +119,11 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
     {
         if (team == BattleTeam.Denmark)
             return 1f;
-
         switch (CurrentDifficulty)
         {
-            case OfficerAIDifficulty.Easy:
-                return 1.28f;
-            case OfficerAIDifficulty.Hard:
-                return 0.84f;
-            default:
-                return 1f;
+            case OfficerAIDifficulty.Easy: return 1.28f;
+            case OfficerAIDifficulty.Hard: return 0.84f;
+            default: return 1f;
         }
     }
 
@@ -141,15 +131,11 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
     {
         if (team == BattleTeam.Denmark)
             return 0.10f;
-
         switch (CurrentDifficulty)
         {
-            case OfficerAIDifficulty.Easy:
-                return 0.18f;
-            case OfficerAIDifficulty.Hard:
-                return 0.055f;
-            default:
-                return 0.10f;
+            case OfficerAIDifficulty.Easy: return 0.18f;
+            case OfficerAIDifficulty.Hard: return 0.055f;
+            default: return 0.10f;
         }
     }
 
@@ -163,276 +149,205 @@ public sealed class OfficerAIPrototypeManager : MonoBehaviour
     {
         if (!installed || GetSelectedDanishCount() == 0)
             return false;
-
         Vector2 guiPoint = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
         return GetControlPanelRect().Contains(guiPoint);
     }
 
-    private Rect GetControlPanelRect()
+    private static Rect GetControlPanelRect()
     {
-        // Safe margins deliberately keep the bar inside the visible Game view even
-        // when the Unity Game tab is zoomed slightly above 1.0x.
-        const float height = 58f;
-        float width = Mathf.Max(360f, Screen.width - 100f);
-        return new Rect(50f, Screen.height - height - 42f, width, height);
+        float width = Mathf.Min(940f, Mathf.Max(700f, Screen.width - 90f));
+        const float height = 104f;
+        return new Rect((Screen.width - width) * 0.5f, Screen.height - height - 18f, width, height);
     }
 
     private void ToggleSelectedAI()
     {
         OfficerAIController first = GetFirstSelectedController();
-        if (first == null)
-            return;
-
-        SetSelectedAIEnabled(!first.AIEnabled);
+        if (first != null)
+            SetSelectedAIEnabled(!first.AIEnabled);
     }
 
     private void SetSelectedAIEnabled(bool enabledValue)
     {
         BattleManager battle = BattleManager.Instance;
-        if (battle == null)
-            return;
-
+        if (battle == null) return;
         foreach (Regiment regiment in battle.Regiments)
         {
-            if (!IsSelectedDanish(regiment))
-                continue;
-
+            if (!IsSelectedDanish(regiment)) continue;
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
-            if (controller != null)
-                controller.SetAIEnabled(enabledValue);
+            if (controller != null) controller.SetAIEnabled(enabledValue);
         }
     }
 
     private void SetSelectedDoctrine(OfficerAIDoctrine doctrine)
     {
         BattleManager battle = BattleManager.Instance;
-        if (battle == null)
-            return;
-
+        if (battle == null) return;
         foreach (Regiment regiment in battle.Regiments)
         {
-            if (!IsSelectedDanish(regiment))
-                continue;
-
+            if (!IsSelectedDanish(regiment)) continue;
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
-            if (controller != null)
-                controller.SetDoctrine(doctrine);
+            if (controller != null) controller.SetDoctrine(doctrine);
         }
     }
 
     private void SetSelectedOrderAggressiveness(float value)
     {
         BattleManager battle = BattleManager.Instance;
-        if (battle == null)
-            return;
-
+        if (battle == null) return;
         foreach (Regiment regiment in battle.Regiments)
         {
-            if (!IsSelectedDanish(regiment))
-                continue;
-
+            if (!IsSelectedDanish(regiment)) continue;
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
-            if (controller != null)
-                controller.SetOrderAggressiveness(value);
+            if (controller != null) controller.SetOrderAggressiveness(value);
         }
     }
 
     private void SetSelectedFirePolicy(RegimentFirePolicy policy)
     {
         BattleManager battle = BattleManager.Instance;
-        if (battle == null)
-            return;
-
+        if (battle == null) return;
         foreach (Regiment regiment in battle.Regiments)
         {
-            if (!IsSelectedDanish(regiment))
-                continue;
-
-            regiment.SetFirePolicy(policy);
+            if (IsSelectedDanish(regiment)) regiment.SetFirePolicy(policy);
         }
     }
 
     private static bool IsSelectedDanish(Regiment regiment)
     {
-        return regiment != null &&
-               regiment.Team == BattleTeam.Denmark &&
-               regiment.IsSelected;
+        return regiment != null && regiment.Team == BattleTeam.Denmark && regiment.IsSelected;
     }
 
     private OfficerAIController GetFirstSelectedController()
     {
         BattleManager battle = BattleManager.Instance;
-        if (battle == null)
-            return null;
-
+        if (battle == null) return null;
         foreach (Regiment regiment in battle.Regiments)
         {
-            if (!IsSelectedDanish(regiment))
-                continue;
-
+            if (!IsSelectedDanish(regiment)) continue;
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
-            if (controller != null)
-                return controller;
+            if (controller != null) return controller;
         }
-
         return null;
     }
 
     private int GetSelectedDanishCount()
     {
         BattleManager battle = BattleManager.Instance;
-        if (battle == null)
-            return 0;
-
+        if (battle == null) return 0;
         int count = 0;
         foreach (Regiment regiment in battle.Regiments)
-        {
-            if (IsSelectedDanish(regiment))
-                count++;
-        }
-
+            if (IsSelectedDanish(regiment)) count++;
         return count;
     }
 
     private Regiment GetFirstSelectedRegiment()
     {
         BattleManager battle = BattleManager.Instance;
-        if (battle == null)
-            return null;
-
+        if (battle == null) return null;
         foreach (Regiment regiment in battle.Regiments)
-        {
-            if (IsSelectedDanish(regiment))
-                return regiment;
-        }
-
+            if (IsSelectedDanish(regiment)) return regiment;
         return null;
     }
 
     private void EnsureStyles()
     {
-        if (panelStyle != null)
-            return;
+        if (panelStyle != null) return;
+        panelStyle = PrototypeUiTheme09F15.Panel(9);
+        headerStyle = PrototypeUiTheme09F15.Header(11);
+        labelStyle = PrototypeUiTheme09F15.Label(9);
+        mutedStyle = PrototypeUiTheme09F15.MutedLabel(8);
+        buttonStyle = PrototypeUiTheme09F15.Button(9);
+        accentStyle = PrototypeUiTheme09F15.AccentBox(9);
+    }
 
-        panelStyle = new GUIStyle(GUI.skin.box);
-        panelStyle.fontSize = 8;
-        panelStyle.alignment = TextAnchor.UpperLeft;
-        panelStyle.normal.textColor = Color.white;
-
-        labelStyle = new GUIStyle(GUI.skin.label);
-        labelStyle.fontSize = 8;
-        labelStyle.alignment = TextAnchor.MiddleLeft;
-        labelStyle.normal.textColor = Color.white;
-
-        sectionStyle = new GUIStyle(labelStyle);
-        sectionStyle.fontStyle = FontStyle.Bold;
+    private static string DisplayUnitName(Regiment regiment)
+    {
+        if (regiment == null) return "KOMPAGNI";
+        if (regiment.RegimentName == "1. Regiment") return "1. KOMPAGNI";
+        if (regiment.RegimentName == "5. Regiment") return "2. KOMPAGNI";
+        return regiment.RegimentName.ToUpperInvariant();
     }
 
     private void OnGUI()
     {
-        if (!installed)
-            return;
-
+        if (!installed) return;
         EnsureStyles();
 
         int selectedCount = GetSelectedDanishCount();
-        if (selectedCount == 0)
-            return;
+        if (selectedCount == 0) return;
 
         Regiment firstRegiment = GetFirstSelectedRegiment();
         OfficerAIController firstController = GetFirstSelectedController();
-        if (firstRegiment == null || firstController == null || firstController.Officer == null)
-            return;
+        if (firstRegiment == null || firstController == null || firstController.Officer == null) return;
 
+        GUI.depth = -840;
         Rect panel = GetControlPanelRect();
         GUI.Box(panel, string.Empty, panelStyle);
+        string title = selectedCount > 1
+            ? selectedCount + " KOMPAGNIER VALGT"
+            : DisplayUnitName(firstRegiment) + " | KAPTAJN";
+        GUI.Box(new Rect(panel.x + 7f, panel.y + 6f, panel.width - 14f, 22f), title, headerStyle);
 
-        float x = panel.x + 4f;
-        float y = panel.y + 4f;
-        float w = panel.width - 8f;
-        const float gap = 3f;
-        const float buttonHeight = 23f;
-
-        // Row 1: compact unit summary and all action buttons.
-        float infoWidth = Mathf.Clamp(w * 0.18f, 120f, 240f);
-        string unitLine = selectedCount > 1
-            ? selectedCount + " valgte | " + firstController.Officer.OfficerName
-            : firstRegiment.RegimentName + " | " + firstController.Officer.OfficerName;
-        GUI.Label(new Rect(x, y, infoWidth, buttonHeight), unitLine, sectionStyle);
-
-        float controlX = x + infoWidth + gap;
-        float controlWidth = Mathf.Max(224f, w - infoWidth - gap);
-        float topButtonWidth = Mathf.Max(32f, (controlWidth - gap * 6f) / 7f);
-
-        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), firstController.AIEnabled ? "AI ON" : "AI OFF"))
+        string aiText = firstController.AIEnabled ? "AI: ON" : "AI: OFF";
+        if (GUI.Button(new Rect(panel.xMax - 96f, panel.y + 7f, 82f, 20f), aiText,
+            firstController.AIEnabled ? accentStyle : buttonStyle))
             SetSelectedAIEnabled(!firstController.AIEnabled);
 
-        controlX += topButtonWidth + gap;
-        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF"))
+        float leftX = panel.x + 12f;
+        float y = panel.y + 35f;
+        const float leftWidth = 284f;
+        int losses = Mathf.Max(0, firstRegiment.InitialStrength - firstRegiment.CurrentStrength);
+        GUI.Label(new Rect(leftX, y, leftWidth, 16f),
+            "Styrke " + firstRegiment.CurrentStrength + "/" + firstRegiment.InitialStrength +
+            "  |  tab " + losses + "  |  " + firstRegiment.Formation, labelStyle);
+        y += 17f;
+        GUI.Label(new Rect(leftX, y, leftWidth, 16f),
+            "Moral " + firstRegiment.Morale.ToString("0") +
+            "  |  Cohesion " + firstRegiment.Cohesion.ToString("0") +
+            "  |  Agg " + firstController.OrderAggressiveness.ToString("0"), labelStyle);
+        y += 17f;
+        GUI.Label(new Rect(leftX, y, leftWidth, 16f),
+            "I = AI  |  Z/X = facing  |  F/C = Line/Column  |  T = range", mutedStyle);
+
+        float commandX = panel.x + 304f;
+        float commandWidth = panel.xMax - commandX - 10f;
+        const float gap = 5f;
+        const float buttonHeight = 29f;
+        float rowY = panel.y + 35f;
+        float topWidth = (commandWidth - gap * 5f) / 6f;
+
+        if (GUI.Button(new Rect(commandX, rowY, topWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF", buttonStyle))
             SetSelectedDoctrine(OfficerAIDoctrine.Defensive);
-
-        controlX += topButtonWidth + gap;
-        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL"))
+        if (GUI.Button(new Rect(commandX + (topWidth + gap), rowY, topWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL", buttonStyle))
             SetSelectedDoctrine(OfficerAIDoctrine.Balanced);
-
-        controlX += topButtonWidth + gap;
-        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF"))
+        if (GUI.Button(new Rect(commandX + (topWidth + gap) * 2f, rowY, topWidth, buttonHeight), firstController.Doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF", buttonStyle))
             SetSelectedDoctrine(OfficerAIDoctrine.Offensive);
+        if (GUI.Button(new Rect(commandX + (topWidth + gap) * 3f, rowY, topWidth, buttonHeight), "<15", buttonStyle) && PlayerCommander.Instance != null)
+            PlayerCommander.Instance.RotateSelectedFacing(-15f);
+        if (GUI.Button(new Rect(commandX + (topWidth + gap) * 4f, rowY, topWidth, buttonHeight), "15>", buttonStyle) && PlayerCommander.Instance != null)
+            PlayerCommander.Instance.RotateSelectedFacing(15f);
+        if (GUI.Button(new Rect(commandX + (topWidth + gap) * 5f, rowY, topWidth, buttonHeight), "KAMP F9", buttonStyle) && PrototypeCombatTuningManager.Instance != null)
+            PrototypeCombatTuningManager.Instance.TogglePanel();
 
-        controlX += topButtonWidth + gap;
-        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), "<15 [Z]"))
-        {
-            if (PlayerCommander.Instance != null)
-                PlayerCommander.Instance.RotateSelectedFacing(-15f);
-        }
+        rowY += buttonHeight + gap;
+        float fireWidth = (commandWidth - gap * 3f) / 4f;
+        if (GUI.Button(new Rect(commandX, rowY, fireWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.HoldFire ? "[HOLD]" : "HOLD", buttonStyle))
+            SetSelectedFirePolicy(RegimentFirePolicy.HoldFire);
+        if (GUI.Button(new Rect(commandX + fireWidth + gap, rowY, fireWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.CloseRange ? "[CLOSE]" : "CLOSE", buttonStyle))
+            SetSelectedFirePolicy(RegimentFirePolicy.CloseRange);
+        if (GUI.Button(new Rect(commandX + (fireWidth + gap) * 2f, rowY, fireWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.MediumRange ? "[MED]" : "MED", buttonStyle))
+            SetSelectedFirePolicy(RegimentFirePolicy.MediumRange);
+        if (GUI.Button(new Rect(commandX + (fireWidth + gap) * 3f, rowY, fireWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.LongRange ? "[LONG]" : "LONG", buttonStyle))
+            SetSelectedFirePolicy(RegimentFirePolicy.LongRange);
 
-        controlX += topButtonWidth + gap;
-        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), "15> [X]"))
-        {
-            if (PlayerCommander.Instance != null)
-                PlayerCommander.Instance.RotateSelectedFacing(15f);
-        }
-
-        controlX += topButtonWidth + gap;
-        if (GUI.Button(new Rect(controlX, y, topButtonWidth, buttonHeight), "KAMP F9"))
-        {
-            if (PrototypeCombatTuningManager.Instance != null)
-                PrototypeCombatTuningManager.Instance.TogglePanel();
-        }
-
-        // Row 2: aggression plus fire policy.
-        y += buttonHeight + 4f;
-        float aggressionWidth = Mathf.Clamp(w * 0.36f, 210f, 470f);
-        float aggressionLabelWidth = 58f;
-        GUI.Label(new Rect(x, y, aggressionLabelWidth, buttonHeight), "Agg " + firstController.OrderAggressiveness.ToString("0"), sectionStyle);
-
+        // Keep the aggression control compact and aligned with the shared bottom-panel design.
+        float sliderWidth = Mathf.Min(180f, leftWidth - 74f);
         float newAggression = GUI.HorizontalSlider(
-            new Rect(x + aggressionLabelWidth, y + 7f, Mathf.Max(80f, aggressionWidth - aggressionLabelWidth), 16f),
-            firstController.OrderAggressiveness,
-            0f,
-            100f);
-
+            new Rect(leftX + 72f, panel.yMax - 13f, sliderWidth, 12f),
+            firstController.OrderAggressiveness, 0f, 100f);
         if (Mathf.Abs(newAggression - firstController.OrderAggressiveness) >= 0.5f)
             SetSelectedOrderAggressiveness(newAggression);
-
-        float fireX = x + aggressionWidth + gap * 2f;
-        float fireAvailable = Mathf.Max(160f, w - aggressionWidth - gap * 2f);
-        float fireButtonWidth = Mathf.Max(34f, (fireAvailable - gap * 3f) / 4f);
-
-        if (GUI.Button(new Rect(fireX, y, fireButtonWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.HoldFire ? "[HOLD]" : "HOLD"))
-            SetSelectedFirePolicy(RegimentFirePolicy.HoldFire);
-
-        fireX += fireButtonWidth + gap;
-        if (GUI.Button(new Rect(fireX, y, fireButtonWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.CloseRange ? "[CLOSE]" : "CLOSE"))
-            SetSelectedFirePolicy(RegimentFirePolicy.CloseRange);
-
-        fireX += fireButtonWidth + gap;
-        if (GUI.Button(new Rect(fireX, y, fireButtonWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.MediumRange ? "[MED]" : "MED"))
-            SetSelectedFirePolicy(RegimentFirePolicy.MediumRange);
-
-        fireX += fireButtonWidth + gap;
-        if (GUI.Button(new Rect(fireX, y, fireButtonWidth, buttonHeight), firstRegiment.FirePolicy == RegimentFirePolicy.LongRange ? "[LONG]" : "LONG"))
-            SetSelectedFirePolicy(RegimentFirePolicy.LongRange);
     }
 }
 
