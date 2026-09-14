@@ -1,61 +1,60 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f19
+Prototype version: v00.00.09f20
 Build status: TEST
-Build name: DISCRETIONARY RESERVE + 4v1 FLANK JUDGEMENT + UNIFIED OFFICER AI
-Visible build marker: PROJECT 1864 | v00.00.09f19 TEST
+Build name: MAJOR SELECTION HANDOFF + COMMANDER INTENT LOCK + IMMEDIATE DOCTRINE RESPONSE
+Visible build marker: PROJECT 1864 | v00.00.09f20 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1-09f17 retained + 09f18 unified officer AI/command authority + 09f19 discretionary reserve/flank judgement
+Design manual baseline: v00.02.08 + 09f1-09f17 retained + 09f18 unified officer AI/command authority + 09f19 discretionary reserve/flank judgement + 09f20 selection/intent/doctrine fix
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
 09f18 design supplement: docs/design-supplements/v00.00.09f18-unified-ai-command-authority.md
 09f19 design supplement: docs/design-supplements/v00.00.09f19-discretionary-reserve.md
+09f20 design supplement: docs/design-supplements/v00.00.09f20-selection-intent-doctrine.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f19 - Reserve is tactical judgement, including 4 versus 1
-- A single known enemy no longer automatically disables the Major's reserve option.
+v00.00.09f20 - Major/company selection handoff
+- Fixed selection authority after selecting the Major.
+- A successfully selected Danish company now immediately takes UI/selection authority away from the Major.
+- This applies to both normal click selection and the existing left-mouse box selection because the 09f20 handoff runs after PlayerCommander, box selection and Major UI have processed the frame.
+- Selecting a company restores the normal company bottom bar; selecting Major still clears company selection and opens the Major panel.
+- Merely selecting a company does NOT switch its AI OFF. The AI is switched OFF only when the player gives that selected company a direct manual order, preserving the 09f18 authority rule.
+
+v00.00.09f20 - Player-issued Major mission is commander intent
+- A player-issued Major order such as FORSVAR HER or ANGRIB HER is now treated as the commander's mission intent.
+- With Major AI ON, the Major may still decide subordinate placement, reserve and flank usage, but ThinkMajor is prevented from silently replacing that player mission with a different autonomous mission.
+- This fixes the case where the player ordered FORSVAR HER and the Major later abandoned it because autonomous AI selected another task.
+- A new explicit player Major order replaces the previous commander intent.
+
+v00.00.09f20 - Doctrine response
+- Changing Major doctrine while a player mission is active immediately re-plans the SAME mission/objective rather than discarding it.
+- Example: FORSVAR HER remains FORSVAR HER when switching between OFF/BAL/DEF; doctrine changes how the Major interprets/executes the mission, not the objective itself.
+- With Major AI ON and NO explicit player mission, switching to DEF immediately issues a defensive posture at the battalion's current centre and prevents the previous offensive plan from continuing.
+- With no explicit player mission, switching to BAL/OFF returns autonomous mission selection to ThinkMajor immediately.
+- Console telemetry: MAJOR-INTENT-09F20 and SELECTION-09F20.
+
+v00.00.09f19 retained - Reserve is tactical judgement, including 4 versus 1
+- A single known enemy does not automatically disable the Major's reserve option.
 - With four active companies against one known enemy company, the Major may choose 3 FRONT + 1 RESERVE when three companies are judged sufficient for the primary mission.
 - Current prototype reserve gate requires healthy battalion condition and clear numerical superiority: average strength >= 68%, average cohesion >= 54 and total visible strength superiority >= x2.65.
 - The freshest/cohesive company is preferred as reserve.
-- The remaining three companies are re-centred side by side at the existing 60 m company spacing; there is no empty fourth-company hole in the front.
+- The remaining three companies are re-centred side by side at the existing 60 m company spacing.
 - Reserve may remain approximately 78 m behind the front or be assigned to a flank.
 
-v00.00.09f19 - Flank is a separate decision
+v00.00.09f19 retained - Flank is a separate decision
 - Creating a reserve does NOT automatically mean flanking.
 - A flank requires stronger conditions than simply holding a reserve: average strength >= 76%, average cohesion >= 62%, reserve strength >= 75%, useful enemy distance and a reasonably short route to a legal flank position.
 - ATTACK permits a wider flank opportunity than DEFEND; defensive flanking represents a local counter-flank/counterattack.
-- With one enemy, left/right flank selection uses the shorter legal route for the reserve rather than requiring unequal enemy counts on the two sides.
-- SafeCompany endpoint logic from 09f18 is reused, so flank/reserve endpoints still avoid Farmhouse/Barn, open river and battlefield bounds.
-- Console telemetry: HQ-RESERVE-09F19 shows Scenario=4v1, reserve company, strength superiority, average condition and whether Flank=True/False.
+- SafeCompany endpoint logic from 09f18 is reused, so flank/reserve endpoints avoid Farmhouse/Barn, open river and battlefield bounds.
 
-v00.00.09f18 retained - One AI concept for Major and companies
+v00.00.09f18 retained - Unified AI authority
 - Major and company UI use the same AI vocabulary: AI ON / AI OFF plus DEF / BAL / OFF doctrine.
-- Direct manual company orders switch that company's OfficerAIController OFF BEFORE PlayerCommander consumes the order.
-- While AI is OFF, the company is detached from the current Major mission and will not be re-tasked by that existing mission.
-- Manually switching the company AI ON reattaches it to the last Major assignment when one exists.
-- Any NEW Major order explicitly reclaims all four companies, clears manual detachment and switches company AI ON.
-- Direct manual movement of the Major switches Major AI OFF, matching the same authority rule.
-
-v00.00.09f18 retained - Major command authority
-- PrototypeMajorBattalion09F18 remains the authoritative battalion behavior layer; 09f19 adds reserve-decision refinement on top.
-- A new Major order clears each subordinate company's old PlayerCommander route and old destination ghost before assigning the new mission.
-- Old manual destinations cannot resume after the Major mission completes.
-- Major missions are reasserted while moving, so companies do not drift back to stale orders.
-- ATTACK/FORSVAR companies stop manoeuvring and form Line as soon as they reach their slot OR an enemy is inside their selected fire-policy range, reducing movement under fire.
-- Major attack movement uses company slots rather than shared forcedTarget pursuit, so subordinate companies do not converge on the enemy centre.
-
-v00.00.09f18 retained - Selection, HQ movement and compact UI
-- Major can be selected by normal click and by the same left-mouse drag rectangle concept used for companies.
-- Selecting Major clears company selection and replaces the company bottom bar with the compact Major panel.
-- Major hover shows AI state, doctrine, 3 horses, current battalion order and reserve decision.
-- Right-click ground while Major is selected moves the physical Major/HQ; direct HQ movement turns Major AI OFF.
-- The Major panel retains the six basic orders: ANGRIB HER, FORSVAR HER, TILBAGETRÆK HERTIL, RYK FREM HERTIL, HOLD POSITION, SAML HER.
-
-v00.00.09f18 retained - New Major destinations and obstacle-safe endpoints
-- Major orders create their own visible company path lines and formation destination footprints.
-- Selecting the Major shows command-links to all subordinate companies plus their current Major-assigned destinations.
-- Major assignment endpoints are checked against Farmhouse/Barn formation footprints and open river positions before use.
-- The existing bridge/building route layers still own the legal route TO the selected safe endpoint.
+- Direct manual company orders switch that company's OfficerAIController OFF before PlayerCommander consumes the order.
+- While AI is OFF, the company is detached from the current Major mission.
+- Manually switching the company AI ON reattaches it to its last Major assignment when one exists.
+- Any NEW Major order reclaims all four companies, clears manual detachment and switches company AI ON.
+- Direct manual movement of the Major switches Major AI OFF.
+- A new Major order clears old company PlayerCommander routes/ghosts and assigns fresh Major-owned destinations.
 
 Retained from v00.00.09f17
 - Four Danish company-scale units under the Major.
@@ -68,14 +67,14 @@ Retained from v00.00.09f15-v00.00.09f14
 - B-271 ranged lethality defaults: BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55, firing fraction 58%.
 - Destination facing chevron, musket volley audio, 1:1 fallen support and procedural WALK animation.
 
-Primary v00.00.09f19 QA
-1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f19 TEST.
-2. Keep the test situation at 4 Danish companies versus 1 known Prussian company and issue Major ANGRIB HER or FORSVAR HER.
-3. With a healthy Danish battalion, Major may choose one reserve even though only one enemy is known.
-4. If reserve is selected, verify the other THREE companies re-form as a centred side-by-side front rather than leaving a gap.
-5. Check Major panel decision text: it should say either reserve behind front or flank when judged useful.
-6. If Flank=True, verify the reserve gets a separate flank destination and does not stack on the front companies.
-7. Reduce Danish strength/cohesion and repeat: Major should be able to decide NO RESERVE and mass all four companies.
-8. Test a distant enemy: even with reserve, Major should normally keep it behind the front rather than send it on an excessive flank march.
-9. Recheck 09f18 authority rule: manual company order -> AI OFF; new Major order -> company AI ON and old manual destinations cleared.
-10. Recheck Farmhouse/Barn and river endpoint safety for front, reserve and flank placements.
+Primary v00.00.09f20 QA
+1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f20 TEST.
+2. Select Major, then single-click a Danish company: Major panel must close and company bottom UI must appear.
+3. Select Major, then drag a box around one or more Danish companies: Major must deselect and the companies must be selected normally.
+4. Selecting a company alone must NOT turn company AI OFF.
+5. Give the selected company a manual move/H/F/C/Z/X order: company AI must turn OFF and detach from the current Major mission.
+6. Select Major again, switch Major AI ON and issue FORSVAR HER at a visible location.
+7. Wait more than the old 6-second ThinkMajor interval: the Major must continue the player-issued FORSVAR mission rather than replace it with an autonomous attack/advance.
+8. While that FORSVAR mission is active, press OFF then DEF doctrine: the objective must remain the same; the mission must not be discarded.
+9. Test Major AI ON with no explicit Major mission: changing doctrine to DEF must immediately establish a defensive posture rather than continuing a previous offensive task.
+10. Recheck 4v1 reserve/flank decision, obstacle-safe endpoints and old manual-route clearing.
