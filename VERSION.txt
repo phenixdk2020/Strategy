@@ -1,63 +1,59 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f28
+Prototype version: v00.00.09f29
 Build status: TEST
-Build name: REGIMENTAL HQ + OBERSTLOJTNANT COMMAND CHAIN
-Visible build marker: PROJECT 1864 | v00.00.09f28 TEST
+Build name: INFANTRY SQUARE + CAVALRY THREAT FOUNDATION
+Visible build marker: PROJECT 1864 | v00.00.09f29 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + tactical design supplements through 09f28
+Design manual baseline: v00.02.09 + tactical design supplements through 09f29
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
-09f27 design supplement: docs/design-supplements/v00.00.09f27-two-battalions-shared-major-core.md
-09f28 design supplement: docs/design-supplements/v00.00.09f28-regimental-hq-command-chain.md
+09f29 design supplement: docs/design-supplements/v00.00.09f29-infantry-square-cavalry-threat.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f28 - Physical Regimental HQ / Oberstløjtnant
-- Adds one physical selectable Regimental HQ commanded by Oberstløjtnant.
-- Canonical runtime chain is now: Oberstløjtnant -> Major A/Major B -> 8 company-scale infantry units.
-- Regimental HQ has 4 horses and its own full-width 90 px bottom HUD.
-- Regimental HQ exposes AI ON/OFF, DEF/BAL/OFF doctrine and the same six mission verbs: ANGRIB HER / FORSVAR HER / RYK FREM / TILBAGETRÆK / SAML / HOLD.
-- Regimental orders are NOT sent directly to companies. F28 assigns battalion objectives to the two Majors; the shared F27 Major core translates those objectives into company missions.
-- New Regimental order reclaims both Majors into higher-command authority by setting their battalion AI ON through the F27 shared core.
-- Battalion objectives are assigned to nearest Major to reduce route crossing.
-- First regiment dispositions: 2 abreast, 1 forward + 1 reserve, or 1 forward + 1 flank depending on mission, doctrine and known enemy count.
-- Offensive doctrine may select a battalion flank when the known enemy picture is limited; Defensive/Balanced may preserve a regimental reserve.
-- Regimental AI first-pass: with AI ON and no explicit mission, OFF doctrine may attack nearest known enemy; otherwise it establishes a defensive mission around regiment centre.
-- Explicit player regimental mission remains commander intent and is not churned every AI think cycle.
-- Regimental HQ dynamically follows the two Majors in bounds when AI is ON, normally around 360 m behind their midpoint/front direction.
-- Regimental command visual bands: IN COMMAND <=800 m, EXTENDED <=1100 m, OUT OF COMMAND >1100 m. First F28 pass visualises these bands; courier/delivery delay remains later B-288 work.
-- Selecting Regimental HQ shows command links to the two Majors; selecting a Major continues to show only its four company links.
-- Console telemetry prefixes: REG-HQ-09F28, REG-ORDER-09F28, REG-AI-09F28, REG-AUTHORITY-09F28.
+v00.00.09f29 - Infantry square / cavalry-threat foundation
+- Adds first runtime KARRÉ/SQUARE state for Danish infantry companies without replacing the stable Line/Column movement kernel.
+- Q toggles selected Danish companies into manual KARRÉ; F reforms to Line and C leaves square for Column through the existing command system.
+- Manual KARRÉ is a direct player order: selected company AI is switched OFF so current Major mission is released under the existing authority rules.
+- Square formation is physically visualised by redistributing the existing 1:1 infantry render positions around a two-rank perimeter rather than teleporting a separate placeholder icon.
+- Square formation time depends on current cohesion. First QA window is roughly 5.2-8.4 seconds.
+- A square cannot fire while formation is still forming.
+- When ready, square shows all-direction CLOSE/MEDIUM/LONG range rings instead of the normal forward-only fire fan.
+- First square firing model represents one active face at a time and reduces effective fire output with a 0.42 square-fire factor so KARRÉ does not become a 360-degree full-company volley.
+- Square expands the company collision footprint to approximately 20.5 x 20.5 m while active.
+- F29 exposes a mounted-threat API for F30: ReportMountedThreat(company, source, distance, closingSpeed, relativeStrength, charging).
+- AI ON infantry may automatically FORM SQUARE when mounted threat score exceeds the first QA threshold. Distance, closing speed, relative strength and explicit charge state contribute to the score.
+- Automatic square suspends physical movement while preserving the parent Major/Regimental mission. When the mounted threat clears, square reforms and the stored parent mission may resume.
+- AI OFF does not auto-square from mounted threat; direct player authority remains literal.
+- Shift+Q is a temporary QA hook that reports a synthetic cavalry charge against selected AI ON infantry so auto-square can be tested before F30 creates the first real cavalry unit.
+- Future mounted melee/charge code can query IsInSquare(), IsSquareReady() and GetMountedChargeDefenseMultiplier(). A ready square currently exposes x0.34 mounted charge effectiveness; forming square x0.72. These are QA values, not final historical tuning.
+- Console telemetry prefixes: SQUARE-09F29 and SQUARE-THREAT-09F29.
 
-Retained from v00.00.09f27
-- Two battalions, two physical Majors and eight Danish companies.
-- Both Majors use the same shared controller/HUD/authority model.
-- Collision-safe Major slots and minimum-total-distance company assignment remain.
-- Direct manual company override remains below the Major level.
+Retained from v00.00.09f28
+- Physical Oberstløjtnant Regimental HQ with two Majors and eight company-scale infantry units.
+- Oberstløjtnant -> Major -> Kaptajn authority chain and Regimental mission allocation remain.
+- Regiment AI may use two battalions side-by-side, one forward + reserve, or one forward + flank.
+- Major and Regimental HQ dynamic advance and command-zone visuals remain.
 
-Retained from v00.00.09f26
-- AI ON moving companies react to confirmed hostile fire by suspending movement and returning fire while preserving the parent mission.
-
-Retained from v00.00.09f25
+Retained from v00.00.09f26-v00.00.09f25
+- Under-fire reaction preserves parent mission while local AI responds to hostile fire.
 - Infantry CHARGE/melee baseline and local Captain authority remain.
 
-Primary v00.00.09f28 QA
-1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f28 TEST.
-2. Verify physical HQ hierarchy: 1 Oberstløjtnant + 2 Majorer + 8 companies.
-3. Select Oberstløjtnant HQ by click and by drag-box.
-4. Verify Regimental HUD uses AI ON/OFF + DEF/BAL/OFF + six standard mission buttons.
-5. Issue FORSVAR HER. Both Majors must receive distinct battalion objectives and then position their own four companies.
-6. Issue RYK FREM. Battalion objective assignment should choose the nearest Major/slot pairing rather than unnecessary crossing.
-7. Issue ANGRIB HER with BAL doctrine and limited enemy count; verify the regimental planner may use one battalion forward and one reserve.
-8. Repeat ANGRIB HER with OFF doctrine; verify the planner may use one battalion as a flank when conditions allow.
-9. Select Regimental HQ: see links to both Majors and 800/1100 m command-zone rings. Select Major: see only its company links/320/450 m rings.
-10. Manually move one Major: its battalion AI goes OFF. A NEW Oberstløjtnant order should reclaim that Major and issue a fresh battalion mission.
-11. With Regimental AI ON and no explicit mission, verify it creates an initial defend/attack mission according to doctrine and enemy knowledge.
-12. Move both battalions forward far enough; Regimental HQ should relocate forward in a later bound rather than remain at spawn.
-13. Regression-test manual company authority, F26 under-fire reaction and F25 charge/melee under the new hierarchy.
+Primary v00.00.09f29 QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29 TEST.
+2. Select one Danish company and press Q. Company AI must go OFF and status must show DANNER KARRÉ, then KARRÉ KLAR.
+3. Verify the 1:1 soldiers visibly redistribute around a square perimeter over several seconds rather than teleporting instantly.
+4. While square is forming it must HOLD FIRE. When ready, previous fire policy is restored.
+5. Select a ready square and verify normal forward fans are hidden and all-direction CLOSE/MEDIUM/LONG rings are shown.
+6. Put an enemy on the side/rear of the square. The square may rotate its abstract active firing face to the nearest threat, but must use reduced square fire output rather than full-company 360-degree fire.
+7. Press F. Square state must end and existing Line visual system must reform the company.
+8. Form square manually, then issue a new direct movement order. Square must be released so the manual route can execute.
+9. Put selected company AI ON, then press Shift+Q. Synthetic mounted threat should trigger automatic square. The parent mission must remain stored rather than being deleted.
+10. Wait for synthetic threat to clear. Automatic square must release and parent/local AI may resume its mission.
+11. Regression: F28 Oberstløjtnant -> Major -> company orders still work after the company leaves square.
+12. Regression: F25 infantry charge/melee and F26 under-fire reaction still operate on normal Line/Column companies.
 
-Next milestone after Regiment-control QA
-- Stabilise F28 command chain first.
-- Then implement/test Dragoons as B-290.
-- Then implement/test Kanonbatteri/Artilleri as B-291.
-- Do not prioritise Brigade/Division HQ before combined-arms Regiment control is proven.
+Next milestone
+- F30: first real Danish mounted cavalry prototype on shared cavalry core; Gardehusar/Dragoon decision to be explicit in OOB data rather than conflated.
+- F30 mounted charge must call F29 mounted-threat API and consume square readiness/charge-defense result.
+- After cavalry baseline: mounted/dismounted Dragoon behaviour, then Kanonbatteri/Artilleri, then Combined Arms QA.
