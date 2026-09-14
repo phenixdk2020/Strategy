@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.16**  
+**Aktuel designbaseline: v00.02.17**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10n3 ZONE LINE POLISH + COMPACT INFO**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n4 HUD + ZONE SELECTION + SHARED BORDER HOTFIX**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -33,6 +33,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 13: 48 — National AI: økonomi, byggeri, hær, udstyr og mobilisering](parts/part-13-48-NATIONAL-AI-ECONOMY-MILITARY.md)
 - [Del 14: 49 — Campaign3 v00.00.10n2: HUD-cleanup og kystklippede zonegrænser](parts/part-14-49-CAMPAIGN-V10N2-UI-COASTLINE.md)
 - [Del 15: 50 — Campaign3 v00.00.10n3: skarpere zonegrænser + kompakt zoneinfo](parts/part-15-50-CAMPAIGN-V10N3-ZONE-POLISH-INFO.md)
+- [Del 16: 51 — Campaign3 v00.00.10n4: HUD-default, korrekt zonevalg og delte interne grænser](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -49,7 +50,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 
 ## City Register 1851 — kanonisk campaign-baseline
 
-Designbaseline v00.02.16 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
+Designbaseline v00.02.17 fastholder CITY-REG-01 som den kanoniske city-node baseline for **Kongeriget Danmark** ved campaign-start 1. januar 1851. Populationen bruger folketællingen 1. februar 1850. Alle 68 købstæder skal findes på strategikortet, mens strategisk relevante ikke-købstæder registreres separat.
 
 Byerne opdeles i **A — Development City**, **B — Regional Town** og **C — Minor Town**. B- og C-byer skal fortsat være synlige, klikbare og økonomisk/logistisk relevante, men de får ikke fri tung militær udbygning med fx kaserner, arsenaler, større militære depoter, våbenfabrikker eller permanente fæstninger. Historisk dokumenterede anlæg kan eksistere som fixed/special buildings uanset klasse.
 
@@ -137,6 +138,20 @@ Den nuværende geometri er stadig prototype. n3 gør renderingen skarpere, men `
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 15 / Campaign3 v00.00.10n3](parts/part-15-50-CAMPAIGN-V10N3-ZONE-POLISH-INFO.md).
 
+## Campaign3 v00.00.10n4 — HUD-default, korrekt zonevalg og delte interne grænser
+
+Designbaseline v00.02.17 retter tre Play Mode-fejl fra n3 uden at ændre campaign-data eller simulation.
+
+Legacy zone/city/formation INFO-panelet er nu **skjult som standard**, også for brugere der tidligere havde gemt det som åbent i PlayerPrefs. En one-time n4 migration sætter clean default til HUD synlig, legacy INFO skjult og debug skjult. `INFO/F2` kan fortsat åbne detailpanelet eksplicit, mens compact zone card er normal map-click-visning.
+
+Zoneinfo bruger ikke længere nearest-centre til arealklik. `CampaignZoneInfoPanelV010N3` læser de faktiske source-polygonloops fra `ZONE_OVERLAY_1851_LAND_CLIPPED` og resolver map-click med `PointInPolygon` mod polygonens `CampaignZoneOverlayMetadataV010N.ZoneId`. Dermed skal et klik i Vejle Amt returnere `DK-Z11-VEJ` og ikke en geografisk uvedkommende zone som Aalborg Amt.
+
+Zone-line renderer registrerer samtidig hvilke forskellige ZoneIds der ejer hvert snapped segment. Kun segmenter delt af mindst **to forskellige zoner** vises. Single-owner edges — kystkanter, clipping-fragmenter og de lange one-sided sporer set i n3 — skjules. De oprindelige source-loops bevares som hidden geometry/data.
+
+Historisk guardrail er uændret: zoneidentiteterne er kanoniske, men den nuværende center-derived polygongeometri er stadig prototype og ikke historisk 1851-facit.
+
+Den fulde implementerings- og QA-specifikation ligger i [Del 16 / Campaign3 v00.00.10n4](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md).
+
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
 P0A v00.00.09 på arbejdsbranchen implementerer den første sammenhængende tactical-command slice oven på v00.00.08. Danske testregimenter er **forsvarere**, mens de preussiske testregimenter er **angribere**. Battlefield er udvidet fra 180x120 til **360x240**, startafstanden er forøget, og kameraets bounds/zoom er udvidet, så spilleren har reel tid og plads til at pause, inspicere, udstede ordrer og manøvrere før kontakt.
@@ -215,6 +230,7 @@ Screens/counter-recon bliver en rigtig mission. Cavalry og skirmishers kan besky
 
 ## Versionshistorik
 
+- **v00.02.17 / Campaign3 v00.00.10n4** — hotfix efter Play Mode-feedback. Legacy INFO-panelet og debugpanelerne starter lukkede gennem en one-time n4 PlayerPrefs-migration. Zoneinfo-selection bruger nu de faktiske source-polygoner og `CampaignZoneOverlayMetadataV010N.ZoneId` med PointInPolygon i stedet for nearest-centre, så klik følger det synlige amt. Zone-line polish renderer kun segmenter som ejes af mindst to forskellige ZoneIds; single-owner kystkanter, clipping-fragmenter og lange one-sided sporer skjules.
 - **v00.02.16 / Campaign3 v00.00.10n3** — zone-line polish og compact zone info. `CampaignZoneLinePolishV010N3` snapper/deduplikerer det synlige segmentlag, gør linjerne tyndere/opaque og undlader kyst-envelope-segmenter fra standard gul overlay, så kysten læses direkte fra geografi/World Imagery. `CampaignZoneInfoPanelV010N3` viser et lille kontekstuelt zonekort ved klik på zone, by eller dansk landområde med ZoneId, city count, A/B/C, 1850-købstadsbefolkning, byliste, land/ferry-links og valgt by. Geometrien er fortsat prototype og ikke historisk 1851-facit.
 - **v00.02.15 / Campaign3 v00.00.10n2** — HUD-cleanup og zonegeometri-cleanup. Persistent `CampaignHudStateV010N2` indfører F1/F2/F3/F4 og INFO/DBG toggles; tekniske debugpaneler er skjult som standard og overlapper ikke længere gameplay-panelerne. Campaign-topbar og buildbadge bruger samme `CampaignBuildInfo.CurrentVersion`. Zoneoverlayet går fra fem rektangulære gruppe-sektorer til `PROTOTYPE_LAND_CLIPPED_GLOBAL_VORONOI`: én global 20-zone nearest-centre partition klippes mod CampaignDenmarkGeography-landmasken, så hav-overløb reduceres og area-overlap elimineres ved konstruktion. Natural Earth 1:50m er fortsat kun en forenklet coastline scaffold; detaljer som Limfjorden kræver senere højere-detalje geografi/GIS. RMB på bymarkør resolves desuden til byens ZoneId for marchordrer.
 - **v00.02.14 / National AI Design** — strategisk AI udvidet med et eksplicit `NationalAIDirector`-lag for alle AI-styrede lande. Landene bruger samme økonomi, manpower, construction, production, recruitment, training, equipment og logistics som spilleren. Datadrevne `NationAIProfile`-profiler styrer nationale forskelle i rekrutteringssystem, force mix, doktrin, træning, modernisering, industri, infrastruktur, finansiel risikotolerance og mobilisering. AI skal selv beslutte hvad landet bygger, hvilken hær det træner, og hvilket udstyr der produceres/indkøbes og fordeles. Historiske forhold er priors, ikke faste scripts; normal difficulty må ikke give gratis ressourcer, perfekt intelligence eller skjulte combat-bonusser.
