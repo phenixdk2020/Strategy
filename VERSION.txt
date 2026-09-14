@@ -1,9 +1,9 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n6
-Build status: ISOMETRIC CITY ICONS + N5 WITHDRAWAL / ZONE FIXES
-Build name: CAMPAIGN3 ISOMETRIC CITY ICONS 10N6
+Prototype version: v00.00.10n6a
+Build status: ISOMETRIC CITY ICONS + WITHDRAWAL COMPILE HOTFIX
+Build name: CAMPAIGN3 ISOMETRIC CITY ICONS 10N6A
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n6-isometric-city-icons
+Work branch: work/channel-campaign3-v10n6a-withdrawal-compile-hotfix
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
 Design baseline: v00.02.19
@@ -15,11 +15,21 @@ LINEAGE:
 - v00.00.10n4 = clean HUD default + polygon-accurate zone selection + shared-border renderer
 - v00.00.10n5 = tactical withdrawal + city-anchored prototype zone partition refinements
 - v00.00.10n6 = Proposal 3 isometric miniature city icons
+- v00.00.10n6a = CS1612 compile hotfix for withdrawal rally-point assignment
 
 ROLLBACK:
+- before v10n6a: backup/channel-campaign3-before-v10n6a-withdrawal-compile-hotfix-20260914
 - before v10n6: backup/channel-campaign3-v10n5-before-v10n6-isometric-city-icons-20260914
 - before v10n5: backup/channel-campaign3-before-v10n5-withdrawal-orders-20260914
 - before v10n4: backup/channel-campaign3-before-v10n4-hud-zone-lines-20260914
+
+V10N6A HOTFIX:
+- Fixes Unity/C# error CS1612 in PrototypeWithdrawalControllerV010N5.BeginWithdrawal().
+- RallyPoint is a Vector3 property, so RallyPoint.y cannot be modified directly.
+- The incoming rallyPoint is now copied to a local Vector3 named resolvedRallyPoint.
+- Ground height is applied to resolvedRallyPoint.y.
+- The complete Vector3 is then assigned once to RallyPoint.
+- No withdrawal behaviour or tuning values are intentionally changed by this hotfix.
 
 V10N6 PURPOSE:
 - Replace round city cylinders with Proposal 3 - Isometric Miniature Town visuals.
@@ -71,31 +81,27 @@ RETAINED / REFINED ZONE FOUNDATION:
 - Zone geometry remains prototype and is NOT exact historical 1851 border data.
 - DigDag/source-backed historical Amt polygons remain the production target.
 
-FILES ADDED/CHANGED IN V10N6:
-- Assets/Scripts/Campaign/CampaignCityIconV010N6.cs
-- Assets/Scripts/Campaign/CampaignCityIconV010N6.cs.meta
+FILES CHANGED IN V10N6A:
+- Assets/Scripts/PrototypeWithdrawalControllerV010N5.cs
 - Assets/Scripts/Campaign/CampaignBuildInfo.cs
-- Assets/Scripts/PrototypeBuildVersionOverlay.cs
 - VERSION.txt
-- docs/parts/part-18-53-CAMPAIGN-V10N6-ISOMETRIC-CITY-ICONS.md
 
 QA GATES:
-1. Unity 6000.6.0f1 compiles without errors.
-2. Badge/topbar show v00.00.10n6.
-3. All 68 CITY-REG-01 cities still exist.
-4. No old round city cylinder is visibly rendered.
-5. Every city root gets CITY_ICON_ISOMETRIC_10N6.
-6. C towns show 3 houses and are visually smallest.
-7. B towns show 6 houses + church.
-8. A cities show 12 houses + church + civic centre and are visually largest.
-9. Population scale variation remains limited inside each tier.
-10. Left-click city identity remains correct.
-11. RMB on city still resolves movement to the city's zone.
-12. City labels remain aligned with the city root.
-13. Building meshes have no colliders; one simple city BoxCollider handles input.
+1. Unity 6000.6.0f1 compiles without CS1612 at PrototypeWithdrawalControllerV010N5.cs line 71.
+2. Badge/topbar show v00.00.10n6a.
+3. TILBAGETRÆK HERTIL still records a terrain-height-adjusted RallyPoint.
+4. Fighting withdrawal still transitions to RallyMarch when clear.
+5. BRYD KONTAKT behaviour is unchanged.
+6. All 68 CITY-REG-01 cities still exist.
+7. No old round city cylinder is visibly rendered.
+8. Every city root gets CITY_ICON_ISOMETRIC_10N6.
+9. C towns show 3 houses and are visually smallest.
+10. B towns show 6 houses + church.
+11. A cities show 12 houses + church + civic centre and are visually largest.
+12. Left-click city identity remains correct.
+13. RMB on city still resolves movement to the city's zone.
 14. 20 zones / 68 cities / urban population 290565 validation remains unchanged.
 15. Vejle/Aalborg/Hjørring/Thisted/Viborg zone-selection regressions are retested.
-16. n5 TILBAGETRÆK HERTIL / fighting withdrawal / BRYD KONTAKT regressions are retested.
-17. World Imagery and streamed 3D terrain remain functional.
+16. World Imagery and streamed 3D terrain remain functional.
 
-QA state: V10N6 IMPLEMENTED / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N6A IMPLEMENTED / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
