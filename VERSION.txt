@@ -1,46 +1,43 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f23
+Prototype version: v00.00.09f24
 Build status: TEST
-Build name: MANUAL AUTHORITY BEFORE INPUT + COLLISION-SAFE RESERVED FORMATION SLOTS
-Visible build marker: PROJECT 1864 | v00.00.09f23 TEST
+Build name: MAJOR ORDER REPLACEMENT + EXACT DESTINATION COMMITMENT + COMPANY MISSION VISIBILITY
+Visible build marker: PROJECT 1864 | v00.00.09f24 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1-09f22 retained + 09f23 authority/formation-slot safety
+Design manual baseline: v00.02.08 + 09f1-09f23 retained + 09f24 mission/destination authority
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
 09f22 design supplement: docs/design-supplements/v00.00.09f22-major-formation-selection-hud.md
 09f23 design supplement: docs/design-supplements/v00.00.09f23-authority-and-formation-slot-safety.md
+09f24 design supplement: docs/design-supplements/v00.00.09f24-major-mission-destination-authority.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f23 - Manual authority ordering fix
-- Direct player company orders now release Major authority BEFORE PlayerCommander consumes the same input frame.
-- PrototypeManualOrderAuthority execution order changed from +250 to -1200.
-- Selected companies are detached from the live Major mission, HQ mission visuals are cleared, and Officer AI is OFF before RMB/key orders are interpreted.
-- This fixes the case where a company received a manual order but continued following the Major mission because the input had already been processed while AI authority was still active.
-- Major AI cannot reclaim an AI-OFF manually detached company until a NEW Major order or explicit company AI ON.
-- Console telemetry: AI-AUTHORITY-09F23.
+v00.00.09f24 - Selected company can inspect its Major destination
+- Major mission path/footprint visuals are no longer visible only while the Major itself is selected.
+- If one or more subordinate companies are selected and they still belong to the active Major mission, each selected company shows its own current path and destination footprint.
+- Selecting a company does not detach it; only a direct manual order does that.
+- Manual AI-OFF companies still lose the Major mission visual as intended.
 
-v00.00.09f23 - Shared collision-safe formation slot resolver
-- Major formations and manual multi-company Line orders now share PrototypeFormationSlotSafety09F23.
-- A final slot is illegal if the company footprint overlaps Farmhouse/Barn, open river water, battlefield bounds or another reserved company slot.
-- Accepted company slots are reserved immediately with minimum centre separation 55 m.
-- If a slot is blocked, the resolver searches along the requested formation line first and only uses a shallow fore/aft stagger as a last resort.
-- This prevents two independently corrected companies from being pushed onto the same building edge.
+v00.00.09f24 - New Major order is a hard replacement
+- Every newly created Major mission set receives a new execution identity, even if the player repeats the same order at the same map point.
+- On a new Major order, stale direct-player routes/ghosts are cleared, old direct attack targets are removed and the old local Officer-AI mission is flushed before the new destination is written.
+- The new order therefore replaces the previous live execution instead of coexisting with it.
+- Console telemetry: HQ-COMMIT-09F24.
 
-v00.00.09f23 - Manual drawn Line safety
-- Manual multi-company Line slots are generated from the player-drawn line, corrected for buildings and reserved against one another.
-- Final legal slots are assigned to selected companies by minimum total squared march distance across all 2-4 company permutations.
-- This fixes one company standing off the intended line while another ends on/in an object.
-- Manual group ground/enemy raycasts use the expanded 5000 m interaction distance.
-- Console telemetry: GROUP-LINE-09F23.
+v00.00.09f24 - Destination box is authoritative
+- A Major-owned company may not mark itself arrived merely because an enemy enters fire range while the displayed destination box is still several metres away.
+- Exact arrival tolerance is approximately 4.5 m from the assigned company slot.
+- While travelling, local Officer-AI Update is temporarily paused but AIEnabled remains ON.
+- The strategic goal is restored only when no active movement destination exists, so bridge/building steering waypoints are not overwritten.
+- When the exact slot is reached, local Officer AI is released again.
+- This fixes the observed case where companies stopped short of the yellow/blue destination boxes.
 
-v00.00.09f23 - Major slot deconfliction
-- A final Major formation pass runs after f22 objective-centred placement.
-- Front slots are regenerated from the commander objective, corrected as one reserved set and assigned by shortest total march distance.
-- Reserve is included in the same final footprint reservation system and cannot collapse onto a front company.
-- Individual facing toward known enemy remains retained where available.
-- AI-OFF/manual companies are explicitly excluded so this layer cannot steal player authority.
-- Console telemetry: HQ-SLOTS-09F23.
+Retained from v00.00.09f23
+- Direct player company orders detach from Major authority before PlayerCommander handles the same input frame.
+- Major/manual Line formations use shared collision-safe reserved company slots.
+- Major slots and manual group slots cannot overlap one another or Farmhouse/Barn footprints.
+- Manual group slots are assigned by minimum total march distance.
 
 Retained from v00.00.09f22
 - Major ANGRIB HER is objective-centred and front companies use nearest unique slots.
@@ -73,16 +70,16 @@ Retained from v00.00.09f15-v00.00.09f14
 - B-271 ranged lethality defaults: BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55, firing fraction 58%.
 - Destination facing chevron, musket volley audio, 1:1 fallen support and procedural WALK animation.
 
-Primary v00.00.09f23 QA
-1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f23 TEST.
-2. Give Major FORSVAR HER close to Farmhouse/Barn so one or more nominal front slots are blocked.
-3. No two companies may receive the same/overlapping corrected endpoint.
-4. No final formation footprint may overlap Farmhouse/Barn.
-5. The battalion line should remain on/near the requested line, extending laterally only as needed.
-6. Draw a manual multi-company Line through/near the building and verify the same slot legality/reservation rules.
-7. Manual units should take nearest final slots without unnecessary route crossing.
-8. While a Major mission is active, select one or more companies and give a direct manual RMB/formation order.
-9. AI must switch OFF before the manual order is processed; Major mission/visual must disappear for those units.
-10. The manually detached companies must follow only the player order and must not resume the old Major destination.
-11. Give the Major a NEW order and verify the companies can be reclaimed with AI ON.
-12. Recheck bridge-only crossing, reserve/flank judgement and direct manual attack authority.
+Primary v00.00.09f24 QA
+1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f24 TEST.
+2. Give Major FORSVAR HER and wait until the four company destinations are visible.
+3. Select one company without issuing a manual order: its current Major path and destination box must remain visible.
+4. Select several companies without ordering them: all selected Major-owned companies must show their own destination footprints.
+5. Give Major a second, clearly different FORSVAR HER destination before the first mission is complete.
+6. The old physical movement/attack execution must stop and the new Major destination must take over immediately.
+7. Repeat the same Major order at the same point; it must still count as a fresh replacement order.
+8. Companies must continue to the displayed destination boxes instead of stopping early at fire range.
+9. Final arrival should be within approximately 4.5 m of the assigned slot.
+10. Verify building/bridge routing is still respected while exact destination commitment is active.
+11. Verify a direct manual company order still switches AI OFF and removes that company's Major mission visual.
+12. Recheck 4v1 reserve/flank judgement, direct manual attack authority and collision-safe formation slots.
