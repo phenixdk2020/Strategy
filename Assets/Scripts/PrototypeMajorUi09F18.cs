@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// v00.00.09f18: Major selection, box-selection, hover, shared AI UI and order input.
+// v00.00.09f18 selection/input retained.
+// v00.00.09f22: full-width low-profile bottom HUD shared visually with company HUD.
 [DefaultExecutionOrder(440)]
 public sealed class PrototypeMajorUi09F18 : MonoBehaviour
 {
@@ -24,6 +25,7 @@ public sealed class PrototypeMajorUi09F18 : MonoBehaviour
     private GUIStyle accentStyle;
     private GUIStyle hoverStyle;
     private const float DragThreshold = 9f;
+    private const float HudHeight = 90f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -261,9 +263,7 @@ public sealed class PrototypeMajorUi09F18 : MonoBehaviour
 
     private Rect PanelRect()
     {
-        float width = Mathf.Min(1060f, Mathf.Max(850f, Screen.width - 28f));
-        const float height = 112f;
-        return new Rect((Screen.width - width) * 0.5f, Screen.height - height - 8f, width, height);
+        return new Rect(0f, Screen.height - HudHeight, Screen.width, HudHeight);
     }
 
     private void EnsureStyles()
@@ -309,50 +309,51 @@ public sealed class PrototypeMajorUi09F18 : MonoBehaviour
         GUI.depth = -870;
         Rect panel = PanelRect();
         GUI.Box(panel, string.Empty, panelStyle);
-        GUI.Box(new Rect(panel.x + 6f, panel.y + 5f, panel.width - 12f, 21f),
+
+        float pad = 7f;
+        float headerY = panel.y + 3f;
+        GUI.Box(new Rect(pad, headerY, panel.width - pad * 2f, 19f),
             "BATALJONS HQ | MAJOR | 4 KOMPAGNIER", headerStyle);
 
-        float aiX = panel.xMax - 286f;
-        if (GUI.Button(new Rect(aiX, panel.y + 6f, 72f, 19f), major.AIEnabled ? "AI ON" : "AI OFF", major.AIEnabled ? accentStyle : buttonStyle))
+        float aiX = panel.xMax - 274f;
+        if (GUI.Button(new Rect(aiX, headerY + 1f, 70f, 17f), major.AIEnabled ? "AI ON" : "AI OFF", major.AIEnabled ? accentStyle : buttonStyle))
             major.ToggleAI();
-        aiX += 75f;
-        if (GUI.Button(new Rect(aiX, panel.y + 6f, 44f, 19f), major.Doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF", buttonStyle)) major.SetDoctrine(OfficerAIDoctrine.Defensive);
-        aiX += 47f;
-        if (GUI.Button(new Rect(aiX, panel.y + 6f, 44f, 19f), major.Doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL", buttonStyle)) major.SetDoctrine(OfficerAIDoctrine.Balanced);
-        aiX += 47f;
-        if (GUI.Button(new Rect(aiX, panel.y + 6f, 44f, 19f), major.Doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF", buttonStyle)) major.SetDoctrine(OfficerAIDoctrine.Offensive);
+        aiX += 73f;
+        if (GUI.Button(new Rect(aiX, headerY + 1f, 62f, 17f), major.Doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF", buttonStyle)) major.SetDoctrine(OfficerAIDoctrine.Defensive);
+        aiX += 65f;
+        if (GUI.Button(new Rect(aiX, headerY + 1f, 62f, 17f), major.Doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL", buttonStyle)) major.SetDoctrine(OfficerAIDoctrine.Balanced);
+        aiX += 65f;
+        if (GUI.Button(new Rect(aiX, headerY + 1f, 62f, 17f), major.Doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF", buttonStyle)) major.SetDoctrine(OfficerAIDoctrine.Offensive);
 
-        float infoX = panel.x + 9f;
-        float infoY = panel.y + 31f;
-        const float colW = 204f;
-        for (int i = 0; i < major.Companies.Count; i++)
+        float infoWidth = Mathf.Clamp(panel.width * 0.31f, 360f, 520f);
+        float rowY = panel.y + 27f;
+        GUI.Label(new Rect(pad + 3f, rowY, infoWidth - 8f, 15f), major.LastOrderText, labelStyle);
+        GUI.Label(new Rect(pad + 3f, rowY + 16f, infoWidth - 8f, 15f), major.LastDecisionText, mutedStyle);
+
+        float commandX = infoWidth + 8f;
+        float commandWidth = panel.width - commandX - 8f;
+        const float gap = 4f;
+        float buttonWidth = (commandWidth - gap * 5f) / 6f;
+        const float commandHeight = 27f;
+
+        if (GUI.Button(new Rect(commandX, rowY, buttonWidth, commandHeight), "ANGRIB HER", buttonStyle)) pendingOrder = MajorOrder09F18.AttackHere;
+        if (GUI.Button(new Rect(commandX + (buttonWidth + gap), rowY, buttonWidth, commandHeight), "FORSVAR HER", buttonStyle)) pendingOrder = MajorOrder09F18.DefendHere;
+        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 2f, rowY, buttonWidth, commandHeight), "TILBAGETRÆK", buttonStyle)) pendingOrder = MajorOrder09F18.WithdrawHere;
+        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 3f, rowY, buttonWidth, commandHeight), "RYK FREM", buttonStyle)) pendingOrder = MajorOrder09F18.AdvanceHere;
+        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 4f, rowY, buttonWidth, commandHeight), "HOLD", buttonStyle)) major.IssueOrder(MajorOrder09F18.HoldPosition, major.HqRoot.transform.position);
+        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 5f, rowY, buttonWidth, commandHeight), "SAML HER", buttonStyle)) pendingOrder = MajorOrder09F18.AssembleHere;
+
+        float companyY = panel.y + 60f;
+        float companyWidth = (panel.width - pad * 2f - 9f) / 4f;
+        for (int i = 0; i < major.Companies.Count && i < 4; i++)
         {
             Regiment regiment = major.Companies[i];
             if (regiment == null)
                 continue;
-            int col = i % 2;
-            int row = i / 2;
-            GUI.Label(new Rect(infoX + col * colW, infoY + row * 17f, colW - 2f, 16f),
-                PrototypeMajorBattalion09F18.Name(regiment) + " " + regiment.CurrentStrength + "/" + regiment.InitialStrength + " | " + major.Role(regiment),
-                labelStyle);
+            int losses = Mathf.Max(0, regiment.InitialStrength - regiment.CurrentStrength);
+            string text = PrototypeMajorBattalion09F18.Name(regiment) + " " + regiment.CurrentStrength + "/" + regiment.InitialStrength +
+                          " | tab " + losses + " | " + major.Role(regiment);
+            GUI.Label(new Rect(pad + i * (companyWidth + 3f), companyY, companyWidth, 18f), text, labelStyle);
         }
-        GUI.Label(new Rect(infoX, panel.yMax - 30f, colW * 2f, 14f), major.LastOrderText, mutedStyle);
-        GUI.Label(new Rect(infoX, panel.yMax - 15f, colW * 2f, 14f), major.LastDecisionText, mutedStyle);
-
-        float commandX = panel.x + 422f;
-        float commandY = panel.y + 32f;
-        float commandWidth = panel.xMax - commandX - 9f;
-        const float gap = 4f;
-        float buttonWidth = (commandWidth - gap * 2f) / 3f;
-        const float buttonHeight = 32f;
-
-        if (GUI.Button(new Rect(commandX, commandY, buttonWidth, buttonHeight), "ANGRIB HER", buttonStyle)) pendingOrder = MajorOrder09F18.AttackHere;
-        if (GUI.Button(new Rect(commandX + buttonWidth + gap, commandY, buttonWidth, buttonHeight), "FORSVAR HER", buttonStyle)) pendingOrder = MajorOrder09F18.DefendHere;
-        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 2f, commandY, buttonWidth, buttonHeight), "TILBAGETRÆK HERTIL", buttonStyle)) pendingOrder = MajorOrder09F18.WithdrawHere;
-
-        commandY += buttonHeight + gap;
-        if (GUI.Button(new Rect(commandX, commandY, buttonWidth, buttonHeight), "RYK FREM HERTIL", buttonStyle)) pendingOrder = MajorOrder09F18.AdvanceHere;
-        if (GUI.Button(new Rect(commandX + buttonWidth + gap, commandY, buttonWidth, buttonHeight), "HOLD POSITION", buttonStyle)) major.IssueOrder(MajorOrder09F18.HoldPosition, major.HqRoot.transform.position);
-        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 2f, commandY, buttonWidth, buttonHeight), "SAML HER", buttonStyle)) pendingOrder = MajorOrder09F18.AssembleHere;
     }
 }
