@@ -4,20 +4,27 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// Campaign3 v00.00.10n3 compact contextual zone information panel.
-/// Clicking a zone marker, city marker, or Danish land area resolves a ZONE-REG-01
-/// zone and opens a small panel in the upper-left corner.
+/// Campaign3 v00.00.10n4 compact contextual zone information panel.
+/// Zone selection is resolved from the ACTUAL visible prototype polygon geometry,
+/// not from a nearest-zone-centre approximation. This keeps click identity aligned
+/// with the map area the player is actually pointing at.
 /// </summary>
 [DefaultExecutionOrder(24000)]
 public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
 {
-    private const string GeographyRootName = "GEO_Denmark_NaturalEarth50m";
+    private sealed class ZoneArea
+    {
+        public string ZoneId;
+        public readonly List<Vector2> WorldPolygon = new List<Vector2>();
+    }
 
-    private readonly List<List<Vector2>> landRings = new List<List<Vector2>>();
+    private const string ZoneOverlayRootName = "ZONE_OVERLAY_1851_LAND_CLIPPED";
+
+    private readonly List<ZoneArea> zoneAreas = new List<ZoneArea>();
     private CampaignDenmark1851Registry.ZoneDef selectedZone;
     private CampaignDenmark1851Registry.CityDef selectedCity;
     private bool visible;
-    private bool geographyReady;
+    private bool zoneGeometryReady;
 
     private GUIStyle panelStyle;
     private GUIStyle titleStyle;
@@ -30,15 +37,15 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignZoneInfoPanelV010N3>() != null)
             return;
 
-        GameObject go = new GameObject("PROJECT1864_ZONE_INFO_v000010n3");
+        GameObject go = new GameObject("PROJECT1864_ZONE_INFO_CURRENT");
         DontDestroyOnLoad(go);
         go.AddComponent<CampaignZoneInfoPanelV010N3>();
     }
 
     private void Update()
     {
-        if (!geographyReady)
-            TryLoadLandRings();
+        if (!zoneGeometryReady)
+            TryLoadZoneAreas();
 
         if (GrandCampaignBootstrap.Instance == null || Camera.main == null)
             return;
@@ -56,20 +63,17 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
             selectedCity = city;
             visible = true;
 
-            // Clicking the map should always be able to reveal the compact card,
-            // even if the user previously switched to minimal HUD.
             if (!CampaignHudStateV010N2.HudVisible)
                 CampaignHudStateV010N2.ToggleHud();
 
-            // v10n3 compact card replaces the large legacy INFO panel during normal
-            // map selection. INFO/F2 can still reopen the detailed legacy panel.
+            // The large legacy INFO boxes stay closed during normal map clicking.
             if (CampaignHudStateV010N2.SelectionEnabled)
                 CampaignHudStateV010N2.ToggleSelectionPanel();
 
             Debug.Log(
                 CampaignBuildInfo.LogTag + "|ZoneInfo=True|Zone=" + selectedZone.Id +
                 "|City=" + (selectedCity != null ? selectedCity.Id : "-") +
-                "|Source=MapClick");
+                "|Source=PolygonMapClick");
         }
     }
 
@@ -82,6 +86,8 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         city = null;
 
         Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+
+        // Exact marker clicks have highest priority.
         if (Physics.Raycast(ray, out RaycastHit hit, 500f))
         {
             GrandCampaignCityMarker cityMarker = hit.collider.GetComponent<GrandCampaignCityMarker>();
@@ -103,103 +109,95 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
             }
         }
 
-        // Area selection uses the same current Denmark land scaffold as v10n2.
-        // The nearest-centre rule matches the prototype zone partition.
-        Plane campaignPlane = new Plane(Vector3.up, new Vector3(0f, 0.18f, 0f));
+        if (!zoneGeometryReady || zoneAreas.Count == 0)
+            return false;
+
+        // Resolve the mouse to campaign X/Z and test the actual v10n2/v10n4
+        // polygon parts. This replaces the incorrect nearest-centre shortcut from n3.
+        Plane campaignPlane = new Plane(Vector3.up, new Vector3(0f, 0.74f, 0f));
         if (!campaignPlane.Raycast(ray, out float enter))
             return false;
 
         Vector3 world = ray.GetPoint(enter);
-        Vector2 lonLat = CampaignGeoProjection.Unproject(world);
-        if (!PointInAnyLandRing(lonLat))
-            return false;
+        Vector2 point = new Vector2(world.x, world.z);
 
-        zone = FindNearestZone(lonLat);
-        return zone != null;
+        for (int i = 0; i < zoneAreas.Count; i++)
+        {
+            ZoneArea area = zoneAreas[i];
+            if (!PointInPolygon(point, area.WorldPolygon))
+                continue;
+
+            zone = FindZone(area.ZoneId);
+            if (zone != null)
+                return true;
+        }
+
+        return false;
     }
 
-    private void TryLoadLandRings()
+    private void TryLoadZoneAreas()
     {
-        GameObject root = GameObject.Find(GeographyRootName);
+        GameObject root = GameObject.Find(ZoneOverlayRootName);
         if (root == null)
             return;
 
-        landRings.Clear();
-        for (int i = 0; i < root.transform.childCount; i++)
+        zoneAreas.Clear();
+        LineRenderer[] lines = root.GetComponentsInChildren<LineRenderer>(true);
+
+        for (int i = 0; i < lines.Length; i++)
         {
-            Transform child = root.transform.GetChild(i);
-            if (!child.name.StartsWith("DNK_LandPart_", StringComparison.Ordinal))
+            LineRenderer line = lines[i];
+            CampaignZoneOverlayMetadataV010N metadata = line.GetComponent<CampaignZoneOverlayMetadataV010N>();
+            if (metadata == null || string.IsNullOrEmpty(metadata.ZoneId) || line.positionCount < 3)
                 continue;
 
-            MeshFilter filter = child.GetComponent<MeshFilter>();
-            if (filter == null || filter.sharedMesh == null)
-                continue;
+            Vector3[] positions = new Vector3[line.positionCount];
+            line.GetPositions(positions);
 
-            Vector3[] vertices = filter.sharedMesh.vertices;
-            if (vertices == null || vertices.Length < 3)
-                continue;
+            ZoneArea area = new ZoneArea { ZoneId = metadata.ZoneId };
+            for (int p = 0; p < positions.Length; p++)
+                area.WorldPolygon.Add(new Vector2(positions[p].x, positions[p].z));
 
-            List<Vector2> ring = new List<Vector2>(vertices.Length);
-            for (int v = 0; v < vertices.Length; v++)
-            {
-                Vector3 world = child.TransformPoint(vertices[v]);
-                ring.Add(CampaignGeoProjection.Unproject(world));
-            }
-
-            if (ring.Count >= 3)
-                landRings.Add(ring);
+            if (area.WorldPolygon.Count >= 3)
+                zoneAreas.Add(area);
         }
 
-        geographyReady = landRings.Count > 0;
-    }
-
-    private bool PointInAnyLandRing(Vector2 point)
-    {
-        for (int r = 0; r < landRings.Count; r++)
+        zoneGeometryReady = zoneAreas.Count > 0;
+        if (zoneGeometryReady)
         {
-            if (PointInPolygon(point, landRings[r]))
-                return true;
+            Debug.Log(
+                CampaignBuildInfo.LogTag + "|ZoneInfoGeometry=True|PolygonParts=" + zoneAreas.Count +
+                "|Resolver=PointInActualOverlayPolygon");
         }
-        return false;
     }
 
     private static bool PointInPolygon(Vector2 point, List<Vector2> polygon)
     {
+        if (polygon == null || polygon.Count < 3)
+            return false;
+
         bool inside = false;
         int j = polygon.Count - 1;
+
         for (int i = 0; i < polygon.Count; i++)
         {
             Vector2 pi = polygon[i];
             Vector2 pj = polygon[j];
-            float denominator = pj.y - pi.y;
-            bool crosses = ((pi.y > point.y) != (pj.y > point.y)) &&
-                Mathf.Abs(denominator) > 0.0000001f &&
-                (point.x < (pj.x - pi.x) * (point.y - pi.y) / denominator + pi.x);
-            if (crosses)
-                inside = !inside;
+            bool yCross = (pi.y > point.y) != (pj.y > point.y);
+            if (yCross)
+            {
+                float denominator = pj.y - pi.y;
+                if (Mathf.Abs(denominator) > 0.0000001f)
+                {
+                    float xCross = (pj.x - pi.x) * (point.y - pi.y) / denominator + pi.x;
+                    if (point.x < xCross)
+                        inside = !inside;
+                }
+            }
             j = i;
         }
+
         return inside;
-    }
-
-    private static CampaignDenmark1851Registry.ZoneDef FindNearestZone(Vector2 lonLat)
-    {
-        CampaignDenmark1851Registry.ZoneDef[] zones = CampaignDenmark1851Registry.Zones;
-        CampaignDenmark1851Registry.ZoneDef best = null;
-        float bestDistance = float.MaxValue;
-
-        for (int i = 0; i < zones.Length; i++)
-        {
-            Vector2 p = new Vector2(zones[i].Longitude, zones[i].Latitude);
-            float distance = (p - lonLat).sqrMagnitude;
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                best = zones[i];
-            }
-        }
-
-        return best;
     }
 
     private static CampaignDenmark1851Registry.ZoneDef FindZone(string zoneId)
@@ -303,8 +301,6 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         if (!visible || selectedZone == null || !CampaignHudStateV010N2.HudVisible)
             return;
 
-        // If the user explicitly opens the old detailed INFO panel, let that panel
-        // replace the compact card rather than drawing both on top of each other.
         if (CampaignHudStateV010N2.SelectionVisible)
             return;
 
