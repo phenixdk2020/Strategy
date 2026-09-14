@@ -1,42 +1,62 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f13
+Prototype version: v00.00.09f14
 Build status: TEST
-Build name: DESTINATION FACING + VOLLEY TELEMETRY + MUSKET AUDIO + 1:1 FALLEN CONTROL
-Visible build marker: PROJECT 1864 | v00.00.09f13 TEST
+Build name: B-271 RANGED LETHALITY CALIBRATION - 20-30 CLOSE HIT TARGET
+Visible build marker: PROJECT 1864 | v00.00.09f14 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + formation-ranks doctrine supplement
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
+Current B-271 notes: docs/backlog/B-271-RANGED-COMBAT-CALIBRATION-NOTES.md
+09f14 design supplement: docs/design-supplements/v00.00.09f14-combat-lethality-calibration.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f13 - Destination facing indicator
-- Added PrototypeDestinationFacing09F13.
-- Active destination footprint now receives a small yellow chevron at its front edge.
-- Chevron follows the route FinalFacing rather than merely the current regiment rotation.
-- Purpose is to make the final facing readable before the company reaches/stops at the destination.
+v00.00.09f14 - B-271 ranged lethality calibration ACTIVE
+- Object/path detours from B-270 are retained; current user test reports obstacle avoidance appears to work correctly.
+- Ranged lethality is now the active tuning gate.
+- F9 default BaseHit increased from 1.40% to 12.00%.
+- CLOSE factor increased from x1.75 to x2.00.
+- MEDIUM factor changed from x1.00 to x1.10.
+- LONG factor increased from x0.30 to x0.55.
+- Firing fraction remains 58%.
+- F9 BaseHit slider maximum increased to 20.00% so the new QA profile is actually adjustable in the panel.
+- STANDARD now restores the new 09f14 QA defaults.
 
-v00.00.09f13 - Volley telemetry for B-271 hit-rate calibration
-- Added PrototypeVolleyTelemetryAudio09F13.
-- Every detected volley now writes a compact VOLLEY-QA-09F13 Console line containing shooter, target, actual distance in metres, CLOSE/MEDIUM/LONG band, firing men, base-hit percentage, range factor, current quality factor, expected hits, resolved hits and target strength remaining.
-- This is intended to collect repeated samples before changing Close-range lethality.
-- Current F9 defaults remain BaseHit=1.40%, Close=x1.75, Medium=x1.00, Long=x0.30 and firing fraction=58%.
+v00.00.09f14 - Expected centerline for a fresh 190-man company
+- 190 men x 58% gives about 110 firing men.
+- At full quality, CLOSE centerline is about 26.4 expected hits.
+- MEDIUM centerline is about 14.5 expected hits.
+- LONG centerline is about 7.3 expected hits.
+- Actual results still vary with random spread and active quality factors.
+- These are QA/gameplay calibration targets, not final historical weapon-profile values.
 
-v00.00.09f13 - First-pass musket audio
-- A lightweight procedural 3D black-powder volley sound is generated at runtime, so no external audio asset is required for this QA pass.
-- Sound originates from the firing regiment and uses 3D distance attenuation plus slight pitch variation.
-- This is a placeholder/prototype sound; a historically better recorded/curated musket library can replace it later without changing combat logic.
+v00.00.09f14 - Legacy 16-hit ceiling calibration layer
+- Regiment.FireVolley still contains a legacy hard ceiling of 16 resolved hits.
+- Added PrototypeLethalityCalibration09F14 at execution order 37100.
+- The layer only supplements a volley if the original kernel actually reaches the 16-hit ceiling.
+- It never reduces or rewrites uncapped lower-hit volleys.
+- Supplemental hits are physically limited by firing men and target strength.
+- Original volley shock is not applied twice; supplemental hits use zero extra shock.
+- This is explicitly temporary until the authoritative hit resolver is cleaned up and the legacy 16-hit ceiling is removed from the kernel.
 
-v00.00.09f13 - Fallen display control repaired
-- F9 'Tab pr. synligt lig' now supports 1 instead of having a hard minimum of 2.
-- The combat-tuning control is synchronized with PrototypeBattleVisuals09F4.CasualtyDisplayRatio, which is the ratio consumed by the active 09f7 renderer.
-- The old duplicate/legacy casualty-manager ratio is no longer allowed to disagree with the active renderer.
-- STANDARD now returns fallen display to 1:1.
+v00.00.09f14 - Definitive calibration telemetry
+- Existing VOLLEY-QA-09F13 remains for raw/kernel telemetry and audio.
+- New definitive line is VOLLEY-CAL-09F14.
+- It logs shooter, target, actual distance, band, firing men, BaseHit, range factor, quality, Expected, KernelHits, ExtraHits, TotalHits and TargetRemaining.
+- For B-271 tuning, use TotalHits from VOLLEY-CAL-09F14.
+- Run at least 10-20 comparable salves per range band before the next tuning decision.
 
-v00.00.09f13 - Walking animation status
-- Existing 09f7 renderer already has procedural WALK / Forced March / routed RUN states.
-- WALK currently includes leg/boot swing, arm motion, carried-rifle pose and per-soldier vertical bob.
-- It remains a first-pass procedural primitive animation rather than a skeletal/Mecanim animation; no new animation system is introduced in 09f13.
+v00.00.09f14 - Later weapon-model direction
+- Final ranged combat must not use one universal accuracy curve.
+- Weapon profiles shall later distinguish at least older smoothbore muskets from rifled/tapriffel/Minié-like weapons and other relevant systems.
+- Each weapon profile can then own its own distance/accuracy behavior while common formation, quality, smoke, cover and movement factors remain shared.
+
+v00.00.09f13 retained - Destination facing / telemetry / audio / fallen control
+- Destination footprint keeps the final-facing chevron.
+- Procedural 3D black-powder volley audio remains active.
+- F9 'Tab pr. synligt lig' still supports 1:1 and is synchronized with the active renderer.
+- Existing procedural WALK / Forced March / routed RUN animation remains active.
 
 v00.00.09f12 retained - Route/pathfinding authority
 - Direct ANGREB retains the enemy as mission target while river/building routing owns physical steering when required.
@@ -58,13 +78,12 @@ v00.00.09f8/f9 retained
 - Morale remains locked to 100 for the current hit-rate QA pass; cohesion remains active.
 - Stationary facing remains 16.8 degrees/second.
 
-Primary v00.00.09f13 QA
+Primary v00.00.09f14 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f13 TEST.
-3. Give a move/facing destination: yellow destination rectangle must show a chevron pointing in the final facing direction.
-4. Fire several Close-range volleys and verify Console lines beginning VOLLEY-QA-09F13 show DistanceM, Band and Hits.
-5. Repeat at Medium and Long later so B-271 can compare distributions rather than individual shots.
-6. Musket/volley sound must play from the firing formation and attenuate with camera distance.
-7. F9 'Tab pr. synligt lig' must be able to reach 1 and active fallen rendering must follow it.
-8. Existing procedural WALK state remains active during normal movement.
-9. Recheck object detours/bridge routing to ensure presentation/QA additions did not regress B-270 movement.
+2. Build marker reads PROJECT 1864 | v00.00.09f14 TEST.
+3. F9 STANDARD shows BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55 and firing fraction 58%.
+4. Place fresh companies at CLOSE and collect at least 10-20 VOLLEY-CAL-09F14 lines.
+5. Compare TotalHits rather than only the legacy VOLLEY-QA-09F13 Hits value.
+6. Fresh ~190-man CLOSE salves should center roughly in the 20-30 hit region, subject to random/quality variation.
+7. Repeat later at MEDIUM and LONG to establish measured distributions before further tuning.
+8. Confirm pathfinding/object detours, bridge routing, destination chevron, musket audio, 1:1 fallen and WALK animation did not regress.
