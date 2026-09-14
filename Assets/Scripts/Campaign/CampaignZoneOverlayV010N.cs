@@ -4,39 +4,29 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// PROJECT 1864 Campaign3 v00.00.10n
+/// PROJECT 1864 Campaign3 zone overlay.
 ///
-/// Visual foundation for the canonical ZONE-REG-01 1851 zones.
+/// v00.00.10n introduced the visual zone-overlay architecture.
+/// v00.00.10n2 replaces the old overlapping geographic group rectangles with one
+/// global nearest-centre partition for all 20 zones and clips every resulting zone
+/// part against the same Denmark land mesh used by the campaign geography layer.
 ///
 /// IMPORTANT HISTORICAL GUARDRAIL:
-/// The zone identities/names are canonical 1851 data, but the boundary geometry in
-/// v10n is a temporary centre-derived sector approximation. It must NOT be treated
-/// as historically exact county geometry. Production polygon geometry is targeted
-/// at the DigDag historical-administrative GIS dataset (Amt og Region).
-///
-/// v10n therefore solves presentation/interaction architecture without baking a
-/// fabricated border into the historical source-of-truth layer.
+/// Zone identities are canonical ZONE-REG-01 data, but this remains prototype
+/// centre-derived geometry. It is NOT a claim about exact 1851 county boundaries.
+/// Production geometry remains targeted at DigDag historical Amt/Region polygons.
 /// </summary>
 [DefaultExecutionOrder(21000)]
 public sealed class CampaignZoneOverlayV010N : MonoBehaviour
 {
-    private sealed class ZoneGroup
-    {
-        public string Name;
-        public float West;
-        public float East;
-        public float South;
-        public float North;
-        public readonly List<CampaignDenmark1851Registry.ZoneDef> Zones =
-            new List<CampaignDenmark1851Registry.ZoneDef>();
-    }
-
-    public const string Version = "v00.00.10n";
-    public const string GeometryMode = "PROTOTYPE_CENTRE_DERIVED_SECTORS";
+    public const string GeometryMode = "PROTOTYPE_LAND_CLIPPED_GLOBAL_VORONOI";
     public const string IntendedHistoricalSource = "DigDag - Amt og Region";
 
+    private const string GeographyRootName = "GEO_Denmark_NaturalEarth50m";
     private const float OverlayY = 0.74f;
-    private const float BoundaryWidth = 0.055f;
+    private const float BoundaryWidth = 0.040f;
+    private const float MinPolygonArea = 0.000010f;
+    private const float Epsilon = 0.000001f;
 
     private readonly List<GameObject> overlayObjects = new List<GameObject>();
     private GameObject overlayRoot;
@@ -51,7 +41,7 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignZoneOverlayV010N>() != null)
             return;
 
-        GameObject go = new GameObject("PROJECT1864_ZoneOverlay_v000010n");
+        GameObject go = new GameObject("PROJECT1864_ZoneOverlay_CURRENT");
         DontDestroyOnLoad(go);
         go.AddComponent<CampaignZoneOverlayV010N>();
     }
@@ -64,7 +54,7 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
     private void Update()
     {
         if (!built && GrandCampaignBootstrap.Instance != null)
-            BuildOverlay();
+            TryBuildOverlay();
 
         if (Input.GetKeyDown(KeyCode.Z))
         {
@@ -72,110 +62,125 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
             if (overlayRoot != null)
                 overlayRoot.SetActive(visible);
 
-            Debug.Log("CAMPAIGN-10N|ZoneOverlay=" + visible + "|Toggle=Z|Geometry=" + GeometryMode);
+            Debug.Log(
+                CampaignBuildInfo.LogTag + "|ZoneOverlay=" + visible +
+                "|Toggle=Z|Geometry=" + GeometryMode);
         }
     }
 
-    private void BuildOverlay()
+    private void TryBuildOverlay()
     {
+        List<List<Vector2>> landRings = ReadLandRingsFromCampaignGeography();
+        if (landRings.Count == 0)
+            return;
+
         built = true;
-        overlayRoot = new GameObject("ZONE_OVERLAY_1851_PROTOTYPE");
+        overlayRoot = new GameObject("ZONE_OVERLAY_1851_LAND_CLIPPED");
         DontDestroyOnLoad(overlayRoot);
 
-        List<ZoneGroup> groups = BuildGroups();
-        int polygons = 0;
+        CampaignDenmark1851Registry.ZoneDef[] zones = CampaignDenmark1851Registry.Zones;
+        HashSet<string> zonesWithGeometry = new HashSet<string>();
+        int polygonParts = 0;
         int segments = 0;
+        int tinyPartsSkipped = 0;
 
-        for (int g = 0; g < groups.Count; g++)
+        for (int z = 0; z < zones.Length; z++)
         {
-            ZoneGroup group = groups[g];
-            for (int z = 0; z < group.Zones.Count; z++)
+            CampaignDenmark1851Registry.ZoneDef zone = zones[z];
+            Vector2 targetPoint = new Vector2(zone.Longitude, zone.Latitude);
+            int zonePart = 0;
+
+            for (int r = 0; r < landRings.Count; r++)
             {
-                CampaignDenmark1851Registry.ZoneDef zone = group.Zones[z];
-                List<Vector2> polygon = BuildVoronoiCell(zone, group);
+                List<Vector2> polygon = new List<Vector2>(landRings[r]);
+
+                // A single global nearest-centre partition means every point can
+                // belong to only one zone interior. There are no overlapping group
+                // rectangles as in the original v10n prototype.
+                for (int o = 0; o < zones.Length; o++)
+                {
+                    CampaignDenmark1851Registry.ZoneDef other = zones[o];
+                    if (other.Id == zone.Id)
+                        continue;
+
+                    Vector2 otherPoint = new Vector2(other.Longitude, other.Latitude);
+                    polygon = ClipToTargetHalfPlane(polygon, targetPoint, otherPoint);
+                    if (polygon.Count < 3)
+                        break;
+                }
+
+                polygon = RemoveNearDuplicatePoints(polygon);
                 if (polygon.Count < 3)
                     continue;
 
-                CreateBoundary(zone, polygon, group.Name);
-                polygons++;
+                float area = Mathf.Abs(SignedArea(polygon));
+                if (area < MinPolygonArea)
+                {
+                    tinyPartsSkipped++;
+                    continue;
+                }
+
+                zonePart++;
+                CreateBoundary(zone, polygon, r + 1, zonePart);
+                zonesWithGeometry.Add(zone.Id);
+                polygonParts++;
                 segments += polygon.Count;
             }
         }
 
         Debug.Log(
-            "CAMPAIGN-10N|Installed=True|Overlay=1851Zones|Zones=" + polygons +
+            CampaignBuildInfo.LogTag +
+            "|Installed=True|Overlay=1851Zones" +
+            "|Zones=" + zonesWithGeometry.Count +
+            "|PolygonParts=" + polygonParts +
             "|BoundarySegments=" + segments +
+            "|TinyPartsSkipped=" + tinyPartsSkipped +
+            "|LandClipped=True" +
+            "|AreaOverlap=FalseByGlobalVoronoiConstruction" +
+            "|LandMask=CampaignDenmarkGeography_NaturalEarth50m" +
             "|Geometry=" + GeometryMode +
             "|HistoricalSourceTarget=DigDag_Amt_Region|Toggle=Z");
     }
 
-    private static List<ZoneGroup> BuildGroups()
+    /// <summary>
+    /// Reads the already-rendered Denmark land parts instead of maintaining a
+    /// second coastline dataset. This keeps the overlay coastline exactly aligned
+    /// with CampaignDenmarkGeography as that scaffold evolves.
+    /// </summary>
+    private static List<List<Vector2>> ReadLandRingsFromCampaignGeography()
     {
-        ZoneGroup jutland = Group("Jylland", 7.95f, 11.05f, 54.70f, 57.82f);
-        ZoneGroup funen = Group("Fyn-Langeland", 9.72f, 10.98f, 54.68f, 55.68f);
-        ZoneGroup zealand = Group("Sjælland-Møn", 10.92f, 12.72f, 54.84f, 56.20f);
-        ZoneGroup lolland = Group("Lolland-Falster", 10.98f, 12.62f, 54.55f, 55.08f);
-        ZoneGroup bornholm = Group("Bornholm", 14.58f, 15.22f, 54.94f, 55.36f);
+        List<List<Vector2>> rings = new List<List<Vector2>>();
+        GameObject root = GameObject.Find(GeographyRootName);
+        if (root == null)
+            return rings;
 
-        CampaignDenmark1851Registry.ZoneDef[] zones = CampaignDenmark1851Registry.Zones;
-        for (int i = 0; i < zones.Length; i++)
+        for (int i = 0; i < root.transform.childCount; i++)
         {
-            CampaignDenmark1851Registry.ZoneDef zone = zones[i];
-            if (zone.Id == "DK-Z08-BOR")
-                bornholm.Zones.Add(zone);
-            else if (zone.Id == "DK-Z07-MAR")
-                lolland.Zones.Add(zone);
-            else if (zone.Id == "DK-Z09-ODE" || zone.Id == "DK-Z10-SVE")
-                funen.Zones.Add(zone);
-            else if (zone.Id.StartsWith("DK-Z0", StringComparison.Ordinal) &&
-                     zone.Id != "DK-Z07-MAR" && zone.Id != "DK-Z08-BOR" &&
-                     zone.Id != "DK-Z09-ODE")
-                zealand.Zones.Add(zone);
-            else
-                jutland.Zones.Add(zone);
-        }
-
-        return new List<ZoneGroup> { jutland, funen, zealand, lolland, bornholm };
-    }
-
-    private static ZoneGroup Group(string name, float west, float east, float south, float north)
-    {
-        return new ZoneGroup
-        {
-            Name = name,
-            West = west,
-            East = east,
-            South = south,
-            North = north
-        };
-    }
-
-    private static List<Vector2> BuildVoronoiCell(
-        CampaignDenmark1851Registry.ZoneDef target,
-        ZoneGroup group)
-    {
-        List<Vector2> polygon = new List<Vector2>
-        {
-            new Vector2(group.West, group.South),
-            new Vector2(group.East, group.South),
-            new Vector2(group.East, group.North),
-            new Vector2(group.West, group.North)
-        };
-
-        Vector2 targetPoint = new Vector2(target.Longitude, target.Latitude);
-        for (int i = 0; i < group.Zones.Count; i++)
-        {
-            CampaignDenmark1851Registry.ZoneDef other = group.Zones[i];
-            if (ReferenceEquals(other, target) || other.Id == target.Id)
+            Transform child = root.transform.GetChild(i);
+            if (!child.name.StartsWith("DNK_LandPart_", StringComparison.Ordinal))
                 continue;
 
-            Vector2 otherPoint = new Vector2(other.Longitude, other.Latitude);
-            polygon = ClipToTargetHalfPlane(polygon, targetPoint, otherPoint);
-            if (polygon.Count < 3)
-                break;
+            MeshFilter filter = child.GetComponent<MeshFilter>();
+            if (filter == null || filter.sharedMesh == null)
+                continue;
+
+            Vector3[] vertices = filter.sharedMesh.vertices;
+            if (vertices == null || vertices.Length < 3)
+                continue;
+
+            List<Vector2> ring = new List<Vector2>(vertices.Length);
+            for (int v = 0; v < vertices.Length; v++)
+            {
+                Vector3 world = child.TransformPoint(vertices[v]);
+                ring.Add(CampaignGeoProjection.Unproject(world));
+            }
+
+            ring = RemoveNearDuplicatePoints(ring);
+            if (ring.Count >= 3)
+                rings.Add(ring);
         }
 
-        return polygon;
+        return rings;
     }
 
     private static List<Vector2> ClipToTargetHalfPlane(
@@ -194,18 +199,18 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
 
         Vector2 previous = input[input.Count - 1];
         float previousValue = Vector2.Dot(previous, normal) - threshold;
-        bool previousInside = previousValue <= 0.000001f;
+        bool previousInside = previousValue <= Epsilon;
 
         for (int i = 0; i < input.Count; i++)
         {
             Vector2 current = input[i];
             float currentValue = Vector2.Dot(current, normal) - threshold;
-            bool currentInside = currentValue <= 0.000001f;
+            bool currentInside = currentValue <= Epsilon;
 
             if (currentInside != previousInside)
             {
                 float denominator = previousValue - currentValue;
-                float t = Mathf.Abs(denominator) < 0.000001f
+                float t = Mathf.Abs(denominator) < Epsilon
                     ? 0.5f
                     : previousValue / denominator;
                 output.Add(Vector2.Lerp(previous, current, Mathf.Clamp01(t)));
@@ -222,12 +227,49 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
         return output;
     }
 
+    private static List<Vector2> RemoveNearDuplicatePoints(List<Vector2> input)
+    {
+        List<Vector2> output = new List<Vector2>();
+        if (input == null || input.Count == 0)
+            return output;
+
+        float sqrTolerance = Epsilon * Epsilon;
+        for (int i = 0; i < input.Count; i++)
+        {
+            Vector2 point = input[i];
+            if (output.Count == 0 || (output[output.Count - 1] - point).sqrMagnitude > sqrTolerance)
+                output.Add(point);
+        }
+
+        if (output.Count > 2 && (output[0] - output[output.Count - 1]).sqrMagnitude <= sqrTolerance)
+            output.RemoveAt(output.Count - 1);
+
+        return output;
+    }
+
+    private static float SignedArea(List<Vector2> polygon)
+    {
+        if (polygon == null || polygon.Count < 3)
+            return 0f;
+
+        float area = 0f;
+        for (int i = 0; i < polygon.Count; i++)
+        {
+            Vector2 a = polygon[i];
+            Vector2 b = polygon[(i + 1) % polygon.Count];
+            area += a.x * b.y - b.x * a.y;
+        }
+        return area * 0.5f;
+    }
+
     private void CreateBoundary(
         CampaignDenmark1851Registry.ZoneDef zone,
         List<Vector2> polygon,
-        string groupName)
+        int landPart,
+        int zonePart)
     {
-        GameObject go = new GameObject("ZONE_BORDER_" + zone.Id);
+        GameObject go = new GameObject(
+            "ZONE_BORDER_" + zone.Id + "_LAND_" + landPart + "_PART_" + zonePart);
         go.transform.SetParent(overlayRoot.transform, false);
         overlayObjects.Add(go);
 
@@ -249,8 +291,10 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
         go.AddComponent<CampaignZoneOverlayMetadataV010N>().Initialize(
             zone.Id,
             zone.Name,
-            groupName,
-            false);
+            "GLOBAL_LAND_PARTITION",
+            false,
+            true,
+            true);
     }
 
     private static Material CreateBoundaryMaterial()
@@ -261,8 +305,8 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
 
         Material material = new Material(shader)
         {
-            name = "ZONE_BOUNDARY_1851_PROTOTYPE_10N",
-            color = new Color(0.95f, 0.78f, 0.24f, 0.90f)
+            name = "ZONE_BOUNDARY_1851_PROTOTYPE_10N2",
+            color = new Color(0.95f, 0.78f, 0.24f, 1.00f)
         };
         return material;
     }
@@ -274,7 +318,7 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
 
         badgeStyle = new GUIStyle(GUI.skin.box)
         {
-            fontSize = 10,
+            fontSize = 9,
             alignment = TextAnchor.MiddleLeft
         };
         badgeStyle.normal.textColor = Color.white;
@@ -282,13 +326,16 @@ public sealed class CampaignZoneOverlayV010N : MonoBehaviour
 
     private void OnGUI()
     {
+        if (!CampaignHudStateV010N2.DebugVisible)
+            return;
+
         EnsureGuiStyle();
         string state = visible ? "ON" : "OFF";
-        Rect rect = new Rect(Mathf.Max(8f, Screen.width - 365f), Screen.height - 58f, 357f, 50f);
+        Rect rect = new Rect(Mathf.Max(8f, Screen.width - 340f), Screen.height - 52f, 332f, 44f);
         GUI.Box(
             rect,
-            Version + " | ZONE OVERLAY " + state + " | Z = toggle\n" +
-            "1851 zone identities · prototype geometry · DigDag target",
+            CampaignBuildInfo.CurrentVersion + " | ZONES " + state + " | Z toggle\n" +
+            "land-clipped · global non-overlap partition · DigDag target",
             badgeStyle);
     }
 }
@@ -299,16 +346,22 @@ public sealed class CampaignZoneOverlayMetadataV010N : MonoBehaviour
     public string ZoneName { get; private set; }
     public string GroupName { get; private set; }
     public bool HistoricallyExactGeometry { get; private set; }
+    public bool LandClipped { get; private set; }
+    public bool AreaOverlapFreeByConstruction { get; private set; }
 
     public void Initialize(
         string zoneId,
         string zoneName,
         string groupName,
-        bool historicallyExactGeometry)
+        bool historicallyExactGeometry,
+        bool landClipped,
+        bool areaOverlapFreeByConstruction)
     {
         ZoneId = zoneId;
         ZoneName = zoneName;
         GroupName = groupName;
         HistoricallyExactGeometry = historicallyExactGeometry;
+        LandClipped = landClipped;
+        AreaOverlapFreeByConstruction = areaOverlapFreeByConstruction;
     }
 }
