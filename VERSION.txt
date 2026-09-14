@@ -1,80 +1,75 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f17
+Prototype version: v00.00.09f18
 Build status: TEST
-Build name: FOUR-COMPANY BATTALION + RESERVE/FLANK AI + SIDE-BY-SIDE GROUP LINE + ATTACK LANES
-Visible build marker: PROJECT 1864 | v00.00.09f17 TEST
+Build name: UNIFIED OFFICER AI + MAJOR COMMAND AUTHORITY + HQ BOX SELECT/MOVE + DYNAMIC RESERVE
+Visible build marker: PROJECT 1864 | v00.00.09f18 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + 09f15 Major HQ/map/UI + 09f16 HQ usability/formation + 09f17 four-company reserve/flank/group-line/attack-lanes
+Design manual baseline: v00.02.08 + 09f1-09f17 retained + 09f18 unified officer AI/command authority
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
+09f18 design supplement: docs/design-supplements/v00.00.09f18-unified-ai-command-authority.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f17 - Manual multi-company Line order fix
-- Reproduced QA issue: two selected ~48 m companies were previously placed only 22 m center-to-center and therefore overlapped.
-- Added PrototypeGroupLineSpacing09F17.
-- Normal group Line placement now uses 60 m center spacing: ~48 m company frontage plus ~12 m interval.
-- The existing PlayerCommander route objects are corrected after the order is created, preserving route/pathfinding/ghost behavior instead of replacing the movement system.
-- Group destination preview is also expanded to the true multi-company frontage.
-- Expected result: 2, 3 or 4 selected companies line up SIDE BY SIDE, not on top of each other.
+v00.00.09f18 - One AI concept for Major and companies
+- Major and company UI now use the same AI vocabulary: AI ON / AI OFF plus DEF / BAL / OFF doctrine.
+- Direct manual company orders switch that company's OfficerAIController OFF BEFORE PlayerCommander consumes the order.
+- While AI is OFF, the company is detached from the current Major mission and will not be re-tasked by that existing mission.
+- Manually switching the company AI ON reattaches it to the last Major assignment when one exists.
+- Any NEW Major order explicitly reclaims all four companies, clears manual detachment and switches company AI ON.
+- Direct manual movement of the Major switches Major AI OFF, matching the same authority rule.
 
-v00.00.09f17 - Formation-level attack lanes
-- Reproduced second QA issue: multiple companies ordered to ATTACK the same enemy all chased the same target transform and collapsed on top of each other.
-- Added PrototypeFormationAttackLanes09F17.
-- When 2+ Danish companies share the same attack target, the order is converted to one common firing line with separate company lanes.
-- Lane spacing is 60 m, matching the side-by-side group Line rule.
-- The attack line stops at the shortest active fire-policy range among the attacking companies (bounded to 28-88 m), so all companies can engage without converging on the enemy center.
-- Each company moves to its own lane in Line formation; Regiment.OrderMove clears the shared forced target that caused the overlap.
-- This applies to both manual multi-selection ATTACK and Major-issued attacks once multiple companies share the same target.
+v00.00.09f18 - Major command authority
+- PrototypeMajorBattalion09F18 supersedes the 09f17 battalion behavior layer at runtime.
+- A new Major order clears each subordinate company's old PlayerCommander route and old destination ghost before assigning the new mission.
+- Old manual destinations therefore cannot resume after the Major mission completes.
+- Major missions are reasserted while moving, so companies do not drift back to stale orders.
+- ATTACK/FORSVAR companies stop manoeuvring and form Line as soon as they reach their slot OR an enemy is inside their selected fire-policy range, reducing movement under fire.
+- Major attack movement uses company slots rather than shared forcedTarget pursuit, so subordinate companies do not converge on the enemy centre.
 
-v00.00.09f17 - Four-company Danish battalion
-- Scenario now creates/keeps four Danish company-scale maneuver units under the Major.
-- UI names are 1. Kompagni, 2. Kompagni, 3. Kompagni and 4. Kompagni; internal legacy IDs remain 1.Regiment, 5.Regiment, 2.Regiment and 3.Regiment.
-- All four Danish companies plus the single Prussian test company are normalized to 190 men by the company-scale layer.
-- Initial Danish company positions are spaced side by side at z=-90,-30,+30,+90.
+v00.00.09f18 - Selection, HQ movement and compact UI
+- Major can be selected by normal click and by the same left-mouse drag rectangle concept used for companies.
+- Selecting Major clears company selection and replaces the company bottom bar with the compact Major panel.
+- Major hover shows AI state, doctrine, 3 horses, current battalion order and reserve decision.
+- Right-click ground while Major is selected moves the physical Major/HQ; direct HQ movement turns Major AI OFF.
+- The Major panel retains the six basic orders: ANGRIB HER, FORSVAR HER, TILBAGETRÆK HERTIL, RYK FREM HERTIL, HOLD POSITION, SAML HER.
 
-v00.00.09f17 - Major reserve and flanking MVP
-- Added PrototypeMajorBattalion09F17 as the authoritative four-company HQ behavior/UI layer after the physical 09f15 Major + three horses has spawned.
-- Major still starts HQ AI OFF.
-- With HQ AI OFF, player Major orders use the four companies directly.
-- With HQ AI ON, attack/defend decisions can hold one fresh company as reserve while three companies form the primary front.
-- Reserve selection favors the freshest/most cohesive available company.
-- If battalion strength/cohesion are good and the enemy is close enough, the Major may stage the reserve on a flank.
-- On ATTACK, a flank reserve can commit against a nearby enemy after reaching a useful flank position.
-- On DEFEND, a flank reserve can perform a local counterattack if the enemy closes sufficiently and reserve strength/cohesion remain adequate.
-- This is a first tactical decision MVP, not the final historical officer-stat/personality/order-delay model.
+v00.00.09f18 - New Major destinations and obstacle-safe endpoints
+- Major orders now create their own visible company path lines and formation destination footprints.
+- Selecting the Major shows command-links to all subordinate companies plus their current Major-assigned destinations.
+- Major assignment endpoints are checked against Farmhouse/Barn formation footprints and open river positions before use.
+- The existing bridge/building route layers still own the legal route TO the selected safe endpoint.
 
-v00.00.09f17 - HQ UI / command visibility
-- Major panel remains compact at the bottom and now shows four subordinate companies.
-- Each company shows FRONT / RESERVE / FLANKE-RESERVE or its active Major mission.
-- Command-links are shown from Major to all four companies while HQ is selected.
-- Major hover shows HQ AI state, three horses, four companies and current battalion order.
+v00.00.09f18 - Reserve/flank decision
+- A reserve is NOT mandatory.
+- With only one known enemy threat, the Major normally uses the entire battalion front.
+- A reserve is considered only for ATTACK/FORSVAR when four active companies exist, at least two enemy units are known, and battalion strength/cohesion are sufficient.
+- The freshest/cohesive company is selected when a reserve is justified.
+- A flank is attempted only when the known enemy layout leaves one side less occupied and the flank endpoint is legal.
+- If the front later becomes heavily threatened, an arrived reserve may be committed toward the threatened company.
+- Current enemy knowledge is a temporary prototype radius model (HQ/subordinates approximately 700 m); later LOS/scouting/command-report delay replaces it.
 
-v00.00.09f16 retained
-- Major selection/hover behavior and compact olive/brass UI direction are retained conceptually; 09f17 owns the active four-company HQ implementation.
-- Company control panel keeps the matching compact bottom UI.
+Retained from v00.00.09f17
+- Four Danish company-scale units under the Major.
+- Manual multi-company Line spacing 60 m centre-to-centre.
+- Manual multi-company attack-lane safety remains for direct player attacks.
 
-v00.00.09f15 retained
-- Battlefield remains 2880 x 1920 m.
-- Camera minimum height remains 9.5 m.
-- River remains 5.5 m visual width with matching bridge-only blocker logic.
-- Physical Major HQ remains a mounted Major with three total horses and HQ/Dannebrog marker.
+Retained from v00.00.09f15-v00.00.09f14
+- Battlefield 2880 x 1920 m, camera minimum height 9.5 m, river width 5.5 m and bridge-only crossing.
+- Physical Major HQ with three horses.
+- B-271 ranged lethality defaults: BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55, firing fraction 58%.
+- Destination facing chevron, musket volley audio, 1:1 fallen support and procedural WALK animation.
 
-v00.00.09f14 retained - B-271 ranged lethality calibration
-- F9 defaults remain BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55 and firing fraction 58%.
-- Fresh 190-man CLOSE centerline remains about 26 expected hits before random/quality variation.
-- Use VOLLEY-CAL-09F14 TotalHits for B-271 tuning.
-
-Primary v00.00.09f17 QA
-1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f17 TEST.
-3. Select TWO companies and issue a normal group Line destination: they must finish side by side with ~12 m interval, not overlap.
-4. Repeat with THREE and FOUR selected companies; the group preview and final line must expand accordingly.
-5. Select TWO or more companies and ATTACK the same enemy: they must form separate attack lanes side by side instead of converging on one point.
-6. Confirm four Danish companies spawn at 190 men each and can be selected individually/multi-selected.
-7. Select Major: panel lists all four companies and four command-links are visible.
-8. HQ AI defaults OFF; manual Major FORSVAR HER should use all four companies on one common front.
-9. Turn HQ AI ON and allow an enemy to approach: Major should be able to use 3-front + 1-reserve organization.
-10. Under good battalion condition and suitable distance, watch for FLANKE-RESERVE in the HQ panel and HQ-AI-09F17 / HQ-RESERVE-09F17 console lines.
-11. Recheck bridge/building routing while moving a multi-company line and while Major orders are active.
-12. Recheck VOLLEY-CAL-09F14, musket audio, destination chevron, 1:1 fallen and WALK animation for regressions.
+Primary v00.00.09f18 QA
+1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f18 TEST.
+2. Drag a left-mouse selection rectangle around the Major: the Major becomes selected and the Major panel appears.
+3. Right-click ground with Major selected: HQ moves and Major AI becomes OFF.
+4. Give one company a manual right-click/H/F/C/Z/X order: that company's AI becomes OFF and it leaves the current Major mission.
+5. With that company AI OFF, confirm the existing Major mission does not take it back over.
+6. Turn that company AI ON manually: it should rejoin its last Major assignment.
+7. Give the Major a NEW FORSVAR HER order: all four company AI states become ON, old manual route/ghost lines disappear, and new Major destination footprints appear.
+8. Let the companies reach the defensive line: they must not return to the previous manual destinations afterwards.
+9. Place the defensive point near Farmhouse/Barn: no assigned final formation footprint may overlap those hard blockers.
+10. Give ANGRIB HER while enemy is within/approaching Long range: companies should stop manoeuvring to engage instead of milling around under fire.
+11. With one known enemy, confirm Major normally uses no reserve; with multiple known threats and a healthy battalion, reserve may appear.
+12. If a flank is shown, verify it is only chosen toward the less occupied known enemy side and does not land in open water/building footprint.
