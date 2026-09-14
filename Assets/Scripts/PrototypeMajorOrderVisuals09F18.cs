@@ -1,7 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// v00.00.09f18: command links + Major destination/path visualization.
+// v00.00.09f24: command links + Major destination/path visualization.
+// Major-selected view still shows the complete battalion plan, while selecting one or
+// more subordinate companies now keeps each selected company's current Major mission
+// path and destination footprint visible as well.
 [DefaultExecutionOrder(430)]
 public sealed class PrototypeMajorOrderVisuals09F18 : MonoBehaviour
 {
@@ -27,7 +30,7 @@ public sealed class PrototypeMajorOrderVisuals09F18 : MonoBehaviour
     private static void AutoCreate()
     {
         if (Object.FindAnyObjectByType<PrototypeMajorOrderVisuals09F18>() == null)
-            new GameObject("PrototypeMajorOrderVisuals_v000009f18").AddComponent<PrototypeMajorOrderVisuals09F18>();
+            new GameObject("PrototypeMajorOrderVisuals_v000009f24").AddComponent<PrototypeMajorOrderVisuals09F18>();
     }
 
     private void Awake()
@@ -174,7 +177,7 @@ public sealed class PrototypeMajorOrderVisuals09F18 : MonoBehaviour
         missions.Clear();
     }
 
-    private void UpdateMissionVisuals(bool show)
+    private void UpdateMissionVisuals(bool majorSelected)
     {
         foreach (KeyValuePair<Regiment, Visual> pair in missions)
         {
@@ -182,6 +185,10 @@ public sealed class PrototypeMajorOrderVisuals09F18 : MonoBehaviour
             Visual visual = pair.Value;
             if (regiment == null || visual == null)
                 continue;
+
+            // f24: a selected subordinate must be able to inspect its own current
+            // destination even after selection authority has moved away from the Major.
+            bool show = majorSelected || regiment.IsSelected;
 
             if (visual.Footprint != null)
                 visual.Footprint.enabled = show;
