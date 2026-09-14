@@ -1,74 +1,72 @@
-# PROJECT 1864 — B-280–B-289 Charge, Melee og Regiments-HQ
+# PROJECT 1864 — B-280–B-291 Charge, Melee, Regiments-HQ og næste våbenarter
 
-**Status:** AKTIV implementeringssekvens — v00.00.09f25 har første CHARGE/Command-Zone MVP  
+**Status:** AKTIV implementeringssekvens — v00.00.09f26 har CHARGE/Melee-baseline, Command-Zone MVP og første Under-Fire Reaction  
 **Branch:** `channel-test`
 
 ## B-280 — Infantry CHARGE
 
 **Status:** AKTIV / første MVP implementeret i v00.00.09f25
 
-CHARGE skal være en eksplicit ordre/state, ikke bare almindelig `OrderAttack()` med kortere afstand. Enheden skal kunne lukke gennem normal fire-distance til fysisk kontakt uden at ranged AI stopper fremrykningen ved Close/Medium/Long.
+CHARGE er en eksplicit ordre/state, ikke almindelig `OrderAttack()` med kortere afstand. Enheden skal kunne lukke gennem normal fire-distance til fysisk kontakt uden at ranged AI stopper fremrykningen ved Close/Medium/Long.
 
-Første scope:
-- eksplicit CHARGE-knap/ordre;
-- Line som udgangspunkt, med senere mulighed for andre assault formations;
-- mål/retning låses som charge intent;
-- cohesion/fatigue/momentum påvirkes;
-- ranged fire og charge må ikke kæmpe om movement authority;
-- charge afbrydes ved rout, umulig rute eller ugyldigt mål.
-
-v00.00.09f25 MVP:
+Første MVP:
 - `CHARGE [V]` + enemy target-pick;
-- charge bruger HOLD FIRE og lukker gennem ranged stop-distance;
-- bridge-routing må midlertidigt kræve Column;
+- HOLD FIRE under charge approach;
+- Line i åbent terræn, bridge-routing må midlertidigt kræve Column;
 - ekstra charge-speed/cohesion-cost;
-- transition til den eksisterende melee-manager ved fysisk kontakt.
+- transition til melee-manager ved fysisk kontakt.
 
 ## B-281 — Infantry melee completion
 
-**Status:** AKTIV / basal melee-core eksisterer, udvidelse mangler
+**Status:** AKTIV / basal melee-core eksisterer og er koblet til CHARGE
 
-Eksisterende `PrototypeMeleeCombatManager` er baseline. v00.00.09f25 kobler CHARGE-approach på den eksisterende contact/melee-core.
-
-Udbyg fortsat med:
-- kontakt frontage i stedet for ren centerafstand alene;
-- facing/flank/rear modifiers;
-- charge momentum / defender readiness;
+Videre arbejde:
+- bedre contact frontage;
 - tydelig engaged state;
 - break-off / winner / loser / rout;
-- separate melee casualties og logs;
+- mere visuel melee feedback;
 - ingen formation overlap/teleport gennem modstanderen.
+
+FRONT/FLANK/REAR og kort charge-momentum findes allerede som første testlag.
 
 ## B-282 — Under-fire reaction
 
-**Status:** PLANLAGT — næste combat-adfærdsregel
+**Status:** AKTIV / første MVP implementeret i v00.00.09f26
 
-AI ON company under movement that receives confirmed hostile fire from a known enemy inside own Long range should normally suspend movement, deploy/hold Line, face attacker and return fire. Mission is suspended, not deleted. Exception: critical passage such as bridge crossing may require exiting the passage before deploying.
+AI ON company under movement that receives confirmed hostile fire from a valid enemy inside own Long range should normally suspend movement, deploy/hold Line, face attacker and return fire. Mission is suspended, not deleted.
 
-AI OFF remains literal player control and should not automatically cancel a direct movement order solely because it is fired upon.
+v00.00.09f26 MVP:
+- kun AI ON reagerer automatisk;
+- parent mission bevares;
+- Line + face local threat + return fire;
+- HOLD FIRE respekteres;
+- kortere fire policy kan midlertidigt bruge LONG under self-defence og gendannes bagefter;
+- reaktionen frigives efter en rolig periode;
+- bridge passage er kritisk undtagelse: reaktion deferred til passagen er fri;
+- AI OFF er fortsat direkte spiller-authority.
 
 ## B-283 — Second battalion
 
-**Status:** PLANLAGT — efter Charge/Melee-baseline
+**Status:** NÆSTE HIERARKI-MILEPÆL
 
-Add four additional Danish company-scale infantry units plus a second physical Major HQ.
+Tilføj fire yderligere danske company-scale infanterienheder samt en anden fysisk Major HQ.
 
-Canonical structure:
-- Major A → Battalion 1 → 4 companies.
-- Major B → Battalion 2 → 4 companies.
+Kanonisk struktur:
+- Major A → 1. Bataljon → 4 kompagnier.
+- Major B → 2. Bataljon → 4 kompagnier.
 
-Each Major uses the same AI/UI/authority model.
+Begge Majorer skal bruge samme AI/UI/authority model; ingen parallel specialimplementering hvis det kan undgås.
 
 ## B-284 — Regimental HQ / Oberstløjtnant
 
-**Status:** PLANLAGT — efter anden bataljon
+**Status:** PLANLAGT umiddelbart efter B-283
 
-Create one physical Regimental HQ commanded by **Oberstløjtnant**. It is the next command level above the two Majors.
+Opret én fysisk Regimental HQ ledet af **Oberstløjtnant**. Det er kommandoniveauet over de to Majorer.
 
-Canonical Danish prototype hierarchy:
-- Kaptajn → company;
-- Major → battalion (4 companies);
-- Oberstløjtnant → regiment (2 battalions / 8 companies);
+Kanonisk dansk prototype-hierarki:
+- Kaptajn → kompagni;
+- Major → bataljon (4 kompagnier);
+- Oberstløjtnant → regiment (2 bataljoner / 8 kompagnier);
 - Oberst → brigade;
 - Generalmajor → division.
 
@@ -76,9 +74,9 @@ Canonical Danish prototype hierarchy:
 
 **Status:** PLANLAGT
 
-The Regimental HQ gives mission intent to the two Majors rather than issuing direct company destinations.
+Regiments-HQ giver mission intent til de to Majorer i stedet for direkte company destinations.
 
-First missions:
+Første missioner:
 - FORSVAR HER;
 - ANGRIB HER;
 - RYK FREM;
@@ -86,130 +84,121 @@ First missions:
 - HOLD;
 - SAML.
 
-Majors translate regimental intent into company roles/slots and retain tactical discretion within doctrine/known information.
+Majorer oversætter regimentsintentionen til company roles/slots og beholder taktisk skøn inden for doctrine og kendt information.
 
 ## B-286 — Regiment AI tactical allocation
 
 **Status:** PLANLAGT
 
-Regimental AI decides how to use the two battalions from known information, strength, cohesion, terrain and mission. It may choose, for example:
-- both battalions abreast;
-- one forward + one reserve;
-- one fixing + one flanking;
-- staggered defense;
-- concentration on one sector.
+Regiments-AI beslutter anvendelse af de to bataljoner ud fra kendt information, styrke, cohesion, terræn og mission. Den kan fx vælge:
+- begge bataljoner side om side;
+- én fremme + én reserve;
+- én fixing + én flanking;
+- forskudt forsvar;
+- koncentration på én sektor.
 
-No reserve or flank is mandatory merely because two battalions exist.
+Reserve eller flanke er aldrig obligatorisk blot fordi to bataljoner findes.
 
 ## B-287 — Authority chain
 
-**Status:** DESIGNBESLUTTET / delvist valideret på Major→kompagni niveau
+**Status:** DESIGNBESLUTTET / delvist valideret Major→kompagni
 
-Authority must be explicit:
+Authority:
 
 `Oberstløjtnant order → Major mission → company mission`
 
-A lower level may temporarily react to local contact, but must retain the parent mission intent unless a rule explicitly permits deviation. Direct player intervention at a lower level temporarily detaches that unit from its parent until a new parent order reclaims it.
+Et lavere niveau må reagere lokalt på kontakt, men parent mission intent bevares, medmindre en regel specifikt tillader afvigelse. Direkte spillerintervention på lavere niveau løsriver midlertidigt enheden fra parent command indtil en ny parent order reclaim'er den.
 
-v00.00.09f25 præciserer desuden:
+Validerede regler:
 - manuel ordre → AI OFF / spiller-authority;
-- efterfølgende AI ON → lokal Kaptajn-authority, ikke automatisk genoptagelse af gammel Major-ordre;
-- kun en NY Major-ordre må reclaim'e kompagniet.
+- AI ON efter manuel ordre → lokal Kaptajn-authority, ikke gammel Major-destination;
+- kun en NY Major-ordre reclaim'er kompagniet;
+- v00.00.09f26 under-fire reaction suspenderer missionen, men sletter den ikke.
 
 ## B-288 — Order delay/courier preparation
 
 **Status:** PLANLAGT
 
-Do not require courier delay for first Regimental-HQ gameplay, but architecture must preserve a future order lifecycle between Oberstløjtnant and Majors. Later couriers physically carry delayed orders and can be delayed/lost/intercepted.
+Første Regimental-HQ gameplay behøver ikke fuld courier delay, men arkitekturen skal bevare et fremtidigt order lifecycle mellem Oberstløjtnant og Majorer. Senere skal fysiske couriers kunne bære forsinkede ordrer og blive forsinket/tabt/intercepted.
 
 ## B-289 — Dynamic HQ advance / Command Zone
 
 **Status:** AKTIV / første Major→kompagni MVP implementeret i v00.00.09f25
 
-HQ must not remain at its original start position while subordinate formations advance hundreds of metres. During movement and especially attack, HQ positions are dynamic tactical positions.
+HQ må ikke blive på startpositionen mens underenheder rykker hundredvis af meter frem. Under movement/attack skal HQ forskydes i bounds.
 
-### Major / Battalion HQ movement
-
-- The Major follows the battalion in bounds rather than continuously hugging the front line.
-- During an attack the Major should normally remain behind the active company line, but advance when the battalion front moves far enough forward.
-- HQ relocation is a tactical action: choose a new safe HQ anchor, move there, then reassess command links.
-- Major should avoid known enemy frontage, open water, blocked terrain and obviously exposed positions.
-- If the battalion halts to fight, the Major should normally halt behind/near its centre or reserve rather than continue forward through the line.
-- If the battalion retreats, the Major should displace rearward as part of the mission.
-
-v00.00.09f25 MVP:
+Major MVP:
 - review ca. hver 2,5 sek. når Major AI er ON;
-- auto-relocation ved stor nok afstand til underenheder;
+- auto-relocation når underenheder er langt nok fremme;
 - foretrukken position ca. 145–165 m bag bataljonscenter/frontretning;
 - direkte HQ-rute skal være fri for hard blockers/åbent vand;
-- træer/hegn tæller ikke som hard blocker i denne første HQ-route test;
 - automatisk relocation ændrer ikke Majorens mission.
 
-### Oberstløjtnant / Regimental HQ movement
+Command bands:
+- `IN COMMAND` — 0–320 m;
+- `EXTENDED` — 320–450 m;
+- `OUT OF COMMAND` — over 450 m.
 
-- Regimental HQ follows both battalions at a larger standoff than either Major.
-- It should prefer a position from which both Majors remain inside useful command reach.
-- If one battalion advances much farther than the other, the Regimental HQ must balance safety against maintaining communication to both.
-- It may displace forward in bounds as the regiment advances and rearward during withdrawal.
+Distance påvirker primært command/reaction/coordination, ikke musket accuracy eller weapon range.
 
-### Command Zone is not primarily a weapon-stat bonus
+Regimental HQ senere:
+- følger begge bataljoner med større standoff;
+- forsøger at holde begge Majorer inden for brugbar command reach;
+- rykker frem i bounds under offensiv og bagud ved withdrawal.
 
-Being outside command reach should mainly degrade **command and coordination**, not musket accuracy directly.
+## REGIMENT-CONTROL GATE
 
-Suggested affected systems:
-- increased order/reaction delay;
-- slower Officer AI reassessment;
-- slower reserve reassignment and flank coordination;
-- reduced cohesion recovery / reorganisation rate;
-- slower morale recovery after shock;
-- higher chance of delayed/stale information later under fog of war;
-- courier travel time / order delivery once courier lifecycle is enabled.
+**Denne gate skal være stabil før nye våbenarter prioriteres:**
 
-Do **not** use a crude immediate accuracy penalty simply because a company is outside HQ radius.
+1. infantry CHARGE/melee er brugbar;
+2. under-fire reaction er brugbar;
+3. 2 bataljoner / 2 Majorer / 8 kompagnier findes;
+4. Oberstløjtnant fysisk HQ findes;
+5. Oberstløjtnant → Major → Kaptajn authority fungerer;
+6. Regiments-AI kan give bataljonerne angreb/forsvar og vælge fornuftig reserve/flanke-disposition;
+7. grundlæggende HQ-positionering/command reach fungerer.
 
-### Prototype command quality bands
+Når denne gate er nået, fortsætter vi **ikke straks op til Brigade/Division**. Vi bruger først det fungerende system til nye våbenarter.
 
-v00.00.09f25 Major→kompagni QA bands:
+## B-290 — Dragoons
 
-- `IN COMMAND` — 0–320 m, normal command quality;
-- `EXTENDED` — 320–450 m, moderat ekstra reaction delay;
-- `OUT OF COMMAND` — over 450 m, større reaction delay, men enheden fungerer stadig lokalt.
+**Status:** PLANLAGT — første store system efter Regiment-control gate
 
-A company outside Major range does not become helpless: the Kaptajn keeps local control and can defend, fire, react to contact and execute the last received mission. What is lost is fast coordination with higher HQ.
+Dragoons skal bygges og testes som næste våbenart.
 
-Likewise, a Major outside Regimental HQ range still commands its battalion locally, but receives new regimental intent more slowly/less reliably.
+Første scope:
+- mounted movement;
+- formationer for mounted movement;
+- `SID AF` / dismount;
+- dismounted fire;
+- `SID OP` / remount;
+- mounted charge/melee;
+- evt. dismounted melee;
+- heste som fysisk/visuel ressource;
+- Dragoon casualty/state model;
+- Kaptajn/Major/Regiments-AI skal kunne vurdere mounted vs dismounted anvendelse;
+- samme authority-, destination-, command-zone- og order-delay-principper som infanteriet.
 
-### Prototype positioning concept
+Dragoon AI skal testes både under direkte spillerkontrol og gennem HQ-kæden.
 
-Initial QA values, subject to tuning:
+## B-291 — Kanonbatteri / Artilleri
 
-- Major preferred position during normal attack: roughly 100–220 m behind battalion fighting line/centre.
-- Major command quality begins degrading progressively beyond roughly 300–400 m from subordinate companies.
-- Oberstløjtnant preferred position: roughly 250–500 m behind/among the two battalion centres.
-- Regimental command quality may begin degrading beyond roughly 700–900 m to a Major.
+**Status:** PLANLAGT — efter Dragoon-baseline
 
-These are gameplay prototype values, not final historical measurements.
+Artilleri er næste våbenart efter Dragoons.
 
-### Visualisation
+Første scope:
+- batteri som taktisk enhed;
+- movement/limber;
+- unlimber/deploy;
+- facing/fire arc;
+- range bands;
+- ammunitionstyper;
+- reload/cadence;
+- crew/cannon casualties;
+- solid shot/shell/shrapnel/canister når relevant for perioden;
+- struktur-/building damage koblet til senere urban damage model;
+- battery AI for position selection, target priority, displacement og ammunition policy;
+- samme HQ/authority/command-zone-system som øvrige våbenarter.
 
-When an HQ is selected:
-- show direct subordinate links;
-- v00.00.09f25 shows subtle IN COMMAND/EXTENDED range rings;
-- subordinate UI shows `IN COMMAND`, `EXTENDED` or `OUT OF COMMAND` plus distance;
-- do not leave command-zone overlays permanently visible because that would clutter the battlefield.
-
-### Important authority rule
-
-Automatic HQ movement changes **HQ position**, not the commander mission. A Major ordered to defend/attack keeps the mission while relocating its physical HQ to remain useful. The same applies to the Oberstløjtnant relative to the two Majors.
-
-## Gate before Dragoons
-
-Dragoons remain blocked until these are stable enough to reuse:
-1. infantry CHARGE;
-2. melee resolution;
-3. under-fire reaction;
-4. two battalions / two Majors;
-5. Oberstløjtnant → Major command chain;
-6. basic dynamic HQ positioning / command reach.
-
-Then proceed to mounted/dismounted Dragoon implementation, Dragoon AI and later artillery.
+Efter Dragoons + Artilleri testes kombineret våbenbrug under Regimental HQ, før vi prioriterer højere Brigade-/Divisions-HQ.
