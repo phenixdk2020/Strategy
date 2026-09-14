@@ -3,23 +3,23 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// Campaign3 v00.00.10n6b - Proposal 3 City Art.
+/// Campaign3 v00.00.10n6c - Proposal 3 City Art hotfix.
 ///
-/// Replaces the n6 procedural miniature buildings with authored transparent
-/// A/B/C city-art sprites. CITY-REG-01 data, labels, CityId/ZoneId and movement
-/// semantics remain authoritative and unchanged.
+/// Uses authored transparent A/B/C city-art textures from Resources and keeps
+/// CITY-REG-01 identity, labels, CityId/ZoneId and movement semantics unchanged.
 ///
-/// C = small 2-3 building settlement art
-/// B = regional town art with church
-/// A = larger development-city art with church/civic centre
+/// n6c fixes the invalid n6b texture payloads and avoids per-frame error spam while
+/// Unity finishes importing Resources after a pull/recompile.
 /// </summary>
 [DefaultExecutionOrder(23500)]
 public sealed class CampaignCityIconV010N6 : MonoBehaviour
 {
-    private const string LegacyIconRootName = "CITY_ICON_ISOMETRIC_10N6";
-    private const string IconRootName = "CITY_ICON_PROPOSAL3_10N6B";
+    private const string ProceduralIconRootName = "CITY_ICON_ISOMETRIC_10N6";
+    private const string PreviousIconRootName = "CITY_ICON_PROPOSAL3_10N6B";
+    private const string IconRootName = "CITY_ICON_PROPOSAL3_10N6C";
     private const string ResourceRoot = "Campaign/CityIcons/";
     private const float GroundLift = 0.09f;
+    private const float RetrySeconds = 1.0f;
 
     private readonly List<Transform> billboardRoots = new List<Transform>();
 
@@ -27,6 +27,8 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
     private Sprite spriteB;
     private Sprite spriteC;
     private bool installed;
+    private bool missingTextureLogged;
+    private float nextRetryTime;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -34,7 +36,7 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignCityIconV010N6>() != null)
             return;
 
-        GameObject go = new GameObject("PROJECT1864_CITY_ART_10N6B");
+        GameObject go = new GameObject("PROJECT1864_CITY_ART_10N6C");
         DontDestroyOnLoad(go);
         go.AddComponent<CampaignCityIconV010N6>();
     }
@@ -44,6 +46,10 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
         if (installed || GrandCampaignBootstrap.Instance == null)
             return;
 
+        if (Time.unscaledTime < nextRetryTime)
+            return;
+
+        nextRetryTime = Time.unscaledTime + RetrySeconds;
         if (!EnsureSprites())
             return;
 
@@ -72,7 +78,13 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
         int hiddenZoneCentreDiscs = HideZoneCentreDiscs();
 
         if (installedCount < CampaignDenmark1851Registry.Cities.Length)
+        {
+            Debug.LogWarning(
+                CampaignBuildInfo.LogTag +
+                "|Proposal3CityArt=Partial|Installed=" + installedCount +
+                "|Expected=" + CampaignDenmark1851Registry.Cities.Length);
             return;
+        }
 
         installed = true;
         Debug.Log(
@@ -82,6 +94,9 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
             "|TierA=" + CountTier(CampaignDenmark1851Registry.CityTier.A) +
             "|TierB=" + CountTier(CampaignDenmark1851Registry.CityTier.B) +
             "|TierC=" + CountTier(CampaignDenmark1851Registry.CityTier.C) +
+            "|TextureA=" + DescribeTexture(spriteA) +
+            "|TextureB=" + DescribeTexture(spriteB) +
+            "|TextureC=" + DescribeTexture(spriteC) +
             "|AlphaCutout=True" +
             "|GreenTownBase=False" +
             "|RoundCityRenderer=False" +
@@ -120,21 +135,40 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
         if (spriteA != null && spriteB != null && spriteC != null)
             return true;
 
-        spriteA = LoadSprite(ResourceRoot + "City_A_Proposal3", "City_A_Proposal3_Sprite");
-        spriteB = LoadSprite(ResourceRoot + "City_B_Proposal3", "City_B_Proposal3_Sprite");
-        spriteC = LoadSprite(ResourceRoot + "City_C_Proposal3", "City_C_Proposal3_Sprite");
+        spriteA = spriteA != null
+            ? spriteA
+            : LoadSprite(ResourceRoot + "City_A_Proposal3", "City_A_Proposal3_Sprite");
+        spriteB = spriteB != null
+            ? spriteB
+            : LoadSprite(ResourceRoot + "City_B_Proposal3", "City_B_Proposal3_Sprite");
+        spriteC = spriteC != null
+            ? spriteC
+            : LoadSprite(ResourceRoot + "City_C_Proposal3", "City_C_Proposal3_Sprite");
 
         if (spriteA == null || spriteB == null || spriteC == null)
         {
-            Debug.LogError(
-                CampaignBuildInfo.LogTag +
-                "|Proposal3CityArt=False|Reason=MissingTexture" +
-                "|A=" + (spriteA != null) +
-                "|B=" + (spriteB != null) +
-                "|C=" + (spriteC != null));
+            if (!missingTextureLogged)
+            {
+                missingTextureLogged = true;
+                Debug.LogError(
+                    CampaignBuildInfo.LogTag +
+                    "|Proposal3CityArt=False|Reason=MissingTexture" +
+                    "|A=" + (spriteA != null) +
+                    "|B=" + (spriteB != null) +
+                    "|C=" + (spriteC != null) +
+                    "|ResourceRoot=" + ResourceRoot +
+                    "|RetrySeconds=" + RetrySeconds);
+            }
             return false;
         }
 
+        missingTextureLogged = false;
+        Debug.Log(
+            CampaignBuildInfo.LogTag +
+            "|Proposal3TexturesLoaded=True" +
+            "|A=" + DescribeTexture(spriteA) +
+            "|B=" + DescribeTexture(spriteB) +
+            "|C=" + DescribeTexture(spriteC));
         return true;
     }
 
@@ -168,9 +202,8 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
             return true;
         }
 
-        Transform legacy = markerObject.transform.Find(LegacyIconRootName);
-        if (legacy != null)
-            Destroy(legacy.gameObject);
+        DestroyChildIfPresent(markerObject.transform, ProceduralIconRootName);
+        DestroyChildIfPresent(markerObject.transform, PreviousIconRootName);
 
         Renderer oldRenderer = markerObject.GetComponent<Renderer>();
         if (oldRenderer != null)
@@ -207,6 +240,13 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
 
         billboardRoots.Add(root);
         return spriteRenderer.sprite != null;
+    }
+
+    private static void DestroyChildIfPresent(Transform parent, string childName)
+    {
+        Transform child = parent.Find(childName);
+        if (child != null)
+            Destroy(child.gameObject);
     }
 
     private Sprite GetSpriteForTier(CampaignDenmark1851Registry.CityTier tier)
@@ -289,5 +329,12 @@ public sealed class CampaignCityIconV010N6 : MonoBehaviour
             if (cities[i] != null && cities[i].Tier == tier)
                 count++;
         return count;
+    }
+
+    private static string DescribeTexture(Sprite sprite)
+    {
+        if (sprite == null || sprite.texture == null)
+            return "missing";
+        return sprite.texture.width + "x" + sprite.texture.height;
     }
 }
