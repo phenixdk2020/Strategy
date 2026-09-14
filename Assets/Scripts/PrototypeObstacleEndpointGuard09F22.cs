@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ public sealed class PrototypeObstacleEndpointGuard09F22 : MonoBehaviour
     private FieldInfo destinationField;
     private FieldInfo hasDestinationField;
     private Renderer[] blockers;
+    private readonly Dictionary<Regiment, float> nextLog = new Dictionary<Regiment, float>();
 
     private const float LineHalfWidth = 25f;
     private const float ColumnHalfWidth = 3.4f;
@@ -58,15 +60,19 @@ public sealed class PrototypeObstacleEndpointGuard09F22 : MonoBehaviour
             corrected.y = PrototypeBootstrap.SampleGroundHeight(corrected.x, corrected.z) + 0.10f;
             destinationField.SetValue(regiment, corrected);
 
-            Debug.Log("OBSTACLE-ENDPOINT-09F22|Unit=" + regiment.RegimentName +
-                      "|BlockedBy=" + blockerName + "|EndpointProjected=True|Formation=" + regiment.Formation);
+            if (!nextLog.TryGetValue(regiment, out float allowed) || Time.time >= allowed)
+            {
+                nextLog[regiment] = Time.time + 2f;
+                Debug.Log("OBSTACLE-ENDPOINT-09F22|Unit=" + regiment.RegimentName +
+                          "|BlockedBy=" + blockerName + "|EndpointProjected=True|Formation=" + regiment.Formation);
+            }
         }
     }
 
     private void Scan()
     {
         Renderer[] all = UnityEngine.Object.FindObjectsByType<Renderer>();
-        System.Collections.Generic.List<Renderer> found = new System.Collections.Generic.List<Renderer>();
+        List<Renderer> found = new List<Renderer>();
         foreach (Renderer renderer in all)
         {
             if (renderer == null)
