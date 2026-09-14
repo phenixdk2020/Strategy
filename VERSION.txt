@@ -1,91 +1,101 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n5
-Build status: TACTICAL WITHDRAWAL ORDERS
-Build name: CAMPAIGN3 TACTICAL WITHDRAWAL ORDERS 10N5
+Prototype version: v00.00.10n6
+Build status: ISOMETRIC CITY ICONS + N5 WITHDRAWAL / ZONE FIXES
+Build name: CAMPAIGN3 ISOMETRIC CITY ICONS 10N6
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n5-withdrawal-orders
+Work branch: work/channel-campaign3-v10n6-isometric-city-icons
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.18
+Design baseline: v00.02.19
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
 - v00.00.10n2 = persistent HUD cleanup + land-clipped non-overlap zone partition
 - v00.00.10n3 = crisp zone-line render + compact contextual zone info
 - v00.00.10n4 = clean HUD default + polygon-accurate zone selection + shared-border renderer
-- v00.00.10n5 = tactical withdrawal / fighting withdrawal / break-contact prototype
+- v00.00.10n5 = tactical withdrawal + city-anchored prototype zone partition refinements
+- v00.00.10n6 = Proposal 3 isometric miniature city icons
 
 ROLLBACK:
+- before v10n6: backup/channel-campaign3-v10n5-before-v10n6-isometric-city-icons-20260914
 - before v10n5: backup/channel-campaign3-before-v10n5-withdrawal-orders-20260914
 - before v10n4: backup/channel-campaign3-before-v10n4-hud-zone-lines-20260914
 
-V10N5 PURPOSE:
-- Add a controlled withdrawal order with a player-selected rally point.
-- Units not in combat contact march directly toward the rally point.
-- Units in combat contact use a fighting-withdrawal cycle: back away while facing the enemy, halt briefly to fire, then continue withdrawing until clear.
-- Add BRYD KONTAKT as a separate emergency disengagement order.
-- Keep uncontrolled morale rout/flight separate from player-ordered withdrawal.
+V10N6 PURPOSE:
+- Replace round city cylinders with Proposal 3 - Isometric Miniature Town visuals.
+- Keep CITY-REG-01 data, city positions, labels, click identity and movement semantics unchanged.
+- Preserve n5 withdrawal work and the latest city-anchored prototype zone partition.
 
-TACTICAL COMMANDS:
-1. TILBAGETRÆK HERTIL
-- Select one or more Danish regiments.
-- Press the TILBAGETRÆK HERTIL control.
-- Click a terrain point to define a common rally point.
-- Units outside combat contact enter RallyMarch and move directly to the rally point.
-- Units inside combat contact enter FightingWithdrawal first.
-- FightingWithdrawal alternates short backward movement phases and short firing/holding phases.
-- During fighting withdrawal the regiment keeps its frontage toward the nearest threat instead of turning its back.
-- Once safely outside mutual effective engagement distance for a confirmation interval, the unit switches to RallyMarch.
+ISOMETRIC CITY VISUAL STANDARD:
+1. C - MINOR TOWN
+- 3 small procedural houses.
+- Small square/diamond town footprint.
+- Sparse vegetation.
+- Smallest icon scale.
 
-2. BRYD KONTAKT
-- Applies immediately to the currently selected Danish regiments.
-- Fire policy is temporarily forced to HOLD while disengaging.
-- Unit turns away from the nearest threat and uses an emergency speed boost to leave engagement range.
-- If the unit already has a rally point, it continues toward that rally point after contact is broken.
-- If no rally point exists, it halts after safely disengaging.
-- Original fire policy is restored after disengagement.
+2. B - REGIONAL TOWN
+- 6 houses.
+- Church with nave, tower and pointed spire.
+- Medium settlement footprint.
+- Medium icon scale.
 
-3. ROUT / FLUGT REMAINS SEPARATE
-- Existing Regiment.IsRouted and morale-triggered Route() remain the uncontrolled rout state.
-- FightingWithdrawal and BreakContact are controlled orders and do not mark the unit routed.
+3. A - DEVELOPMENT CITY
+- 12 houses.
+- Church with tower/spire.
+- Larger civic/administrative building.
+- Densest footprint and largest icon scale.
 
-OFFICER AI INTERACTION:
-- A withdrawal order temporarily takes direct control from OfficerAIController if AI UNIT is enabled.
-- Officer AI is restored after the controlled withdrawal order completes, provided the regiment has not routed.
-- This is a prototype bridge until the later HQ/order-delay system represents withdrawal as a native officer mission.
+CITY ICON RUNTIME:
+- CampaignCityIconV010N6 runs after campaign world creation.
+- Existing CITY_* root and GrandCampaignCityMarker remain authoritative.
+- Old round city renderer is disabled.
+- Old collider(s) are disabled.
+- Root transform scale is reset to 1:1.
+- A simple invisible BoxCollider becomes the click surface.
+- Visible miniature is child CITY_ICON_ISOMETRIC_10N6.
+- Individual buildings have no colliders.
+- House variation is deterministic from CityId.
+- Shared materials are reused across all cities.
+- Population gives only limited scale variation inside the A/B/C tier.
 
-UI:
-- PrototypeWithdrawalCommandManagerV010N5 adds a compact withdrawal command strip above the existing Officer AI command panel.
-- TILBAGETRÆK HERTIL arms the next terrain click as rally-point selection.
-- BRYD KONTAKT issues immediate emergency disengagement.
-- Status text shows armed target count / active withdrawals.
+RETAINED N5 TACTICAL WITHDRAWAL:
+- TILBAGETRÆK HERTIL establishes a common rally point.
+- Units outside contact march directly to the rally point.
+- Units in combat use fighting withdrawal before rally march.
+- BRYD KONTAKT is a controlled emergency disengagement order.
+- Existing morale rout remains a separate uncontrolled state.
 
-FILES ADDED/CHANGED IN V10N5:
-- Assets/Scripts/PrototypeWithdrawalControllerV010N5.cs
-- Assets/Scripts/PrototypeWithdrawalControllerV010N5.cs.meta
-- Assets/Scripts/PrototypeWithdrawalCommandManagerV010N5.cs
-- Assets/Scripts/PrototypeWithdrawalCommandManagerV010N5.cs.meta
-- Assets/Scripts/PrototypeBuildVersionOverlay.cs
+RETAINED / REFINED ZONE FOUNDATION:
+- Prototype zone partition uses city + zone-centre anchors rather than one centre point only.
+- Zone selection prefers city marker, then actual polygon, with zone centre only as fallback.
+- Zone geometry remains prototype and is NOT exact historical 1851 border data.
+- DigDag/source-backed historical Amt polygons remain the production target.
+
+FILES ADDED/CHANGED IN V10N6:
+- Assets/Scripts/Campaign/CampaignCityIconV010N6.cs
+- Assets/Scripts/Campaign/CampaignCityIconV010N6.cs.meta
 - Assets/Scripts/Campaign/CampaignBuildInfo.cs
+- Assets/Scripts/PrototypeBuildVersionOverlay.cs
 - VERSION.txt
-- docs/PROJECT-1864-Designmanual.md
-- docs/parts/part-17-52-CAMPAIGN-V10N5-TACTICAL-WITHDRAWAL.md
+- docs/parts/part-18-53-CAMPAIGN-V10N6-ISOMETRIC-CITY-ICONS.md
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. Campaign/tactical build badge shows v00.00.10n5.
-3. Select a Danish regiment outside enemy range; TILBAGETRÆK HERTIL + terrain click sends it directly to the rally point.
-4. Select a Danish regiment in combat range; the same order starts FightingWithdrawal instead of immediately turning away.
-5. FightingWithdrawal visibly alternates backward movement and firing/holding phases.
-6. Regiment continues facing the threat during the controlled withdrawal movement phase.
-7. Once clear, the regiment changes to RallyMarch and travels to the selected rally point.
-8. BRYD KONTAKT forces HOLD FIRE during emergency disengagement.
-9. BRYD KONTAKT turns the regiment away from the nearest enemy and moves faster than normal march.
-10. Original fire policy is restored after contact is broken.
-11. A unit with an existing rally point continues toward it after BRYD KONTAKT succeeds.
-12. A unit without a rally point halts after successful BRYD KONTAKT.
-13. Routed units ignore controlled withdrawal orders and continue existing rout behaviour.
-14. Officer AI enabled before the order is restored after completion.
-15. Existing normal move, attack, hold, formation, fire-policy and campaign systems regress without breakage.
+2. Badge/topbar show v00.00.10n6.
+3. All 68 CITY-REG-01 cities still exist.
+4. No old round city cylinder is visibly rendered.
+5. Every city root gets CITY_ICON_ISOMETRIC_10N6.
+6. C towns show 3 houses and are visually smallest.
+7. B towns show 6 houses + church.
+8. A cities show 12 houses + church + civic centre and are visually largest.
+9. Population scale variation remains limited inside each tier.
+10. Left-click city identity remains correct.
+11. RMB on city still resolves movement to the city's zone.
+12. City labels remain aligned with the city root.
+13. Building meshes have no colliders; one simple city BoxCollider handles input.
+14. 20 zones / 68 cities / urban population 290565 validation remains unchanged.
+15. Vejle/Aalborg/Hjørring/Thisted/Viborg zone-selection regressions are retested.
+16. n5 TILBAGETRÆK HERTIL / fighting withdrawal / BRYD KONTAKT regressions are retested.
+17. World Imagery and streamed 3D terrain remain functional.
 
-QA state: V10N5 IMPLEMENTED / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N6 IMPLEMENTED / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
