@@ -2,14 +2,17 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
-/// Campaign3 v00.00.10n2 HUD visibility controller.
+/// Campaign3 HUD visibility controller.
 /// Keeps the essential campaign bar visible while allowing large information/debug
 /// panels to be hidden. Preferences persist through PlayerPrefs.
 ///
+/// v10n4 changes the default so the large legacy selection/info panel starts hidden.
+/// The compact contextual zone card remains the normal map-click information view.
+///
 /// F1 = toggle all non-essential HUD panels
-/// F2 = toggle selection/info panel
+/// F2 = toggle legacy selection/info panel
 /// F3 = toggle technical/debug panels
-/// F4 = reset HUD preferences
+/// F4 = reset HUD preferences to the current clean default
 /// </summary>
 [DefaultExecutionOrder(-25000)]
 public sealed class CampaignHudStateV010N2 : MonoBehaviour
@@ -17,10 +20,11 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
     private const string KeyHudVisible = "PROJECT1864.Campaign3.HudVisible";
     private const string KeySelection = "PROJECT1864.Campaign3.SelectionPanel";
     private const string KeyDebug = "PROJECT1864.Campaign3.DebugPanels";
+    private const string KeyV10N4DefaultsApplied = "PROJECT1864.Campaign3.V10N4DefaultsApplied";
 
     private static bool loaded;
     private static bool hudVisible = true;
-    private static bool selectionPanel = true;
+    private static bool selectionPanel;
     private static bool debugPanels;
 
     public static bool HudVisible
@@ -55,7 +59,7 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
         if (Object.FindAnyObjectByType<CampaignHudStateV010N2>() != null)
             return;
 
-        GameObject go = new GameObject("PROJECT1864_HUD_STATE_v000010n2");
+        GameObject go = new GameObject("PROJECT1864_HUD_STATE_CURRENT");
         DontDestroyOnLoad(go);
         go.AddComponent<CampaignHudStateV010N2>();
     }
@@ -83,8 +87,6 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
     {
         EnsureLoaded();
 
-        // If minimal HUD is active, INFO/F2 should restore the information panel
-        // instead of first toggling its saved state off invisibly.
         if (!hudVisible)
         {
             hudVisible = true;
@@ -129,8 +131,9 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
     {
         loaded = true;
         hudVisible = true;
-        selectionPanel = true;
+        selectionPanel = false;
         debugPanels = false;
+        PlayerPrefs.SetInt(KeyV10N4DefaultsApplied, 1);
         Save();
         LogState("F4/RESET");
     }
@@ -139,9 +142,23 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
     {
         if (loaded) return;
         loaded = true;
+
         hudVisible = PlayerPrefs.GetInt(KeyHudVisible, 1) != 0;
-        selectionPanel = PlayerPrefs.GetInt(KeySelection, 1) != 0;
+        selectionPanel = PlayerPrefs.GetInt(KeySelection, 0) != 0;
         debugPanels = PlayerPrefs.GetInt(KeyDebug, 0) != 0;
+
+        // One-time migration for users who already had the n2/n3 INFO panel stored
+        // as visible. The first n4 run deliberately starts with both large legacy
+        // INFO and technical debug panels closed.
+        if (PlayerPrefs.GetInt(KeyV10N4DefaultsApplied, 0) == 0)
+        {
+            hudVisible = true;
+            selectionPanel = false;
+            debugPanels = false;
+            PlayerPrefs.SetInt(KeyV10N4DefaultsApplied, 1);
+            Save();
+            LogState("V10N4_DEFAULT_MIGRATION");
+        }
     }
 
     private static void Save()
