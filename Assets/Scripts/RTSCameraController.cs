@@ -6,7 +6,7 @@ public sealed class RTSCameraController : MonoBehaviour
     [SerializeField] private float rotateSpeed = 75f;
     [SerializeField] private float zoomStep = 9.5f;
     [SerializeField] private float minHeight = 9.5f;
-    [SerializeField] private float maxHeight = 720f;
+    [SerializeField] private float maxHeight = 600f;
 
     private void Update()
     {
