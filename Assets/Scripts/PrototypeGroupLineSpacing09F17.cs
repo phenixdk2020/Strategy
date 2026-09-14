@@ -1,17 +1,20 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f17 fixes group Line orders where multiple selected companies were
-// placed too close together and visually overlapped. The authoritative PlayerCommander
-// routes are adjusted after creation so all existing pathfinding/ghost logic is retained.
+// v00.00.09f23
+// Manual multi-company Line orders remain side by side, but their final formation
+// footprints must also be legal. Slots are resolved along the player's drawn line,
+// reserved so two companies cannot collapse onto the same corrected endpoint, and
+// finally assigned to companies by minimum total march distance.
 [DefaultExecutionOrder(350)]
 public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
 {
     private const float FormationDragThreshold = 4f;
     private const float CompanyFrontage = 48f;
-    private const float CompanySpacing = 60f; // 48 m frontage + ~12 m interval.
+    private const float CompanySpacing = 60f;
 
     private FieldInfo routesField;
     private FieldInfo formationPreviewField;
@@ -29,7 +32,7 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeGroupLineSpacing09F17>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeGroupLineSpacing_v000009f17");
+        GameObject root = new GameObject("PrototypeGroupLineSpacing_v000009f23");
         root.AddComponent<PrototypeGroupLineSpacing09F17>();
     }
 
@@ -42,12 +45,12 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
 
         if (routesField == null || formationPreviewField == null || issueCurrentRouteLegMethod == null)
         {
-            Debug.LogError("GROUP-LINE-09F17|Installed=False|Reason=PlayerCommanderReflectionMissing");
+            Debug.LogError("GROUP-LINE-09F23|Installed=False|Reason=PlayerCommanderReflectionMissing");
             enabled = false;
             return;
         }
 
-        Debug.Log("GROUP-LINE-09F17|Installed=True|Frontage=48m|Spacing=60m|SideBySide=True");
+        Debug.Log("GROUP-LINE-09F23|Installed=True|Frontage=48m|Spacing=60m|CollisionSafe=True|NearestAssignment=True");
     }
 
     private void Update()
@@ -117,19 +120,42 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
         if (lineDirection.sqrMagnitude < 0.01f)
             lineDirection = Vector3.right;
 
-        selected.Sort((a, b) =>
-        {
-            float ap = Vector3.Dot(a.transform.position, lineDirection);
-            float bp = Vector3.Dot(b.transform.position, lineDirection);
-            return ap.CompareTo(bp);
-        });
-
         object routesObject = routesField.GetValue(PlayerCommander.Instance);
         IDictionary routes = routesObject as IDictionary;
         if (routes == null)
             return;
 
+        // Build the requested slots first. Obstacle correction stays on the drawn line
+        // whenever possible and each accepted footprint is reserved immediately.
+        List<Vector3> safeSlots = new List<Vector3>();
+        List<Vector3> reserved = new List<Vector3>();
         float centerIndex = (selected.Count - 1) * 0.5f;
+        int movedSlots = 0;
+        int depthFallbacks = 0;
+
+        for (int i = 0; i < selected.Count; i++)
+        {
+            float offset = (i - centerIndex) * CompanySpacing;
+            Vector3 raw = start + lineDirection * offset;
+            raw.y = PrototypeBootstrap.SampleGroundHeight(raw.x, raw.z) + 0.10f;
+
+            Vector3 safe = PrototypeFormationSlotSafety09F23.ResolveOnFormationLine(
+                raw,
+                facing,
+                lineDirection,
+                reserved,
+                out bool moved,
+                out bool depthFallback);
+
+            safeSlots.Add(safe);
+            reserved.Add(safe);
+            if (moved) movedSlots++;
+            if (depthFallback) depthFallbacks++;
+        }
+
+        // Do not bind slots by regiment list order. Pick the assignment that minimizes
+        // total squared march distance, so units naturally take the closest free slot.
+        int[] assignment = BestAssignment(selected, safeSlots);
         int adjusted = 0;
 
         for (int i = 0; i < selected.Count; i++)
@@ -142,7 +168,7 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
             if (route == null)
                 continue;
 
-            System.Type routeType = route.GetType();
+            Type routeType = route.GetType();
             FieldInfo waypointsField = routeType.GetField("Waypoints", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             FieldInfo finalFacingField = routeType.GetField("FinalFacing", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             FieldInfo finalFormationField = routeType.GetField("FinalFormation", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -153,10 +179,7 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
             if (waypoints == null || waypoints.Count == 0)
                 continue;
 
-            float offset = (i - centerIndex) * CompanySpacing;
-            Vector3 destination = start + lineDirection * offset;
-            destination.y = PrototypeBootstrap.SampleGroundHeight(destination.x, destination.z) + 0.10f;
-
+            Vector3 destination = safeSlots[assignment[i]];
             int currentIndex = currentIndexField != null ? (int)currentIndexField.GetValue(route) : 0;
             if (currentIndex < 0 || currentIndex >= waypoints.Count)
                 currentIndex = 0;
@@ -170,10 +193,63 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
             adjusted++;
         }
 
-        Debug.Log("GROUP-LINE-09F17|Adjusted=" + adjusted +
+        Debug.Log("GROUP-LINE-09F23|Adjusted=" + adjusted +
                   "|Selected=" + selected.Count +
                   "|Spacing=" + CompanySpacing.ToString("0") +
-                  "m|SideBySide=True");
+                  "m|MovedSlots=" + movedSlots +
+                  "|DepthFallbacks=" + depthFallbacks +
+                  "|UniqueReserved=True|NearestAssignment=True");
+    }
+
+    private static int[] BestAssignment(List<Regiment> units, List<Vector3> slots)
+    {
+        int n = Mathf.Min(units.Count, slots.Count);
+        int[] current = new int[n];
+        int[] best = new int[n];
+        bool[] used = new bool[n];
+        float bestCost = float.PositiveInfinity;
+        SearchAssignment(0, units, slots, current, best, used, 0f, ref bestCost);
+        return best;
+    }
+
+    private static void SearchAssignment(
+        int index,
+        List<Regiment> units,
+        List<Vector3> slots,
+        int[] current,
+        int[] best,
+        bool[] used,
+        float cost,
+        ref float bestCost)
+    {
+        if (index >= current.Length)
+        {
+            if (cost < bestCost)
+            {
+                bestCost = cost;
+                Array.Copy(current, best, current.Length);
+            }
+            return;
+        }
+
+        if (cost >= bestCost)
+            return;
+
+        for (int slot = 0; slot < current.Length; slot++)
+        {
+            if (used[slot])
+                continue;
+
+            used[slot] = true;
+            current[index] = slot;
+            Vector3 a = units[index].transform.position;
+            Vector3 b = slots[slot];
+            a.y = 0f;
+            b.y = 0f;
+            float d = Vector3.Distance(a, b);
+            SearchAssignment(index + 1, units, slots, current, best, used, cost + d * d, ref bestCost);
+            used[slot] = false;
+        }
     }
 
     private void CorrectPreview()
@@ -253,8 +329,8 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
     private Regiment GetEnemyUnderMouse()
     {
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-        RaycastHit[] hits = Physics.RaycastAll(ray, 4000f);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        RaycastHit[] hits = Physics.RaycastAll(ray, 5000f);
+        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         foreach (RaycastHit hit in hits)
         {
             Regiment regiment = hit.collider != null ? hit.collider.GetComponentInParent<Regiment>() : null;
@@ -268,8 +344,8 @@ public sealed class PrototypeGroupLineSpacing09F17 : MonoBehaviour
     {
         point = default;
         Ray ray = cam.ScreenPointToRay(screenPoint);
-        RaycastHit[] hits = Physics.RaycastAll(ray, 4000f);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        RaycastHit[] hits = Physics.RaycastAll(ray, 5000f);
+        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         foreach (RaycastHit hit in hits)
         {
             if (hit.collider == null) continue;
