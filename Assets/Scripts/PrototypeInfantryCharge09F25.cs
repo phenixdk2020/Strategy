@@ -16,6 +16,7 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
         public RegimentFirePolicy PreviousFirePolicy;
         public float NextSteer;
         public bool ContactLogged;
+        public float ContactStartedAt;
     }
 
     public static PrototypeInfantryCharge09F25 Instance { get; private set; }
@@ -38,6 +39,7 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
     private const float DenmarkChargeSpeed = 4.80f;
     private const float PrussiaChargeSpeed = 5.00f;
     private const float ExtraCohesionCostPerSecond = 0.30f;
+    private const float ChargeMomentumSeconds = 2.6f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -71,7 +73,7 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
         Debug.Log("CHARGE-09F25|Installed=True|Contact=" + ContactDistance.ToString("0.0") +
                   "m|SpeedDK=" + DenmarkChargeSpeed.ToString("0.00") +
                   "|SpeedPR=" + PrussiaChargeSpeed.ToString("0.00") +
-                  "|Hotkey=V");
+                  "|Momentum=" + ChargeMomentumSeconds.ToString("0.0") + "s|Hotkey=V");
     }
 
     private void OnDestroy()
@@ -137,6 +139,13 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
         return regiment != null && charges.ContainsKey(regiment);
     }
 
+    public bool HasChargeMomentum(Regiment regiment)
+    {
+        if (regiment == null || !charges.TryGetValue(regiment, out ChargeState state))
+            return false;
+        return state.ContactLogged && Time.time - state.ContactStartedAt <= ChargeMomentumSeconds;
+    }
+
     private void BeginTargetPickFromSelection()
     {
         pendingUnits.Clear();
@@ -194,7 +203,8 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
                 Target = target,
                 PreviousFirePolicy = previous,
                 NextSteer = 0f,
-                ContactLogged = false
+                ContactLogged = false,
+                ContactStartedAt = -999f
             };
             charges[unit] = state;
 
@@ -236,15 +246,18 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
                 if (!state.ContactLogged)
                 {
                     state.ContactLogged = true;
+                    state.ContactStartedAt = Time.time;
                     Debug.Log("CHARGE-09F25|Contact=True|Unit=" + unit.RegimentName +
                               "|Target=" + state.Target.RegimentName +
                               "|Distance=" + distance.ToString("0.0") +
-                              "|MeleeAuthority=PrototypeMeleeCombatManager");
+                              "|MomentumWindow=" + ChargeMomentumSeconds.ToString("0.0") +
+                              "s|MeleeAuthority=PrototypeMeleeCombatManager");
                 }
                 continue;
             }
 
             state.ContactLogged = false;
+            state.ContactStartedAt = -999f;
             if (Time.time < state.NextSteer)
                 continue;
             state.NextSteer = Time.time + SteerInterval;
