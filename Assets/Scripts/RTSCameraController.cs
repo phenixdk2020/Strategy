@@ -2,11 +2,11 @@ using UnityEngine;
 
 public sealed class RTSCameraController : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 110f;
+    [SerializeField] private float moveSpeed = 150f;
     [SerializeField] private float rotateSpeed = 75f;
-    [SerializeField] private float zoomStep = 7.5f;
-    [SerializeField] private float minHeight = 16f;
-    [SerializeField] private float maxHeight = 420f;
+    [SerializeField] private float zoomStep = 9.5f;
+    [SerializeField] private float minHeight = 9.5f;
+    [SerializeField] private float maxHeight = 720f;
 
     private void Update()
     {
@@ -68,8 +68,10 @@ public sealed class RTSCameraController : MonoBehaviour
         }
 
         Vector3 p = transform.position;
-        p.x = Mathf.Clamp(p.x, -710f, 710f);
-        p.z = Mathf.Clamp(p.z, -470f, 470f);
+        float xLimit = Mathf.Max(20f, PrototypeBootstrap.BattlefieldHalfWidth - 10f);
+        float zLimit = Mathf.Max(20f, PrototypeBootstrap.BattlefieldHalfDepth - 10f);
+        p.x = Mathf.Clamp(p.x, -xLimit, xLimit);
+        p.z = Mathf.Clamp(p.z, -zLimit, zLimit);
         p.y = Mathf.Clamp(p.y, minHeight, maxHeight);
         transform.position = p;
     }
