@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// v00.00.09f15 first physical battalion-HQ prototype.
-// The Major is deliberately NOT autonomous AI in this build. The player selects the
-// HQ and gives six battalion-level orders to two directly subordinate companies.
+// v00.00.09f15 physical HQ, refined by v00.00.09f16.
+// v09f16 makes Major a first-class selectable HQ, exposes hover/selection hooks,
+// adds compact bottom UI + AI toggle, and fixes battalion DEFEND formation geometry.
 [DefaultExecutionOrder(250)]
 public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
 {
@@ -28,12 +28,15 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
 
     public static PrototypeMajorHQ09F15 Instance { get; private set; }
 
+    public bool DebugIsSelected => selected;
+    public string DebugLastOrderText => lastOrderText;
+    public int DebugSubordinateCount => subordinates.Count;
+
     private readonly List<Regiment> subordinates = new List<Regiment>();
     private readonly Dictionary<Regiment, UnitMission> missions = new Dictionary<Regiment, UnitMission>();
     private readonly Dictionary<Regiment, LineRenderer> commandLinks = new Dictionary<Regiment, LineRenderer>();
 
     private GameObject hqRoot;
-    private BoxCollider selectionCollider;
     private LineRenderer selectionRing;
     private LineRenderer targetPreview;
     private bool selected;
@@ -61,10 +64,10 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
-        if (UnityEngine.Object.FindAnyObjectByType<PrototypeMajorHQ09F15>() != null)
+        if (Object.FindAnyObjectByType<PrototypeMajorHQ09F15>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeMajorHQ_v000009f15");
+        GameObject root = new GameObject("PrototypeMajorHQ_v000009f16");
         root.AddComponent<PrototypeMajorHQ09F15>();
     }
 
@@ -75,7 +78,6 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
     }
 
@@ -101,7 +103,9 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
         UpdateMissionStates();
         UpdateTargetPreview();
 
-        if (cam == null || !Input.GetMouseButtonDown(0) || IsPointerOverControls(Input.mousePosition))
+        // PlayerCommander owns the normal selection click in 09f16. This local path
+        // remains as a fallback if that system is unavailable.
+        if (PlayerCommander.Instance != null || cam == null || !Input.GetMouseButtonDown(0) || IsPointerOverControls(Input.mousePosition))
             return;
 
         if (selected && pendingOrder != MajorOrder.None)
@@ -115,14 +119,7 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
             return;
         }
 
-        if (RayHitsHQ(Input.mousePosition))
-        {
-            SetSelected(true);
-            return;
-        }
-
-        if (selected)
-            SetSelected(false);
+        SetSelected(RayHitsHQ(Input.mousePosition));
     }
 
     public bool IsPointerOverControls(Vector3 mousePosition)
@@ -133,6 +130,97 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
         Vector2 guiPoint = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
         return GetPanelRect().Contains(guiPoint) ||
                (pendingOrder != MajorOrder.None && GetTargetHintRect().Contains(guiPoint));
+    }
+
+    public bool DebugRayHitsHQ(Vector3 mousePosition)
+    {
+        return RayHitsHQ(mousePosition);
+    }
+
+    public void DebugSetSelected(bool value)
+    {
+        SetSelected(value);
+    }
+
+    public Vector3 DebugGetSubordinateCenter()
+    {
+        Vector3 total = Vector3.zero;
+        int count = 0;
+        foreach (Regiment regiment in subordinates)
+        {
+            if (regiment == null)
+                continue;
+            total += regiment.transform.position;
+            count++;
+        }
+        return count > 0 ? total / count : (hqRoot != null ? hqRoot.transform.position : Vector3.zero);
+    }
+
+    public float DebugAverageStrengthRatio()
+    {
+        float total = 0f;
+        int count = 0;
+        foreach (Regiment regiment in subordinates)
+        {
+            if (regiment == null || regiment.InitialStrength <= 0)
+                continue;
+            total += regiment.CurrentStrength / (float)regiment.InitialStrength;
+            count++;
+        }
+        return count > 0 ? total / count : 0f;
+    }
+
+    public float DebugAverageCohesion()
+    {
+        float total = 0f;
+        int count = 0;
+        foreach (Regiment regiment in subordinates)
+        {
+            if (regiment == null)
+                continue;
+            total += regiment.Cohesion;
+            count++;
+        }
+        return count > 0 ? total / count : 0f;
+    }
+
+    public Regiment DebugFindNearestEnemyToPoint(Vector3 point, float maxDistance)
+    {
+        return FindNearestEnemyToPoint(point, maxDistance);
+    }
+
+    public void DebugIssueHoldOrder()
+    {
+        IssueHoldOrder();
+    }
+
+    public void DebugIssueTargetedOrder(string orderName, Vector3 point)
+    {
+        MajorOrder order;
+        switch (orderName)
+        {
+            case "AttackHere": order = MajorOrder.AttackHere; break;
+            case "DefendHere": order = MajorOrder.DefendHere; break;
+            case "WithdrawHere": order = MajorOrder.WithdrawHere; break;
+            case "AdvanceHere": order = MajorOrder.AdvanceHere; break;
+            case "AssembleHere": order = MajorOrder.AssembleHere; break;
+            default: return;
+        }
+        IssueTargetedOrder(order, point);
+    }
+
+    public bool DebugHandlePendingTargetClick(Vector3 mousePosition)
+    {
+        if (!selected || pendingOrder == MajorOrder.None)
+            return false;
+
+        if (!TryGetGroundPoint(mousePosition, out Vector3 point))
+            return true;
+
+        IssueTargetedOrder(pendingOrder, point);
+        pendingOrder = MajorOrder.None;
+        SetTargetPreviewVisible(false);
+        return true;
     }
 
     private void TryCreateHQ()
@@ -154,9 +242,9 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
         hqRoot.transform.position = position;
         hqRoot.transform.rotation = Quaternion.Euler(0f, 90f, 0f);
 
-        selectionCollider = hqRoot.AddComponent<BoxCollider>();
-        selectionCollider.center = new Vector3(0f, 1.5f, 0f);
-        selectionCollider.size = new Vector3(11f, 3.2f, 9f);
+        BoxCollider selectionCollider = hqRoot.AddComponent<BoxCollider>();
+        selectionCollider.center = new Vector3(0f, 1.8f, 0f);
+        selectionCollider.size = new Vector3(12f, 4.5f, 10f);
 
         CreateHorse(new Vector3(0f, 0f, 0.6f), 0f, true);
         CreateHorse(new Vector3(-3.0f, 0f, -1.8f), 8f, false);
@@ -169,30 +257,28 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
         CreateCommandLinks();
 
         Debug.Log(
-            "HQ-09F15|Created=True|Rank=Major|Level=Battalion|AIEnabled=False|" +
-            "Horses=3|Subordinates=2|Orders=Attack,Defend,Withdraw,Advance,Hold,Assemble");
+            "HQ-09F16|Created=True|Rank=Major|Level=Battalion|AIEnabled=False|" +
+            "Horses=3|Subordinates=2|Selectable=True|Hover=True|CompactUI=True");
     }
 
     private void CreateMaterials()
     {
-        horseMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.30f, 0.18f, 0.10f), "HQHorse09F15");
-        leatherMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.12f, 0.075f, 0.045f), "HQLeather09F15");
-        officerMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.08f, 0.16f, 0.28f), "HQOfficer09F15");
-        brassMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.72f, 0.60f, 0.24f), "HQBrass09F15");
-        flagRedMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.68f, 0.06f, 0.08f), "HQFlagRed09F15");
-        flagWhiteMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.94f, 0.91f, 0.82f), "HQFlagWhite09F15");
-        linkMaterial = CreateUnlitMaterial(new Color(0.82f, 0.69f, 0.29f, 0.88f), "HQCommandLink09F15");
-        selectionMaterial = CreateUnlitMaterial(new Color(1f, 0.80f, 0.18f, 0.95f), "HQSelection09F15");
-        targetMaterial = CreateUnlitMaterial(new Color(0.92f, 0.72f, 0.18f, 0.95f), "HQTarget09F15");
+        horseMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.30f, 0.18f, 0.10f), "HQHorse09F16");
+        leatherMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.12f, 0.075f, 0.045f), "HQLeather09F16");
+        officerMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.08f, 0.16f, 0.28f), "HQOfficer09F16");
+        brassMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.72f, 0.60f, 0.24f), "HQBrass09F16");
+        flagRedMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.68f, 0.06f, 0.08f), "HQFlagRed09F16");
+        flagWhiteMaterial = PrototypeBootstrap.CreateSharedMaterial(new Color(0.94f, 0.91f, 0.82f), "HQFlagWhite09F16");
+        linkMaterial = CreateUnlitMaterial(new Color(0.82f, 0.69f, 0.29f, 0.88f), "HQCommandLink09F16");
+        selectionMaterial = CreateUnlitMaterial(new Color(1f, 0.80f, 0.18f, 0.95f), "HQSelection09F16");
+        targetMaterial = CreateUnlitMaterial(new Color(0.92f, 0.72f, 0.18f, 0.95f), "HQTarget09F16");
     }
 
     private static Material CreateUnlitMaterial(Color color, string name)
     {
         Shader shader = Shader.Find("Unlit/Color");
-        if (shader == null)
-            shader = Shader.Find("Sprites/Default");
-        if (shader == null)
-            shader = Shader.Find("Standard");
+        if (shader == null) shader = Shader.Find("Sprites/Default");
+        if (shader == null) shader = Shader.Find("Standard");
         return new Material(shader) { name = name, color = color };
     }
 
@@ -213,10 +299,8 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
         float[] legX = { -0.28f, 0.28f, -0.28f, 0.28f };
         float[] legZ = { -0.58f, -0.58f, 0.58f, 0.58f };
         for (int i = 0; i < 4; i++)
-        {
             CreatePrimitivePart(horse.transform, PrimitiveType.Cylinder, "HorseLeg",
                 new Vector3(legX[i], 0.47f, legZ[i]), new Vector3(0.11f, 0.47f, 0.11f), Quaternion.identity, horseMaterial);
-        }
 
         CreatePrimitivePart(horse.transform, PrimitiveType.Cube, "Saddle",
             new Vector3(0f, 1.46f, -0.05f), new Vector3(0.78f, 0.18f, 0.78f), Quaternion.identity, leatherMaterial);
@@ -238,14 +322,9 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
             new Vector3(-0.42f, 1.95f, -0.05f), new Vector3(0.05f, 0.75f, 0.05f), Quaternion.Euler(0f, 0f, -8f), brassMaterial);
     }
 
-    private GameObject CreatePrimitivePart(
-        Transform parent,
-        PrimitiveType type,
-        string name,
-        Vector3 localPosition,
-        Vector3 localScale,
-        Quaternion localRotation,
-        Material material)
+    private static GameObject CreatePrimitivePart(
+        Transform parent, PrimitiveType type, string name, Vector3 localPosition,
+        Vector3 localScale, Quaternion localRotation, Material material)
     {
         GameObject part = GameObject.CreatePrimitive(type);
         part.name = name;
@@ -254,11 +333,9 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
         part.transform.localScale = localScale;
         part.transform.localRotation = localRotation;
         Renderer renderer = part.GetComponent<Renderer>();
-        if (renderer != null)
-            renderer.sharedMaterial = material;
+        if (renderer != null) renderer.sharedMaterial = material;
         Collider collider = part.GetComponent<Collider>();
-        if (collider != null)
-            Destroy(collider);
+        if (collider != null) Destroy(collider);
         return part;
     }
 
@@ -267,7 +344,6 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
         GameObject flagRoot = new GameObject("MajorHQFlag");
         flagRoot.transform.SetParent(hqRoot.transform, false);
         flagRoot.transform.localPosition = new Vector3(-4.2f, 0f, 2.1f);
-
         CreatePrimitivePart(flagRoot.transform, PrimitiveType.Cylinder, "FlagPole",
             new Vector3(0f, 2.3f, 0f), new Vector3(0.055f, 2.3f, 0.055f), Quaternion.identity, leatherMaterial);
         CreatePrimitivePart(flagRoot.transform, PrimitiveType.Cube, "DannebrogField",
@@ -309,20 +385,15 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
     {
         Regiment first = FindRegiment("1. Regiment");
         Regiment second = FindRegiment("5. Regiment");
-
         bool changed = subordinates.Count != 2 ||
                        (subordinates.Count > 0 && subordinates[0] != first) ||
                        (subordinates.Count > 1 && subordinates[1] != second);
-
         if (!changed)
             return;
 
         subordinates.Clear();
-        if (first != null)
-            subordinates.Add(first);
-        if (second != null)
-            subordinates.Add(second);
-
+        if (first != null) subordinates.Add(first);
+        if (second != null) subordinates.Add(second);
         CreateCommandLinks();
     }
 
@@ -331,26 +402,21 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
         BattleManager battle = BattleManager.Instance;
         if (battle == null || battle.Regiments == null)
             return null;
-
         foreach (Regiment regiment in battle.Regiments)
             if (regiment != null && regiment.RegimentName == name)
                 return regiment;
-
         return null;
     }
 
     private void CreateCommandLinks()
     {
         foreach (KeyValuePair<Regiment, LineRenderer> pair in commandLinks)
-            if (pair.Value != null)
-                Destroy(pair.Value.gameObject);
+            if (pair.Value != null) Destroy(pair.Value.gameObject);
         commandLinks.Clear();
 
         foreach (Regiment regiment in subordinates)
         {
-            if (regiment == null)
-                continue;
-
+            if (regiment == null) continue;
             GameObject linkObject = new GameObject("MajorCommandLink_" + regiment.RegimentName);
             linkObject.transform.SetParent(transform, false);
             LineRenderer line = linkObject.AddComponent<LineRenderer>();
@@ -367,19 +433,14 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
 
     private void UpdateCommandLinks()
     {
-        if (hqRoot == null)
-            return;
-
+        if (hqRoot == null) return;
         foreach (KeyValuePair<Regiment, LineRenderer> pair in commandLinks)
         {
             Regiment regiment = pair.Key;
             LineRenderer line = pair.Value;
-            if (line == null)
-                continue;
-
+            if (line == null) continue;
             line.enabled = selected && regiment != null;
-            if (!line.enabled)
-                continue;
+            if (!line.enabled) continue;
 
             Vector3 a = hqRoot.transform.position;
             Vector3 b = regiment.transform.position;
@@ -409,141 +470,108 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
     {
         if (cam == null || hqRoot == null)
             return false;
-
         Ray ray = cam.ScreenPointToRay(mousePosition);
         RaycastHit[] hits = Physics.RaycastAll(ray, 4000f);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
         foreach (RaycastHit hit in hits)
         {
             Transform t = hit.collider != null ? hit.collider.transform : null;
-            if (t == null)
-                continue;
-            if (t == hqRoot.transform || t.IsChildOf(hqRoot.transform))
+            if (t != null && (t == hqRoot.transform || t.IsChildOf(hqRoot.transform)))
                 return true;
         }
-
         return false;
     }
 
     private bool TryGetGroundPoint(Vector3 mousePosition, out Vector3 point)
     {
         point = default;
-        if (cam == null)
-            return false;
-
+        if (cam == null) return false;
         Ray ray = cam.ScreenPointToRay(mousePosition);
         RaycastHit[] hits = Physics.RaycastAll(ray, 4000f);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
         foreach (RaycastHit hit in hits)
         {
-            if (hit.collider == null)
-                continue;
-            if (hit.collider.GetComponentInParent<Regiment>() != null)
-                continue;
-            if (hqRoot != null && (hit.collider.transform == hqRoot.transform || hit.collider.transform.IsChildOf(hqRoot.transform)))
-                continue;
-            if (hit.collider.gameObject.name != "Battlefield Ground")
-                continue;
-
+            if (hit.collider == null) continue;
+            if (hit.collider.GetComponentInParent<Regiment>() != null) continue;
+            if (hqRoot != null && (hit.collider.transform == hqRoot.transform || hit.collider.transform.IsChildOf(hqRoot.transform))) continue;
+            if (hit.collider.gameObject.name != "Battlefield Ground") continue;
             point = hit.point;
             point.y = PrototypeBootstrap.SampleGroundHeight(point.x, point.z) + 0.10f;
             return true;
         }
-
         return false;
     }
 
     private void IssueTargetedOrder(MajorOrder order, Vector3 point)
     {
-        if (subordinates.Count == 0)
+        if (subordinates.Count == 0 || hqRoot == null)
             return;
 
-        Vector3 forward = point - hqRoot.transform.position;
+        // Common battalion facing: face the relevant enemy from the objective, not the HQ travel vector.
+        Regiment threat = FindNearestEnemyToPoint(point, 1200f);
+        Vector3 forward = threat != null ? threat.transform.position - point : point - hqRoot.transform.position;
         forward.y = 0f;
-        if (forward.sqrMagnitude < 0.01f)
-            forward = hqRoot.transform.forward;
+        if (forward.sqrMagnitude < 0.01f) forward = hqRoot.transform.forward;
         forward.Normalize();
 
         Vector3 lineDirection = Vector3.Cross(Vector3.up, forward).normalized;
-        float spacing = order == MajorOrder.AssembleHere ? 16f : 42f;
+        float spacing = order == MajorOrder.AssembleHere ? 26f : 60f;
         float centerIndex = (subordinates.Count - 1) * 0.5f;
 
         for (int i = 0; i < subordinates.Count; i++)
         {
             Regiment regiment = subordinates[i];
-            if (regiment == null || regiment.IsRouted)
-                continue;
+            if (regiment == null || regiment.IsRouted) continue;
 
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
-            if (controller != null && controller.AIEnabled)
-                controller.SetAIEnabled(false);
+            if (controller != null && controller.AIEnabled) controller.SetAIEnabled(false);
 
             Vector3 goal = point + lineDirection * ((i - centerIndex) * spacing);
             goal.y = PrototypeBootstrap.SampleGroundHeight(goal.x, goal.z) + 0.10f;
 
-            UnitMission mission = new UnitMission
+            missions[regiment] = new UnitMission
             {
                 Order = order,
                 Goal = goal,
                 FinalFacing = forward,
                 AttackCommitted = false
             };
-            missions[regiment] = mission;
 
-            switch (order)
-            {
-                case MajorOrder.AttackHere:
-                    regiment.SetFirePolicy(RegimentFirePolicy.LongRange);
-                    regiment.OrderMove(goal);
-                    break;
-                case MajorOrder.DefendHere:
-                    regiment.OrderMove(goal);
-                    break;
-                case MajorOrder.WithdrawHere:
-                    regiment.SetFormation(RegimentFormation.Line);
-                    regiment.OrderMove(goal);
-                    break;
-                case MajorOrder.AdvanceHere:
-                    regiment.OrderMove(goal);
-                    break;
-                case MajorOrder.AssembleHere:
-                    regiment.OrderMove(goal);
-                    break;
-            }
+            if (order == MajorOrder.AttackHere)
+                regiment.SetFirePolicy(RegimentFirePolicy.LongRange);
+            if (order == MajorOrder.WithdrawHere)
+                regiment.SetFormation(RegimentFormation.Line);
+
+            regiment.OrderMove(goal);
         }
 
         lastOrderText = GetOrderLabel(order) + " | mål " + point.x.ToString("0") + ", " + point.z.ToString("0");
-        Debug.Log("HQ-ORDER-09F15|Major=True|Order=" + order + "|X=" + point.x.ToString("0.0") + "|Z=" + point.z.ToString("0.0") + "|Recipients=" + subordinates.Count);
+        Debug.Log("HQ-ORDER-09F16|Major=True|Order=" + order + "|X=" + point.x.ToString("0.0") +
+                  "|Z=" + point.z.ToString("0.0") + "|Recipients=" + subordinates.Count +
+                  "|CommonFacing=True|Spacing=" + spacing.ToString("0"));
     }
 
     private void IssueHoldOrder()
     {
         pendingOrder = MajorOrder.None;
         missions.Clear();
-
         foreach (Regiment regiment in subordinates)
         {
-            if (regiment == null || regiment.IsRouted)
-                continue;
+            if (regiment == null || regiment.IsRouted) continue;
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
-            if (controller != null && controller.AIEnabled)
-                controller.SetAIEnabled(false);
+            if (controller != null && controller.AIEnabled) controller.SetAIEnabled(false);
             regiment.SetFormation(RegimentFormation.Line);
             regiment.OrderHold();
         }
-
         lastOrderText = "HOLD POSITION";
-        Debug.Log("HQ-ORDER-09F15|Major=True|Order=HoldPosition|Recipients=" + subordinates.Count);
+        Debug.Log("HQ-ORDER-09F16|Major=True|Order=HoldPosition|Recipients=" + subordinates.Count);
     }
 
     private void UpdateMissionStates()
     {
-        if (missions.Count == 0)
-            return;
-
+        if (missions.Count == 0) return;
         List<Regiment> completed = null;
+
         foreach (KeyValuePair<Regiment, UnitMission> pair in missions)
         {
             Regiment regiment = pair.Key;
@@ -556,7 +584,7 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
 
             if (mission.Order == MajorOrder.AttackHere && !mission.AttackCommitted)
             {
-                Regiment enemy = FindNearestEnemy(regiment, 135f);
+                Regiment enemy = FindNearestEnemy(regiment, 115f);
                 if (enemy != null)
                 {
                     regiment.OrderAttack(enemy);
@@ -565,19 +593,17 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
                 }
             }
 
-            if (mission.AttackCommitted)
-                continue;
+            if (mission.AttackCommitted) continue;
+            if (PlanarDistance(regiment.transform.position, mission.Goal) > 3.5f) continue;
 
-            if (PlanarDistance(regiment.transform.position, mission.Goal) > 5.5f)
-                continue;
-
+            // Snap the last few metres so multiple subordinate slots finish as one straight front.
+            Vector3 exact = mission.Goal;
+            exact.y = PrototypeBootstrap.SampleGroundHeight(exact.x, exact.z) + 0.10f;
+            regiment.transform.position = exact;
             regiment.SetFormation(RegimentFormation.Line);
             regiment.OrderHold();
 
-            Regiment nearest = FindNearestEnemy(regiment, 600f);
-            Vector3 facing = nearest != null
-                ? nearest.transform.position - regiment.transform.position
-                : mission.FinalFacing;
+            Vector3 facing = mission.FinalFacing;
             facing.y = 0f;
             if (facing.sqrMagnitude > 0.01f)
                 regiment.transform.rotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
@@ -585,35 +611,33 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
             AddCompleted(ref completed, regiment);
         }
 
-        if (completed == null)
-            return;
+        if (completed == null) return;
         foreach (Regiment regiment in completed)
-            if (regiment != null)
-                missions.Remove(regiment);
+            if (regiment != null) missions.Remove(regiment);
     }
 
     private static void AddCompleted(ref List<Regiment> completed, Regiment regiment)
     {
-        if (completed == null)
-            completed = new List<Regiment>();
+        if (completed == null) completed = new List<Regiment>();
         completed.Add(regiment);
     }
 
     private Regiment FindNearestEnemy(Regiment from, float maxDistance)
     {
-        BattleManager battle = BattleManager.Instance;
-        if (battle == null || from == null)
-            return null;
+        return from == null ? null : FindNearestEnemyToPoint(from.transform.position, maxDistance);
+    }
 
+    private Regiment FindNearestEnemyToPoint(Vector3 point, float maxDistance)
+    {
+        BattleManager battle = BattleManager.Instance;
+        if (battle == null || battle.Regiments == null) return null;
         Regiment nearest = null;
         float best = maxDistance;
         foreach (Regiment candidate in battle.Regiments)
         {
-            if (candidate == null || candidate.Team == from.Team || candidate.IsRouted)
-                continue;
-            float distance = PlanarDistance(from.transform.position, candidate.transform.position);
-            if (distance >= best)
-                continue;
+            if (candidate == null || candidate.Team == BattleTeam.Denmark || candidate.IsRouted || candidate.CurrentStrength <= 0) continue;
+            float distance = PlanarDistance(point, candidate.transform.position);
+            if (distance >= best) continue;
             best = distance;
             nearest = candidate;
         }
@@ -634,25 +658,19 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
             SetTargetPreviewVisible(false);
             return;
         }
-
         if (!TryGetGroundPoint(Input.mousePosition, out Vector3 point))
         {
             SetTargetPreviewVisible(false);
             return;
         }
-
-        Color color = GetOrderColor(pendingOrder);
-        if (targetMaterial != null)
-            targetMaterial.color = color;
+        if (targetMaterial != null) targetMaterial.color = GetOrderColor(pendingOrder);
         UpdateCircle(targetPreview, point, pendingOrder == MajorOrder.AssembleHere ? 12f : 22f, 0.42f);
         targetPreview.enabled = true;
     }
 
     private static void UpdateCircle(LineRenderer line, Vector3 center, float radius, float heightOffset)
     {
-        if (line == null)
-            return;
-
+        if (line == null) return;
         int count = line.positionCount;
         for (int i = 0; i < count; i++)
         {
@@ -665,8 +683,7 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
 
     private void SetTargetPreviewVisible(bool value)
     {
-        if (targetPreview != null)
-            targetPreview.enabled = value;
+        if (targetPreview != null) targetPreview.enabled = value;
     }
 
     private static Color GetOrderColor(MajorOrder order)
@@ -696,98 +713,89 @@ public sealed class PrototypeMajorHQ09F15 : MonoBehaviour
 
     private Rect GetPanelRect()
     {
-        float width = Mathf.Min(940f, Mathf.Max(720f, Screen.width - 90f));
-        const float height = 174f;
-        return new Rect((Screen.width - width) * 0.5f, Screen.height - height - 34f, width, height);
+        float width = Mathf.Min(940f, Mathf.Max(700f, Screen.width - 90f));
+        const float height = 104f;
+        return new Rect((Screen.width - width) * 0.5f, Screen.height - height - 18f, width, height);
     }
 
     private Rect GetTargetHintRect()
     {
         const float width = 430f;
-        const float height = 30f;
+        const float height = 28f;
         return new Rect((Screen.width - width) * 0.5f, 46f, width, height);
     }
 
     private void EnsureStyles()
     {
-        if (panelStyle != null)
-            return;
-        panelStyle = PrototypeUiTheme09F15.Panel(10);
-        headerStyle = PrototypeUiTheme09F15.Header(13);
-        labelStyle = PrototypeUiTheme09F15.Label(10);
-        mutedStyle = PrototypeUiTheme09F15.MutedLabel(9);
-        buttonStyle = PrototypeUiTheme09F15.Button(10);
+        if (panelStyle != null) return;
+        panelStyle = PrototypeUiTheme09F15.Panel(9);
+        headerStyle = PrototypeUiTheme09F15.Header(11);
+        labelStyle = PrototypeUiTheme09F15.Label(9);
+        mutedStyle = PrototypeUiTheme09F15.MutedLabel(8);
+        buttonStyle = PrototypeUiTheme09F15.Button(9);
         accentStyle = PrototypeUiTheme09F15.AccentBox(9);
     }
 
     private void OnGUI()
     {
-        if (!selected || hqRoot == null)
-            return;
-
+        if (!selected || hqRoot == null) return;
         EnsureStyles();
         GUI.depth = -850;
 
         Rect panel = GetPanelRect();
         GUI.Box(panel, string.Empty, panelStyle);
-        GUI.Box(new Rect(panel.x + 8f, panel.y + 7f, panel.width - 16f, 27f), "BATALJONS HQ  |  MAJOR", headerStyle);
-        GUI.Box(new Rect(panel.xMax - 182f, panel.y + 10f, 164f, 20f), "HQ AI: OFF  |  3 HESTE", accentStyle);
+        GUI.Box(new Rect(panel.x + 7f, panel.y + 6f, panel.width - 14f, 22f), "BATALJONS HQ  |  MAJOR", headerStyle);
 
-        float infoX = panel.x + 14f;
-        float infoY = panel.y + 42f;
-        float infoWidth = Mathf.Min(330f, panel.width * 0.36f);
+        PrototypeMajorHQ09F16 ai = PrototypeMajorHQ09F16.Instance;
+        bool aiOn = ai != null && ai.MajorAIEnabled;
+        if (GUI.Button(new Rect(panel.xMax - 142f, panel.y + 7f, 128f, 20f), aiOn ? "HQ AI: ON | 3 HESTE" : "HQ AI: OFF | 3 HESTE", aiOn ? accentStyle : buttonStyle))
+        {
+            if (ai != null) ai.SetMajorAIEnabled(!aiOn);
+        }
 
-        GUI.Label(new Rect(infoX, infoY, infoWidth, 20f), "UNDER KOMMANDO", PrototypeUiTheme09F15.Label(10, true));
-        infoY += 22f;
+        float infoX = panel.x + 12f;
+        float infoY = panel.y + 34f;
+        const float infoWidth = 282f;
+        GUI.Label(new Rect(infoX, infoY, infoWidth, 16f), "UNDER KOMMANDO", PrototypeUiTheme09F15.Label(9, true));
+        infoY += 16f;
+
         for (int i = 0; i < subordinates.Count; i++)
         {
             Regiment regiment = subordinates[i];
-            if (regiment == null)
-                continue;
-
+            if (regiment == null) continue;
             int losses = Mathf.Max(0, regiment.InitialStrength - regiment.CurrentStrength);
-            string mission = missions.TryGetValue(regiment, out UnitMission active)
-                ? GetOrderLabel(active.Order)
-                : "HOLD / lokal ordre";
-            string line =
-                (i + 1) + ". Kompagni   " + regiment.CurrentStrength + "/" + regiment.InitialStrength +
-                "   tab " + losses + "   |   " + mission;
-            GUI.Label(new Rect(infoX, infoY, infoWidth, 19f), line, labelStyle);
-            infoY += 20f;
+            string mission = missions.TryGetValue(regiment, out UnitMission active) ? GetOrderLabel(active.Order) : "HOLD / lokal";
+            GUI.Label(new Rect(infoX, infoY, infoWidth, 16f),
+                (i + 1) + ". Kompagni  " + regiment.CurrentStrength + "/" + regiment.InitialStrength +
+                "  tab " + losses + " | " + mission, labelStyle);
+            infoY += 16f;
         }
+        GUI.Label(new Rect(infoX, panel.yMax - 18f, infoWidth, 15f), "Aktuel: " + lastOrderText, mutedStyle);
 
-        GUI.Label(new Rect(infoX, panel.yMax - 43f, infoWidth, 18f), "Aktuel: " + lastOrderText, mutedStyle);
-        GUI.Label(new Rect(infoX, panel.yMax - 25f, infoWidth, 18f), "Gule linjer = direkte underordnede enheder", mutedStyle);
-
-        float commandX = panel.x + infoWidth + 26f;
-        float commandY = panel.y + 44f;
-        float commandWidth = panel.xMax - commandX - 14f;
-        const float gap = 7f;
+        float commandX = panel.x + 304f;
+        float commandY = panel.y + 35f;
+        float commandWidth = panel.xMax - commandX - 10f;
+        const float gap = 5f;
         float buttonWidth = (commandWidth - gap * 2f) / 3f;
-        const float buttonHeight = 44f;
+        const float buttonHeight = 29f;
 
-        if (GUI.Button(new Rect(commandX, commandY, buttonWidth, buttonHeight), "ANGRIB HER", buttonStyle))
-            pendingOrder = MajorOrder.AttackHere;
-        if (GUI.Button(new Rect(commandX + buttonWidth + gap, commandY, buttonWidth, buttonHeight), "FORSVAR HER", buttonStyle))
-            pendingOrder = MajorOrder.DefendHere;
-        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 2f, commandY, buttonWidth, buttonHeight), "TILBAGETRÆK HERTIL", buttonStyle))
-            pendingOrder = MajorOrder.WithdrawHere;
+        if (GUI.Button(new Rect(commandX, commandY, buttonWidth, buttonHeight), "ANGRIB HER", buttonStyle)) pendingOrder = MajorOrder.AttackHere;
+        if (GUI.Button(new Rect(commandX + buttonWidth + gap, commandY, buttonWidth, buttonHeight), "FORSVAR HER", buttonStyle)) pendingOrder = MajorOrder.DefendHere;
+        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 2f, commandY, buttonWidth, buttonHeight), "TILBAGETRÆK HERTIL", buttonStyle)) pendingOrder = MajorOrder.WithdrawHere;
 
         commandY += buttonHeight + gap;
-        if (GUI.Button(new Rect(commandX, commandY, buttonWidth, buttonHeight), "RYK FREM HERTIL", buttonStyle))
-            pendingOrder = MajorOrder.AdvanceHere;
+        if (GUI.Button(new Rect(commandX, commandY, buttonWidth, buttonHeight), "RYK FREM HERTIL", buttonStyle)) pendingOrder = MajorOrder.AdvanceHere;
         if (GUI.Button(new Rect(commandX + buttonWidth + gap, commandY, buttonWidth, buttonHeight), "HOLD POSITION", buttonStyle))
         {
             pendingOrder = MajorOrder.None;
             IssueHoldOrder();
         }
-        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 2f, commandY, buttonWidth, buttonHeight), "SAML HER", buttonStyle))
-            pendingOrder = MajorOrder.AssembleHere;
+        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 2f, commandY, buttonWidth, buttonHeight), "SAML HER", buttonStyle)) pendingOrder = MajorOrder.AssembleHere;
 
         if (pendingOrder != MajorOrder.None)
         {
             Rect hint = GetTargetHintRect();
-            GUI.Box(hint, "MAJOR: " + GetOrderLabel(pendingOrder) + "  —  klik på terrænet for at vælge mål", headerStyle);
+            GUI.Box(hint, "MAJOR: " + GetOrderLabel(pendingOrder) + " — klik på terrænet", headerStyle);
         }
     }
 }
