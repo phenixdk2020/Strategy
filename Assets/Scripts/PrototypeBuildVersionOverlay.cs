@@ -5,9 +5,7 @@ using UnityEngine;
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
-    public const string BuildVersion = "v00.00.10e";
-    public const string BuildChannel = "CAMPAIGN TEST";
-
+    private const string BuildChannel = "TACTICAL TEST";
     private GUIStyle style;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -16,7 +14,7 @@ public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
         if (UnityEngine.Object.FindAnyObjectByType<PrototypeBuildVersionOverlay>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeBuildVersionOverlay_" + BuildVersion);
+        GameObject root = new GameObject("PrototypeBuildVersionOverlay_" + CampaignBuildInfo.CurrentVersion);
         root.AddComponent<PrototypeBuildVersionOverlay>();
     }
 
@@ -38,8 +36,8 @@ public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
         EnsureStyle();
         GUI.depth = -1000;
         GUI.Box(
-            new Rect(8f, 8f, 220f, 24f),
-            "PROJECT 1864 | " + BuildVersion + " " + BuildChannel,
+            new Rect(8f, 8f, 255f, 24f),
+            "PROJECT 1864 | " + CampaignBuildInfo.CurrentVersion + " " + BuildChannel,
             style);
     }
 }
