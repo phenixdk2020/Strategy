@@ -72,8 +72,6 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F9))
             TogglePanel();
 
-        // The active 09f7 renderer reads the F4 static ratio even though the older
-        // F4 renderer itself is disabled. Keep the F9 combat panel in sync with it.
         CasualtiesPerBody = Mathf.Max(1, PrototypeBattleVisuals09F4.CasualtyDisplayRatio);
         ApplyCombatTuning();
     }
@@ -334,7 +332,11 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
             casualtyRatio,
             1f, 10f,
             activeFallenRatio.ToString());
-        PrototypeBattleVisuals09F4.SetCasualtyDisplayRatio(Mathf.RoundToInt(casualtyRatio));
+
+        int requestedFallenRatio = Mathf.RoundToInt(casualtyRatio);
+        if (requestedFallenRatio != activeFallenRatio)
+            PrototypeBattleVisuals09F4.SetCasualtyDisplayRatio(requestedFallenRatio);
+
         CasualtiesPerBody = Mathf.Max(1, PrototypeBattleVisuals09F4.CasualtyDisplayRatio);
 
         y += 2f;
