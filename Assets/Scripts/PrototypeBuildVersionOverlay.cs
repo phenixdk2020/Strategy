@@ -5,7 +5,7 @@ using UnityEngine;
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
-    public const string BuildVersion = "v00.00.09f14";
+    public const string BuildVersion = "v00.00.09f15";
     public const string BuildChannel = "TEST";
 
     private GUIStyle style;
@@ -25,11 +25,8 @@ public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
         if (style != null)
             return;
 
-        style = new GUIStyle(GUI.skin.box);
-        style.fontSize = 11;
-        style.fontStyle = FontStyle.Bold;
+        style = PrototypeUiTheme09F15.Header(11);
         style.alignment = TextAnchor.MiddleCenter;
-        style.normal.textColor = Color.white;
         style.padding = new RectOffset(6, 6, 2, 2);
     }
 
@@ -38,7 +35,7 @@ public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
         EnsureStyle();
         GUI.depth = -1000;
         GUI.Box(
-            new Rect(8f, 8f, 194f, 24f),
+            new Rect(8f, 8f, 206f, 24f),
             "PROJECT 1864 | " + BuildVersion + " " + BuildChannel,
             style);
     }
