@@ -26,7 +26,7 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeMeleeCombatManager>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeMeleeCombatManager_v009");
+        GameObject root = new GameObject("PrototypeMeleeCombatManager_v009f25");
         root.AddComponent<PrototypeMeleeCombatManager>();
     }
 
@@ -58,7 +58,7 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("MELEE-DIAG|Installed=True|Type=InfantryBayonetContact|Pulse=1.25s");
+        Debug.Log("MELEE-DIAG|Installed=True|Version=09f25|Type=InfantryBayonetContact|Pulse=1.25s|ChargeMomentum=True|Sector=True");
     }
 
     private void Update()
@@ -98,10 +98,12 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
                 {
                     nextPulseByPair[key] = Time.time + 0.20f;
                     Debug.Log(string.Format(
-                        "MELEE-DIAG|Contact=True|A={0}|B={1}|Distance={2:0.0}",
+                        "MELEE-DIAG|Contact=True|A={0}|B={1}|Distance={2:0.0}|ChargeA={3}|ChargeB={4}",
                         a.RegimentName,
                         b.RegimentName,
-                        PlanarDistance(a.transform.position, b.transform.position)));
+                        PlanarDistance(a.transform.position, b.transform.position),
+                        HasChargeMomentum(a),
+                        HasChargeMomentum(b)));
                     continue;
                 }
 
@@ -124,12 +126,16 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
 
         int beforeA = a.CurrentStrength;
         int beforeB = b.CurrentStrength;
+        bool chargeA = HasChargeMomentum(a);
+        bool chargeB = HasChargeMomentum(b);
+        string sectorA = ContactSector(a, b);
+        string sectorB = ContactSector(b, a);
 
         ApplyMeleeLosses(a, lossA);
         ApplyMeleeLosses(b, lossB);
 
         Debug.Log(string.Format(
-            "MELEE-LOG|A={0}|B={1}|Distance={2:0.0}|LossA={3}|LossB={4}|StrengthA={5}->{6}|StrengthB={7}->{8}|MoraleA={9:0}|MoraleB={10:0}|CohA={11:0}|CohB={12:0}",
+            "MELEE-LOG|A={0}|B={1}|Distance={2:0.0}|LossA={3}|LossB={4}|StrengthA={5}->{6}|StrengthB={7}->{8}|MoraleA={9:0}|MoraleB={10:0}|CohA={11:0}|CohB={12:0}|ChargeA={13}|ChargeB={14}|AttackerSectorOnA={15}|AttackerSectorOnB={16}",
             a.RegimentName,
             b.RegimentName,
             PlanarDistance(a.transform.position, b.transform.position),
@@ -142,7 +148,11 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
             a.Morale,
             b.Morale,
             a.Cohesion,
-            b.Cohesion));
+            b.Cohesion,
+            chargeA,
+            chargeB,
+            sectorA,
+            sectorB));
     }
 
     private static int CalculateLosses(Regiment defender, Regiment attacker)
@@ -155,9 +165,26 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
 
         float defenderStability = Mathf.Lerp(0.72f, 1.12f, defender.Cohesion / 100f);
         float expected = 2.2f + 4.2f * strengthMass * attackQuality / defenderStability;
+
+        string sector = ContactSector(defender, attacker);
+        float sectorMultiplier = sector == "REAR" ? 1.35f : sector == "FLANK" ? 1.18f : 1.00f;
+
+        bool chargeMomentum = HasChargeMomentum(attacker);
+        float chargeMultiplier = chargeMomentum ? 1.22f : 1.00f;
+
+        // A steady Line meeting a frontal bayonet charge blunts much of the initial
+        // momentum. Flank/rear contact retains the full charge advantage.
+        if (chargeMomentum && sector == "FRONT" &&
+            defender.Formation == RegimentFormation.Line &&
+            defender.Cohesion >= 70f && defender.Morale >= 60f)
+        {
+            chargeMultiplier *= 0.86f;
+        }
+
+        expected *= sectorMultiplier * chargeMultiplier;
         expected *= Random.Range(0.72f, 1.28f);
 
-        return Mathf.Clamp(Mathf.RoundToInt(expected), 1, 10);
+        return Mathf.Clamp(Mathf.RoundToInt(expected), 1, 12);
     }
 
     private void ApplyMeleeLosses(Regiment regiment, int requestedLosses)
@@ -200,15 +227,10 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
 
     private static bool AreInContact(Regiment a, Regiment b)
     {
-        // Do not allow melee to resolve through water, houses, trees or other
-        // blocked tactical space merely because the broad unit bounds overlap.
-        if (PrototypeNavigationRecoveryManager.HasObstacleBetween(
-            a.transform.position,
-            b.transform.position,
-            RegimentFormation.Line))
-        {
+        // Only HARD tactical blockers invalidate melee contact. Trees/fence posts are
+        // not treated as walls for a company-scale bayonet contact.
+        if (HardObstacleBetween(a.transform.position, b.transform.position))
             return false;
-        }
 
         BoxCollider boxA = a.GetComponent<BoxCollider>();
         BoxCollider boxB = b.GetComponent<BoxCollider>();
@@ -217,6 +239,72 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
             return true;
 
         return PlanarDistance(a.transform.position, b.transform.position) <= ContactDistance;
+    }
+
+    private static bool HardObstacleBetween(Vector3 a, Vector3 b)
+    {
+        float distance = PlanarDistance(a, b);
+        int samples = Mathf.Clamp(Mathf.CeilToInt(distance / 1.5f), 2, 12);
+
+        for (int i = 0; i <= samples; i++)
+        {
+            float t = i / (float)samples;
+            Vector3 p = Vector3.Lerp(a, b, t);
+
+            float riverX = PrototypeBootstrap.StreamCenterX(p.z);
+            bool bridge = Mathf.Abs(p.z - 22f) <= 8f;
+            if (Mathf.Abs(p.x - riverX) <= 4.7f && !bridge)
+                return true;
+
+            Vector3 probe = new Vector3(
+                p.x,
+                PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 1.0f,
+                p.z);
+            Collider[] hits = Physics.OverlapSphere(probe, 0.8f);
+            foreach (Collider hit in hits)
+            {
+                if (hit == null)
+                    continue;
+                string name = hit.gameObject.name;
+                string root = hit.transform.root != null ? hit.transform.root.name : string.Empty;
+                if (name.Contains("Farmhouse") || name.Contains("Barn") ||
+                    root.Contains("Farmhouse") || root.Contains("Barn"))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasChargeMomentum(Regiment regiment)
+    {
+        return PrototypeInfantryCharge09F25.Instance != null &&
+               PrototypeInfantryCharge09F25.Instance.HasChargeMomentum(regiment);
+    }
+
+    private static string ContactSector(Regiment defender, Regiment attacker)
+    {
+        if (defender == null || attacker == null)
+            return "FRONT";
+
+        Vector3 toAttacker = attacker.transform.position - defender.transform.position;
+        toAttacker.y = 0f;
+        if (toAttacker.sqrMagnitude < 0.01f)
+            return "FRONT";
+        toAttacker.Normalize();
+
+        Vector3 forward = defender.transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
+        float dot = Vector3.Dot(forward, toAttacker);
+        if (dot >= 0.50f)
+            return "FRONT";
+        if (dot <= -0.50f)
+            return "REAR";
+        return "FLANK";
     }
 
     private static void FaceOpponent(Regiment regiment, Regiment opponent)
