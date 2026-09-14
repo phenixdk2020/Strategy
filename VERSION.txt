@@ -1,93 +1,81 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f21
+Prototype version: v00.00.09f22
 Build status: TEST
-Build name: MANUAL ATTACK AUTHORITY ISOLATION + MAJOR/PLAYER ATTACK-LANE SEPARATION
-Visible build marker: PROJECT 1864 | v00.00.09f21 TEST
+Build name: MAJOR OBJECTIVE-CENTRED FORMATION + NEAREST SLOTS + SELECTION/HUD/RANGE FIX
+Visible build marker: PROJECT 1864 | v00.00.09f22 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1-09f17 retained + 09f18 unified officer AI/command authority + 09f19 discretionary reserve/flank judgement + 09f20 selection/intent/doctrine fix + 09f21 manual attack authority isolation
+Design manual baseline: v00.02.08 + 09f1-09f21 retained + 09f22 formation/selection/HUD/range corrections
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
-09f18 design supplement: docs/design-supplements/v00.00.09f18-unified-ai-command-authority.md
-09f19 design supplement: docs/design-supplements/v00.00.09f19-discretionary-reserve.md
-09f20 design supplement: docs/design-supplements/v00.00.09f20-selection-intent-doctrine.md
-09f21 design supplement: docs/design-supplements/v00.00.09f21-manual-attack-authority.md
+09f22 design supplement: docs/design-supplements/v00.00.09f22-major-formation-selection-hud.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f21 - Manual attack authority isolation
-- Fixed the case where one manually detached company attacked a designated enemy, fired once, then turned and marched toward an unrelated lane position.
-- Root cause: the legacy 09f17 attack-lane layer grouped ALL Danish companies sharing the same forcedTarget, including Major/AI-controlled companies and direct player-controlled companies.
-- Major/AI ON companies are now excluded from the manual attack-lane planner.
-- A single player-controlled AI OFF company is never converted into a formation attack lane and retains its direct designated target.
-- Manual attack lanes are now eligible only for 2+ CURRENTLY SELECTED Danish companies that are all under direct manual control (AI OFF) and share the same target.
-- Multi-company manual lane movement temporarily suspends forcedTarget only while moving to separate lane slots; OrderAttack is restored at lane arrival or when the target is already inside useful fire range.
-- New direct player input clears any stale manual-lane assignment before the new order is processed.
-- River/bridge and hard-building legality layers remain authoritative and are not bypassed.
-- Console telemetry: ATTACK-LANES-09F21.
+v00.00.09f22 - Major objective-centred formation planner
+- Major ANGRIB HER now treats the clicked terrain point as the actual commander objective.
+- The attack front is built behind that objective rather than being shifted to the centre of an arbitrary nearest known enemy.
+- Front company slots remain side by side at approximately 60 m centre spacing.
+- Unique slots are assigned by minimum total march distance across all 2-4 company permutations, reducing crossed routes.
+- Reserve remains outside the front layout; a non-flanking reserve is positioned behind the recalculated front.
+- Existing 09f19 flank judgement is retained.
+- Each company receives an individual final facing toward the nearest known relevant enemy, so outer companies can turn inward toward a central enemy instead of all remaining parallel.
+- Saved Major assignments are updated together with live missions so AI OFF/ON reattachment does not restore stale pre-09f22 positions.
+- Console telemetry: HQ-FORMATION-09F22.
 
-v00.00.09f20 - Major/company selection handoff
-- Fixed selection authority after selecting the Major.
-- A successfully selected Danish company now immediately takes UI/selection authority away from the Major.
-- This applies to both normal click selection and the existing left-mouse box selection because the 09f20 handoff runs after PlayerCommander, box selection and Major UI have processed the frame.
-- Selecting a company restores the normal company bottom bar; selecting Major still clears company selection and opens the Major panel.
-- Merely selecting a company does NOT switch its AI OFF. The AI is switched OFF only when the player gives that selected company a direct manual order, preserving the 09f18 authority rule.
+v00.00.09f22 - Company selection reach
+- Added a 5000 m late selection layer matching the expanded battlefield/HQ raycast scale.
+- Clicking a Danish company can now take selection authority from Major even when the legacy PlayerCommander 1000 m click ray would miss from a higher camera position.
+- Shift/Ctrl additive selection semantics are retained.
+- Console telemetry: SELECTION-09F22.
 
-v00.00.09f20 - Player-issued Major mission is commander intent
-- A player-issued Major order such as FORSVAR HER or ANGRIB HER is now treated as the commander's mission intent.
-- With Major AI ON, the Major may still decide subordinate placement, reserve and flank usage, but ThinkMajor is prevented from silently replacing that player mission with a different autonomous mission.
-- This fixes the case where the player ordered FORSVAR HER and the Major later abandoned it because autonomous AI selected another task.
-- A new explicit player Major order replaces the previous commander intent.
+v00.00.09f22 - Building endpoint legality
+- If a Line/Column destination lies inside the formation-clearance area around Farmhouse/Barn, the raw endpoint is projected to the nearest legal edge before static obstacle routing.
+- This targets the observed up/down oscillation when the requested final formation physically cannot fit at the raw destination.
+- The current implementation still moves one logical company around a hard blocker. Full visual sub-formation splitting around both sides of a building is deferred to a later path-threading layer.
+- Console telemetry: OBSTACLE-ENDPOINT-09F22.
 
-v00.00.09f20 - Doctrine response
-- Changing Major doctrine while a player mission is active immediately re-plans the SAME mission/objective rather than discarding it.
-- Example: FORSVAR HER remains FORSVAR HER when switching between OFF/BAL/DEF; doctrine changes how the Major interprets/executes the mission, not the objective itself.
-- With Major AI ON and NO explicit player mission, switching to DEF immediately issues a defensive posture at the battalion's current centre and prevents the previous offensive plan from continuing.
-- With no explicit player mission, switching to BAL/OFF returns autonomous mission selection to ThinkMajor immediately.
-- Console telemetry: MAJOR-INTENT-09F20 and SELECTION-09F20.
+v00.00.09f22 - Fire range alignment
+- Direct OrderAttack no longer marches to 92% of the selected fire-policy range before stopping.
+- Attack stop range now equals the active CLOSE/MEDIUM/LONG fire trigger range, so the visible band and first legal volley threshold line up.
 
-v00.00.09f19 retained - Reserve is tactical judgement, including 4 versus 1
-- A single known enemy does not automatically disable the Major's reserve option.
-- With four active companies against one known enemy company, the Major may choose 3 FRONT + 1 RESERVE when three companies are judged sufficient for the primary mission.
-- Current prototype reserve gate requires healthy battalion condition and clear numerical superiority: average strength >= 68%, average cohesion >= 54 and total visible strength superiority >= x2.65.
-- The freshest/cohesive company is preferred as reserve.
-- The remaining three companies are re-centred side by side at the existing 60 m company spacing.
-- Reserve may remain approximately 78 m behind the front or be assigned to a flank.
+v00.00.09f22 - Unified bottom HUD
+- Major and company command HUD now use the same low-profile, full-width bottom-panel concept.
+- Panels sit flush to the bottom edge and are approximately 90 px high, around 20% lower than the previous HQ panel.
+- Major HUD retains AI ON/OFF, DEF/BAL/OFF, six base Major orders and four-company status.
+- Company HUD retains AI ON/OFF, DEF/BAL/OFF, facing, combat tuning access, fire policy and aggression.
 
-v00.00.09f19 retained - Flank is a separate decision
-- Creating a reserve does NOT automatically mean flanking.
-- A flank requires stronger conditions than simply holding a reserve: average strength >= 76%, average cohesion >= 62%, reserve strength >= 75%, useful enemy distance and a reasonably short route to a legal flank position.
-- ATTACK permits a wider flank opportunity than DEFEND; defensive flanking represents a local counter-flank/counterattack.
-- SafeCompany endpoint logic from 09f18 is reused, so flank/reserve endpoints avoid Farmhouse/Barn, open river and battlefield bounds.
+Retained from v00.00.09f21
+- Manual attack authority isolation remains: one manual AI OFF company is not absorbed by Major/group attack-lane planning.
+- 2+ selected manual AI OFF companies may still use side-by-side attack lanes against the same target.
 
-v00.00.09f18 retained - Unified AI authority
-- Major and company UI use the same AI vocabulary: AI ON / AI OFF plus DEF / BAL / OFF doctrine.
-- Direct manual company orders switch that company's OfficerAIController OFF before PlayerCommander consumes the order.
-- While AI is OFF, the company is detached from the current Major mission.
-- Manually switching the company AI ON reattaches it to its last Major assignment when one exists.
-- Any NEW Major order reclaims all four companies, clears manual detachment and switches company AI ON.
-- Direct manual movement of the Major switches Major AI OFF.
-- A new Major order clears old company PlayerCommander routes/ghosts and assigns fresh Major-owned destinations.
+Retained from v00.00.09f20
+- Company selection is allowed to take UI authority from Major.
+- Player-issued Major mission remains commander intent; doctrine changes execution style rather than silently replacing the mission.
 
-Retained from v00.00.09f17
-- Four Danish company-scale units under the Major.
-- Manual multi-company Line spacing 60 m centre-to-centre.
-- Manual multi-company attack-lane safety remains for direct player attacks, now authority-isolated by 09f21.
+Retained from v00.00.09f19
+- In 4 versus 1 the Major may choose 3 FRONT + 1 RESERVE when condition/superiority justify it.
+- Reserve and flank are separate decisions; flanking is never mandatory.
+
+Retained from v00.00.09f18
+- Major and companies use unified AI vocabulary: AI ON/OFF and DEF/BAL/OFF.
+- Direct manual company order sets company AI OFF; a new Major order reclaims subordinate companies and switches them AI ON.
+- Major can be moved manually and doing so switches Major AI OFF.
 
 Retained from v00.00.09f15-v00.00.09f14
 - Battlefield 2880 x 1920 m, camera minimum height 9.5 m, river width 5.5 m and bridge-only crossing.
 - Physical Major HQ with three horses.
+- Four Danish company-scale units under the Major.
 - B-271 ranged lethality defaults: BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55, firing fraction 58%.
 - Destination facing chevron, musket volley audio, 1:1 fallen support and procedural WALK animation.
 
-Primary v00.00.09f21 QA
-1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f21 TEST.
-2. Put Major AI ON and let one or more Major-controlled companies engage the Prussian test unit.
-3. Select ONE Danish company and manually right-click that same Prussian target.
-4. The selected company AI must switch OFF and detach from the Major mission.
-5. It must keep the manually designated target; it must NOT fire once and then turn/march toward another company's attack lane.
-6. Leave the target inside range/arc and verify the manual company can fire repeated volleys according to reload time.
-7. Select TWO Danish companies and manually attack the same target: both become AI OFF and may use separate 60 m side-by-side manual lanes.
-8. After lane arrival they must restore OrderAttack and continue fighting rather than stopping at the lane destination.
-9. Give either manual company a new direct move/hold/etc. order and verify stale lane authority does not pull it back.
-10. Give the Major a NEW order and verify the companies can be reclaimed with AI ON according to the unified authority rule.
-11. Recheck bridge-only crossing and Farmhouse/Barn detours.
+Primary v00.00.09f22 QA
+1. Unity compiles without red errors and visible marker reads PROJECT 1864 | v00.00.09f22 TEST.
+2. Select Major and issue ANGRIB HER at a clearly visible terrain objective.
+3. Attack front must be centred logically on/behind that objective, not shifted sideways toward an unrelated enemy centre.
+4. Front companies must receive unique nearest slots and should avoid unnecessary route crossing.
+5. Outer companies must turn toward the relevant enemy when they reach the front.
+6. After a Major order, click a company from normal zoom and verify Major selection releases immediately.
+7. Give a company MEDIUM fire policy and OrderAttack; verify it can stop/open fire at the displayed MEDIUM boundary rather than marching ~8% further in.
+8. Give a destination too close to Farmhouse/Barn and verify the endpoint is moved to a legal edge without up/down oscillation.
+9. Verify both Major and company HUD are flush bottom, full width and visually consistent.
+10. Recheck 4v1 reserve/flank judgement, manual AI OFF authority, bridge-only crossing and building detours.
