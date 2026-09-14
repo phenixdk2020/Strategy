@@ -1,74 +1,70 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f16
+Prototype version: v00.00.09f17
 Build status: TEST
-Build name: MAJOR SELECTION + HOVER + HQ AI TOGGLE + COMPACT SHARED UI + STRAIGHT BATTALION FRONT
-Visible build marker: PROJECT 1864 | v00.00.09f16 TEST
+Build name: FOUR-COMPANY BATTALION + RESERVE/FLANK AI + SIDE-BY-SIDE GROUP LINE FIX
+Visible build marker: PROJECT 1864 | v00.00.09f17 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + 09f15 Major HQ/map/UI + 09f16 HQ usability/formation
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + 09f15 Major HQ/map/UI + 09f16 HQ usability/formation + 09f17 four-company reserve/flank/group-line
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
-09f16 design supplement: docs/design-supplements/v00.00.09f16-hq-selection-ui-formation.md
-09f16 backlog: docs/backlog/B-281-HQ-UI-SELECTION-AND-BATTALION-FRONT.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f16 - Major selection and hover
-- Major is now handled as a first-class selectable HQ through PrototypeMajorSelectionBridge09F16.
-- Normal left-click selection flow is preserved: PlayerCommander resolves Regiment selection first; the Major bridge resolves HQ selection immediately afterwards.
-- Selecting Major shows the HQ selection ring and command-links; clicking another unit/ground removes Major selection.
-- Major gets mouse-over tooltip with rank/echelon, HQ AI state, horses, subordinate count and current order.
+v00.00.09f17 - Manual multi-company Line order fix
+- Reproduced QA issue: two selected ~48 m companies were previously placed only 22 m center-to-center and therefore overlapped.
+- Added PrototypeGroupLineSpacing09F17.
+- Normal group Line placement now uses 60 m center spacing: ~48 m company frontage plus ~12 m interval.
+- The existing PlayerCommander route objects are corrected after the order is created, preserving route/pathfinding/ghost behavior instead of replacing the movement system.
+- Group destination preview is also expanded to the true multi-company frontage.
+- Expected result: 2, 3 or 4 selected companies line up SIDE BY SIDE, not on top of each other.
 
-v00.00.09f16 - Major AI toggle
-- Major HQ still starts AI OFF.
-- HQ panel now has a working HQ AI ON/OFF button.
-- PrototypeMajorHQ09F16 provides a first autonomous battalion-AI MVP: periodically evaluate nearest enemy + battalion strength/cohesion and choose HOLD/DEFEND/ADVANCE/ATTACK.
-- This is a temporary behavior baseline; final officer stats/personality/order-compliance logic remains later work.
+v00.00.09f17 - Four-company Danish battalion
+- Scenario now creates/keeps four Danish company-scale maneuver units under the Major.
+- UI names are 1. Kompagni, 2. Kompagni, 3. Kompagni and 4. Kompagni; internal legacy IDs remain 1.Regiment, 5.Regiment, 2.Regiment and 3.Regiment.
+- All four Danish companies plus the single Prussian test company are normalized to 190 men by the company-scale layer.
+- Initial Danish company positions are spaced side by side at z=-90,-30,+30,+90.
 
-v00.00.09f16 - Shared compact bottom UI
-- Major and company panels now use the same dark olive/brass PrototypeUiTheme09F15 visual language.
-- Both panels use the same centered bottom footprint: about 940 x 104 px maximum.
-- Major panel keeps the six HQ orders but is substantially lower than 09f15.
-- Company panel is restyled to the same panel/header/button theme and retains AI, doctrine, facing, fire policy, F9 and aggression controls.
+v00.00.09f17 - Major reserve and flanking MVP
+- Added PrototypeMajorBattalion09F17 as the authoritative four-company HQ behavior/UI layer after the physical 09f15 Major + three horses has spawned.
+- Major still starts HQ AI OFF.
+- With HQ AI OFF, player Major orders use the four companies directly.
+- With HQ AI ON, attack/defend decisions can hold one fresh company as reserve while three companies form the primary front.
+- Reserve selection favors the freshest/most cohesive available company.
+- If battalion strength/cohesion are good and the enemy is close enough, the Major may stage the reserve on a flank.
+- On ATTACK, a flank reserve can commit against a nearby enemy after reaching a useful flank position.
+- On DEFEND, a flank reserve can perform a local counterattack if the enemy closes sufficiently and reserve strength/cohesion remain adequate.
+- This is a first tactical decision MVP, not the final historical officer-stat/personality/order-delay model.
 
-v00.00.09f16 - Straight battalion DEFEND front
-- FORSVAR HER now computes one common battalion facing from the objective toward the nearest relevant enemy.
-- Both subordinate companies receive slots on one common line perpendicular to that facing.
-- Normal spacing increased to 60 m so ~48 m company fronts do not overlap.
-- On final arrival each company snaps the final <=3.5 m to its exact slot, goes to Line, Holds and receives the exact same final facing.
-- The old per-company nearest-enemy final facing is removed from this completion path because it produced the skewed two-company front seen in 09f15 QA.
+v00.00.09f17 - HQ UI / command visibility
+- Major panel remains compact at the bottom and now shows four subordinate companies.
+- Each company shows FRONT / RESERVE / FLANKE-RESERVE or its active Major mission.
+- Command-links are shown from Major to all four companies while HQ is selected.
+- Major hover shows HQ AI state, three horses, four companies and current battalion order.
+
+v00.00.09f16 retained
+- Major selection/hover behavior and compact olive/brass UI direction are retained conceptually; 09f17 owns the active four-company HQ implementation.
+- Company control panel keeps the matching compact bottom UI.
 
 v00.00.09f15 retained
-- Battlefield remains 2880 x 1920 m (4x 09f14 area).
+- Battlefield remains 2880 x 1920 m.
 - Camera minimum height remains 9.5 m.
-- River remains 5.5 m visual width with matching 2.75 m blocker half-width and bridge-only crossing.
-- Denmark has two 190-man companies; Prussia has one 190-man test company.
-- Major HQ remains mounted with three total horses and HQ/Dannebrog marker.
-- Six Major orders remain: ANGRIB HER, FORSVAR HER, TILBAGETRÆK HERTIL, RYK FREM HERTIL, HOLD POSITION, SAML HER.
+- River remains 5.5 m visual width with matching bridge-only blocker logic.
+- Physical Major HQ remains a mounted Major with three total horses and HQ/Dannebrog marker.
 
 v00.00.09f14 retained - B-271 ranged lethality calibration
 - F9 defaults remain BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55 and firing fraction 58%.
 - Fresh 190-man CLOSE centerline remains about 26 expected hits before random/quality variation.
 - Use VOLLEY-CAL-09F14 TotalHits for B-271 tuning.
 
-v00.00.09f13 retained
-- Destination facing chevron remains active.
-- Procedural 3D musket volley audio remains active.
-- F9 fallen control still supports 1:1.
-- Existing procedural WALK / Forced March / routed RUN animation remains active.
-
-v00.00.09f12 retained
-- Direct attack route authority remains active.
-- Farmhouse/Barn detours and overlapping blocker-cluster routing remain active.
-- Bridge traversal remains STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
-
-Primary v00.00.09f16 QA
+Primary v00.00.09f17 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f16 TEST.
-3. Hover Major: tooltip appears without selecting HQ.
-4. Left-click Major: Major selection ring + command-links appear and company selection is cleared by normal selection flow.
-5. Toggle HQ AI OFF -> ON -> OFF from the Major panel; console shows HQ-AI-09F16.
-6. Select a company and Major alternately; both control panels use the same compact bottom visual style/footprint.
-7. Give FORSVAR HER on open terrain: both companies must finish on one straight battalion front with the same facing and without overlapping.
-8. Repeat FORSVAR HER with one or more blockers/river routing in the approach and confirm the final line still resolves after legal pathing.
-9. Recheck the other five Major orders.
-10. Recheck VOLLEY-CAL-09F14, musket audio, destination chevron, 1:1 fallen and WALK animation for regressions.
+2. Build marker reads PROJECT 1864 | v00.00.09f17 TEST.
+3. Select TWO companies and issue a normal group Line destination: they must finish side by side with ~12 m interval, not overlap.
+4. Repeat with THREE and FOUR selected companies; the group preview and final line must expand accordingly.
+5. Confirm four Danish companies spawn at 190 men each and can be selected individually/multi-selected.
+6. Select Major: panel lists all four companies and four command-links are visible.
+7. HQ AI defaults OFF; manual Major FORSVAR HER should use all four companies on one common front.
+8. Turn HQ AI ON and allow an enemy to approach: Major should be able to use 3-front + 1-reserve organization.
+9. Under good battalion condition and suitable distance, watch for FLANKE-RESERVE in the HQ panel and HQ-AI-09F17 / HQ-RESERVE-09F17 console lines.
+10. Recheck bridge/building routing while moving a multi-company line and while Major orders are active.
+11. Recheck VOLLEY-CAL-09F14, musket audio, destination chevron, 1:1 fallen and WALK animation for regressions.
