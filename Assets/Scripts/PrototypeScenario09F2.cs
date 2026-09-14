@@ -2,10 +2,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f2 isolation baseline, refined by v00.00.09f11.
-// Keep exactly one regiment per side. Most scenery remains transparent to movement,
-// but explicitly approved hard blockers (Farmhouse + Barn) keep their colliders so
-// the scene semantics match PrototypeStaticObstacleRouting09F11.
+// v00.00.09f2 isolation baseline, extended by v00.00.09f15.
+// 09f15 keeps two Danish company-scale units versus one Prussian test company so the
+// new Major HQ can command two subordinates without re-enabling the larger legacy OOB.
 [DefaultExecutionOrder(-12000)]
 public sealed class PrototypeScenario09F2 : MonoBehaviour
 {
@@ -32,7 +31,7 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
             expanded.enabled = false;
 
         BattleManager battle = BattleManager.Instance;
-        if (battle == null || battle.Regiments == null || battle.Regiments.Count < 2)
+        if (battle == null || battle.Regiments == null || battle.Regiments.Count < 3)
             return;
 
         FieldInfo regimentsField = typeof(BattleManager).GetField(
@@ -45,7 +44,7 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
 
         if (regiments == null)
         {
-            Debug.LogError("SCENARIO-09F2|Applied=False|Reason=BattleManager.regiments_not_found");
+            Debug.LogError("SCENARIO-09F15|Applied=False|Reason=BattleManager.regiments_not_found");
             enabled = false;
             return;
         }
@@ -61,6 +60,7 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
 
             bool keep =
                 regiment.RegimentName == "1. Regiment" ||
+                regiment.RegimentName == "5. Regiment" ||
                 regiment.RegimentName == "8th Regiment";
 
             if (keep)
@@ -70,11 +70,13 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
             Destroy(regiment.gameObject);
         }
 
-        Regiment danish = FindRegiment(regiments, "1. Regiment");
+        Regiment danish1 = FindRegiment(regiments, "1. Regiment");
+        Regiment danish2 = FindRegiment(regiments, "5. Regiment");
         Regiment prussian = FindRegiment(regiments, "8th Regiment");
 
-        SetPose(danish, new Vector3(-105f, 0f, 0f), Quaternion.Euler(0f, 90f, 0f));
-        SetPose(prussian, new Vector3(105f, 0f, 0f), Quaternion.Euler(0f, -90f, 0f));
+        SetPose(danish1, new Vector3(-220f, 0f, -54f), Quaternion.Euler(0f, 90f, 0f));
+        SetPose(danish2, new Vector3(-220f, 0f, 54f), Quaternion.Euler(0f, 90f, 0f));
+        SetPose(prussian, new Vector3(220f, 0f, 0f), Quaternion.Euler(0f, -90f, 0f));
 
         Collider[] colliders = Object.FindObjectsByType<Collider>();
         int disabledSceneryColliders = 0;
@@ -99,14 +101,17 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
                 continue;
             }
 
+            // The Major HQ is created after this isolation pass and therefore keeps
+            // its own selection collider. All existing scenery remains non-blocking
+            // except the explicitly approved building blockers above.
             collider.enabled = false;
             disabledSceneryColliders++;
         }
 
         applied = true;
         Debug.Log(
-            "SCENARIO-09F11|Applied=True|Denmark=1|Prussia=1|" +
-            "HardBlockers=Farmhouse,Barn|OtherScenery=PassThrough|" +
+            "SCENARIO-09F15|Applied=True|DenmarkCompanies=2|PrussiaCompanies=1|" +
+            "InternalDanishIds=1.Regiment,5.Regiment|HardBlockers=Farmhouse,Barn|" +
             "HouseColliders=" + preservedHouseColliders +
             "|DisabledOtherSceneryColliders=" + disabledSceneryColliders);
     }
