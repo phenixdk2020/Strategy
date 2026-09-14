@@ -2,8 +2,8 @@ using UnityEngine;
 
 /// <summary>
 /// PROJECT 1864 current Campaign3 status overlay for the imagery-only campaign map.
-/// Shows World Imagery streaming plus streamed 3D elevation status.
-/// The overall build version is read from CampaignBuildInfo to avoid stale hardcoded badges.
+/// Shows the compact build badge at all times while technical imagery/terrain panels
+/// are optional through CampaignHudStateV010N2.
 /// </summary>
 [DefaultExecutionOrder(30000)]
 public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
@@ -88,17 +88,22 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
         GUI.depth = -2000;
         EnsureStyles();
 
+        // The compact build identity remains visible even in minimal-HUD mode.
         DrawOpaque(new Rect(0f, 0f, 228f, 42f), new Color(0.035f, 0.075f, 0.095f, 0.99f));
         GUI.Box(
             new Rect(8f, 8f, 212f, 31f),
             "PROJECT 1864 | " + CampaignBuildInfo.CurrentVersion,
             badgeStyle);
 
+        if (!CampaignHudStateV010N2.DebugVisible)
+            return;
+
         string status = worldRaster != null ? worldRaster.Status : "INITIALISING";
         string detail = worldRaster != null ? worldRaster.WorldDetailStatus : "Waiting for World Imagery provider";
         string terrainStatus = terrain != null ? terrain.Status : "TERRAIN INITIALISING";
 
-        Rect panel = new Rect(8f, 194f, Mathf.Min(455f, Screen.width - 16f), 98f);
+        float panelY = CampaignHudStateV010N2.SelectionVisible ? 280f : 48f;
+        Rect panel = new Rect(8f, panelY, Mathf.Min(455f, Screen.width - 16f), 98f);
         DrawOpaque(panel, new Color(0.035f, 0.070f, 0.085f, 0.94f));
         GUI.Box(
             panel,
@@ -109,7 +114,9 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
             "Home=Danmark · PageUp=Europa · End=Verden · WASD/pile=pan · hjul=zoom · MMB=træk · T=2D/3D · Q/E=drej",
             worldStyle);
 
-        Rect legacyMapInfo = new Rect(8f, Screen.height - 76f, 420f, 68f);
+        // Keep this separate from the campaign data box instead of drawing both
+        // directly on top of each other as previous builds did.
+        Rect legacyMapInfo = new Rect(8f, Screen.height - 154f, 420f, 68f);
         DrawOpaque(legacyMapInfo, new Color(0.035f, 0.070f, 0.085f, 0.98f));
         GUI.Box(
             legacyMapInfo,
