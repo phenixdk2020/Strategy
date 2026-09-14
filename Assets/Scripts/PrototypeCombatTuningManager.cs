@@ -1,6 +1,10 @@
 using System.Reflection;
 using UnityEngine;
 
+// Runtime combat QA/tuning panel.
+// v00.00.09f13: the fallen-body control is now tied to the active 09f7/F4
+// casualty display ratio and explicitly supports 1:1 instead of the old legacy
+// minimum of 1 body per 2 casualties.
 [DefaultExecutionOrder(-9000)]
 public sealed class PrototypeCombatTuningManager : MonoBehaviour
 {
@@ -12,10 +16,8 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
     public static float LongRangeMultiplier { get; private set; } = 0.30f;
     public static float FiringFractionPercent { get; private set; } = 58f;
     public static int StartingAmmoRoundsPerMan { get; private set; } = 60;
-    public static int CasualtiesPerBody { get; private set; } = 8;
+    public static int CasualtiesPerBody { get; private set; } = 1;
 
-    // Morale/cohesion still matter, but no longer collapse accuracy all the way toward
-    // zero while hundreds of men remain formed and are still exchanging volleys.
     public static float MoraleAccuracyFloor { get; private set; } = 0.72f;
     public static float CohesionAccuracyFloor { get; private set; } = 0.68f;
 
@@ -32,7 +34,7 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeCombatTuningManager>() != null)
             return;
 
-        GameObject managerObject = new GameObject("PrototypeCombatTuningManager_v009");
+        GameObject managerObject = new GameObject("PrototypeCombatTuningManager_v009f13");
         managerObject.AddComponent<PrototypeCombatTuningManager>();
     }
 
@@ -52,6 +54,11 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
 
         if (baseAccuracyField == null)
             Debug.LogError("COMBAT-TUNE: Regiment.baseAccuracy blev ikke fundet.");
+
+        CasualtiesPerBody = Mathf.Max(1, PrototypeBattleVisuals09F4.CasualtyDisplayRatio);
+        Debug.Log(
+            "COMBAT-TUNE-09F13|Installed=True|FallenRatio=1:" + CasualtiesPerBody +
+            "|FallenRatioMin=1|ActiveRendererSync=True");
     }
 
     private void OnDestroy()
@@ -65,6 +72,9 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F9))
             TogglePanel();
 
+        // The active 09f7 renderer reads the F4 static ratio even though the older
+        // F4 renderer itself is disabled. Keep the F9 combat panel in sync with it.
+        CasualtiesPerBody = Mathf.Max(1, PrototypeBattleVisuals09F4.CasualtyDisplayRatio);
         ApplyCombatTuning();
     }
 
@@ -89,7 +99,7 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
 
     public static int GetCasualtiesPerBody()
     {
-        return Mathf.Clamp(CasualtiesPerBody, 1, 100);
+        return Mathf.Max(1, PrototypeBattleVisuals09F4.CasualtyDisplayRatio);
     }
 
     public static float GetConfiguredRangeMultiplier(Regiment regiment, float distance)
@@ -120,7 +130,6 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
     {
         if (regiment == null)
             return "UNKNOWN";
-
         if (distance <= regiment.CloseRange)
             return "CLOSE";
         if (distance <= regiment.EffectiveRange)
@@ -138,16 +147,8 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         float morale01 = Mathf.Clamp01(regiment.Morale / 100f);
         float cohesion01 = Mathf.Clamp01(regiment.Cohesion / 100f);
 
-        float moraleFactor = Mathf.Lerp(
-            Mathf.Clamp01(MoraleAccuracyFloor),
-            1f,
-            morale01);
-
-        float cohesionFactor = Mathf.Lerp(
-            Mathf.Clamp01(CohesionAccuracyFloor),
-            1f,
-            cohesion01);
-
+        float moraleFactor = Mathf.Lerp(Mathf.Clamp01(MoraleAccuracyFloor), 1f, morale01);
+        float cohesionFactor = Mathf.Lerp(Mathf.Clamp01(CohesionAccuracyFloor), 1f, cohesion01);
         return moraleFactor * cohesionFactor;
     }
 
@@ -186,7 +187,7 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
             return;
 
         BattleManager battle = BattleManager.Instance;
-        if (battle == null)
+        if (battle == null || battle.Regiments == null)
             return;
 
         foreach (Regiment regiment in battle.Regiments)
@@ -202,10 +203,6 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
             float desiredRangeMultiplier = GetConfiguredRangeMultiplier(regiment, distance);
             float kernelRangeMultiplier = GetKernelRangeMultiplier(regiment, distance);
 
-            // Regiment.FireVolley currently multiplies by raw morale*cohesion and assumes
-            // 58% firing men. Compensate those legacy kernel terms here so the sliders
-            // represent the actual requested model exactly once, rather than being applied
-            // on top of the old curve a second time.
             float kernelQuality = Mathf.Max(
                 0.05f,
                 Mathf.Clamp01(regiment.Morale / 100f) *
@@ -317,72 +314,28 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
             showPanel = false;
         y += 28f;
 
-        BaseHitChancePercent = DrawFloatSlider(
-            x, ref y, w,
-            "Grundtræf pr. skytte",
-            BaseHitChancePercent,
-            0.05f, 3.00f,
-            BaseHitChancePercent.ToString("0.00") + "%");
-
-        CloseRangeMultiplier = DrawFloatSlider(
-            x, ref y, w,
-            "Close range faktor",
-            CloseRangeMultiplier,
-            0.50f, 3.00f,
-            "x" + CloseRangeMultiplier.ToString("0.00"));
-
-        MediumRangeMultiplier = DrawFloatSlider(
-            x, ref y, w,
-            "Medium range faktor",
-            MediumRangeMultiplier,
-            0.20f, 2.00f,
-            "x" + MediumRangeMultiplier.ToString("0.00"));
-
-        LongRangeMultiplier = DrawFloatSlider(
-            x, ref y, w,
-            "Long range faktor",
-            LongRangeMultiplier,
-            0.02f, 1.00f,
-            "x" + LongRangeMultiplier.ToString("0.00"));
-
-        FiringFractionPercent = DrawFloatSlider(
-            x, ref y, w,
-            "Andel mænd der skyder",
-            FiringFractionPercent,
-            20f, 100f,
-            FiringFractionPercent.ToString("0") + "%");
-
-        MoraleAccuracyFloor = DrawFloatSlider(
-            x, ref y, w,
-            "Min. morale accuracy",
-            MoraleAccuracyFloor,
-            0.20f, 1.00f,
-            Mathf.RoundToInt(MoraleAccuracyFloor * 100f) + "%");
-
-        CohesionAccuracyFloor = DrawFloatSlider(
-            x, ref y, w,
-            "Min. cohesion accuracy",
-            CohesionAccuracyFloor,
-            0.20f, 1.00f,
-            Mathf.RoundToInt(CohesionAccuracyFloor * 100f) + "%");
+        BaseHitChancePercent = DrawFloatSlider(x, ref y, w, "Grundtræf pr. skytte", BaseHitChancePercent, 0.05f, 3.00f, BaseHitChancePercent.ToString("0.00") + "%");
+        CloseRangeMultiplier = DrawFloatSlider(x, ref y, w, "Close range faktor", CloseRangeMultiplier, 0.50f, 3.00f, "x" + CloseRangeMultiplier.ToString("0.00"));
+        MediumRangeMultiplier = DrawFloatSlider(x, ref y, w, "Medium range faktor", MediumRangeMultiplier, 0.20f, 2.00f, "x" + MediumRangeMultiplier.ToString("0.00"));
+        LongRangeMultiplier = DrawFloatSlider(x, ref y, w, "Long range faktor", LongRangeMultiplier, 0.02f, 1.00f, "x" + LongRangeMultiplier.ToString("0.00"));
+        FiringFractionPercent = DrawFloatSlider(x, ref y, w, "Andel mænd der skyder", FiringFractionPercent, 20f, 100f, FiringFractionPercent.ToString("0") + "%");
+        MoraleAccuracyFloor = DrawFloatSlider(x, ref y, w, "Min. morale accuracy", MoraleAccuracyFloor, 0.20f, 1.00f, Mathf.RoundToInt(MoraleAccuracyFloor * 100f) + "%");
+        CohesionAccuracyFloor = DrawFloatSlider(x, ref y, w, "Min. cohesion accuracy", CohesionAccuracyFloor, 0.20f, 1.00f, Mathf.RoundToInt(CohesionAccuracyFloor * 100f) + "%");
 
         float ammo = StartingAmmoRoundsPerMan;
-        ammo = DrawFloatSlider(
-            x, ref y, w,
-            "Start ammunition / mand",
-            ammo,
-            10f, 120f,
-            StartingAmmoRoundsPerMan + " runder");
+        ammo = DrawFloatSlider(x, ref y, w, "Start ammunition / mand", ammo, 10f, 120f, StartingAmmoRoundsPerMan + " runder");
         StartingAmmoRoundsPerMan = Mathf.RoundToInt(ammo);
 
-        float casualtyRatio = CasualtiesPerBody;
+        int activeFallenRatio = Mathf.Max(1, PrototypeBattleVisuals09F4.CasualtyDisplayRatio);
+        float casualtyRatio = activeFallenRatio;
         casualtyRatio = DrawFloatSlider(
             x, ref y, w,
             "Tab pr. synligt lig",
             casualtyRatio,
-            2f, 20f,
-            CasualtiesPerBody.ToString());
-        CasualtiesPerBody = Mathf.RoundToInt(casualtyRatio);
+            1f, 10f,
+            activeFallenRatio.ToString());
+        PrototypeBattleVisuals09F4.SetCasualtyDisplayRatio(Mathf.RoundToInt(casualtyRatio));
+        CasualtiesPerBody = Mathf.Max(1, PrototypeBattleVisuals09F4.CasualtyDisplayRatio);
 
         y += 2f;
         GUI.Label(
@@ -424,8 +377,9 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         LongRangeMultiplier = 0.30f;
         FiringFractionPercent = 58f;
         StartingAmmoRoundsPerMan = 60;
-        CasualtiesPerBody = 8;
         MoraleAccuracyFloor = 0.72f;
         CohesionAccuracyFloor = 0.68f;
+        PrototypeBattleVisuals09F4.SetCasualtyDisplayRatio(1);
+        CasualtiesPerBody = 1;
     }
 }
