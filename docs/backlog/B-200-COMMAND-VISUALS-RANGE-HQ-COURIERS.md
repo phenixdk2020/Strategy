@@ -82,10 +82,16 @@ Standardvisning:
 
 En udvidet command-overlay kan vise hele kæden nedad eller opad efter spillerens valg.
 
-Command relationship og en aktiv courier/order må ikke bruge samme visuelle sprog:
+### Visuel regel for relation og aktiv ordre
 
-- **command-link** = organisatorisk relation,
-- **order-route** = konkret besked, der fysisk er på vej.
+Command relationship og aktiv ordre deler samme **geometriske link** mellem chef og direkte underenhed, så spilleren ikke skal aflæse to parallelle linjer.
+
+- **Normal command-link** = tynd fast/stabil linje, som viser organisatorisk relation.
+- **Aktiv ordre på linket** = samme linje får en tydelig aktiv state, fx stiplet/pulserende/highlightet.
+- En **lille rytter-/hestemarkør** bevæger sig langs linket og viser ordre-/rapportprogress.
+- Når der ikke transporteres en ordre eller rapport, vises ingen rytter på linket.
+
+Dermed bruges den samme læsbare relation mellem Major og kompagni som visuelt spor for command delay uden at skabe ekstra line-spaghetti.
 
 ## B-204 — Semantic zoom og NATO/APP-6-lignende symboler
 
@@ -106,57 +112,73 @@ Teknisk krav:
 - simulationen ændres ikke ved LOD/semantic zoom,
 - selection og order targets skal bevare samme stable unit ID gennem alle visual modes.
 
-## B-205 — Courier/order-route visual
+## B-205 — Courier/order progress på eksisterende command-link
 
-**BESLUTTET / PLANLAGT.** En aktiv ordre skal kunne visualiseres som en stiplet/dashed rute fra afsenderens HQ til modtagende formation/HQ.
+**BESLUTTET / PLANLAGT.** En aktiv ordre skal visualiseres direkte på den eksisterende command-link mellem afsender-HQ og modtagende formation/HQ.
 
-På ruten vises en bevægelig markør:
+På linket vises en bevægelig markør:
 
 - lille courier/horse icon ved tættere zoom,
 - simpel kugle/chevron/pil ved større afstand,
-- markørens position langs ruten svarer til faktisk simulation progress, ikke en kosmetisk timer,
+- markørens position mellem afsender og modtager svarer til faktisk **order-delivery progress**,
 - markørens retning viser om ordren går ud til enheden eller en acknowledgement/report er på vej tilbage.
 
-Når spilleren hover/selecter ruten eller ordren, vises fx:
+Eksempel:
+
+`Major  ---- 🐎 ---->  1. Kompagni`
+
+Når spilleren hover/selecter linket eller ordren, vises fx:
 
 `Sent 10:42 | Courier 63% | ETA ~1m40s | En route`
 
-ETA er et estimat; actual delivery afhænger af terræn, vej, movement, vejr, enemy interference og HQ relocation.
+Når rytteren/markøren når modtageren:
 
-## B-206 — Courier er en simulation entity, men ikke tung soldier-AI
+- ordren skifter `In transit → Delivered`,
+- modtagerens Officer AI må derefter acknowledge/fortolke ordren,
+- et eventuelt acknowledgement/report kan vises som en ny rytter, der bevæger sig **modsatte vej** på samme command-link.
 
-**BESLUTTET / PLANLAGT.** Budbringeren skal have faktisk progress gennem verden, men må implementeres letvægtsmæssigt.
+### Vigtig teknisk designregel
+
+Rytterikonet er **ikke en fysisk 3D-pathfinding-agent**, der forsøger at ride rundt om træer, huse eller hegn. Det er en command-visualisation, som interpolerer langs command-linket ud fra simulationens beregnede kommunikationsprogress. Derfor kan visualet ikke sidde fast på terræn og kan altid bruges som pålidelig indikator for, hvornår ordren når frem.
+
+Selve command delay beregnes fortsat af simulationen ud fra afstand, kommunikationsform, staff quality og senere terræn/vej/vejr/enemy interference. Rytterens placering er en visualisering af dette resultat, ikke årsagen til delayet.
+
+## B-206 — Courier som letvægts command state, ikke tung soldier-AI
+
+**BESLUTTET / PLANLAGT.** Budbringeren repræsenteres primært som en letvægts command/order state.
 
 Minimum state:
 
 - sender HQ,
-- recipient / last known recipient position,
+- recipient,
 - order/report ID,
-- route,
-- current route progress,
-- movement speed,
-- status: dispatched / en route / searching / delayed / delivered / lost,
+- transmission start,
+- calculated delivery time,
+- current progress 0–1,
+- status: dispatched / en route / delayed / delivered / lost,
 - direction: outbound order eller returning acknowledgement/report.
 
-Senere kan courieren:
+Første MVP kræver **ingen fysisk terrain pathfinding for courier-modellen**. En lille hest/rytter på command-linket er den visuelle progress-indikator.
 
-- blive forsinket af terræn/vej/vejr,
-- søge efter et HQ, der har flyttet sig,
-- blive afskåret, såret/fanget/dræbt,
-- få hesten udmattet eller mistet,
-- erstattes af ny courier ved timeout eller urgent resend.
+Senere kan selve delayberegningen påvirkes af:
 
-Der er ikke behov for fuld individuel combat-AI. Tæt på kameraet kan en ryttermodel følge den samme lightweight route state; langt væk eksisterer kun data + UI-marker.
+- terræn/vej/vejr,
+- flyttet HQ,
+- afskårne forbindelser,
+- cavalry/scouts og enemy interdiction,
+- Staff/Command Skill,
+- eventuel courier availability og fatigue.
+
+Hvis projektet senere ønsker fysisk courier interception, kan en mere detaljeret world-route-model lægges ovenpå, men den må ikke være nødvendig for den grundlæggende UI-læsbarhed eller ordrelevering.
 
 ### Courier interception — område-/risikomodel
 
-**BESLUTTET.** Spilleren skal ikke mikro-jage enkelte budbringere. Interception afgøres primært af formationer, reconnaissance og kontrol af området omkring courier-ruten.
+**BESLUTTET.** Spilleren skal ikke mikro-jage enkelte budbringere. Interception afgøres primært af formationer, reconnaissance og kontrol af området mellem afsender og modtager.
 
 Hvis en eller flere fjendtlige formationer kommer mellem afsender-HQ og modtageren, kan systemet:
 
-- forsøge en alternativ rute,
 - øge courierens ETA,
-- sætte ordren i `Delayed` eller `Searching`,
+- sætte ordren i `Delayed`,
 - i sjældnere tilfælde markere courier/order som `Lost` eller `Intercepted`.
 
 Risikoen påvirkes bl.a. af enemy presence/ZOC, cavalry/scouts, own screening/escort, roads, woods/villages, terrain, daylight/night, distance og Staff/Command quality. **Intercepted** skal være mærkbart, men forholdsvis sjældent, så command-friction føles plausibel uden at blive frustrerende.
@@ -165,7 +187,7 @@ Fjendens courier-markører er underlagt fog of war. Spilleren ser ikke automatis
 
 ## B-207 — Command overlay og clutter control
 
-**BESLUTTET / PLANLAGT.** Command-links og courier routes vises ikke permanent for hele hæren.
+**BESLUTTET / PLANLAGT.** Command-links og courier progress vises ikke permanent for hele hæren.
 
 De vises når mindst én af følgende er sand:
 
@@ -175,6 +197,8 @@ De vises når mindst én af følgende er sand:
 - spilleren åbner en specifik ordre i message/order UI.
 
 Standard skal prioritere læsbarhed frem for at vise hele kommunikationsnettet konstant.
+
+Hvis flere beskeder samtidig bevæger sig på samme link, kan markørerne få en lille side-offset eller samles i et kompakt tællerikon, så de ikke ligger præcis oven i hinanden.
 
 ## B-208 — Order status på HQ og unit card
 
@@ -189,6 +213,10 @@ Det skal være muligt at skelne mellem:
 - ordren er leveret,
 - officeren har forstået/acknowledged,
 - formationen udfører den faktisk.
+
+Ved aktiv ordre kan unit card vise fx:
+
+`Pending order: FORSVAR HER | ETA 00:18 | Courier 63%`
 
 ## B-209 — Kobling til Officer AI
 
@@ -208,7 +236,7 @@ Range fan, fire policy og første continuous accuracy-by-range er nu flyttet ind
 
 1. **Fire eligibility phase 2** — segmenteret frontage/LOS/target exposure oven på den nye forward fire arc.
 2. **HQ entity + command relationship overlay**.
-3. **Courier/order lifecycle MVP** med moving progress marker.
+3. **Courier/order lifecycle MVP** med ryttermarkør på eksisterende command-links.
 4. **Fog-of-war/scouts + command effectiveness** koblet til HQ/courier.
 5. **Semantic zoom / NATO-symbol mode**.
 6. Derefter dybere courier failure, reports/acknowledgements og højere-level brigade/division AI.
