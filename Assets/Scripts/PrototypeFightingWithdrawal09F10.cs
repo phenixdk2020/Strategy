@@ -8,7 +8,7 @@ public enum PrototypeWithdrawalRange09F10
     OutOfRange
 }
 
-// v00.00.09f10 controlled fighting withdrawal.
+// v00.00.09f10 controlled fighting withdrawal, river geometry aligned in 09f15.
 // The company remains in Line and facing the threat, alternates stationary covering
 // fire with short backward steps, and stops at the selected distance band.
 [DefaultExecutionOrder(3200)]
@@ -45,10 +45,10 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
     private const float PositionArrival = 0.35f;
     private const float FacingTurnSpeed = 16.8f;
 
-    // Current prototype river geometry. Fighting withdrawal is a local tactical order;
+    // 09f15 river geometry. Fighting withdrawal is a local tactical order;
     // it does not automatically reverse-march through a bridge. If a backward step
     // would enter open water, the order halts instead of walking into the stream.
-    private const float RiverHalfWidth = 2.20f;
+    private const float RiverHalfWidth = 2.75f;
     private const float BridgeZ = 22.0f;
     private const float BridgeHalfLengthX = 9.0f;
     private const float BridgeHalfWidthZ = 4.0f;
@@ -73,9 +73,9 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
 
         Instance = this;
         Debug.Log(
-            "WITHDRAW-09F10|Installed=True|Step=" + BackstepDistance.ToString("0") +
+            "WITHDRAW-09F15|Installed=True|Step=" + BackstepDistance.ToString("0") +
             "m|Speed=" + BackwardSpeed.ToString("0.00") +
-            "mps|Modes=MEDIUM,LONG,OUT|LineOnly=True|FireThenMove=True");
+            "mps|Modes=MEDIUM,LONG,OUT|LineOnly=True|FireThenMove=True|RiverWidth=5.5m");
     }
 
     private void OnDestroy()
@@ -109,7 +109,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
             started++;
         }
 
-        Debug.Log("WITHDRAW-09F10|SelectedStarted=" + started + "|Mode=" + mode);
+        Debug.Log("WITHDRAW-09F15|SelectedStarted=" + started + "|Mode=" + mode);
     }
 
     public bool IsWithdrawing(Regiment regiment)
@@ -127,9 +127,6 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
         if (controller != null && controller.AIEnabled)
         {
-            // Explicit player withdrawal takes command priority. AI remains OFF after
-            // completion so an Offensive officer cannot immediately cancel the withdrawal
-            // by advancing again; the player can re-enable AI deliberately afterwards.
             controller.SetAIEnabled(false);
         }
 
@@ -154,7 +151,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         regiment.SetFirePolicy(RegimentFirePolicy.LongRange);
 
         Debug.Log(
-            "WITHDRAW-09F10|Unit=" + regiment.RegimentName +
+            "WITHDRAW-09F15|Unit=" + regiment.RegimentName +
             "|Start=True|Mode=" + mode +
             "|Current=" + state.LastProgressDistance.ToString("0.0") +
             "m|Target=" + targetDistance.ToString("0.0") +
@@ -257,7 +254,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         if (SegmentTouchesOpenWater(regiment.transform.position, end))
         {
             Debug.LogWarning(
-                "WITHDRAW-09F10|Unit=" + regiment.RegimentName +
+                "WITHDRAW-09F15|Unit=" + regiment.RegimentName +
                 "|Blocked=True|Reason=RIVER|AutomaticBridgeReverse=False");
             return false;
         }
@@ -269,12 +266,11 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         regiment.SetFirePolicy(RegimentFirePolicy.HoldFire);
 
         Debug.Log(
-            "WITHDRAW-09F10|Unit=" + regiment.RegimentName +
+            "WITHDRAW-09F15|Unit=" + regiment.RegimentName +
             "|Phase=BACKSTEP|Step=" + step.ToString("0.0") + "m");
         return true;
     }
 
-    // Returns true when the withdrawal should be removed from the active set.
     private bool UpdateBackstep(WithdrawalState state)
     {
         Regiment regiment = state.Unit;
@@ -323,7 +319,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         state.PhaseUntil = Time.time + GetFirePauseSeconds(state.Unit);
 
         Debug.Log(
-            "WITHDRAW-09F10|Unit=" + state.Unit.RegimentName +
+            "WITHDRAW-09F15|Unit=" + state.Unit.RegimentName +
             "|Phase=FIRE_PAUSE|Distance=" +
             PlanarDistance(state.Unit.transform.position, state.Threat.transform.position).ToString("0.0") + "m");
     }
@@ -338,7 +334,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
         state.Unit.SetFirePolicy(state.RestoreFirePolicy);
 
         Debug.Log(
-            "WITHDRAW-09F10|Unit=" + state.Unit.RegimentName +
+            "WITHDRAW-09F15|Unit=" + state.Unit.RegimentName +
             "|Complete=True|Reason=" + reason +
             "|RestoredFire=" + state.RestoreFirePolicy +
             "|OfficerAI=OFF_UNTIL_REENABLED");
@@ -353,7 +349,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
             regiment.SetFirePolicy(state.RestoreFirePolicy);
 
         active.Remove(regiment);
-        Debug.Log("WITHDRAW-09F10|Unit=" + regiment.RegimentName + "|Cancelled=True|Reason=" + reason);
+        Debug.Log("WITHDRAW-09F15|Unit=" + regiment.RegimentName + "|Cancelled=True|Reason=" + reason);
     }
 
     private static float GetTargetDistance(Regiment regiment, PrototypeWithdrawalRange09F10 mode)
@@ -364,7 +360,6 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
                 return regiment.EffectiveRange;
 
             case PrototypeWithdrawalRange09F10.Long:
-                // Aim for roughly two thirds into the Medium->Maximum interval.
                 return regiment.EffectiveRange +
                        (regiment.MaximumRange - regiment.EffectiveRange) * 0.65f;
 
@@ -375,7 +370,6 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
 
     private static float GetFirePauseSeconds(Regiment regiment)
     {
-        // Long enough to allow the current reload cycle and a stationary covering shot.
         return Mathf.Max(2.0f, regiment.CurrentReloadSeconds + 0.65f);
     }
 
@@ -448,7 +442,7 @@ public sealed class PrototypeFightingWithdrawal09F10 : MonoBehaviour
 
     private static float StreamCenterX(float z)
     {
-        return Mathf.Sin(z * 0.065f) * 4.8f;
+        return PrototypeBootstrap.StreamCenterX(z);
     }
 
     private static float PlanarDistance(Vector3 a, Vector3 b)
