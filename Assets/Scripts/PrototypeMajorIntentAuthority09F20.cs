@@ -24,6 +24,7 @@ public sealed class PrototypeMajorIntentAuthority09F20 : MonoBehaviour
 
     private bool doctrineInitialized;
     private OfficerAIDoctrine previousDoctrine;
+    private bool autonomousDefensiveLock;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -67,22 +68,49 @@ public sealed class PrototypeMajorIntentAuthority09F20 : MonoBehaviour
             OfficerAIDoctrine oldDoctrine = previousDoctrine;
             previousDoctrine = major.Doctrine;
 
-            if (hasExplicitIntent && major.AIEnabled)
+            if (major.AIEnabled)
             {
-                // Re-issue the same commander's mission so the new doctrine affects execution,
-                // reserve choice and subordinate behavior without changing the objective.
-                major.IssueOrder(explicitOrder, explicitPoint, false);
-                SuppressAutonomousReplacement();
+                if (hasExplicitIntent)
+                {
+                    // Keep the commander's mission. Doctrine changes how it is executed,
+                    // not what objective the Major was ordered to achieve.
+                    autonomousDefensiveLock = false;
+                    major.IssueOrder(explicitOrder, explicitPoint, false);
+                    SuppressAutonomousReplacement();
 
-                Debug.Log("MAJOR-INTENT-09F20|DoctrineChanged=True|From=" + oldDoctrine +
-                          "|To=" + major.Doctrine +
-                          "|MissionRetained=" + explicitOrder +
-                          "|Objective=" + explicitPoint.x.ToString("0") + "," + explicitPoint.z.ToString("0"));
+                    Debug.Log("MAJOR-INTENT-09F20|DoctrineChanged=True|From=" + oldDoctrine +
+                              "|To=" + major.Doctrine +
+                              "|MissionRetained=" + explicitOrder +
+                              "|Objective=" + explicitPoint.x.ToString("0") + "," + explicitPoint.z.ToString("0"));
+                }
+                else if (major.Doctrine == OfficerAIDoctrine.Defensive)
+                {
+                    // With no explicit commander mission, DEF means take/hold a defensive posture now.
+                    // This avoids the old behaviour where the Major could remain on an OFF attack plan.
+                    autonomousDefensiveLock = true;
+                    Vector3 center = CompanyCenter();
+                    major.IssueOrder(MajorOrder09F18.DefendHere, center, true);
+                    SuppressAutonomousReplacement();
+
+                    Debug.Log("MAJOR-INTENT-09F20|DoctrineChanged=True|From=" + oldDoctrine +
+                              "|To=Defensive|ImmediateReplan=DEFEND|PlayerIntent=False");
+                }
+                else
+                {
+                    autonomousDefensiveLock = false;
+                    // BAL/OFF without explicit commander intent returns control to ThinkMajor immediately.
+                    nextMajorThinkField.SetValue(major, 0f);
+                    Debug.Log("MAJOR-INTENT-09F20|DoctrineChanged=True|From=" + oldDoctrine +
+                              "|To=" + major.Doctrine + "|ImmediateReassessment=True|PlayerIntent=False");
+                }
             }
         }
 
-        if (hasExplicitIntent && major.AIEnabled)
+        if (major.AIEnabled && (hasExplicitIntent || autonomousDefensiveLock))
             SuppressAutonomousReplacement();
+
+        if (!major.AIEnabled)
+            autonomousDefensiveLock = false;
 
         previousPending = pending;
         previousObservedOrder = observedOrder;
@@ -118,6 +146,7 @@ public sealed class PrototypeMajorIntentAuthority09F20 : MonoBehaviour
         explicitOrder = order;
         explicitPoint = point;
         hasExplicitIntent = order != MajorOrder09F18.None;
+        autonomousDefensiveLock = false;
 
         if (hasExplicitIntent && major.AIEnabled)
             SuppressAutonomousReplacement();
@@ -128,10 +157,28 @@ public sealed class PrototypeMajorIntentAuthority09F20 : MonoBehaviour
                   "|MajorAI=" + (major.AIEnabled ? "ON" : "OFF"));
     }
 
+    private Vector3 CompanyCenter()
+    {
+        Vector3 total = Vector3.zero;
+        int count = 0;
+
+        foreach (Regiment regiment in major.Companies)
+        {
+            if (regiment == null || regiment.IsRouted || regiment.CurrentStrength <= 0)
+                continue;
+            total += regiment.transform.position;
+            count++;
+        }
+
+        return count > 0
+            ? total / count
+            : (major.HqRoot != null ? major.HqRoot.transform.position : Vector3.zero);
+    }
+
     private void SuppressAutonomousReplacement()
     {
         // Reserve/flank reviews continue to run. Only the higher-level ThinkMajor mission
-        // replacement is held while a player-issued mission is active.
+        // replacement is held while a player-issued mission (or explicit DEF free-AI posture) is active.
         nextMajorThinkField.SetValue(major, Time.time + 3600f);
     }
 }
