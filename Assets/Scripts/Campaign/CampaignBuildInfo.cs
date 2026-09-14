@@ -2,8 +2,8 @@ public static class CampaignBuildInfo
 {
     // Single source of truth for the overall Campaign3 build shown in UI/log headers.
     // Subsystem class names may retain the version in which that subsystem was introduced.
-    public const string CurrentVersion = "v00.00.10n4";
-    public const string CurrentBuildName = "CAMPAIGN3 HUD + ZONE SELECTION + SHARED BORDER HOTFIX 10N4";
+    public const string CurrentVersion = "v00.00.10n5";
+    public const string CurrentBuildName = "CAMPAIGN3 TACTICAL WITHDRAWAL ORDERS 10N5";
     public const string BranchTarget = "channel-campaign3";
-    public const string LogTag = "CAMPAIGN-10N4";
+    public const string LogTag = "CAMPAIGN-10N5";
 }
