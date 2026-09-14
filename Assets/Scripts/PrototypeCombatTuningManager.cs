@@ -2,18 +2,18 @@ using System.Reflection;
 using UnityEngine;
 
 // Runtime combat QA/tuning panel.
-// v00.00.09f13: the fallen-body control is now tied to the active 09f7/F4
-// casualty display ratio and explicitly supports 1:1 instead of the old legacy
-// minimum of 1 body per 2 casualties.
+// v00.00.09f14: B-271 lethality calibration. The default TEST profile now targets
+// roughly 20-30 hits at CLOSE for a formed ~190-man company while preserving a
+// clear falloff through MEDIUM and LONG. These remain QA values, not final weapon data.
 [DefaultExecutionOrder(-9000)]
 public sealed class PrototypeCombatTuningManager : MonoBehaviour
 {
     public static PrototypeCombatTuningManager Instance { get; private set; }
 
-    public static float BaseHitChancePercent { get; private set; } = 1.40f;
-    public static float CloseRangeMultiplier { get; private set; } = 1.75f;
-    public static float MediumRangeMultiplier { get; private set; } = 1.00f;
-    public static float LongRangeMultiplier { get; private set; } = 0.30f;
+    public static float BaseHitChancePercent { get; private set; } = 12.00f;
+    public static float CloseRangeMultiplier { get; private set; } = 2.00f;
+    public static float MediumRangeMultiplier { get; private set; } = 1.10f;
+    public static float LongRangeMultiplier { get; private set; } = 0.55f;
     public static float FiringFractionPercent { get; private set; } = 58f;
     public static int StartingAmmoRoundsPerMan { get; private set; } = 60;
     public static int CasualtiesPerBody { get; private set; } = 1;
@@ -34,7 +34,7 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeCombatTuningManager>() != null)
             return;
 
-        GameObject managerObject = new GameObject("PrototypeCombatTuningManager_v009f13");
+        GameObject managerObject = new GameObject("PrototypeCombatTuningManager_v009f14");
         managerObject.AddComponent<PrototypeCombatTuningManager>();
     }
 
@@ -57,8 +57,8 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
 
         CasualtiesPerBody = Mathf.Max(1, PrototypeBattleVisuals09F4.CasualtyDisplayRatio);
         Debug.Log(
-            "COMBAT-TUNE-09F13|Installed=True|FallenRatio=1:" + CasualtiesPerBody +
-            "|FallenRatioMin=1|ActiveRendererSync=True");
+            "COMBAT-TUNE-09F14|Installed=True|BaseHit=12.00%|Close=x2.00|Medium=x1.10|Long=x0.55|" +
+            "FiringFraction=58%|TargetCloseHits190Approx=26|FallenRatio=1:" + CasualtiesPerBody);
     }
 
     private void OnDestroy()
@@ -312,7 +312,7 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
             showPanel = false;
         y += 28f;
 
-        BaseHitChancePercent = DrawFloatSlider(x, ref y, w, "Grundtræf pr. skytte", BaseHitChancePercent, 0.05f, 3.00f, BaseHitChancePercent.ToString("0.00") + "%");
+        BaseHitChancePercent = DrawFloatSlider(x, ref y, w, "Grundtræf pr. skytte", BaseHitChancePercent, 0.05f, 20.00f, BaseHitChancePercent.ToString("0.00") + "%");
         CloseRangeMultiplier = DrawFloatSlider(x, ref y, w, "Close range faktor", CloseRangeMultiplier, 0.50f, 3.00f, "x" + CloseRangeMultiplier.ToString("0.00"));
         MediumRangeMultiplier = DrawFloatSlider(x, ref y, w, "Medium range faktor", MediumRangeMultiplier, 0.20f, 2.00f, "x" + MediumRangeMultiplier.ToString("0.00"));
         LongRangeMultiplier = DrawFloatSlider(x, ref y, w, "Long range faktor", LongRangeMultiplier, 0.02f, 1.00f, "x" + LongRangeMultiplier.ToString("0.00"));
@@ -373,10 +373,10 @@ public sealed class PrototypeCombatTuningManager : MonoBehaviour
 
     private static void ResetDefaults()
     {
-        BaseHitChancePercent = 1.40f;
-        CloseRangeMultiplier = 1.75f;
-        MediumRangeMultiplier = 1.00f;
-        LongRangeMultiplier = 0.30f;
+        BaseHitChancePercent = 12.00f;
+        CloseRangeMultiplier = 2.00f;
+        MediumRangeMultiplier = 1.10f;
+        LongRangeMultiplier = 0.55f;
         FiringFractionPercent = 58f;
         StartingAmmoRoundsPerMan = 60;
         MoraleAccuracyFloor = 0.72f;
