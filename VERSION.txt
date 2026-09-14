@@ -1,73 +1,53 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f15
+Prototype version: v00.00.09f16
 Build status: TEST
-Build name: MAJOR HQ + 2 DANISH COMPANIES + 4X AREA MAP + CLOSER ZOOM + UI PASS
-Visible build marker: PROJECT 1864 | v00.00.09f15 TEST
+Build name: MAJOR SELECTION + HOVER + HQ AI TOGGLE + COMPACT SHARED UI + STRAIGHT BATTALION FRONT
+Visible build marker: PROJECT 1864 | v00.00.09f16 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + 09f15 Major HQ/map/UI + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + 09f14 ranged lethality calibration + 09f15 Major HQ/map/UI + 09f16 HQ usability/formation
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
-Current B-271 notes: docs/backlog/B-271-RANGED-COMBAT-CALIBRATION-NOTES.md
-09f15 design supplement: docs/design-supplements/v00.00.09f15-major-hq-map-ui.md
+09f16 design supplement: docs/design-supplements/v00.00.09f16-hq-selection-ui-formation.md
+09f16 backlog: docs/backlog/B-281-HQ-UI-SELECTION-AND-BATTALION-FRONT.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f15 - Battlefield / camera
-- Battlefield changed from 1440 x 960 m to 2880 x 1920 m.
-- This is 2x each linear dimension = 4x battlefield area.
-- Terrain mesh keeps roughly 5 m cells and uses UInt32 indices.
-- Camera minimum height reduced from 16 m to 9.5 m for substantially closer inspection of soldiers, horses and animation.
-- Camera bounds now derive from PrototypeBootstrap battlefield constants rather than the old hardcoded limits.
-- First environment polish pass adds warmer lighting, soft shadows, richer ground/water/road tones, fuller tree crowns and simple farmhouse detail.
+v00.00.09f16 - Major selection and hover
+- Major is now handled as a first-class selectable HQ through PrototypeMajorSelectionBridge09F16.
+- Normal left-click selection flow is preserved: PlayerCommander resolves Regiment selection first; the Major bridge resolves HQ selection immediately afterwards.
+- Selecting Major shows the HQ selection ring and command-links; clicking another unit/ground removes Major selection.
+- Major gets mouse-over tooltip with rank/echelon, HQ AI state, horses, subordinate count and current order.
 
-v00.00.09f15 - Wider river / bridge
-- Visual river width increased from 4.4 m to 5.5 m.
-- River hard-blocker half-width increased to 2.75 m to match the visual river.
-- Bridge remains the only legal open-water crossing.
-- Bridge visual and river navigation now share PrototypeBootstrap.StreamCenterX.
-- Long-route river sampling is dynamic so the larger battlefield cannot skip the narrow river between coarse samples.
+v00.00.09f16 - Major AI toggle
+- Major HQ still starts AI OFF.
+- HQ panel now has a working HQ AI ON/OFF button.
+- PrototypeMajorHQ09F16 provides a first autonomous battalion-AI MVP: periodically evaluate nearest enemy + battalion strength/cohesion and choose HOLD/DEFEND/ADVANCE/ATTACK.
+- This is a temporary behavior baseline; final officer stats/personality/order-compliance logic remains later work.
 
-v00.00.09f15 - Active company-scale test OOB
-- Denmark now keeps two active company-scale units: internal IDs 1. Regiment and 5. Regiment.
-- UI presents them as 1. Kompagni and 2. Kompagni.
-- Prussia keeps 8th Regiment as the single opposing company-scale test unit.
-- All three active units are normalized to 190 men before the existing 09f8 range tuning layer applies.
+v00.00.09f16 - Shared compact bottom UI
+- Major and company panels now use the same dark olive/brass PrototypeUiTheme09F15 visual language.
+- Both panels use the same centered bottom footprint: about 940 x 104 px maximum.
+- Major panel keeps the six HQ orders but is substantially lower than 09f15.
+- Company panel is restyled to the same panel/header/button theme and retains AI, doctrine, facing, fire policy, F9 and aggression controls.
 
-v00.00.09f15 - Major battalion HQ
-- Added PrototypeMajorHQ09F15.
-- Physical HQ is a Danish Major with a mounted officer, three total horses and a small HQ/Dannebrog marker.
-- Major HQ has NO autonomous AI in this build.
-- Selecting Major shows a yellow HQ selection ring and direct command-links to both Danish companies.
-- Major is not registered as a combat Regiment and therefore does not alter victory conditions.
+v00.00.09f16 - Straight battalion DEFEND front
+- FORSVAR HER now computes one common battalion facing from the objective toward the nearest relevant enemy.
+- Both subordinate companies receive slots on one common line perpendicular to that facing.
+- Normal spacing increased to 60 m so ~48 m company fronts do not overlap.
+- On final arrival each company snaps the final <=3.5 m to its exact slot, goes to Line, Holds and receives the exact same final facing.
+- The old per-company nearest-enemy final facing is removed from this completion path because it produced the skewed two-company front seen in 09f15 QA.
 
-v00.00.09f15 - Major HQ UI
-- Added PrototypeUiTheme09F15 for a darker olive/brass command-panel look.
-- Major receives a dedicated HQ panel rather than the company combat panel.
-- HQ panel shows HQ AI OFF, 3 horses, both subordinate companies, strength/losses and current Major mission.
-- Targeted Major orders display an order prompt plus a terrain target-circle preview.
-
-v00.00.09f15 - Six Major orders
-- ANGRIB HER: distribute companies across a battalion frontage and advance toward the chosen area; local enemy contact can convert to direct attack.
-- FORSVAR HER: distribute companies around the selected defensive area and hold in Line after arrival.
-- TILBAGETRÆK HERTIL: organized battalion-level fallback MVP to the selected area.
-- RYK FREM HERTIL: advance the battalion to the selected area without an automatic storm order.
-- HOLD POSITION: cancel active Major missions and hold both companies.
-- SAML HER: concentrate both companies more tightly around the selected point.
-- Subordinate Danish OfficerAIControllers are kept OFF when a Major order is issued so the Major command layer remains authoritative in this first prototype.
-
-v00.00.09f15 - Officer hierarchy documented
-- Company leader = Kaptajn.
-- Battalion leader = Major.
-- Regiment leader = Oberstløjtnant.
-- Brigade leader = Oberst.
-- Division leader = Generalmajor.
-- The design manual notes that historical command appointments could be filled by officers one grade below the normal level after losses or shortages.
-- Courier/order delay remains later work; the approved visual model uses a small rider marker moving along the command-link, not a terrain-pathfinding horse.
+v00.00.09f15 retained
+- Battlefield remains 2880 x 1920 m (4x 09f14 area).
+- Camera minimum height remains 9.5 m.
+- River remains 5.5 m visual width with matching 2.75 m blocker half-width and bridge-only crossing.
+- Denmark has two 190-man companies; Prussia has one 190-man test company.
+- Major HQ remains mounted with three total horses and HQ/Dannebrog marker.
+- Six Major orders remain: ANGRIB HER, FORSVAR HER, TILBAGETRÆK HERTIL, RYK FREM HERTIL, HOLD POSITION, SAML HER.
 
 v00.00.09f14 retained - B-271 ranged lethality calibration
 - F9 defaults remain BaseHit 12.00%, CLOSE x2.00, MEDIUM x1.10, LONG x0.55 and firing fraction 58%.
 - Fresh 190-man CLOSE centerline remains about 26 expected hits before random/quality variation.
-- PrototypeLethalityCalibration09F14 still supplements the old 16-hit kernel ceiling only when that ceiling is reached.
 - Use VOLLEY-CAL-09F14 TotalHits for B-271 tuning.
 
 v00.00.09f13 retained
@@ -81,16 +61,14 @@ v00.00.09f12 retained
 - Farmhouse/Barn detours and overlapping blocker-cluster routing remain active.
 - Bridge traversal remains STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
 
-Primary v00.00.09f15 QA
+Primary v00.00.09f16 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f15 TEST.
-3. Camera can zoom closer than 09f14 and cannot move outside the expanded battlefield bounds.
-4. Battlefield reports 2880 x 1920 m.
-5. River looks slightly wider and open-water crossing is still impossible away from the bridge.
-6. Two Danish companies and one Prussian company are active, each normalized to 190 men.
-7. Major HQ is visible behind the Danish line with three horses and HQ flag.
-8. Clicking Major shows the dedicated HQ panel and command-links to both Danish companies.
-9. Test each targeted Major order: ANGRIB HER / FORSVAR HER / TILBAGETRÆK HERTIL / RYK FREM HERTIL / SAML HER.
-10. HOLD POSITION immediately cancels current Major missions and holds both companies.
-11. Recheck farmhouse/barn detours and bridge routing on the expanded battlefield.
-12. Recheck VOLLEY-CAL-09F14, musket audio, destination chevron, 1:1 fallen and WALK animation for regressions.
+2. Build marker reads PROJECT 1864 | v00.00.09f16 TEST.
+3. Hover Major: tooltip appears without selecting HQ.
+4. Left-click Major: Major selection ring + command-links appear and company selection is cleared by normal selection flow.
+5. Toggle HQ AI OFF -> ON -> OFF from the Major panel; console shows HQ-AI-09F16.
+6. Select a company and Major alternately; both control panels use the same compact bottom visual style/footprint.
+7. Give FORSVAR HER on open terrain: both companies must finish on one straight battalion front with the same facing and without overlapping.
+8. Repeat FORSVAR HER with one or more blockers/river routing in the approach and confirm the final line still resolves after legal pathing.
+9. Recheck the other five Major orders.
+10. Recheck VOLLEY-CAL-09F14, musket audio, destination chevron, 1:1 fallen and WALK animation for regressions.
