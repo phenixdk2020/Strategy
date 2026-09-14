@@ -1,66 +1,70 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f12
+Prototype version: v00.00.09f13
 Build status: TEST
-Build name: DIRECT ATTACK ROUTE AUTHORITY + BUILDING WAYPOINT FIX
-Visible build marker: PROJECT 1864 | v00.00.09f12 TEST
+Build name: DESTINATION FACING + VOLLEY TELEMETRY + MUSKET AUDIO + 1:1 FALLEN CONTROL
+Visible build marker: PROJECT 1864 | v00.00.09f13 TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + formation-ranks doctrine supplement
+Design manual baseline: v00.02.08 + 09f1 control/recovery + 09f2 isolation + 09f3 movement/river + 09f4 visual/orders/flags + 09f5 company-scale/hover + 09f6 tactical selection/march + 09f7 volley/movement/range + 09f8 range/cone/morale/turning QA + 09f9 combat-QA/bridge-routing + 09f10 behaviour rules/fighting withdrawal + 09f11 terrain/pathfinding/map expansion + 09f12 route-authority fix + 09f13 combat-QA/presentation + formation-ranks doctrine supplement
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
-09f11 terrain supplement: docs/design-supplements/v00.00.09f11-terrain-pathfinding-map.md
-09f12 route-authority supplement: docs/design-supplements/v00.00.09f12-route-authority-fix.md
+Current tactical roadmap: docs/backlog/B-270-TACTICAL-PROTOTYPE-NEXT-SEQUENCE.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f12 - Direct ATTACK route authority
-- Added PrototypeAttackRouteAuthority09F12 at execution order -5000 so terrain routing is resolved before normal Regiment movement.
-- A direct ANGREB target remains the strategic mission target, but forcedTarget tracking is temporarily suspended whenever the legal route requires the river/bridge router or the hard-building router.
-- River routing has first priority; approved building avoidance has second priority.
-- While a detour is active, Regiment.Update can no longer rewrite destination straight back to the enemy every frame.
-- When a clear legal approach exists again, the original forced target is restored automatically and normal attack closing/firing resumes.
+v00.00.09f13 - Destination facing indicator
+- Added PrototypeDestinationFacing09F13.
+- Active destination footprint now receives a small yellow chevron at its front edge.
+- Chevron follows the route FinalFacing rather than merely the current regiment rotation.
+- Purpose is to make the final facing readable before the company reaches/stops at the destination.
 
-v00.00.09f12 - Building waypoint persistence
-- PrototypeStaticObstacleRouting09F11 now distinguishes current steering waypoint, already-known final destination and a genuinely new external destination.
-- Repeating the same final destination no longer clears the detour queue.
-- Farmhouse/Barn detours can therefore progress through corner 1 -> corner 2 -> original final destination instead of repeatedly rebuilding corner 1.
-- RequiresDetour() is exposed for the attack-route authority so direct attack orders obey the same approved hard blockers as normal MOVE orders.
+v00.00.09f13 - Volley telemetry for B-271 hit-rate calibration
+- Added PrototypeVolleyTelemetryAudio09F13.
+- Every detected volley now writes a compact VOLLEY-QA-09F13 Console line containing shooter, target, actual distance in metres, CLOSE/MEDIUM/LONG band, firing men, base-hit percentage, range factor, current quality factor, expected hits, resolved hits and target strength remaining.
+- This is intended to collect repeated samples before changing Close-range lethality.
+- Current F9 defaults remain BaseHit=1.40%, Close=x1.75, Medium=x1.00, Long=x0.30 and firing fraction=58%.
 
-v00.00.09f11 retained - Bridge/map/terrain
-- Bridge traversal remains a forward-only state sequence: STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
-- Farmhouse and Barn remain hard blockers; trees and fences remain pass-through.
-- Battlefield remains 1440 x 960 m with scale 1 Unity unit = 1 metre.
+v00.00.09f13 - First-pass musket audio
+- A lightweight procedural 3D black-powder volley sound is generated at runtime, so no external audio asset is required for this QA pass.
+- Sound originates from the firing regiment and uses 3D distance attenuation plus slight pitch variation.
+- This is a placeholder/prototype sound; a historically better recorded/curated musket library can replace it later without changing combat logic.
+
+v00.00.09f13 - Fallen display control repaired
+- F9 'Tab pr. synligt lig' now supports 1 instead of having a hard minimum of 2.
+- The combat-tuning control is synchronized with PrototypeBattleVisuals09F4.CasualtyDisplayRatio, which is the ratio consumed by the active 09f7 renderer.
+- The old duplicate/legacy casualty-manager ratio is no longer allowed to disagree with the active renderer.
+- STANDARD now returns fallen display to 1:1.
+
+v00.00.09f13 - Walking animation status
+- Existing 09f7 renderer already has procedural WALK / Forced March / routed RUN states.
+- WALK currently includes leg/boot swing, arm motion, carried-rifle pose and per-soldier vertical bob.
+- It remains a first-pass procedural primitive animation rather than a skeletal/Mecanim animation; no new animation system is introduced in 09f13.
+
+v00.00.09f12 retained - Route/pathfinding authority
+- Direct ANGREB retains the enemy as mission target while river/building routing owns physical steering when required.
+- Farmhouse/Barn detour waypoints persist and overlapping hard-building clearance is treated as a combined obstacle cluster.
+- Bridge traversal remains STAGE_BRIDGE -> APPROACH_BRIDGE -> CROSS_BRIDGE -> EXIT_BRIDGE -> DIRECT.
+
+v00.00.09f11 retained - Expanded battlefield
+- Battlefield remains 1440 x 960 m, scale 1 Unity unit = 1 metre.
 - River remains extended/widened across the expanded map and bridge-only for legal crossing.
-- RTS camera bounds/zoom/far clip remain expanded for the larger battlefield.
+- Farmhouse and Barn are hard blockers; trees and fences remain pass-through for now.
 
 v00.00.09f10 retained
-- Enemy inside Long/MaximumRange => remain/deploy in Line except when a higher-priority bridge crossing requires Column.
+- Enemy inside Long/MaximumRange => remain/deploy in Line except when bridge passage requires Column.
 - Fighting withdrawal controls remain TRÆK -> MED / LONG / UD.
-- Controlled withdrawal remains Line, covering fire, ~10 m backsteps and ~1.70 m/s backward speed.
 
-v00.00.09f9 retained
-- Officer engagement-range autonomy and current combat QA accuracy remain retained.
-- Particle velocity repair remains active for black-powder smoke.
-
-v00.00.09f8 retained
+v00.00.09f8/f9 retained
 - Current TEST ranges remain Close 35 m, Medium/Effective 70 m and Long/Maximum 100 m.
 - Fire sector remains 70 degrees total (+/-35 degrees).
 - Morale remains locked to 100 for the current hit-rate QA pass; cohesion remains active.
 - Stationary facing remains 16.8 degrees/second.
 
-v00.00.09f7 retained
-- AWAIT -> AIM -> FIRE -> RELOAD visuals, frontage smoke, WALK / Forced March / routed RUN, close casualty placement and exact formation footprints remain retained.
-
-v00.00.09f5/f6 retained
-- Active test companies remain 190 men.
-- Danish 1851 Line baseline remains 3 ranks, approximately 64 + 63 + 63.
-- F9 living/fallen display ratios remain 1:1 / 1:2 / 1:5 / 1:10.
-- Long movement may use Column outside combat-contact rules.
-
-Primary v00.00.09f12 QA
+Primary v00.00.09f13 QA
 1. Unity compiles without red errors.
-2. Build marker reads PROJECT 1864 | v00.00.09f12 TEST.
-3. Give direct ANGREB against the enemy on the opposite river bank: the company must route toward the fixed bridge before normal attack closing resumes.
-4. Repeated OpenWaterPrevented=True warnings must not be the normal mechanism used to keep the unit out of the river.
-5. Give a normal MOVE destination through Farmhouse: the company must pass corner 1, then corner 2, then continue to the original final destination.
-6. Repeat through Barn.
-7. Give ANGREB with Farmhouse/Barn between attacker and target: target intent must be preserved while the company routes around the building, then normal attack behaviour resumes automatically.
-8. Existing 190-man/3-rank company, 35/70/100 m QA ranges, 16.8 deg/s facing, fighting withdrawal, forced march and Officer AI rules remain retained.
+2. Build marker reads PROJECT 1864 | v00.00.09f13 TEST.
+3. Give a move/facing destination: yellow destination rectangle must show a chevron pointing in the final facing direction.
+4. Fire several Close-range volleys and verify Console lines beginning VOLLEY-QA-09F13 show DistanceM, Band and Hits.
+5. Repeat at Medium and Long later so B-271 can compare distributions rather than individual shots.
+6. Musket/volley sound must play from the firing formation and attenuate with camera distance.
+7. F9 'Tab pr. synligt lig' must be able to reach 1 and active fallen rendering must follow it.
+8. Existing procedural WALK state remains active during normal movement.
+9. Recheck object detours/bridge routing to ensure presentation/QA additions did not regress B-270 movement.
