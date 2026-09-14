@@ -2,10 +2,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f3 river-only navigation constraint, extended through v00.00.09f11.
-// Scenery remains pass-through except explicitly approved hard blockers handled by
-// PrototypeStaticObstacleRouting09F11. The stream remains a hard tactical barrier:
-// any route that would cross water is redirected through the fixed bridge at z=22.
+// v00.00.09f3 river-only navigation constraint, extended through v00.00.09f15.
+// The stream remains a hard tactical barrier and the fixed bridge at z=22 remains the
+// only legal crossing. 09f15 widens the blocker to match the new 5.5 m visual river.
 [DefaultExecutionOrder(5000)]
 public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 {
@@ -30,7 +29,7 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
     private FieldInfo destinationField;
     private FieldInfo hasDestinationField;
 
-    private const float RiverHalfWidth = 2.20f;
+    private const float RiverHalfWidth = 2.75f;
     private const float BridgeZ = 22.0f;
     private const float BridgeHalfLengthX = 9.0f;
     private const float BridgeHalfWidthZ = 4.0f;
@@ -66,13 +65,13 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 
         if (destinationField == null || hasDestinationField == null)
         {
-            Debug.LogError("RIVER-09F11|Installed=False|Reason=RegimentMovementFieldsMissing");
+            Debug.LogError("RIVER-09F15|Installed=False|Reason=RegimentMovementFieldsMissing");
             enabled = false;
             return;
         }
 
         Debug.Log(
-            "RIVER-09F11|Installed=True|River=Blocked|Crossing=BridgeOnly|" +
+            "RIVER-09F15|Installed=True|River=Blocked|Width=5.5m|Crossing=BridgeOnly|" +
             "BridgeZ=22|Staging=" + BridgeStagingOffset.ToString("0") +
             "m|Entry=" + BridgeEntryOffset.ToString("0") +
             "m|AttackPreSteering=True|BridgeForcesColumn=True|StrictPhaseMachine=True");
@@ -175,7 +174,7 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
                 {
                     state.LastWaterWarningAt = Time.unscaledTime;
                     Debug.LogWarning(
-                        "RIVER-09F11|Unit=" + regiment.RegimentName +
+                        "RIVER-09F15|Unit=" + regiment.RegimentName +
                         "|OpenWaterPrevented=True|RestoredLastSafe=True|UnexpectedWriter=True");
                 }
             }
@@ -273,7 +272,7 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
                 regiment.SetFormation(RegimentFormation.Column);
 
             Debug.Log(
-                "RIVER-09F11|Unit=" + regiment.RegimentName +
+                "RIVER-09F15|Unit=" + regiment.RegimentName +
                 "|BridgeRoute=True|StartSide=" + state.StartSide +
                 "|ColumnForced=True|Attack=" + continuousAttackGoal);
         }
@@ -291,9 +290,6 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 
         if (!crossedToOtherBank)
         {
-            // v09f11 strict one-way phase machine. The previous implementation could
-            // switch CROSS_BRIDGE back to APPROACH_BRIDGE after the pivot moved more
-            // than 2 m away from nearEntry, producing the oscillation visible in QA.
             if (state.Phase == "STAGE_BRIDGE")
             {
                 if (PlanarDistance(current, nearStaging) > PointArrival)
@@ -318,7 +314,6 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
                 SetPhase(regiment, state, "CROSS_BRIDGE");
             }
 
-            // Once CROSS_BRIDGE begins it may not return to APPROACH_BRIDGE.
             steeringTarget = WithGroundHeight(farEntry);
             state.LastSteeringTarget = steeringTarget;
             if (state.Phase != "CROSS_BRIDGE")
@@ -340,7 +335,7 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
         SetPhase(regiment, state, "DIRECT");
 
         Debug.Log(
-            "RIVER-09F11|Unit=" + regiment.RegimentName +
+            "RIVER-09F15|Unit=" + regiment.RegimentName +
             "|BridgeRoute=False|CrossingComplete=True|FinalGoalResumed=True");
 
         return false;
@@ -411,7 +406,8 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 
     private static bool SegmentTouchesOpenWater(Vector3 a, Vector3 b)
     {
-        const int samples = 64;
+        float length = PlanarDistance(a, b);
+        int samples = Mathf.Clamp(Mathf.CeilToInt(length / 3.0f), 24, 1200);
         for (int i = 0; i <= samples; i++)
         {
             float t = i / (float)samples;
@@ -451,7 +447,7 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 
     private static float StreamCenterX(float z)
     {
-        return Mathf.Sin(z * 0.065f) * 4.8f;
+        return PrototypeBootstrap.StreamCenterX(z);
     }
 
     private static bool NearlySame(Vector3 a, Vector3 b, float tolerance)
@@ -473,7 +469,7 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 
         state.Phase = phase;
         Debug.Log(
-            "RIVER-09F11|Unit=" + regiment.RegimentName +
+            "RIVER-09F15|Unit=" + regiment.RegimentName +
             "|Phase=" + phase +
             "|BridgeOnly=True|Column=" + (regiment.Formation == RegimentFormation.Column));
     }
