@@ -1,6 +1,5 @@
 using UnityEngine;
 
-// v00.00.09f18: Major selection, box-selection, hover, shared AI UI and order input.
 [DefaultExecutionOrder(440)]
 public sealed class PrototypeMajorUi09F18 : MonoBehaviour
 {
@@ -46,6 +45,16 @@ public sealed class PrototypeMajorUi09F18 : MonoBehaviour
     {
         if (Instance == this)
             Instance = null;
+    }
+
+    public void QueueOrder(MajorOrder09F18 order)
+    {
+        pendingOrder = order;
+    }
+
+    private bool UseLookPack()
+    {
+        return PrototypeKampRebuildLook09V.HideLegacyBottomBar && PrototypeKampRebuildLook09V.Instance != null;
     }
 
     private void Update()
@@ -252,6 +261,9 @@ public sealed class PrototypeMajorUi09F18 : MonoBehaviour
 
     public bool IsPointerOverControls(Vector3 mousePosition)
     {
+        if (UseLookPack())
+            return PrototypeKampRebuildLook09V.ContainsPointer(mousePosition);
+
         PrototypeMajorBattalion09F18 major = PrototypeMajorBattalion09F18.Instance;
         if (major == null || !major.Selected)
             return false;
@@ -284,6 +296,9 @@ public sealed class PrototypeMajorUi09F18 : MonoBehaviour
     {
         PrototypeMajorBattalion09F18 major = PrototypeMajorBattalion09F18.Instance;
         if (major == null || !major.Installed)
+            return;
+
+        if (UseLookPack())
             return;
 
         EnsureStyles();
