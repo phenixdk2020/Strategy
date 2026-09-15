@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f1 backport: AI approach-formation policy.
-// Moving AI regiments march in Column while outside the deployment zone and
-// deploy to Line near contact/destination. Formation-only: no destination writes.
+// v00.00.09f29b: authority-safe AI approach-formation policy.
+// Moving AI companies may march in Column outside the deployment zone and deploy to
+// Line near contact, but this layer must not touch formation while a Major or local
+// under-fire reaction owns the company.
 [DefaultExecutionOrder(1350)]
 public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
 {
@@ -23,7 +24,7 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeApproachFormationPolicy09H3>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeApproachFormationPolicy_v000009f1");
+        GameObject root = new GameObject("PrototypeApproachFormationPolicy_v000009f29b");
         root.AddComponent<PrototypeApproachFormationPolicy09H3>();
     }
 
@@ -35,14 +36,14 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
 
         if (hasDestinationField == null || destinationField == null)
         {
-            Debug.LogWarning("FORMATION-09F1-AI|Installed=False|Reason=RegimentMovementFieldsNotFound");
+            Debug.LogWarning("FORMATION-09F29B-AI|Installed=False|Reason=RegimentMovementFieldsNotFound");
             enabled = false;
             return;
         }
 
         Debug.Log(
-            "FORMATION-09F1-AI|Installed=True|Policy=MarchColumnThenDeployLine|" +
-            "FormationWritesOnly=True|MovementWrites=False");
+            "FORMATION-09F29B-AI|Installed=True|Policy=MarchColumnThenDeployLine|" +
+            "FormationWritesOnly=True|MovementWrites=False|AuthoritySafe=True");
     }
 
     private void Update()
@@ -66,6 +67,20 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
         if (ai == null || !ai.AIEnabled)
         {
             SetPolicyState(regiment, false, 0f, "AI_OFF");
+            return;
+        }
+
+        // F27 deliberately disables the local controller while the Major owns movement
+        // to a battalion slot. Treat that as an authority lock, not merely an AI state.
+        if (!ai.enabled)
+        {
+            SetPolicyState(regiment, false, 0f, "HIGHER_COMMAND_OWNS_MOVEMENT");
+            return;
+        }
+
+        if (PrototypeUnderFireReaction09F26.IsReacting(regiment))
+        {
+            SetPolicyState(regiment, false, 0f, "UNDER_FIRE_REACTION_OWNS_FORMATION");
             return;
         }
 
@@ -135,7 +150,7 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
         marchColumnActive[regiment] = active;
 
         Debug.Log(string.Format(
-            "FORMATION-09F1-AI|Unit={0}|MarchColumn={1}|Formation={2}|Distance={3:0.0}|Reason={4}",
+            "FORMATION-09F29B-AI|Unit={0}|MarchColumn={1}|Formation={2}|Distance={3:0.0}|Reason={4}",
             regiment.RegimentName,
             active,
             regiment.Formation,
