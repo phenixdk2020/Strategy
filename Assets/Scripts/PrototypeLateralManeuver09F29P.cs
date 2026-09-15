@@ -20,8 +20,8 @@ public sealed class PrototypeLateralManeuver09F29P : MonoBehaviour
 
     private const float ThinkInterval = 0.30f;
     private const float FriendlyTrigger = 13.0f;
-    private const float DesiredClearance = 19.0f;
-    private const float SideStepDistance = 11.0f;
+    private const float DesiredClearance = 10.5f;
+    private const float SideStepDistance = 12.0f;
     private const float SideStepSpeed = 1.45f;
     private const float ArrivalDistance = 0.45f;
     private const float MaxDuration = 12.0f;
@@ -85,6 +85,11 @@ public sealed class PrototypeLateralManeuver09F29P : MonoBehaviour
             if (blocker == null)
                 continue;
 
+            // Deterministic tie-break: only one company in an overlapping pair moves.
+            // This prevents both formations stepping away from each other in the same frame.
+            if (string.CompareOrdinal(unit.RegimentName ?? string.Empty, blocker.RegimentName ?? string.Empty) < 0)
+                continue;
+
             Vector3 target;
             if (!TryChooseSideStep(unit, blocker, battle.Regiments, out target))
                 continue;
@@ -140,7 +145,7 @@ public sealed class PrototypeLateralManeuver09F29P : MonoBehaviour
                 continue;
             }
 
-            Vector3 step = planar.normalized * SideStepSpeed * Time.unscaledDeltaTime;
+            Vector3 step = planar.normalized * SideStepSpeed * Time.deltaTime;
             if (step.magnitude > planar.magnitude)
                 step = planar;
 
