@@ -1,17 +1,50 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29b
+Prototype version: v00.00.09f29c
 Build status: TEST
-Build name: BATTLEFIELD SCALE + ATTACK AI HARDENING
-Visible build marker: PROJECT 1864 | v00.00.09f29b TEST
+Build name: UNIFIED COMMAND HUD + COMPANY NAMING
+Visible build marker: PROJECT 1864 | v00.00.09f29c TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.10 + tactical design supplements through 09f29b
+Design manual baseline: v00.02.11 + tactical design supplements through 09f29c
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29c design supplement: docs/design-supplements/v00.00.09f29c-unified-command-hud.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
-v00.00.09f29b - Battlefield scale + attack AI hardening
+v00.00.09f29c - Unified command HUD + company naming
+- Adds one compact 90 px tactical command HUD for both Major/Battalion and Company/Kaptajn selection, visually replacing the overlapping legacy bottom controls without changing the existing simulation-control footprint.
+- Major HUD is divided into ENHEDSINFO / AI, BATALJONSORDRER and KOMPAGNIER UNDER MAJOR.
+- Major HUD shows aggregate men, losses, morale, cohesion and ammunition plus one status row for each of the four subordinate companies with men/current strength, losses, morale and ammunition.
+- AI ON is green and AI OFF red. DEF/BAL/OFF use red for inactive and green for the active doctrine.
+- Battalion order buttons are compact and show the pending point-order in green: ANGRIB HER, FORSVAR HER, RYK FREM, TILBAGETRÆK, SAML and STOP/HOLD.
+- Company HUD is divided into ENHEDSINFO, AI/DOKTRIN, SKYDNING, ORDRER/BEVÆGELSE and FORMATION.
+- Company fire controls are grouped as HOLD/CLOSE/MED/LONG with red inactive / green active state.
+- Fighting withdrawal controls are grouped as -> MED, -> LONG and -> UD, with the active common withdrawal mode shown green when all selected companies share it.
+- TVANG, CHARGE and STOP are in the company movement/order group. Forced march and active charge use green state feedback.
+- STOP is a hard direct company command: AI is turned OFF, the manual route is cleared, fighting withdrawal is cancelled, an active infantry charge is ended, forced march is disabled and the unit receives OrderHold().
+- Formation controls are LINJE, KOLONNE and SQUARE. SQUARE now has a visible company-HUD button and uses the existing F29 square implementation rather than a duplicate formation model.
+- Formation buttons are direct company authority just like the existing F/C/Q hotkeys; selecting a formation switches local company AI OFF so the higher mission cannot immediately overwrite the player's formation choice.
+- Danish company display naming is normalized to 1. KOMPAGNI through 8. KOMPAGNI. Legacy internal prototype identifiers such as 1. Regiment / 5. Regiment / 2. Regiment / 3. Regiment are retained internally for compatibility, while Unity GameObject/display names are corrected at runtime.
+- The unified HUD consumes pointer events in the existing 90 px bottom command area after processing its buttons, preventing hidden legacy IMGUI buttons underneath from double-firing.
+- Backup before this revision: backup/channel-test-v00.00.09f29b-pre-09f29c-hud.
+
+Primary v00.00.09f29c QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29c TEST.
+2. Select Major A and Major B separately. Verify one compact HUD appears with ENHEDSINFO / AI, BATALJONSORDRER and four subordinate company rows.
+3. Toggle Major AI and DEF/BAL/OFF. AI ON / active doctrine must be green; inactive states must be red.
+4. Select a Danish company. Verify the HUD title uses KOMPAGNI instead of the old Regiment prototype name.
+5. Verify the eight Danish companies display as 1. KOMPAGNI through 8. KOMPAGNI while command hierarchy/lookup still functions.
+6. Verify company SKYDNING shows HOLD/CLOSE/MED/LONG and the selected fire policy is green.
+7. Verify ORDRER/BEVÆGELSE contains -> MED, -> LONG, -> UD, TVANG, CHARGE and STOP.
+8. Start TVANG, CHARGE or withdrawal and verify the relevant active state is shown green where applicable.
+9. Press STOP during a route/withdrawal/charge. Company must stop, local AI must be OFF, forced march must be cleared and no stale movement order may restart it.
+10. Verify FORMATION contains LINJE, KOLONNE and SQUARE. SQUARE must enter the existing F29 forming/ready state and not create a second square implementation.
+11. Verify clicks on the new HUD do not also trigger the hidden legacy HUD controls underneath.
+12. Regression: Major point-orders still show the officer target-area cursor and use existing F27 mission/slot logic.
+13. Regression: f29b attack authority, sticky targets, bridge routing and river endpoint protection remain active.
+
+Retained from v00.00.09f29b - Battlefield scale + attack AI hardening
 - Tactical battlefield is doubled in both linear dimensions from 2880 x 1920 m to 5760 x 3840 m. This is 2x width, 2x depth and 4x area versus f29a.
 - The road and river are generated across the complete enlarged battlefield instead of ending at the previous map bounds.
 - Vegetation coverage expands to the larger battlefield while retaining the same central farm/bridge QA terrain.
@@ -28,20 +61,6 @@ v00.00.09f29b - Battlefield scale + attack AI hardening
 - Regimental AttackHere role assignment is corrected: when doctrine calls for one battalion forward plus reserve, the battalion nearest the objective remains the front/assault battalion and the farther battalion becomes reserve. Total-travel permutation can no longer make the nearest battalion retreat while the distant battalion passes it.
 - Offensive front+flank assignment uses the same nearest-battalion-as-front rule.
 - Retains f29a terrain-following command hierarchy lines, company -> Major visibility, Major -> Oberstløjtnant visibility, officer target-area cursor and full company-footprint river endpoint protection.
-- Backup before this revision: backup/channel-test-v00.00.09f29a-pre-09f29b.
-
-Primary v00.00.09f29b QA
-1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29b TEST.
-2. Camera can traverse the full 5760 x 3840 m battlefield and the ground, road and river continue to the new bounds.
-3. Verify two hostile Prussian companies are present and both behave as company-scale formations.
-4. Give the Oberstløjtnant a BAL AttackHere order near one battalion. The nearer battalion must remain FRONT; the farther battalion may become RESERVE.
-5. During a Major-owned approach, company controllers are disabled and neither frontage planner nor approach-formation policy may rewrite the route/formation.
-6. When a company reaches its attack area and receives AttackTarget, it must retain that target until it routs/dies or higher authority changes the mission.
-7. With two nearby enemy companies, verify attackers no longer oscillate targets every few seconds merely because nearest-distance ordering changes.
-8. Under-fire reaction still pauses movement, faces the attacker and returns fire without frontage/approach systems fighting it.
-9. Select companies/Majors and verify f29a hierarchy relationship lines remain visible and terrain-following.
-10. Place a defensive/attack formation near the river and verify no company endpoint is accepted with part of the line standing in open water.
-11. Regression: Q square, F reform, infantry charge/melee, bridge routing and direct manual company authority still operate.
 
 v00.00.09f29 - Infantry square / cavalry-threat foundation
 - Adds first runtime KARRÉ/SQUARE state for Danish infantry companies without replacing the stable Line/Column movement kernel.
