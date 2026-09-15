@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-// v00.00.09f8 fire-range visual authority.
+// v00.00.09f8 fire-range visual authority, hardened by v00.00.09f29n.
 // Keeps the 70-degree sector, gives Close/Medium/Long the same side-boundary rays,
-// and hides range fans while the company is in Column or physically reforming to Line.
+// and hides range fans while the company is in Column, physically reforming to Line,
+// explicitly charging, or participating in charge-created bayonet melee.
 [DefaultExecutionOrder(35000)]
 public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
 {
@@ -59,8 +60,9 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
         };
 
         Debug.Log(
-            "FIRE-VISUAL-09F8|Installed=True|Ranges=35/70/100m|Cone=70deg|" +
-            "SharedSideRays=True|HiddenInColumn=True|HiddenDuringReform=True");
+            "FIRE-VISUAL-09F29N|Installed=True|Ranges=35/70/100m|Cone=70deg|" +
+            "SharedSideRays=True|HiddenInColumn=True|HiddenDuringReform=True|" +
+            "HiddenDuringCharge=True|HiddenDuringChargeMelee=True");
     }
 
     private void OnDestroy()
@@ -81,7 +83,8 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
                 continue;
 
             bool formationReady = UpdateAndGetFormationReady(regiment);
-            bool visible = regiment.IsSelected && regiment.ShowRange && formationReady;
+            bool chargeSuppressed = IsChargeFireSuppressed(regiment);
+            bool visible = regiment.IsSelected && regiment.ShowRange && formationReady && !chargeSuppressed;
             FormationBounds bounds = CalculateBounds(regiment.Formation, regiment.CurrentStrength);
 
             BuildFan(
@@ -115,7 +118,16 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
 
     public bool IsFormationFireReady(Regiment regiment)
     {
-        return regiment != null && UpdateAndGetFormationReady(regiment);
+        return regiment != null &&
+               !IsChargeFireSuppressed(regiment) &&
+               UpdateAndGetFormationReady(regiment);
+    }
+
+    private static bool IsChargeFireSuppressed(Regiment regiment)
+    {
+        PrototypeInfantryCharge09F25 charge = PrototypeInfantryCharge09F25.Instance;
+        return charge != null &&
+               (charge.IsCharging(regiment) || charge.IsChargeMeleeParticipant(regiment));
     }
 
     private bool UpdateAndGetFormationReady(Regiment regiment)
@@ -212,7 +224,7 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
         Vector3 leftFront = frontCenter - right * halfWidth;
         Vector3 rightFront = frontCenter + right * halfWidth;
 
-        // Each range uses the SAME left/right direction rays.  The origin for the
+        // Each range uses the SAME left/right direction rays. The origin for the
         // arc is interpolated across the whole firing frontage, which prevents the
         // shorter fans from visually pinching inward compared with Long range.
         List<Vector3> points = new List<Vector3>(ArcSegments + 4);
