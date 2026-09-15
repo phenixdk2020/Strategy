@@ -2,9 +2,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f2 isolation baseline, extended by v00.00.09f17.
-// 09f17 keeps four Danish company-scale units versus one Prussian test company so the
-// Major can practice frontage, reserve and flanking behavior without re-enabling legacy OOB.
+// v00.00.09f29b scenario hardening.
+// Keeps four Danish company-scale units versus TWO Prussian test companies so target
+// allocation, attack frontage and regimental role decisions can be exercised against
+// more than one hostile formation.
 [DefaultExecutionOrder(-12000)]
 public sealed class PrototypeScenario09F2 : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeScenario09F2>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeScenario_v000009f17");
+        GameObject root = new GameObject("PrototypeScenario_v000009f29b");
         root.AddComponent<PrototypeScenario09F2>();
     }
 
@@ -30,7 +31,7 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
             expanded.enabled = false;
 
         BattleManager battle = BattleManager.Instance;
-        if (battle == null || battle.Regiments == null || battle.Regiments.Count < 3)
+        if (battle == null || battle.Regiments == null || battle.Regiments.Count < 4)
             return;
 
         FieldInfo regimentsField = typeof(BattleManager).GetField(
@@ -43,7 +44,7 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
 
         if (regiments == null)
         {
-            Debug.LogError("SCENARIO-09F17|Applied=False|Reason=BattleManager.regiments_not_found");
+            Debug.LogError("SCENARIO-09F29B|Applied=False|Reason=BattleManager.regiments_not_found");
             enabled = false;
             return;
         }
@@ -65,7 +66,8 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
                 regiment.RegimentName == "5. Regiment" ||
                 regiment.RegimentName == "2. Regiment" ||
                 regiment.RegimentName == "3. Regiment" ||
-                regiment.RegimentName == "8th Regiment";
+                regiment.RegimentName == "8th Regiment" ||
+                regiment.RegimentName == "18th Regiment";
 
             if (keep)
                 continue;
@@ -78,13 +80,16 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
         Regiment danish2 = FindRegiment(regiments, "5. Regiment");
         Regiment danish3 = FindRegiment(regiments, "2. Regiment");
         Regiment danish4 = FindRegiment(regiments, "3. Regiment");
-        Regiment prussian = FindRegiment(regiments, "8th Regiment");
+        Regiment prussian1 = FindRegiment(regiments, "8th Regiment");
+        Regiment prussian2 = FindRegiment(regiments, "18th Regiment");
 
-        SetPose(danish1, new Vector3(-220f, 0f, -90f), Quaternion.Euler(0f, 90f, 0f));
-        SetPose(danish2, new Vector3(-220f, 0f, -30f), Quaternion.Euler(0f, 90f, 0f));
-        SetPose(danish3, new Vector3(-220f, 0f, 30f), Quaternion.Euler(0f, 90f, 0f));
-        SetPose(danish4, new Vector3(-220f, 0f, 90f), Quaternion.Euler(0f, 90f, 0f));
-        SetPose(prussian, new Vector3(220f, 0f, 0f), Quaternion.Euler(0f, -90f, 0f));
+        SetPose(danish1, new Vector3(-320f, 0f, -90f), Quaternion.Euler(0f, 90f, 0f));
+        SetPose(danish2, new Vector3(-320f, 0f, -30f), Quaternion.Euler(0f, 90f, 0f));
+        SetPose(danish3, new Vector3(-320f, 0f, 30f), Quaternion.Euler(0f, 90f, 0f));
+        SetPose(danish4, new Vector3(-320f, 0f, 90f), Quaternion.Euler(0f, 90f, 0f));
+
+        SetPose(prussian1, new Vector3(620f, 0f, -70f), Quaternion.Euler(0f, -90f, 0f));
+        SetPose(prussian2, new Vector3(620f, 0f, 90f), Quaternion.Euler(0f, -90f, 0f));
 
         Collider[] colliders = Object.FindObjectsByType<Collider>();
         int disabledSceneryColliders = 0;
@@ -114,8 +119,8 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
 
         applied = true;
         Debug.Log(
-            "SCENARIO-09F17|Applied=True|DenmarkCompanies=4|PrussiaCompanies=1|" +
-            "InternalDanishIds=1.Regiment,5.Regiment,2.Regiment,3.Regiment|" +
+            "SCENARIO-09F29B|Applied=True|DenmarkCompanies=4|PrussiaCompanies=2|" +
+            "EnemyIds=8th.Regiment,18th.Regiment|StartSeparation=940m|" +
             "HardBlockers=Farmhouse,Barn|HouseColliders=" + preservedHouseColliders +
             "|DisabledOtherSceneryColliders=" + disabledSceneryColliders);
     }
@@ -135,9 +140,7 @@ public sealed class PrototypeScenario09F2 : MonoBehaviour
         Regiment regiment = unit.AddComponent<Regiment>();
         regiment.Initialize(name, BattleTeam.Denmark, strength, false, position);
 
-        // Regiment.Initialize registers itself with BattleManager; regiments references
-        // that same authoritative list, so no separate Add is required here.
-        Debug.Log("SCENARIO-09F17|SpawnedExtraCompany=True|InternalId=" + name);
+        Debug.Log("SCENARIO-09F29B|SpawnedExtraCompany=True|InternalId=" + name);
     }
 
     private static Regiment FindRegiment(List<Regiment> regiments, string name)
