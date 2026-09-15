@@ -2,10 +2,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f29b: authority-safe AI approach-formation policy.
-// Moving AI companies may march in Column outside the deployment zone and deploy to
-// Line near contact, but this layer must not touch formation while a Major or local
-// under-fire reaction owns the company.
+// v00.00.09f29j: pre-contact deployment hardening.
+// Moving AI companies may march in Column while safely outside hostile long range, but
+// must deploy to Line before crossing an enemy's maximum firing range. This protection
+// also applies while a Major owns physical movement: higher command keeps movement
+// authority, while this policy is allowed to perform the safety-critical Column -> Line
+// formation change only. It never writes a movement destination.
 [DefaultExecutionOrder(1350)]
 public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
 {
@@ -16,7 +18,8 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
     private FieldInfo destinationField;
 
     private const float MinimumWaypointColumnDistance = 16f;
-    private const float DeploymentBuffer = 12f;
+    private const float EnemyLongRangeDeploymentBuffer = 10f;
+    private const float ColumnReentryHysteresis = 14f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -24,7 +27,7 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeApproachFormationPolicy09H3>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeApproachFormationPolicy_v000009f29b");
+        GameObject root = new GameObject("PrototypeApproachFormationPolicy_v000009f29j");
         root.AddComponent<PrototypeApproachFormationPolicy09H3>();
     }
 
@@ -36,14 +39,15 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
 
         if (hasDestinationField == null || destinationField == null)
         {
-            Debug.LogWarning("FORMATION-09F29B-AI|Installed=False|Reason=RegimentMovementFieldsNotFound");
+            Debug.LogWarning("FORMATION-09F29J-AI|Installed=False|Reason=RegimentMovementFieldsNotFound");
             enabled = false;
             return;
         }
 
         Debug.Log(
-            "FORMATION-09F29B-AI|Installed=True|Policy=MarchColumnThenDeployLine|" +
-            "FormationWritesOnly=True|MovementWrites=False|AuthoritySafe=True");
+            "FORMATION-09F29J-AI|Installed=True|Policy=MarchColumnDeployBeforeEnemyLongRange|" +
+            "EnemyLongBuffer=" + EnemyLongRangeDeploymentBuffer.ToString("0") +
+            "|FormationWritesOnly=True|MovementWrites=False|HigherCommandPreContactDeploy=True");
     }
 
     private void Update()
@@ -63,18 +67,18 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
 
     private void ApplyPolicy(Regiment regiment, BattleManager battle)
     {
+        // Square is a stronger tactical formation state and owns its own physical rules.
+        // Never collapse an active square to Line/Column from the approach policy.
+        if (PrototypeInfantrySquare09F29.IsInSquare(regiment))
+        {
+            SetPolicyState(regiment, false, 0f, "SQUARE_OWNS_FORMATION");
+            return;
+        }
+
         OfficerAIController ai = regiment.GetComponent<OfficerAIController>();
         if (ai == null || !ai.AIEnabled)
         {
             SetPolicyState(regiment, false, 0f, "AI_OFF");
-            return;
-        }
-
-        // F27 deliberately disables the local controller while the Major owns movement
-        // to a battalion slot. Treat that as an authority lock, not merely an AI state.
-        if (!ai.enabled)
-        {
-            SetPolicyState(regiment, false, 0f, "HIGHER_COMMAND_OWNS_MOVEMENT");
             return;
         }
 
@@ -85,14 +89,49 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
         }
 
         bool hasDestination = (bool)hasDestinationField.GetValue(regiment);
-        if (!hasDestination)
+        Vector3 destination = hasDestination
+            ? (Vector3)destinationField.GetValue(regiment)
+            : regiment.transform.position;
+        float destinationDistance = hasDestination
+            ? PlanarDistance(regiment.transform.position, destination)
+            : 0f;
+
+        Regiment nearestEnemy = FindNearestEnemy(regiment, battle);
+        float enemyDistance = nearestEnemy != null
+            ? PlanarDistance(regiment.transform.position, nearestEnemy.transform.position)
+            : float.PositiveInfinity;
+
+        // Deploy against the ENEMY weapon envelope, not our own. A formation therefore
+        // finishes changing out of march column before it crosses hostile LONG range.
+        float hostileLongRange = nearestEnemy != null
+            ? nearestEnemy.MaximumRange
+            : regiment.MaximumRange;
+        float deployDistance = hostileLongRange + EnemyLongRangeDeploymentBuffer;
+
+        // F27 deliberately disables OfficerAIController while the Major owns physical
+        // movement to a battalion/company slot. Movement authority remains with F27,
+        // but formation safety must still be able to deploy the company before enemy fire.
+        if (!ai.enabled)
         {
-            SetPolicyState(regiment, false, 0f, "NO_DESTINATION");
+            if (hasDestination && nearestEnemy != null && enemyDistance <= deployDistance)
+            {
+                DeployLine(regiment);
+                SetPolicyState(regiment, false, enemyDistance, "HIGHER_COMMAND_PRECONTACT_DEPLOY");
+            }
+            else
+            {
+                SetPolicyState(regiment, false, enemyDistance, "HIGHER_COMMAND_OWNS_MOVEMENT");
+            }
             return;
         }
 
-        Vector3 destination = (Vector3)destinationField.GetValue(regiment);
-        float destinationDistance = PlanarDistance(regiment.transform.position, destination);
+        if (!hasDestination)
+        {
+            DeployLine(regiment);
+            SetPolicyState(regiment, false, enemyDistance, "NO_DESTINATION");
+            return;
+        }
+
         if (destinationDistance <= 3.5f)
         {
             DeployLine(regiment);
@@ -100,28 +139,28 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
             return;
         }
 
-        Regiment nearestEnemy = FindNearestEnemy(regiment, battle);
-        float enemyDistance = nearestEnemy != null
-            ? PlanarDistance(regiment.transform.position, nearestEnemy.transform.position)
-            : float.PositiveInfinity;
-
-        float deployDistance = regiment.EffectiveRange + DeploymentBuffer;
-
         bool attackMission =
             ai.Mission == OfficerAIMission.AttackNearest ||
             ai.Mission == OfficerAIMission.AttackTarget;
 
         bool moveMission = ai.Mission == OfficerAIMission.MoveToPoint;
 
+        // Hysteresis prevents Line <-> Column oscillation if the enemy or formation
+        // hovers around the deployment threshold. Once deployed, a company needs a
+        // clearly larger safety gap before it may reform march column again.
+        bool wasMarchColumn = false;
+        marchColumnActive.TryGetValue(regiment, out wasMarchColumn);
+        float columnThreshold = deployDistance + (wasMarchColumn ? 0f : ColumnReentryHysteresis);
+
         bool shouldMarchColumn =
-            (attackMission && enemyDistance > deployDistance) ||
+            (attackMission && enemyDistance > columnThreshold) ||
             (moveMission && destinationDistance > MinimumWaypointColumnDistance &&
-             enemyDistance > deployDistance);
+             enemyDistance > columnThreshold);
 
         if (!shouldMarchColumn)
         {
             DeployLine(regiment);
-            SetPolicyState(regiment, false, enemyDistance, "DEPLOYMENT_ZONE");
+            SetPolicyState(regiment, false, enemyDistance, "BEFORE_ENEMY_LONG_RANGE");
             return;
         }
 
@@ -133,8 +172,12 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
 
     private static void DeployLine(Regiment regiment)
     {
-        if (regiment != null && regiment.Formation != RegimentFormation.Line)
+        if (regiment != null &&
+            !PrototypeInfantrySquare09F29.IsInSquare(regiment) &&
+            regiment.Formation != RegimentFormation.Line)
+        {
             regiment.SetFormation(RegimentFormation.Line);
+        }
     }
 
     private void SetPolicyState(
@@ -150,7 +193,7 @@ public sealed class PrototypeApproachFormationPolicy09H3 : MonoBehaviour
         marchColumnActive[regiment] = active;
 
         Debug.Log(string.Format(
-            "FORMATION-09F29B-AI|Unit={0}|MarchColumn={1}|Formation={2}|Distance={3:0.0}|Reason={4}",
+            "FORMATION-09F29J-AI|Unit={0}|MarchColumn={1}|Formation={2}|Distance={3:0.0}|Reason={4}",
             regiment.RegimentName,
             active,
             regiment.Formation,
