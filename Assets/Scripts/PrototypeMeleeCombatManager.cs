@@ -2,6 +2,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
+// v00.00.09f25 melee core, hardened by v00.00.09f29n.
+// Normal melee may start on collider contact, but an explicit CHARGE is allowed to drive
+// deeper into the hostile footprint before both formations are stopped. This removes the
+// visible no-man's-land that previously appeared between charging companies.
 [DefaultExecutionOrder(1500)]
 public sealed class PrototypeMeleeCombatManager : MonoBehaviour
 {
@@ -19,6 +23,7 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
 
     private const float PulseInterval = 1.25f;
     private const float ContactDistance = 7.0f;
+    private const float ChargeDeepContactDistance = 2.2f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -58,7 +63,8 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
             return;
         }
 
-        Debug.Log("MELEE-DIAG|Installed=True|Version=09f25|Type=InfantryBayonetContact|Pulse=1.25s|ChargeMomentum=True|Sector=True");
+        Debug.Log("MELEE-DIAG|Installed=True|Version=09f29n|Type=InfantryBayonetContact|Pulse=1.25s|ChargeDeepContact=" +
+                  ChargeDeepContactDistance.ToString("0.0") + "m|ChargeMomentum=True|Sector=True");
     }
 
     private void Update()
@@ -80,6 +86,15 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
                 if (!CanMelee(b) || a.Team == b.Team)
                     continue;
 
+                float distance = PlanarDistance(a.transform.position, b.transform.position);
+                bool explicitCharge = IsCharging(a) || IsCharging(b);
+
+                // Collider overlap begins while the visual lines are still several metres
+                // apart. During an explicit charge do not let that early overlap stop the
+                // attacker; allow it to penetrate into the enemy footprint first.
+                if (explicitCharge && distance > ChargeDeepContactDistance)
+                    continue;
+
                 if (!AreInContact(a, b))
                     continue;
 
@@ -90,18 +105,22 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
                 FaceOpponent(a, b);
                 FaceOpponent(b, a);
 
-                nextFireTimeField.SetValue(a, Time.time + 0.40f);
-                nextFireTimeField.SetValue(b, Time.time + 0.40f);
+                // Regiment.Update runs earlier in the frame. Keeping the next volley in
+                // the future every melee frame suppresses musket fire for both sides while
+                // bayonet contact is active without destroying their chosen fire policy.
+                nextFireTimeField.SetValue(a, Time.time + 1.0f);
+                nextFireTimeField.SetValue(b, Time.time + 1.0f);
 
                 string key = BuildPairKey(a, b);
                 if (!nextPulseByPair.TryGetValue(key, out float nextPulse))
                 {
                     nextPulseByPair[key] = Time.time + 0.20f;
                     Debug.Log(string.Format(
-                        "MELEE-DIAG|Contact=True|A={0}|B={1}|Distance={2:0.0}|ChargeA={3}|ChargeB={4}",
+                        "MELEE-DIAG|Contact=True|A={0}|B={1}|Distance={2:0.0}|ExplicitCharge={3}|ChargeA={4}|ChargeB={5}",
                         a.RegimentName,
                         b.RegimentName,
-                        PlanarDistance(a.transform.position, b.transform.position),
+                        distance,
+                        explicitCharge,
                         HasChargeMomentum(a),
                         HasChargeMomentum(b)));
                     continue;
@@ -274,6 +293,12 @@ public sealed class PrototypeMeleeCombatManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    private static bool IsCharging(Regiment regiment)
+    {
+        return PrototypeInfantryCharge09F25.Instance != null &&
+               PrototypeInfantryCharge09F25.Instance.IsCharging(regiment);
     }
 
     private static bool HasChargeMomentum(Regiment regiment)
