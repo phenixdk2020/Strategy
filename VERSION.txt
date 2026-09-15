@@ -1,16 +1,48 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29c
+Prototype version: v00.00.09f29d
 Build status: TEST
-Build name: UNIFIED COMMAND HUD + COMPANY NAMING
-Visible build marker: PROJECT 1864 | v00.00.09f29c TEST
+Build name: SEMANTIC ZOOM + NATO TACTICAL OVERLAY
+Visible build marker: PROJECT 1864 | v00.00.09f29d TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.11 + tactical design supplements through 09f29c
+Design manual baseline: v00.02.12 + tactical design supplements through 09f29d
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29d design supplement: docs/design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md
 09f29c design supplement: docs/design-supplements/v00.00.09f29c-unified-command-hud.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29d - Semantic zoom + NATO tactical overlay
+- Adds a new runtime semantic zoom manager with four visual levels: CLOSE, MEDIUM, OPERATIONAL and STRATEGIC.
+- HQ visibility is prioritized: Major/Battalion and Regimental HQ receive fixed-screen-size tactical counters from moderate zoom, before generic company counters appear.
+- Major/Battalion counters use NATO echelon II and Regimental/Oberstløjtnant uses III; company-scale infantry uses I.
+- Operational zoom overlays all company-scale formations on both sides with NATO-style infantry counters, facing arrows, strength bars, current/initial men and morale; Danish counters also show ammunition.
+- Friendly counters are blue, enemy red, selected units/HQ gold and routed units grey.
+- Strategic zoom hides company/HQ MeshRenderers and ParticleSystemRenderers while leaving terrain, simulation, colliders, AI, LineRenderers, command links and order state active. The result is a 2D tactical-symbol layer over the 3D battlefield.
+- Zooming back in restores the hidden 3D meshes.
+- Dynamic refresh ensures newly created flag/HQ/company renderers inherit the current strategic visibility state.
+- HQ counters include a screen-space beacon/stem down to the real world position so commanders remain locatable over terrain and units.
+- The two company-scale Prussian QA entities are displayed in the semantic overlay as PR. 1. KOMPAGNI and PR. 2. KOMPAGNI, while their legacy internal identifiers remain unchanged for compatibility.
+- Current QA thresholds use camera height: HQ markers ~72 m, Medium ~135 m, Operational ~235 m, Strategic ~390 m. A later design phase may replace this with projected screen-footprint thresholds.
+- Adds a top-right tactical-view indicator while not in Close view.
+- New telemetry prefix: SEMANTIC-ZOOM-09F29D.
+- Design proposal and future path documented in docs/design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md.
+- Backup before this revision: backup/channel-test-v00.00.09f29c-pre-09f29d-semantic-zoom.
+
+Primary v00.00.09f29d QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29d TEST.
+2. Close zoom retains normal 3D soldiers, flags, HQ models and tactical visuals.
+3. Above ~72 m camera height, Major A, Major B and Oberstløjtnant become clearly visible through HQ counters/beacons.
+4. A selected company gets a counter before full operational company overlay activates.
+5. Operational zoom shows all current Danish and Prussian company-scale formations with I echelon counters.
+6. Major/Battalion shows II; Regimental/Oberstløjtnant shows III.
+7. Verify blue friendly, red enemy, gold selected and grey routed presentation.
+8. Facing arrow must follow each company formation's current forward direction.
+9. Strategic zoom hides company/HQ 3D meshes but preserves terrain, command/range lines, AI, selection colliders and simulation state.
+10. Zoom back below Strategic threshold and verify all 3D company/HQ meshes return.
+11. Verify command relationship lines from f29a remain readable while strategic symbols are active.
+12. Regression: f29c HUD, f29b attack authority, square, charge, bridge routing and river endpoint protection continue unchanged.
 
 v00.00.09f29c - Unified command HUD + company naming
 - Adds one compact 90 px tactical command HUD for both Major/Battalion and Company/Kaptajn selection, visually replacing the overlapping legacy bottom controls without changing the existing simulation-control footprint.
