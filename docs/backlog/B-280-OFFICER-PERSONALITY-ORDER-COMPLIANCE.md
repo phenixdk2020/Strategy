@@ -120,18 +120,76 @@ En senere mulighed kan være at lade spilleren vælge hvor stramt ordren skal f�
 
 STRICT bør have en pris, fx længere ordre-delay, dårligere lokal reaktion eller større risiko for at ordren bliver forældet, så det ikke altid er den bedste løsning.
 
+## Taktisk mulighed: flankering af en allerede engageret fjende
+
+Når en fjendtlig enhed allerede er bundet i kamp med et andet kompagni, må en kompagni-officer senere kunne vurdere, om han midlertidigt kan fortolke sin overordnede ordre og søge en bedre skudposition mod den optagede fjende.
+
+Det må **ikke** være en automatisk regel for alle kompagnier. Beslutningen skal komme fra kaptajnens egne stats og erfaring.
+
+### Dygtig kaptajn
+
+En officer med høj **Tactical Skill**, **Initiative**, **Experience** og **Composure** bør oftere kunne:
+
+- opdage at en fjende er bundet af en anden venlig enhed;
+- se om fjenden vender ryggen eller siden til;
+- bruge en kort **Side Step** eller **Oblique** manøvre for at få fri frontage;
+- komme ind på valgt CLOSE/MED/LONG skudhold uden først at dreje hele formationen mod bevægelsesretningen;
+- undgå positioner hvor andre fjender kan skyde ham i ryg eller side;
+- bevare den overordnede mission og vende tilbage til den, når den lokale mulighed er væk.
+
+### Svag eller overaggressiv kaptajn
+
+En officer med lav Tactical Skill/Experience eller lav Composure kan fejlbedømme samme situation. Høj Aggressiveness og høj Initiative kan få ham til at forsøge manøvren alligevel, selv om:
+
+- hans egen flanke bliver eksponeret;
+- en anden fjendtlig enhed har fri cone mod den nye position;
+- han bevæger sig for langt fra Majorens hensigt;
+- den bundne fjende ikke er så optaget, som han tror.
+
+Det skal være en **risikovurderingsfejl**, ikke en fast regel om at dårlige officerer altid gør noget dumt.
+
+### Foreslået beslutningsmodel
+
+En senere `TacticalOpportunityScore` kan blande:
+
+- Tactical Skill: kvalitet af positionsvalg og trusselsvurdering;
+- Initiative: sandsynlighed for selv at handle;
+- Experience: reducerer decision noise og fejlvurdering;
+- Composure: kvalitet under ild/kaos;
+- Discipline: vægt mod at blive i den overordnede mission;
+- Aggressiveness: øger villighed til at acceptere risiko;
+- Morale/Cohesion: hvor realistisk manøvren er lige nu;
+- synlige fjendtlige fire cones: risiko mod front/flanke/ryg;
+- afstand til egen Major/HQ og parent objective.
+
+En god officer bør derfor have en høj sandsynlighed for at tage **gode** muligheder og en lav sandsynlighed for at tage åbenlyst dårlige muligheder. En dårlig/overaggressiv officer kan både overse gode muligheder og acceptere farlige.
+
+### Authority
+
+Denne opportunistiske manøvre er lokal kaptajnsmyndighed og må ikke afbryde højere prioriterede states:
+
+1. rout / tvungen tilbagetrækning;
+2. charge / melee;
+3. square / cavalry emergency;
+4. bridge-only crossing;
+5. direkte under-fire emergency reaction;
+6. derefter tactical opportunity;
+7. ellers parent Major/regimental mission.
+
+F29P leverer **Side Step-bevægelsen og kort/kamera-synligheden**, men den fulde stat-baserede opportunistiske AI skal aktiveres i en senere revision, så den kan bygges oven på en stabil fysisk manøvre.
+
 ## Vigtig designregel
 
 > En dygtig officer skal ikke nødvendigvis være den mest lydige officer. En højtkvalificeret, initiativrig officer kan tilsidesætte detaljer i en ordre og stadig skabe et bedre resultat; en aggressiv eller dårlig officer kan gøre det samme og skabe en katastrofe.
 
 ## Implementeringsrækkefølge
 
-Denne feature kommer **senere**. Før den aktiveres skal følgende være stabile:
+Denne feature kommer **senere**. Før den fulde personlighedsmodel aktiveres skal følgende være stabile:
 
 1. pathfinding / destination routing;
 2. ranged lethality;
 3. melee baseline;
 4. fysisk HQ/Major-enhed;
-5. Major styrer 1 kompagni;
-6. Major styrer 2 kompagnier;
-7. først derefter personlighed, ordrelydighed og selvstændig fortolkning.
+5. Major styrer flere kompagnier stabilt;
+6. Side Step / Oblique og lokal contact authority;
+7. først derefter fuld personlighed, ordrelydighed og selvstændig opportunistisk fortolkning.
