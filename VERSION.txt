@@ -1,12 +1,13 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29o
+Prototype version: v00.00.09f29p
 Build status: TEST
-Build name: ENEMY THREAT CONES + FLANK CONTACT
-Visible build marker: PROJECT 1864 | v00.00.09f29o TEST
+Build name: TACTICAL MAP + CAMERA NAV + LATERAL MANOEUVRE
+Visible build marker: PROJECT 1864 | v00.00.09f29p TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.13 + tactical design supplements through 09f29o
+Design manual baseline: v00.02.13 + tactical design supplements through 09f29p
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29p design supplement: docs/design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md
 09f29o design supplement: docs/design-supplements/v00.00.09f29o-contact-threat-visibility.md
 09f29n design supplement: docs/design-supplements/v00.00.09f29n-charge-melee-hq-spacing.md
 09f29m design supplement: docs/design-supplements/v00.00.09f29m-square-active-renderer-fix.md
@@ -22,6 +23,38 @@ Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29p - Tactical map + camera navigation + lateral manoeuvre + visual polish
+- Adds a compact tactical overview map above the command HUD with dynamic bounds around the active battle.
+- Map markers: Danish blue, Prussian red, selected unit yellow, Major HQ cyan, Oberstløjtnant HQ gold, camera direction white.
+- Tactical map also sketches the road and river so unit positions are easier to recognise spatially.
+- M toggles the tactical map.
+- F focuses the camera on the selected company/HQ while preserving tactical camera orientation/height.
+- Shift+F moves the camera behind the selected formation at close tactical height and aligns the camera with unit facing.
+- F1/F2 focus Major A/B; F3 focuses Oberstløjtnant; N reorients the camera north.
+- Map panel adds < / N / > rotation buttons plus FOCUS and BAG quick-navigation buttons.
+- Adds a short formation-preserving Side Step for friendly frontage overlap: about 12 m lateral displacement at 1.45 m/s while original facing is preserved.
+- Side Step does not rotate the line toward travel, does not convert to Column and pauses while higher-priority Charge/melee, Square, bridge, under-fire or local-contact states own the company.
+- Only one company in an overlapping pair moves; the clearest left/right side is selected and a move into the river corridor is rejected.
+- Adds presentation-only company captain figures, distinct Major/Oberstløjtnant staff groups and subtle field-boundary dressing with no colliders/navigation impact.
+- Existing F7 rank-and-file renderer and F4 national/regimental standards remain authoritative.
+- Expands B-280 officer-personality backlog with future TacticalOpportunity logic: a good captain should exploit an already engaged enemy only after evaluating flank/rear exposure, while a weak or over-aggressive captain may misjudge the same risk according to stats and decision noise.
+- Full stat-driven opportunistic mission override is documented but intentionally not activated in F29P; F29P first stabilises the physical Side Step/visibility foundation.
+- Backup: backup/channel-test-v00.00.09f29o-pre-09f29p-navigation-visuals.
+
+Primary v00.00.09f29p QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29p TEST.
+2. Press M and verify the tactical map toggles on/off.
+3. Verify Danish/Prussian/selected/Major/Oberstløjtnant markers plus road/river are readable on the map.
+4. Select a company and test F; camera focuses the company. Test Shift+F; camera moves behind the unit and aligns with facing.
+5. Test map < / N / > plus F1/F2/F3 quick camera navigation.
+6. Put two friendly companies closer than about 13 m. Only one should step roughly 12 m laterally and preserve its original facing.
+7. During Side Step the company must remain in its current formation and must not rotate 90 degrees toward travel.
+8. Verify Side Step does not interrupt Charge/melee, Square, bridge route, under-fire reaction or active local AttackContact.
+9. Verify captain/HQ staff graphics and field boundaries are visible but create no collision/pathfinding effects.
+10. Regression: F29O nearby enemy threat cones and flank contact turn-and-engage remain active.
+11. Regression: F29N Charge remains Line/HOLD FIRE with deep contact and hidden cones during charge/melee.
+12. Regression: F29M Square remains visually authoritative and strength-scaled.
 
 v00.00.09f29o - Enemy threat cones + flank-contact engagement
 - Adds nearby Prussian threat-cone preview whenever a Danish company is selected and the enemy is within 180 m.
@@ -50,7 +83,7 @@ Primary v00.00.09f29o QA
 
 v00.00.09f29n - Charge melee + HQ spacing hardening
 - CHARGE is locked to Line for the complete assault; automatic march-column and bridge steering may alter route but may not reform the charging company into Column.
-- CHARGE is locked to HOLD FIRE throughout approach and physical melee; the previous fire policy is restored only when charge ends.
+- CHARGE is locked to HOLD FIRE throughout approach and physical melee; the previous fire policy is restored only when the charge ends.
 - Charge contact distance is reduced from about 7.2 m to about 2.2 m root-to-root so the two company footprints overlap deeply enough to read as bayonet combat.
 - Normal musket cones are hidden for the charging company and, after physical charge contact, for both melee participants.
 - Major HQ follow distance is reduced from 105 m to 80 m and refresh threshold from 55 m to 42 m.
@@ -279,6 +312,7 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority.
 
 Next milestone
-- Validate F29O enemy threat cones and flank-contact turn-and-engage together with F29N Charge/HQ spacing and F29M Square.
+- Validate F29P tactical map, camera focus, formation-preserving Side Step and visual polish together with F29O flank-contact engagement.
+- After physical manoeuvre stability, activate officer-stat-driven tactical opportunity selection so captains can exploit engaged enemies according to skill, initiative, experience and risk judgement.
 - If stable, finish remaining F29 cleanup and then proceed to F30 cavalry.
 - F30: first real Danish mounted cavalry prototype on shared cavalry core.
