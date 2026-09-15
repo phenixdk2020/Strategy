@@ -1,12 +1,13 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29f
+Prototype version: v00.00.09f29g
 Build status: TEST
-Build name: REGIMENTAL HUD VISIBILITY FIX
-Visible build marker: PROJECT 1864 | v00.00.09f29f TEST
+Build name: CONTACT COMBAT + FACING ORDERS + UNIFIED HUD
+Visible build marker: PROJECT 1864 | v00.00.09f29g TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.13 + tactical design supplements through 09f29f
+Design manual baseline: v00.02.13 + tactical design supplements through 09f29g
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29g design supplement: docs/design-supplements/v00.00.09f29g-contact-facing-unified-hud.md
 09f29f HUD fix: Assets/Scripts/PrototypeRegimentalHud09F29F.cs
 09f29e design supplement: docs/design-supplements/v00.00.09f29e-regimental-defense-attack-coordination.md
 09f29d design supplement: docs/design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md
@@ -14,6 +15,33 @@ Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29g - Contact combat + facing orders + unified HUD + river continuity
+- Adds full selection command-chain visibility: selected company -> owning Major -> Oberstløjtnant; selected Major -> own companies + Oberstløjtnant; selected Oberstløjtnant -> both Majors -> all companies.
+- Adds company contact override during parent AttackHere missions: a company drops the march leg and engages when an enemy enters its currently selected fire-policy range.
+- CLOSE/MED/LONG therefore become the actual contact trigger. HOLD does not auto-open fire.
+- Preserves the company fire-policy preference across higher AttackHere orders instead of silently forcing LONG.
+- Disables the F29E coordinated attack-slot writer so it cannot compete with F27 parent movement and local Captain contact authority.
+- Adds unified click/drag officer point orders: click sets objective; drag from the objective sets explicit facing; click without drag keeps automatic facing.
+- A new higher officer order cancels any active company-level fighting withdrawal under the affected battalion before applying the new order.
+- Adds one authoritative F29G HUD for Regiment, Battalion/Major and Company/Kaptajn using the approved F29F visual language.
+- F29C and F29F overlay components are disabled at runtime by F29G; old F27/F28 command components remain state engines behind the opaque input-consuming panel.
+- Company HUD retains fire policy, withdrawal bands, forced march, charge, stop and Line/Column/Square controls.
+- Adds a continuous river-water ribbon from map edge to map edge, including underneath the bridge; navigation rules are unchanged.
+- Backup: backup/channel-test-v00.00.09f29f-pre-09f29g-contact-ai-hud-chain.
+
+Primary v00.00.09f29g QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29g TEST.
+2. Select one company: its line to the Major and the Major line back to the Oberstløjtnant must both be visible.
+3. Select a Major: Major -> four companies and Major -> Oberstløjtnant must be visible.
+4. Select the Oberstløjtnant: the complete Regiment -> Majors -> Companies tree must be visible.
+5. Set a company to MED, give a higher AttackHere order and verify MED remains selected.
+6. When an enemy enters MED range during that march, the company must stop marching and engage immediately instead of continuing to its slot.
+7. Repeat with companies passing north/south of the enemy; each must recognise contact independently.
+8. On Major/Oberstløjtnant FORSVAR HER: click objective and drag toward the expected enemy direction; final company facing must follow the arrow.
+9. Issue TILBAGETRÆK then immediately FORSVAR HER; old company-level withdrawal state must not continue after the new order.
+10. Verify Regiment, Major and Company HUDs all use the same dark/olive F29G style and green-active/red-inactive state language.
+11. Verify river water is continuous with no visible gaps and remains present under the bridge.
 
 v00.00.09f29f - Regimental HUD visibility fix
 - Corrects the F29E regression where runtime QA still showed the legacy F28 Oberstløjtnant HUD instead of the promised unified HUD.
@@ -78,5 +106,5 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority.
 
 Next milestone
-- Validate F29F HUD plus F29E command/attack/navigation fixes and F29D semantic zoom together.
+- Validate F29G contact combat, click-drag facing, unified three-level HUD, command-chain visibility and river continuity together.
 - F30: first real Danish mounted cavalry prototype on shared cavalry core.
