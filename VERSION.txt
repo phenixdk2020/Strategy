@@ -1,12 +1,13 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29k
+Prototype version: v00.00.09f29l
 Build status: TEST
-Build name: CHARGE RIGHT-CLICK TARGETING
-Visible build marker: PROJECT 1864 | v00.00.09f29k TEST
+Build name: BATTLEFIELD HARDENING
+Visible build marker: PROJECT 1864 | v00.00.09f29l TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.13 + tactical design supplements through 09f29k
+Design manual baseline: v00.02.13 + tactical design supplements through 09f29l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29l design supplement: docs/design-supplements/v00.00.09f29l-battlefield-hardening.md
 09f29k design supplement: docs/design-supplements/v00.00.09f29k-charge-targeting.md
 09f29j design supplement: docs/design-supplements/v00.00.09f29j-precontact-line-deployment.md
 09f29i design supplement: docs/design-supplements/v00.00.09f29i-tactical-visibility-layer.md
@@ -18,6 +19,33 @@ Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29l - Battlefield hardening
+- Major HQ follows active missions independently of Major AI ON/OFF and targets roughly 105 m behind its battalion centre.
+- Major follow point is refreshed after roughly 55 m of tactical movement so HQs do not lag far behind the fighting line.
+- Oberstløjtnant follows active player/higher-command missions independently of Regimental AI ON/OFF and targets roughly 210 m behind the midpoint of both Majors.
+- Regimental follow point is refreshed after roughly 90 m of tactical movement.
+- Explicit manual HQ moves are preserved instead of being immediately overwritten; a new mission returns the HQ to normal follow behaviour.
+- Withdrawal follow is placed on the safe rear side in the direction of withdrawal.
+- Replaces the visually unreliable F29G water presentation with a denser continuous F29L river ribbon sampled against the actual rendered Battlefield Ground mesh.
+- River width is 7.5 m, longitudinal sampling 1.25 m and water surface lift 0.24 m; older Stream renderers/F29G ribbon are hidden while navigation/colliders remain unchanged.
+- Adds authoritative final visual Square positioning: displayed men physically interpolate from Line/Column into a hollow two-rank square over the existing formation timer.
+- Square side length and collider scale with CurrentStrength, so casualties visibly produce a smaller square.
+- Adds defensive arrival hysteresis: latch at 1.35 m, release at 3.20 m; F29E micro-correction is suppressed while latched so defending companies stop shuttling around the blue destination footprint.
+- Under-fire reaction remains authoritative while a defensive slot is latched.
+- Backup: backup/channel-test-v00.00.09f29k-pre-09f29l-battlefield-hardening.
+
+Primary v00.00.09f29l QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29l TEST.
+2. Give Oberstløjtnant ANGRIB HER with AI OFF and verify both Majors and Oberstløjtnant continue to follow the advancing formation.
+3. Verify Major HQs remain approximately 105 m behind their battalions and Oberstløjtnant approximately 210 m behind the Major midpoint, subject to terrain safety.
+4. Manually move a HQ; the manual move must remain authoritative until a new mission is issued.
+5. Inspect the full river and bridge: no dry water gaps and water continues under the bridge.
+6. Order SQUARE and visually confirm displayed men move out of their current formation into a hollow two-rank square rather than merely changing state/outline.
+7. Repeat SQUARE after casualties and verify the square footprint is smaller.
+8. Give FORSVAR HER and verify a company settles in its blue slot without repeatedly walking out and back into the destination.
+9. Regression: F29K CHARGE remains green while armed, uses right-click target confirmation and holds fire during the charge.
+10. Regression: F29J Column -> Line deployment still occurs before hostile LONG range.
 
 v00.00.09f29k - Charge right-click targeting
 - Keeps the F25 charge/melee engine as the authoritative physical charge implementation.
@@ -181,6 +209,6 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority.
 
 Next milestone
-- Validate F29K charge targeting together with F29J pre-contact deployment and F29I tactical visibility.
-- Then continue the outstanding river continuity, square visual formation, select-box isolation, defensive slot oscillation and HQ-follow hardening before F30 cavalry.
+- Validate F29L HQ follow, river continuity, visual Square reform and defensive arrival hysteresis together with F29K charge targeting.
+- If stable, proceed to the remaining F29 cleanup and then F30 cavalry.
 - F30: first real Danish mounted cavalry prototype on shared cavalry core.
