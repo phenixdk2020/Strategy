@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f10 TEST  
+**Prototypebaseline:** v00.00.09f29b TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -15,13 +15,20 @@ Når flere systemer vil styre samme enhed, gælder denne prioritet fra høj til 
 1. **Rout/panik og overlevelse** — en routed enhed følger flugtlogik.
 2. **Terrænsikkerhed** — åbent vand må ikke krydses uden lovlig bro/overgang.
 3. **Eksplicit spillerordre** — fx ANGREB, FORSVAR HER, EROBR HER eller TRÆK BAGLÆNS.
-4. **Aktiv missionslogik** — fx bro-routing eller fighting withdrawal.
-5. **AI-officerens mission/doctrine/autonomi.**
-6. **Automatisk formationspolitik** — Line/Column under march og kontakt.
-7. **Fire policy og kampadfærd.**
-8. **Idle/hold-adfærd.**
+4. **Aktiv missionslogik / højere command authority** — fx Major-owned mission placement, bro-routing eller fighting withdrawal.
+5. **Midlertidig lokal kampreaktion** — fx under-fire reaction, når den eksplicit har overtaget den fysiske udførelse.
+6. **AI-officerens mission/doctrine/autonomi.**
+7. **Automatisk formationspolitik** — Line/Column under march og kontakt.
+8. **Fire policy og kampadfærd.**
+9. **Idle/hold-adfærd.**
 
 Et lavere system må ikke overskrive et højere systems aktive hensigt.
+
+### Hård f29b authority-regel — én fysisk movement owner
+
+En formation må kun have **én fysisk movement owner ad gangen**. Hjælpesystemer må ikke samtidig skrive `OrderMove`, `OrderHold`, destination eller formation, hvis et højere system aktivt ejer udførelsen.
+
+I den aktuelle prototype bruges `OfficerAIController.enabled = false` bl.a. som authority-lock, mens en Major fysisk placerer et company. Et lavere AI-/formation-system skal derfor respektere både `AIEnabled` og componentens `enabled` state.
 
 ---
 
@@ -82,7 +89,7 @@ En enhed må automatisk gå i Column når:
 - **ingen fjendtlig enhed er inden for Long/MaximumRange**;
 - eller en højere-prioritets terrænregel kræver Column, fx brokrydsning.
 
-### Ny hård v00.00.09f10-regel
+### Hård v00.00.09f10+-regel
 
 > **Hvis nærmeste gyldige fjende er inden for Long/MaximumRange, må enheden ikke skifte til Column alene fordi den får en ANGREB-ordre eller fordi fire policy ændres fra LONG til MEDIUM/CLOSE.**
 
@@ -127,6 +134,7 @@ March-steering og stationær kampdrejning er separate systemer.
 - Line- og Column-footprint skal beregnes fra formationsslots, ikke gamle hardcodede rektangler.
 - Den gule selection-orb følger formationens faktiske center.
 - Column-markering må derfor være lang og smal og ligge omkring selve kolonnen, også når formationen ligger asymmetrisk bag pivoten.
+- Et formation endpoint ved floden er kun lovligt, hvis **hele company-footprintet** ligger på lovligt terræn; et centerpunkt på bredden må ikke gøre det lovligt at placere dele af linjen i åbent vand.
 
 ---
 
@@ -192,7 +200,7 @@ Rout har højere prioritet end normale spiller- og officerordrer.
 
 - Træer: pass-through.
 - Hegn: pass-through.
-- Bygninger: pass-through.
+- Bygninger: pass-through i den ældre isolation-baseline; aktuelle formation-slot guards kan dog behandle Farmhouse/Barn som hard endpoint blockers i HQ-testen.
 - Åbent vand/flod: **hard blocker**.
 - Fast bro ved den nuværende testflod: eneste lovlige crossing.
 
@@ -351,7 +359,9 @@ ANGREB betyder:
 - hvis fjenden er på samme side af terrænbarrierer, lukkes der til officerens preferred engagement range;
 - hvis fjenden er inden for Long, forbliver/deployer enheden i Line;
 - hvis bro skal krydses, bruges midlertidig Column uanset Long-reglen;
-- efter broen genoptages den oprindelige attack mission.
+- efter broen genoptages den oprindelige attack mission;
+- et eksplicit `AttackTarget` forbliver target, indtil det bliver invalidt eller en ny højere ordre ændrer missionen;
+- et company må ikke skifte mellem to levende fjender alene fordi "nearest enemy" ændrer sig marginalt fra én think-cycle til den næste.
 
 ---
 
@@ -443,6 +453,7 @@ Hvis næste backstep krydser den nuværende flod, stoppes ordren. En senere avan
 - AI OFF = direkte spillerkontrol.
 - AI ON = OfficerAIController må fortolke missionen efter doctrine/stats.
 - En eksplicit spillerordre har højere prioritet end normal officer-autonomi.
+- `AIEnabled=true` betyder ikke nødvendigvis, at controlleren har fysisk movement authority i dette frame; `controller.enabled=false` kan være et bevidst higher-command authority-lock.
 
 ---
 
@@ -517,17 +528,24 @@ AI-officeren skal følge de samme globale formationsregler som spilleren:
 
 Officer-AI må ikke have en skjult undtagelse, som får den til at gå i Column i kampzonen.
 
+Automatisk approach-formation må kun skrive formation, når den lokale Officer AI faktisk ejer formationen; den må ikke ændre et Major-owned eller under-fire-owned company.
+
 ---
 
 ## 32. Explicit AttackTarget
 
-Hvis spilleren udpeger et specifikt fjendtligt mål:
+Hvis spilleren eller en højere officer udpeger et specifikt fjendtligt mål:
 
 - missionen skal bevares som hensigt;
 - officer-doctrine må ikke erstatte målet uden gyldig årsag;
 - terræn/pathfinding må indsætte midlertidige steering-punkter;
 - bridge routing har prioritet over fugleflugtsafstand;
-- efter crossing fortsætter den oprindelige attack mission.
+- efter crossing fortsætter den oprindelige attack mission;
+- target commitment ophører først ved rout/destruction/invalid target eller en ny autoritativ ordre.
+
+### AttackNearest target commitment
+
+`AttackNearest` må vurdere kandidater under en lang approach. Når et target er valgt ved reel contact/engagement envelope, skal valget blive sticky nok til at formationen kan gennemføre attack/firing cycle. Et marginalt nærmere andet target er ikke i sig selv gyldig årsag til at pivotere hele formationen.
 
 ---
 
@@ -586,8 +604,8 @@ Følgende er testværdi og skal ikke automatisk betragtes som endelig balance:
 - Close/Medium/Long = 35/70/100 m;
 - morale låst til 100;
 - forhøjet QA base accuracy;
-- 1v1 company-test;
-- scenery pass-through.
+- current multi-company tactical QA scenario;
+- scenery pass-through hvor ikke en nyere endpoint/terrain guard udtrykkeligt siger andet.
 
 ---
 
@@ -616,13 +634,27 @@ Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgen
 5. Fire cone og faktisk firing eligibility skal være enige.
 6. Fire policy må ikke forveksles med tvungen standoff-distance.
 7. AI-officerer skal følge samme globale formations-/terrænregler som spilleren.
-8. Explicit player mission må ikke stille og roligt blive overskrevet af lavere-prioritets AI.
-9. Casualties må ikke spawn'e langt fra enheden.
-10. Rout må være tydeligt forskellig fra kontrolleret fighting withdrawal.
+8. Explicit player/higher-command mission må ikke stille og roligt blive overskrevet af lavere-prioritets AI.
+9. Der må kun være én fysisk movement owner for et company ad gangen.
+10. Explicit AttackTarget må ikke erstattes af nearest-target logik uden gyldig missionændring.
+11. AttackNearest må ikke oscillere mellem næsten lige nære mål efter engagement er etableret.
+12. Casualties må ikke spawn'e langt fra enheden.
+13. Rout må være tydeligt forskellig fra kontrolleret fighting withdrawal.
+14. Ved regimental front+reserve må den nærmeste battalion ikke sendes bagud alene pga. lavere samlet travel-cost permutation.
 
 ---
 
 ## 39. Versionslog for dette regelsæt
+
+### v00.00.09f29b
+
+- Tilføjet hård regel om **én fysisk movement owner**.
+- `controller.enabled=false` dokumenteret som higher-command authority-lock i F27-kæden.
+- Explicit `AttackTarget` gjort sticky til rout/destruction/new order.
+- `AttackNearest` får contact commitment og må ikke oscillere på marginale afstandsforskelle.
+- Approach formation skal respektere Major- og under-fire authority.
+- Hele company-footprintet skal være lovligt ved river endpoints.
+- Regimental front+reserve/front+flank bruger nærmeste battalion som FRONT.
 
 ### v00.00.09f10
 
