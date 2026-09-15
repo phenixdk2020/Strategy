@@ -1,13 +1,13 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.09**  
-**Aktuel prototype-workbranch: P0A v00.00.09f28 REGIMENT CONTROL TEST**
+**Aktuel designbaseline: v00.02.10**  
+**Aktuel prototype-workbranch: P0A v00.00.09f29b BATTLEFIELD + ATTACK AI TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
 
-Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f28**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md).
+Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f29b**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md), mens den aktuelle map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md).
 
 ## Indhold
 
@@ -25,6 +25,7 @@ Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f2
 - [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
 - [Designsupplement v00.02.09 — Regimentskommando, cavalry, charge shock og infantry square](design-supplements/v00.02.09-regimental-command-cavalry-square.md)
+- [Designsupplement v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -54,6 +55,20 @@ Authority er hierarkisk. Direkte manuel company-ordre giver spiller-authority. A
 
 HQ'er flytter frem i bounds under angreb i stedet for at stå permanent på startpositionen. Command reach påvirker primært order/reaction delay, coordination, reserve/flank reassignment, recovery og senere information quality — ikke direkte musket accuracy eller damage.
 
+## v00.00.09f29b Battlefield og Attack AI — aktuel hardening
+
+Det taktiske battlemap er nu **5760 × 3840 m**, dvs. dobbelt bredde og dobbelt dybde i forhold til den foregående 2880 × 1920 m testflade. Road, river og vegetation fortsætter over den større flade, mens den centrale bridge/farm testzone bevares til regressionstest.
+
+Det aktive QA-scenario beholder nu to fjendtlige Prussian company-scale formationer, `8th Regiment` og `18th Regiment`, så target-selection og fler-target angreb kan testes i samme slag. Begge behandles som 190-mands company testformationer.
+
+Attack-authority følger nu den eksplicitte regel **én fysisk movement owner ad gangen**. Når en Major placerer et company og derfor har disabled den lokale `OfficerAIController`, må frontage-, approach- eller andre hjælpe-AI-systemer ikke skrive ny route eller formation. Under-fire reaction har tilsvarende midlertidig authority og må ikke bekæmpes af andre movement layers.
+
+Et eksplicit `AttackTarget` er sticky og må ikke overskrives af "nearest enemy". `AttackNearest` kan revurdere under approach, men låses til et konkret target ved contact, så formationen ikke oscillerer mellem to næsten lige nære fjender.
+
+Ved regimental `ANGRIB HER` med front + reserve er **bataljonen nærmest objective FRONT/ASSAULT**, mens den fjernere bataljon bliver RESERVE/SUPPORT. Laveste samlede marchafstand må ikke længere bytte rollerne og sende den allerede fremrykkede bataljon baglæns. Samme princip gælder front + flank: nærmeste battalion fixer/front, den anden udfører flankemission.
+
+F29a-visualiseringen bevares: selected company viser connection til egen Major, selected Major viser connection til Oberstløjtnanten, command-lines følger terrænet, og officer target-area cirklen vises under point-orders. Formation endpoint safety kontrollerer hele company-footprint mod åen, så en formation ikke kan godkendes med dele af linjen i åbent vand.
+
 ## Directional fire, fire discipline og accuracy
 
 Infantry fire policy bruger `HOLD / CLOSE / MEDIUM / LONG`. Et mål skal være inden for fire-policy-afstanden og relevant forward fire arc. Close/Medium/Long er ordre-/UI-grænser; accuracy ændres kontinuerligt med faktisk afstand.
@@ -62,7 +77,7 @@ Næste combat-fase fortsætter med formation-segmenteret `eligibleFiringFraction
 
 ## Command-visualisation og order lifecycle
 
-Fysiske HQ-entities, command-links, courier/order lifecycle, fog-of-war reports og semantic zoom er den fælles retning. Valg af et HQ viser relationer til direkte underenheder.
+Fysiske HQ-entities, command-links, courier/order lifecycle, fog-of-war reports og semantic zoom er den fælles retning. Valg af et HQ viser relationer til direkte underenheder. Valg af et company viser desuden relationen tilbage til dets direkte Major, og valg af en Major viser relationen op til den aktuelle Oberstløjtnant, så command chain kan læses begge veje under QA og senere semantic zoom.
 
 Ordrer transporteres senere gennem et egentligt courier/order-lifecycle-system. En aktiv ordre kan vises som en route fra afsender-HQ til modtager med en bevægelig courier-markør, hvis position svarer til faktisk simulation progress. Command relationship lines og konkrete order routes er separate overlays.
 
@@ -98,7 +113,7 @@ Infantry får formationerne:
 
 Cavalry kan også skabe combined-arms pressure uden at charge: en troværdig mounted threat kan tvinge infantry i square og dermed gøre det mere sårbart for artilleri eller infantry manoeuvre.
 
-Efter stabil F28 Regiment-control er næste systemrækkefølge: **Square/cavalry-threat foundation → Gardehusar/Dragoon prototype → mounted/dismounted AI → Kanonbatteri/Artilleri → Combined Arms QA → senere højere Brigade/Division HQ.**
+Efter stabil F29b attack-authority regression er næste systemrækkefølge fortsat: **Gardehusar/Dragoon prototype → mounted/dismounted AI → Kanonbatteri/Artilleri → Combined Arms QA → senere højere Brigade/Division HQ.** F30 forbliver reserveret til den første rigtige mounted cavalry prototype.
 
 ## Fog of war, scouts og command effectiveness
 
@@ -110,6 +125,7 @@ HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radi
 
 ## Versionshistorik
 
+- **v00.02.10 / P0A v00.00.09f29b BATTLEFIELD + ATTACK AI TEST** — Tactical battlefield 5760 × 3840 m; to Prussian company-scale QA-enheder; single physical movement owner-regel; explicit `AttackTarget` sticky ved contact; frontage-planner gjort movement-write-free; approach formation respekterer Major/under-fire authority; regimental FRONT/RESERVE og FRONT/FLANK bruger nærmeste battalion som front; F29a command-chain visuals og river footprint safety retained.
 - **v00.02.09 / P0A v00.00.09f28 REGIMENT CONTROL TEST** — Dansk command chain fastlagt som Kaptajn → Major → Oberstløjtnant → Oberst → Generalmajor; to bataljoner / to Majorer / otte kompagnier under fysisk Oberstløjtnant-HQ; hierarchical authority/reclaim og dynamic HQ command zones; Gardehusarer og dragoner separeret som cavalry-typer på shared core; sabel/karabin/pistol som data-driven cavalry weapon model; FRONT/FLANK/REAR charge shock; close-range volley kan FALTER/ABORT cavalry charge; infantry `SQUARE/KARRÉ` besluttet med reel formation time, multi-side defense og artilleri-trade-off; Dragoons efter stabil F28 og artilleri derefter.
 - **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile`; delegation, doctrine, commander aggression intent, directional infantry fire, HOLD/CLOSE/MEDIUM/LONG, time control, battle supply/night/cavalry/fog-of-war retning.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil/reload, experience, volley feedback, ammunition/casualty model og første expanded systems baseline.
