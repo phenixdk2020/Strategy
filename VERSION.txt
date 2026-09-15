@@ -51,6 +51,10 @@ V10N6G CITY ART:
 - Old round city renderer stays disabled and no green TownGround is generated.
 - Stable BoxCollider click targets remain on the city marker parents.
 
+V10N6G RUNTIME OWNERSHIP GUARD:
+- CampaignN6GRuntimeGuard continuously disables n6f's grid overlay, old city renderer and older zone-info panels.
+- This prevents RuntimeInitialize ordering from allowing an old subsystem to reappear after n6g takes ownership.
+
 V10N6G QA CLEANUP:
 - n6f QA-army removal remains active; the temporary red DK-ARMY-QA at Vejle must stay invisible and unselectable.
 
@@ -61,10 +65,18 @@ FILES ADDED/CHANGED:
 - Assets/Scripts/Campaign/CampaignCityArtV010N6G.cs.meta
 - Assets/Scripts/Campaign/CampaignZoneInfoPanelV010N6G.cs
 - Assets/Scripts/Campaign/CampaignZoneInfoPanelV010N6G.cs.meta
+- Assets/Scripts/Campaign/CampaignN6GRuntimeGuard.cs
+- Assets/Scripts/Campaign/CampaignN6GRuntimeGuard.cs.meta
 - Assets/Scripts/Campaign/CampaignBuildInfo.cs
 - VERSION.txt
 - docs/parts/part-24-59-CAMPAIGN-V10N6G-SOURCE-POLYGONS-CITY-ART.md
-- docs/PROJECT-1864-Designmanual.md
+
+RETAINED SYSTEMS:
+- 20 ZONE-REG-01 zones / 68 CITY-REG-01 cities / 290565 urban population checksum.
+- Tactical withdrawal: TILBAGETRÆK HERTIL / fighting withdrawal / BRYD KONTAKT.
+- n6f QA-army visual cleanup.
+- World Imagery + streamed 3D terrain.
+- A/B/C construction rules and canonical CityId/ZoneId data.
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
