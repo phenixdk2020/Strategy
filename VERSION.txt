@@ -1,80 +1,95 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n6d
-Build status: EMBEDDED ZONE RESOLVER COMPILE HOTFIX
-Build name: CAMPAIGN3 EMBEDDED ZONE RESOLVER COMPILE HOTFIX 10N6D
+Prototype version: v00.00.10n6e
+Build status: HISTORICAL COUNTY SEEDS + CITY ART VISIBILITY
+Build name: CAMPAIGN3 HISTORICAL COUNTY SEEDS + CITY ART VISIBILITY 10N6E
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n6d-resolver-compile-hotfix
+Work branch: work/channel-campaign3-v10n6e-historical-zones-city-art
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.21
+Design baseline: v00.02.23
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
-- v00.00.10n2 = persistent HUD cleanup + land-clipped non-overlap zone partition
+- v00.00.10n2 = HUD cleanup + land-clipped non-overlap zone partition
 - v00.00.10n3 = crisp zone-line render + compact contextual zone info
-- v00.00.10n4 = clean HUD default + polygon-based zone selection + shared-border renderer
-- v00.00.10n5 = tactical withdrawal + city-anchored prototype zone partition refinements
+- v00.00.10n4 = clean HUD default + polygon-based selection + shared-border renderer
+- v00.00.10n5 = tactical withdrawal + multi-site zone refinements
 - v00.00.10n6 = procedural Proposal 3 miniature-city prototype
-- v00.00.10n6a = CS1612 withdrawal rally-point compile hotfix
-- v00.00.10n6b = authored transparent Proposal 3 A/B/C city-art runtime
-- v00.00.10n6c = valid city PNG payloads + deterministic canonical zone ownership resolver
-- v00.00.10n6d = embedded zone ownership resolver compile hotfix
+- v00.00.10n6a = CS1612 withdrawal compile hotfix
+- v00.00.10n6b = authored transparent Proposal 3 city art
+- v00.00.10n6c = city-art resource + zone ownership hotfix
+- v00.00.10n6d = embedded resolver compile hotfix
+- v00.00.10n6e = DigDag-derived historical Amt seed field + city-art visibility pass
 
 ROLLBACK:
+- before v10n6e: backup/channel-campaign3-before-v10n6e-historical-zones-city-art-20260915
 - before v10n6d: backup/channel-campaign3-before-v10n6d-resolver-compile-hotfix-20260915
-- before v10n6c: backup/channel-campaign3-before-v10n6c-city-zone-hotfix-20260914
-- before v10n6b: backup/channel-campaign3-before-v10n6b-proposal3-city-art-20260914
-- before v10n6a: backup/channel-campaign3-before-v10n6a-withdrawal-compile-hotfix-20260914
 
-V10N6D COMPILE HOTFIX:
-- Unity reported CS0103 in CampaignZoneInfoPanelV010N3 because CampaignZoneOwnershipResolverV010N6C was not visible in the local compile context.
-- The resolver logic is now embedded directly in CampaignZoneInfoPanelV010N3.
-- CampaignZoneInfoPanelV010N3 no longer references CampaignZoneOwnershipResolverV010N6C.
-- The separate CampaignZoneOwnershipResolverV010N6C source/meta files are removed from the n6d branch to keep one authoritative implementation.
-- Exact city clicks still resolve through canonical City.ZoneId.
-- Area clicks still use canonical city + zone-centre nearest-site ownership after the land/zone geometry guard.
-- GrandCampaignZoneMarker collider fallback remains disabled for normal area selection.
-- Resolver QA remains CityCanonical=68/68 and ZoneCentreCanonical=20/20 as the target.
+V10N6E COUNTY / AMT GEOMETRY:
+- The sparse city+zone-centre-only partition is no longer the preferred geometry source.
+- CampaignZoneOverlayV010N downloads/caches Data/Geo.csv from christianvedels/A_perfect_storm.
+- That replication dataset documents its parish geography as originating from DigDag and representing Danish parishes on 1 January 1820.
+- Runtime groups parish centroids by historical County + Hundred and creates one averaged historical seed per Herred.
+- Canonical CITY-REG-01 and ZONE-REG-01 guard sites are added after the historical seed field.
+- The resulting geometry remains clipped to the existing Denmark land scaffold and remains overlap-free by Voronoi construction.
+- Geometry mode: DIGDAG_1820_HERRED_SEEDS_LAND_CLIPPED_APPROX.
+- The historical CSV is cached in Application.persistentDataPath after first successful download.
+- If historical seed loading fails, the previous canonical city+zone-centre seed model is used as an explicit fallback and a warning is logged.
 
-RETAINED N6C CITY ART:
-- Valid Proposal 3 A/B/C PNG resources remain unchanged.
-- C: smallest settlement icon, approximately 2-3 buildings.
-- B: regional-town icon, approximately 5-6 buildings plus church.
-- A: largest development-city icon, approximately 10-15 buildings, church and stronger civic centre.
+HISTORICAL GUARDRAIL:
+- The source date is 1820, not exact 1851.
+- Herred centroids are a historical approximation, not the original dated Amt polygons.
+- HistoricallyExactGeometry therefore remains FALSE.
+- Exact dated DigDag Amt/Region polygons for 1 January 1851 remain the production target.
+
+V10N6E CLICK OWNERSHIP:
+- Direct city click always uses canonical City.ZoneId.
+- Ordinary land click now resolves directly from CampaignZoneOverlayMetadataV010N on the polygon containing the click.
+- Nearest-site ownership is no longer used as a second independent answer after polygon selection.
+- Therefore the Amt displayed in the compact info panel must match the visible/source polygon under the pointer.
+- GrandCampaignZoneMarker collider fallback remains disabled for normal area clicks.
+- Open-sea/uncovered clicks return no Amt instead of guessing.
+
+V10N6E PROPOSAL 3 CITY ART:
+- Existing transparent A/B/C Proposal 3 resources remain the visual source.
+- Resources loader now performs direct lookup plus a secondary Resources folder scan.
+- Old n6/n6b/n6c city visual children are removed before n6e installs.
+- Ground lift increased to 0.32 world units to avoid terrain burial.
+- Base visual scales increased substantially:
+  A = 2.15
+  B = 1.60
+  C = 1.18
+- Population still gives only limited extra scale inside a tier.
+- Sprite sorting order increased to 120.
 - Old round city renderer remains disabled.
-- No green TownGround is created.
+- No green TownGround is generated.
 - One invisible BoxCollider remains the stable click target.
-
-IMPORTANT GEOMETRY GUARDRAIL:
-- Visible Amt lines are still PROTOTYPE_LAND_CLIPPED_MULTI_SITE_VORONOI.
-- Resolver consistency is not a claim that the visible lines are historically exact 1851 borders.
-- Natural Earth 1:50m coastline remains too coarse for some coastal details.
-- Source-backed DigDag Amt/Region polygons remain the production target.
 
 RETAINED SYSTEMS:
 - 20 ZONE-REG-01 zones / 68 CITY-REG-01 cities / 290565 urban population checksum.
-- n6a RallyPoint CS1612 hotfix.
-- TILBAGETRÆK HERTIL / fighting withdrawal / BRYD KONTAKT.
+- Tactical withdrawal: TILBAGETRÆK HERTIL / fighting withdrawal / BRYD KONTAKT.
+- n6a RallyPoint compile hotfix.
 - World Imagery + streamed 3D terrain.
-- A/B/C construction rules and city/zone identities.
+- A/B/C construction rules and canonical CityId/ZoneId data.
 
 QA GATES:
-1. Unity 6000.6.0f1 compiles without CS0103 resolver errors.
-2. Badge/topbar show v00.00.10n6d.
-3. No source reference to CampaignZoneOwnershipResolverV010N6C remains in CampaignZoneInfoPanelV010N3.
-4. Log contains ZoneOwnershipResolver=True and CompileDependency=Embedded.
-5. Resolver QA target is CityCanonical=68/68 and ZoneCentreCanonical=20/20.
-6. Log contains Proposal3TexturesLoaded=True with A/B/C dimensions.
-7. Log contains Proposal3CityArt=True and Cities=68.
-8. C/B/A city icons are visible and visually distinct.
-9. No round city cylinder and no green TownGround are visible.
-10. Direct city click returns the city's canonical ZoneId.
-11. Area click uses Source=CanonicalMultiSiteOwnershipEmbedded.
-12. Normal area selection never uses a GrandCampaignZoneMarker collider fallback.
-13. Open-sea click does not select an Amt.
-14. Vejle/Aalborg/Hjørring/Thisted/Viborg click regressions are retested.
-15. Registry remains 20 zones / 68 cities / population 290565.
-16. Withdrawal orders regressions pass.
-17. World Imagery and streamed 3D terrain remain functional.
+1. Unity 6000.6.0f1 compiles without errors.
+2. Badge/topbar show v00.00.10n6e.
+3. Log reports HistoricalCountySeeds=True on successful first download/cache load.
+4. Historical seed count is at least 40 before guard sites are added.
+5. Geometry log reports DIGDAG_1820_HERRED_SEEDS_LAND_CLIPPED_APPROX when historical data loaded.
+6. Aalborg/Hjørring/Thisted/Viborg/Randers/Vejle borders are visually retested for long cross-county arms.
+7. Zone info log reports Mode=VISIBLE_POLYGON_METADATA.
+8. Clicking a visible polygon always displays that polygon's ZoneId/Amt.
+9. Direct city click still returns canonical City.ZoneId.
+10. Open sea does not select an Amt.
+11. Proposal3TexturesLoaded=True with A/B/C dimensions.
+12. Proposal3CityArt=True|Cities=68.
+13. A/B/C city art is clearly visible at normal campaign zoom.
+14. Small C towns are visible; A/B/C remain visually distinct.
+15. No round city cylinders and no green TownGround are visible.
+16. World Imagery and streamed 3D terrain remain functional.
+17. Registry remains 20 zones / 68 cities / 290565 population.
+18. Withdrawal orders regressions pass.
 
-QA state: V10N6D IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N6E IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
