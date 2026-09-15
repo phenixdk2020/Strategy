@@ -1,6 +1,13 @@
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
+// v00.00.09f29b attack-authority hotfix.
+// This layer no longer writes physical movement every 0.25 s. The old behaviour could
+// fight the Major mission owner, OfficerAIController and under-fire reaction at once.
+// F29B keeps frontage allocation as a diagnostic/advisory layer, respects explicit
+// AttackTarget missions, and converts AttackNearest to a sticky explicit target only
+// after contact has entered the engagement envelope.
 [DefaultExecutionOrder(1300)]
 public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
 {
@@ -11,6 +18,7 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
         public bool HasSlot;
         public int SlotIndex;
         public Vector3 SlotPosition;
+        public Vector3 LastTargetPosition;
     }
 
     private readonly Dictionary<Regiment, EngagementState> states =
@@ -18,11 +26,12 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
 
     private bool legacyPlannerDisabled;
     private float nextThinkTime;
+    private FieldInfo missionTargetField;
 
-    private const float ThinkInterval = 0.25f;
-    private const float SlotArrivalDistance = 4.0f;
-    private const float MinimumFriendlySeparation = 22f;
-    private const float LateralSlotSpacing = 24f;
+    private const float ThinkInterval = 0.35f;
+    private const float MinimumFriendlySeparation = 55f;
+    private const float LateralSlotSpacing = 60f;
+    private const float StickyContactFloor = 140f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -30,8 +39,26 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeAttackFrontagePlannerV2>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeAttackFrontagePlannerV2_v009");
+        GameObject root = new GameObject("PrototypeAttackFrontagePlannerV2_v000009f29b");
         root.AddComponent<PrototypeAttackFrontagePlannerV2>();
+    }
+
+    private void Awake()
+    {
+        missionTargetField = typeof(OfficerAIController).GetField(
+            "missionTarget",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        if (missionTargetField == null)
+        {
+            Debug.LogError("AI-SPACING-09F29B|Installed=False|Reason=MissionTargetReflectionMissing");
+            enabled = false;
+            return;
+        }
+
+        Debug.Log(
+            "AI-SPACING-09F29B|Installed=True|MovementWrites=False|ExplicitTargetRespected=True|" +
+            "MajorAuthorityRespected=True|UnderFireAuthorityRespected=True|StickyContactTarget=True");
     }
 
     private void Update()
@@ -49,22 +76,21 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
 
         Dictionary<Regiment, List<Regiment>> groups =
             new Dictionary<Regiment, List<Regiment>>();
+        HashSet<Regiment> activeAttackers = new HashSet<Regiment>();
 
         foreach (Regiment attacker in battle.Regiments)
         {
-            if (!IsAttackAI(attacker))
+            OfficerAIController controller;
+            if (!IsPlannerEligible(attacker, out controller))
                 continue;
 
-            Regiment target = FindNearestEnemy(attacker, battle);
-            if (target == null)
+            Regiment target = ResolveTarget(attacker, controller, battle);
+            if (!IsValidEnemy(attacker, target))
                 continue;
 
-            if (!states.TryGetValue(attacker, out EngagementState state))
-            {
-                state = new EngagementState();
-                states[attacker] = state;
-            }
+            activeAttackers.Add(attacker);
 
+            EngagementState state = GetOrCreate(attacker);
             if (state.Target != target)
             {
                 state.Target = target;
@@ -72,26 +98,42 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
                 state.HasSlot = false;
                 state.SlotIndex = 0;
                 state.SlotPosition = Vector3.zero;
+                state.LastTargetPosition = target.transform.position;
             }
 
-            float threshold = Mathf.Max(
-                attacker.EffectiveRange * 1.30f,
-                attacker.GetFireTriggerRange() + 18f);
+            float threshold = GetEngagementThreshold(attacker);
+            float distance = PlanarDistance(attacker.transform.position, target.transform.position);
 
-            if (PlanarDistance(attacker.transform.position, target.transform.position) > threshold)
+            // AttackNearest is allowed to assess targets at long range. Once it enters
+            // the actual engagement envelope, lock the chosen enemy as AttackTarget.
+            // It remains locked until that target routs/dies, preventing nearest-target
+            // oscillation during the approach/firefight.
+            if (controller.Mission == OfficerAIMission.AttackNearest &&
+                distance <= Mathf.Max(threshold, StickyContactFloor))
+            {
+                controller.SetAttackMission(target);
+                Debug.Log(
+                    "AI-TARGET-09F29B|Unit=" + attacker.RegimentName +
+                    "|Target=" + target.RegimentName +
+                    "|Locked=True|Reason=ContactEntered|Distance=" + distance.ToString("0.0"));
+            }
+
+            if (distance > threshold)
                 continue;
 
-            if (!groups.TryGetValue(target, out List<Regiment> list))
+            if (!groups.TryGetValue(target, out List<Regiment> attackers))
             {
-                list = new List<Regiment>();
-                groups[target] = list;
+                attackers = new List<Regiment>();
+                groups[target] = attackers;
             }
 
-            list.Add(attacker);
+            attackers.Add(attacker);
         }
 
+        CleanupStates(activeAttackers);
+
         foreach (KeyValuePair<Regiment, List<Regiment>> pair in groups)
-            AllocateFrontage(pair.Key, pair.Value);
+            AllocateAdvisoryFrontage(pair.Key, pair.Value);
     }
 
     private void DisableLegacyPlanner()
@@ -105,29 +147,104 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
         if (legacy != null)
         {
             legacy.enabled = false;
-            legacyPlannerDisabled = true;
-            Debug.Log("AI-SPACING-V2|LegacyPlannerDisabled=True");
+            Debug.Log("AI-SPACING-09F29B|LegacyPlannerDisabled=True");
         }
+
+        legacyPlannerDisabled = true;
     }
 
-    private void AllocateFrontage(Regiment target, List<Regiment> attackers)
+    private bool IsPlannerEligible(Regiment attacker, out OfficerAIController controller)
+    {
+        controller = null;
+
+        if (attacker == null || attacker.IsRouted || attacker.CurrentStrength <= 0)
+            return false;
+
+        controller = attacker.GetComponent<OfficerAIController>();
+        if (controller == null || !controller.AIEnabled)
+            return false;
+
+        // CRITICAL F29B authority rule: enabled=false means another system deliberately
+        // owns physical movement (e.g. Major mission placement). Never write or re-plan it.
+        if (!controller.enabled)
+            return false;
+
+        if (PrototypeUnderFireReaction09F26.IsReacting(attacker))
+            return false;
+
+        return controller.Mission == OfficerAIMission.AttackNearest ||
+               controller.Mission == OfficerAIMission.AttackTarget;
+    }
+
+    private Regiment ResolveTarget(
+        Regiment attacker,
+        OfficerAIController controller,
+        BattleManager battle)
+    {
+        if (controller.Mission == OfficerAIMission.AttackTarget)
+        {
+            Regiment explicitTarget = missionTargetField.GetValue(controller) as Regiment;
+            return IsValidEnemy(attacker, explicitTarget) ? explicitTarget : null;
+        }
+
+        Regiment nearest = FindNearestEnemy(attacker, battle);
+        if (!states.TryGetValue(attacker, out EngagementState state) ||
+            !IsValidEnemy(attacker, state.Target))
+        {
+            return nearest;
+        }
+
+        if (!IsValidEnemy(attacker, nearest) || nearest == state.Target)
+            return state.Target;
+
+        float currentDistance = PlanarDistance(attacker.transform.position, state.Target.transform.position);
+        float candidateDistance = PlanarDistance(attacker.transform.position, nearest.transform.position);
+
+        // Hysteresis before contact: only swap if the new candidate is both materially
+        // closer in metres and clearly closer proportionally. Small geometry changes
+        // must not make a formation pivot between enemies every think cycle.
+        bool materiallyBetter =
+            candidateDistance + 45f < currentDistance &&
+            candidateDistance < currentDistance * 0.82f;
+
+        return materiallyBetter ? nearest : state.Target;
+    }
+
+    private EngagementState GetOrCreate(Regiment attacker)
+    {
+        if (!states.TryGetValue(attacker, out EngagementState state) || state == null)
+        {
+            state = new EngagementState();
+            states[attacker] = state;
+        }
+        return state;
+    }
+
+    private void AllocateAdvisoryFrontage(Regiment target, List<Regiment> attackers)
     {
         if (target == null || attackers == null || attackers.Count < 2)
             return;
 
+        // The nearest company to the target is the primary. This prevents a farther
+        // company from becoming the frontage anchor and making the nearer formation
+        // manoeuvre backwards merely because it entered the group first.
         attackers.Sort((a, b) =>
         {
-            EngagementState sa = states[a];
-            EngagementState sb = states[b];
-
-            int timeCompare = sa.EnteredAt.CompareTo(sb.EnteredAt);
-            if (timeCompare != 0)
-                return timeCompare;
+            float da = PlanarDistance(a.transform.position, target.transform.position);
+            float db = PlanarDistance(b.transform.position, target.transform.position);
+            int distanceCompare = da.CompareTo(db);
+            if (distanceCompare != 0)
+                return distanceCompare;
 
             return string.CompareOrdinal(a.RegimentName, b.RegimentName);
         });
 
         Regiment primary = attackers[0];
+        EngagementState primaryState = GetOrCreate(primary);
+        primaryState.HasSlot = true;
+        primaryState.SlotIndex = 0;
+        primaryState.SlotPosition = primary.transform.position;
+        primaryState.LastTargetPosition = target.transform.position;
 
         Vector3 radial = primary.transform.position - target.transform.position;
         radial.y = 0f;
@@ -151,59 +268,46 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
 
         HashSet<int> reservedSlots = new HashSet<int>();
         reservedSlots.Add(0);
-
         List<Vector3> reservedPositions = new List<Vector3>();
         reservedPositions.Add(primary.transform.position);
 
         for (int i = 1; i < attackers.Count; i++)
         {
             Regiment attacker = attackers[i];
-            EngagementState state = states[attacker];
+            EngagementState state = GetOrCreate(attacker);
 
-            int slotIndex;
-            Vector3 slot;
-            ChooseBestSlot(
-                attacker,
-                target,
-                radial,
-                frontage,
-                primaryRadius,
-                reservedSlots,
-                reservedPositions,
-                out slotIndex,
-                out slot);
-
-            reservedSlots.Add(slotIndex);
-            reservedPositions.Add(slot);
-
-            if (!state.HasSlot ||
-                state.SlotIndex != slotIndex ||
-                PlanarDistance(state.SlotPosition, slot) > 3f)
+            bool targetMoved = PlanarDistance(state.LastTargetPosition, target.transform.position) > 14f;
+            if (!state.HasSlot || state.Target != target || targetMoved)
             {
+                int slotIndex;
+                Vector3 slot;
+                ChooseBestSlot(
+                    attacker,
+                    target,
+                    radial,
+                    frontage,
+                    primaryRadius,
+                    reservedSlots,
+                    reservedPositions,
+                    out slotIndex,
+                    out slot);
+
+                state.Target = target;
                 state.HasSlot = true;
                 state.SlotIndex = slotIndex;
                 state.SlotPosition = slot;
+                state.LastTargetPosition = target.transform.position;
 
-                Debug.Log(string.Format(
-                    "AI-SPACING-V2|Unit={0}|Target={1}|Slot={2}|Pos=({3:0.0},{4:0.0})|Reason=ObstacleAwareSharedFrontage",
-                    attacker.RegimentName,
-                    target.RegimentName,
-                    slotIndex,
-                    slot.x,
-                    slot.z));
+                Debug.Log(
+                    "AI-SPACING-09F29B|Unit=" + attacker.RegimentName +
+                    "|Target=" + target.RegimentName +
+                    "|Slot=" + slotIndex +
+                    "|Pos=" + slot.x.ToString("0.0") + "," + slot.z.ToString("0.0") +
+                    "|MovementWrite=False|Authority=OfficerAI");
             }
 
-            attacker.SetFormation(RegimentFormation.Line);
-
-            if (PlanarDistance(attacker.transform.position, slot) > SlotArrivalDistance)
-            {
-                attacker.OrderMove(slot);
-            }
-            else
-            {
-                attacker.OrderHold();
-                FaceTarget(attacker, target);
-            }
+            reservedSlots.Add(state.SlotIndex);
+            reservedPositions.Add(state.SlotPosition);
         }
     }
 
@@ -236,38 +340,24 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
                     radial * radius +
                     frontage * (slotIndex * LateralSlotSpacing);
 
-                requested.x = Mathf.Clamp(requested.x, -170f, 170f);
-                requested.z = Mathf.Clamp(requested.z, -110f, 110f);
+                float xLimit = Mathf.Max(30f, PrototypeBootstrap.BattlefieldHalfWidth - 30f);
+                float zLimit = Mathf.Max(30f, PrototypeBootstrap.BattlefieldHalfDepth - 30f);
+                requested.x = Mathf.Clamp(requested.x, -xLimit, xLimit);
+                requested.z = Mathf.Clamp(requested.z, -zLimit, zLimit);
                 requested.y = 0f;
 
                 Vector3 candidate = requested;
-                Vector3 safe;
-                bool valid = PrototypeBattlefieldNavigationManager.TryFindNearestValidDestination(
+                if (PrototypeBattlefieldNavigationManager.TryFindNearestValidDestination(
                     requested,
                     RegimentFormation.Line,
-                    out safe);
-
-                float safeAdjustment = 0f;
-                if (valid)
+                    out Vector3 safe))
                 {
-                    safeAdjustment = PlanarDistance(requested, safe);
                     candidate = safe;
                 }
 
                 float travelCost = PlanarDistance(attacker.transform.position, candidate);
-                float approachPenalty = PrototypeNavigationRecoveryManager.EstimatePathPenalty(
-                    attacker.transform.position,
-                    candidate,
-                    RegimentFormation.Line);
-
-                // A house/tree between the final slot and the target is especially bad:
-                // the regiment would arrive but have poor frontage/line of fire.
-                float targetLinePenalty = PrototypeNavigationRecoveryManager.EstimatePathPenalty(
-                    candidate,
-                    target.transform.position,
-                    RegimentFormation.Line);
-
                 float friendlyPenalty = 0f;
+
                 foreach (Vector3 reserved in reservedPositions)
                 {
                     float d = PlanarDistance(candidate, reserved);
@@ -282,14 +372,7 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
                         ? 1500f
                         : 0f;
 
-                float cost =
-                    travelCost +
-                    approachPenalty * 1.10f +
-                    targetLinePenalty * 1.65f +
-                    safeAdjustment * 8f +
-                    friendlyPenalty +
-                    blockedPenalty;
-
+                float cost = travelCost + friendlyPenalty + blockedPenalty;
                 if (cost >= bestCost)
                     continue;
 
@@ -314,17 +397,11 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
             attacker.MaximumRange * 0.90f);
     }
 
-    private static bool IsAttackAI(Regiment regiment)
+    private static float GetEngagementThreshold(Regiment attacker)
     {
-        if (regiment == null || regiment.IsRouted)
-            return false;
-
-        OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
-        if (controller == null || !controller.AIEnabled)
-            return false;
-
-        return controller.Mission == OfficerAIMission.AttackNearest ||
-               controller.Mission == OfficerAIMission.AttackTarget;
+        return Mathf.Max(
+            attacker.EffectiveRange * 1.30f,
+            attacker.GetFireTriggerRange() + 18f);
     }
 
     private static Regiment FindNearestEnemy(Regiment attacker, BattleManager battle)
@@ -334,13 +411,8 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
 
         foreach (Regiment candidate in battle.Regiments)
         {
-            if (candidate == null ||
-                candidate == attacker ||
-                candidate.Team == attacker.Team ||
-                candidate.IsRouted)
-            {
+            if (!IsValidEnemy(attacker, candidate))
                 continue;
-            }
 
             float distance = PlanarDistance(attacker.transform.position, candidate.transform.position);
             if (distance < best)
@@ -353,17 +425,41 @@ public sealed class PrototypeAttackFrontagePlannerV2 : MonoBehaviour
         return nearest;
     }
 
-    private static void FaceTarget(Regiment regiment, Regiment target)
+    private static bool IsValidEnemy(Regiment attacker, Regiment candidate)
     {
-        if (regiment == null || target == null)
+        return attacker != null &&
+               candidate != null &&
+               candidate != attacker &&
+               candidate.Team != attacker.Team &&
+               !candidate.IsRouted &&
+               candidate.CurrentStrength > 0;
+    }
+
+    private void CleanupStates(HashSet<Regiment> activeAttackers)
+    {
+        if (states.Count == 0)
             return;
 
-        Vector3 direction = target.transform.position - regiment.transform.position;
-        direction.y = 0f;
-        if (direction.sqrMagnitude < 0.01f)
+        List<Regiment> remove = null;
+        foreach (KeyValuePair<Regiment, EngagementState> pair in states)
+        {
+            Regiment unit = pair.Key;
+            if (unit != null && !unit.IsRouted && unit.CurrentStrength > 0 &&
+                (activeAttackers.Contains(unit) || pair.Value.Target != null))
+            {
+                continue;
+            }
+
+            if (remove == null)
+                remove = new List<Regiment>();
+            remove.Add(unit);
+        }
+
+        if (remove == null)
             return;
 
-        regiment.transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
+        foreach (Regiment unit in remove)
+            states.Remove(unit);
     }
 
     private static float PlanarDistance(Vector3 a, Vector3 b)
