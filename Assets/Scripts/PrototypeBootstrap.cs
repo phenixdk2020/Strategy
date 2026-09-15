@@ -3,9 +3,10 @@ using UnityEngine.Rendering;
 
 public sealed class PrototypeBootstrap : MonoBehaviour
 {
-    // v00.00.09f15: 4x battlefield area versus 09f14 (2x each linear dimension).
-    public const float BattlefieldWidth = 2880f;
-    public const float BattlefieldDepth = 1920f;
+    // v00.00.09f29b: battlefield doubled again in both linear dimensions versus 09f29a.
+    // 5760 x 3840 m gives 4x the previous area while retaining the existing central test terrain.
+    public const float BattlefieldWidth = 5760f;
+    public const float BattlefieldDepth = 3840f;
     public const float BattlefieldHalfWidth = BattlefieldWidth * 0.5f;
     public const float BattlefieldHalfDepth = BattlefieldDepth * 0.5f;
 
@@ -80,8 +81,8 @@ public sealed class PrototypeBootstrap : MonoBehaviour
             new Vector3(18f, 0f, 72f));
 
         Debug.Log(
-            "MAP-09F15|Size=" + BattlefieldWidth.ToString("0") + "x" + BattlefieldDepth.ToString("0") +
-            "m|Previous=1440x960|LinearScale=2x|AreaScale=4x|RiverWidth=5.5m|VisualPolish=True");
+            "MAP-09F29B|Size=" + BattlefieldWidth.ToString("0") + "x" + BattlefieldDepth.ToString("0") +
+            "m|Previous=2880x1920|LinearScale=2x|AreaScale=4x|RiverWidth=5.5m|Vegetation=1800");
     }
 
     private void CreateLighting()
@@ -102,7 +103,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         camera.tag = "MainCamera";
         camera.fieldOfView = 48f;
         camera.nearClipPlane = 0.2f;
-        camera.farClipPlane = 7000f;
+        camera.farClipPlane = 12000f;
         camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = new Color(0.57f, 0.67f, 0.75f);
         cameraObject.transform.position = new Vector3(-32f, 94f, -148f);
@@ -113,7 +114,8 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
     private void CreateGround()
     {
-        // Keep roughly 5 m terrain cells on the 2x-linear 09f15 battlefield.
+        // Keep the previous mesh segment count to avoid a 4x terrain-triangle cost.
+        // The larger map therefore uses roughly 10 m terrain cells instead of ~5 m.
         const int xSegments = 576;
         const int zSegments = 384;
         const float width = BattlefieldWidth;
@@ -154,7 +156,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
         Mesh mesh = new Mesh
         {
-            name = "PrototypeBattlefieldMesh_v09f15_2880x1920",
+            name = "PrototypeBattlefieldMesh_v09f29b_5760x3840",
             indexFormat = IndexFormat.UInt32,
             vertices = vertices,
             triangles = triangles,
@@ -169,7 +171,7 @@ public sealed class PrototypeBootstrap : MonoBehaviour
         mf.sharedMesh = mesh;
 
         MeshRenderer mr = ground.AddComponent<MeshRenderer>();
-        mr.sharedMaterial = CreateSharedMaterial(new Color(0.285f, 0.385f, 0.18f), "Grass09F15");
+        mr.sharedMaterial = CreateSharedMaterial(new Color(0.285f, 0.385f, 0.18f), "Grass09F29B");
 
         MeshCollider mc = ground.AddComponent<MeshCollider>();
         mc.sharedMesh = mesh;
@@ -200,16 +202,17 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
     private void CreateStream()
     {
-        Material water = CreateSharedMaterial(new Color(0.12f, 0.32f, 0.46f), "Water09F15");
+        Material water = CreateSharedMaterial(new Color(0.12f, 0.32f, 0.46f), "Water09F29B");
         Vector3 previous = Vector3.zero;
 
-        const int points = 477;
-        const float startZ = -952f;
+        const float margin = 8f;
         const float stepZ = 4f;
+        float startZ = -BattlefieldHalfDepth + margin;
+        int points = Mathf.CeilToInt((BattlefieldDepth - margin * 2f) / stepZ) + 1;
 
         for (int i = 0; i < points; i++)
         {
-            float z = startZ + i * stepZ;
+            float z = Mathf.Min(BattlefieldHalfDepth - margin, startZ + i * stepZ);
             float x = StreamCenterX(z);
             Vector3 p = new Vector3(x, SampleGroundHeight(x, z) + 0.07f, z);
 
@@ -222,16 +225,17 @@ public sealed class PrototypeBootstrap : MonoBehaviour
 
     private void CreateRoad()
     {
-        Material road = CreateSharedMaterial(new Color(0.50f, 0.38f, 0.23f), "Road09F15");
+        Material road = CreateSharedMaterial(new Color(0.50f, 0.38f, 0.23f), "Road09F29B");
         Vector3 previous = Vector3.zero;
 
-        const int points = 481;
-        const float startX = -1408f;
+        const float margin = 32f;
         const float stepX = 5.87f;
+        float startX = -BattlefieldHalfWidth + margin;
+        int points = Mathf.CeilToInt((BattlefieldWidth - margin * 2f) / stepX) + 1;
 
         for (int i = 0; i < points; i++)
         {
-            float x = startX + i * stepX;
+            float x = Mathf.Min(BattlefieldHalfWidth - margin, startX + i * stepX);
             float z = 22f + Mathf.Sin(x * 0.014f) * 8.2f;
             Vector3 p = new Vector3(x, SampleGroundHeight(x, z) + 0.10f, z);
 
@@ -307,10 +311,14 @@ public sealed class PrototypeBootstrap : MonoBehaviour
     {
         Random.InitState(1864);
 
-        for (int i = 0; i < 900; i++)
+        const int treeCount = 1800;
+        float xLimit = BattlefieldHalfWidth - 20f;
+        float zLimit = BattlefieldHalfDepth - 20f;
+
+        for (int i = 0; i < treeCount; i++)
         {
-            float x = Random.Range(-1420f, 1420f);
-            float z = Random.Range(-940f, 940f);
+            float x = Random.Range(-xLimit, xLimit);
+            float z = Random.Range(-zLimit, zLimit);
 
             bool nearStream = Mathf.Abs(x - StreamCenterX(z)) < 12f;
             bool nearFarm =
