@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f29l
+// v00.00.09f29l, spacing retuned by v00.00.09f29n.
 // Tightens Major/Oberstløjtnant follow behaviour without changing command authority.
 // AI ON/OFF decides whether officers make autonomous decisions; it must not decide
 // whether a HQ physically follows an already-issued player/higher-command mission.
@@ -11,10 +11,15 @@ using UnityEngine;
 public sealed class PrototypeHqFollow09F29L : MonoBehaviour
 {
     private const BindingFlags AnyMember = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-    private const float MajorBehind = 105f;
-    private const float MajorRepositionDelta = 55f;
-    private const float RegimentalBehind = 210f;
-    private const float RegimentalRepositionDelta = 90f;
+
+    // F29N: both command echelons are pulled ~24% closer to the formations. The old
+    // 105/210 m spacing looked detached at tactical zoom and made the command tree
+    // visually over-stretched. 80/160 m keeps hierarchy readable without putting HQs
+    // directly inside the firing line.
+    private const float MajorBehind = 80f;
+    private const float MajorRepositionDelta = 42f;
+    private const float RegimentalBehind = 160f;
+    private const float RegimentalRepositionDelta = 68f;
 
     private FieldInfo battalionsField;
     private FieldInfo currentMissionField;
@@ -51,11 +56,11 @@ public sealed class PrototypeHqFollow09F29L : MonoBehaviour
             "IsSafeHqRelocation", AnyMember, null, new[] { typeof(Vector3), typeof(Vector3) }, null);
 
         Debug.Log(
-            "HQ-FOLLOW-09F29L|Installed=True|MajorBehind=" + MajorBehind.ToString("0") +
+            "HQ-FOLLOW-09F29N|Installed=True|MajorBehind=" + MajorBehind.ToString("0") +
             "|MajorReposition=" + MajorRepositionDelta.ToString("0") +
             "|RegBehind=" + RegimentalBehind.ToString("0") +
             "|RegReposition=" + RegimentalRepositionDelta.ToString("0") +
-            "|FollowIndependentOfAI=True|ManualHQMovePreserved=True");
+            "|SpacingReductionApprox=24%|FollowIndependentOfAI=True|ManualHQMovePreserved=True");
     }
 
     private void Update()
