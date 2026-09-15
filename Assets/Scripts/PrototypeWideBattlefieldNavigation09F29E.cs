@@ -2,13 +2,11 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f29e
-// Wide-battlefield movement guard for the 5760 x 3840 m F29B map.
-// The older V4 A* layer was still compiled around the original +/-176 x +/-116 m
-// prototype grid and could clamp/unstick valid companies back into that tiny area.
-// F29E disables those obsolete bounded navigation writers and uses dynamic battlefield
-// limits, persistent final goals and light-weight obstacle detours. The existing F15
-// bridge-only phase machine remains the sole river-crossing authority.
+// v00.00.09f29e, local-contact/scenery authority hardened by v00.00.09f29o.
+// Wide-battlefield movement guard for the enlarged map. F29O makes this navigation
+// helper yield immediately when a Captain has acquired local attack contact and removes
+// Trees/FencePosts from hard detours because the canonical prototype rules define them
+// as pass-through scenery. Farmhouse/Barn remain local hard travel blockers.
 [DefaultExecutionOrder(1450)]
 public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
 {
@@ -55,7 +53,7 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
     private static void AutoCreate()
     {
         if (UnityEngine.Object.FindAnyObjectByType<PrototypeWideBattlefieldNavigation09F29E>() == null)
-            new GameObject("PrototypeWideBattlefieldNavigation_v000009f29e")
+            new GameObject("PrototypeWideBattlefieldNavigation_v000009f29o")
                 .AddComponent<PrototypeWideBattlefieldNavigation09F29E>();
     }
 
@@ -74,16 +72,17 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
 
         if (destinationField == null || hasDestinationField == null)
         {
-            Debug.LogError("NAV-WIDE-09F29E|Installed=False|Reason=RegimentMovementReflectionMissing");
+            Debug.LogError("NAV-WIDE-09F29O|Installed=False|Reason=RegimentMovementReflectionMissing");
             enabled = false;
             return;
         }
 
         Debug.Log(
-            "NAV-WIDE-09F29E|Installed=True|Bounds=" +
+            "NAV-WIDE-09F29O|Installed=True|Bounds=" +
             PrototypeBootstrap.BattlefieldWidth.ToString("0") + "x" +
             PrototypeBootstrap.BattlefieldDepth.ToString("0") +
-            "|LegacySmallGridDisabled=True|RiverAuthority=PrototypeRiverBridgeOnly09F3");
+            "|LegacySmallGridDisabled=True|RiverAuthority=PrototypeRiverBridgeOnly09F3|" +
+            "LocalContactYields=True|TreePassThrough=True|FencePassThrough=True");
     }
 
     private void OnDestroy()
@@ -141,7 +140,7 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
             recovery.enabled = false;
 
         legacyDisabled = true;
-        Debug.Log("NAV-WIDE-09F29E|ObsoleteNavigationDisabled=True|V4=True|V3=True|V1=True|Recovery=True");
+        Debug.Log("NAV-WIDE-09F29O|ObsoleteNavigationDisabled=True|V4=True|V3=True|V1=True|Recovery=True");
     }
 
     private void EnsureObstacles()
@@ -158,15 +157,16 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
 
             switch (item.name)
             {
-                case "Tree": AddObstacle(item.name, item.position, 2.6f); break;
+                // Trees and FencePosts are intentionally pass-through in the current
+                // company-scale prototype and must not create repeated combat detours.
                 case "Farmhouse": AddObstacle(item.name, item.position, 6.5f); break;
                 case "Barn": AddObstacle(item.name, item.position, 4.5f); break;
-                case "FencePost": AddObstacle(item.name, item.position, 0.55f); break;
             }
         }
 
         obstaclesLoaded = true;
-        Debug.Log("NAV-WIDE-09F29E|ObstaclesLoaded=" + obstacles.Count);
+        Debug.Log("NAV-WIDE-09F29O|ObstaclesLoaded=" + obstacles.Count +
+                  "|TreePassThrough=True|FencePassThrough=True");
     }
 
     private void AddObstacle(string name, Vector3 center, float radius)
@@ -195,6 +195,25 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
             states[unit] = state;
         }
 
+        // F29O authority rule: once AttackContact has handed physical control to the
+        // Captain, wide-map steering must stop writing destination/Column. The local
+        // combat layer will maintain explicit AttackTarget until contact ends.
+        if (PrototypeAttackContact09F29G.IsLocalContact(unit))
+        {
+            state.HasGoal = false;
+            state.HasDetour = false;
+            state.FormationStored = false;
+            state.LastPosition = unit.transform.position;
+            state.LastProgressAt = Time.time;
+
+            PrototypeInfantryCharge09F25 charge = PrototypeInfantryCharge09F25.Instance;
+            bool chargeOwns = charge != null && charge.IsCharging(unit);
+            if (!chargeOwns && !PrototypeInfantrySquare09F29.IsInSquare(unit) &&
+                unit.Formation != RegimentFormation.Line)
+                unit.SetFormation(RegimentFormation.Line);
+            return;
+        }
+
         bool hasDestination = (bool)hasDestinationField.GetValue(unit);
         if (!hasDestination)
         {
@@ -206,9 +225,7 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
             return;
         }
 
-        // The dedicated river phase machine runs later (execution order 5000) and
-        // owns bridge staging/entry/cross/exit steering. Never reinterpret its temporary
-        // steering targets as new final goals.
+        // The dedicated river phase machine runs later and owns bridge steering.
         if (PrototypeRiverBridgeOnly09F3.IsBridgeRouteActive(unit))
         {
             state.LastPosition = unit.transform.position;
@@ -258,6 +275,9 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
 
     private void PlanSteering(Regiment unit, NavigationState state, string reason)
     {
+        if (PrototypeAttackContact09F29G.IsLocalContact(unit))
+            return;
+
         Vector3 current = unit.transform.position;
         current.y = 0f;
         Vector3 goal = ClampToBattlefield(state.FinalGoal);
@@ -316,11 +336,9 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
 
         if (!found)
         {
-            // Never clamp back to the obsolete small map. Leave the original final goal
-            // intact and let the hard river/final-endpoint safety layers handle it.
             state.HasDetour = false;
             WriteTarget(unit, state, goal);
-            Debug.LogWarning("NAV-WIDE-09F29E|Unit=" + unit.RegimentName +
+            Debug.LogWarning("NAV-WIDE-09F29O|Unit=" + unit.RegimentName +
                              "|Detour=False|Blocker=" + blocker.Name +
                              "|Reason=NoLocalObstacleDetour");
             return;
@@ -338,7 +356,7 @@ public sealed class PrototypeWideBattlefieldNavigation09F29E : MonoBehaviour
         state.Detour = best;
         WriteTarget(unit, state, best);
 
-        Debug.Log("NAV-WIDE-09F29E|Unit=" + unit.RegimentName +
+        Debug.Log("NAV-WIDE-09F29O|Unit=" + unit.RegimentName +
                   "|Detour=True|Blocker=" + blocker.Name +
                   "|Reason=" + reason +
                   "|Waypoint=" + best.x.ToString("0.0") + "," + best.z.ToString("0.0") +
