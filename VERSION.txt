@@ -1,15 +1,47 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29
+Prototype version: v00.00.09f29b
 Build status: TEST
-Build name: INFANTRY SQUARE + CAVALRY THREAT FOUNDATION
-Visible build marker: PROJECT 1864 | v00.00.09f29 TEST
+Build name: BATTLEFIELD SCALE + ATTACK AI HARDENING
+Visible build marker: PROJECT 1864 | v00.00.09f29b TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.09 + tactical design supplements through 09f29
+Design manual baseline: v00.02.10 + tactical design supplements through 09f29b
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
-09f29 design supplement: docs/design-supplements/v00.00.09f29-infantry-square-cavalry-threat.md
+09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29b - Battlefield scale + attack AI hardening
+- Tactical battlefield is doubled in both linear dimensions from 2880 x 1920 m to 5760 x 3840 m. This is 2x width, 2x depth and 4x area versus f29a.
+- The road and river are generated across the complete enlarged battlefield instead of ending at the previous map bounds.
+- Vegetation coverage expands to the larger battlefield while retaining the same central farm/bridge QA terrain.
+- Terrain mesh segment count remains 576 x 384 to avoid a 4x triangle increase; the larger map therefore uses coarser terrain cells away from the detailed central test area.
+- The tactical scenario now retains two Prussian company-scale formations: 8th Regiment and 18th Regiment. Both are normalized to the 190-man company QA scale.
+- 18th Regiment no longer executes the old one-off flank waypoint from the pre-regimental test scenario; it enters a normal hostile attack mission.
+- Attack frontage planning no longer writes OrderMove/OrderHold every 0.25 seconds. Physical movement is left to the current authority owner.
+- The frontage layer now ignores a company while its OfficerAIController component is deliberately disabled by a Major/higher command layer.
+- The frontage layer also leaves units under the F26 under-fire reaction untouched.
+- Explicit AttackTarget missions are authoritative; the frontage layer no longer replaces them with whichever enemy happens to be nearest that frame.
+- AttackNearest becomes a sticky explicit target after entering the engagement envelope, preventing formations from pivoting repeatedly between nearby enemies.
+- Hard-coded old attack-slot clamps of approximately +/-170 x +/-110 m are removed; advisory slot calculations use the real battlefield bounds.
+- Approach formation policy now respects the same authority locks, so it cannot change a Major-owned company from Line to Column while the Major is placing it.
+- Regimental AttackHere role assignment is corrected: when doctrine calls for one battalion forward plus reserve, the battalion nearest the objective remains the front/assault battalion and the farther battalion becomes reserve. Total-travel permutation can no longer make the nearest battalion retreat while the distant battalion passes it.
+- Offensive front+flank assignment uses the same nearest-battalion-as-front rule.
+- Retains f29a terrain-following command hierarchy lines, company -> Major visibility, Major -> Oberstløjtnant visibility, officer target-area cursor and full company-footprint river endpoint protection.
+- Backup before this revision: backup/channel-test-v00.00.09f29a-pre-09f29b.
+
+Primary v00.00.09f29b QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29b TEST.
+2. Camera can traverse the full 5760 x 3840 m battlefield and the ground, road and river continue to the new bounds.
+3. Verify two hostile Prussian companies are present and both behave as company-scale formations.
+4. Give the Oberstløjtnant a BAL AttackHere order near one battalion. The nearer battalion must remain FRONT; the farther battalion may become RESERVE.
+5. During a Major-owned approach, company controllers are disabled and neither frontage planner nor approach-formation policy may rewrite the route/formation.
+6. When a company reaches its attack area and receives AttackTarget, it must retain that target until it routs/dies or higher authority changes the mission.
+7. With two nearby enemy companies, verify attackers no longer oscillate targets every few seconds merely because nearest-distance ordering changes.
+8. Under-fire reaction still pauses movement, faces the attacker and returns fire without frontage/approach systems fighting it.
+9. Select companies/Majors and verify f29a hierarchy relationship lines remain visible and terrain-following.
+10. Place a defensive/attack formation near the river and verify no company endpoint is accepted with part of the line standing in open water.
+11. Regression: Q square, F reform, infantry charge/melee, bridge routing and direct manual company authority still operate.
 
 v00.00.09f29 - Infantry square / cavalry-threat foundation
 - Adds first runtime KARRÉ/SQUARE state for Danish infantry companies without replacing the stable Line/Column movement kernel.
@@ -38,20 +70,6 @@ Retained from v00.00.09f28
 Retained from v00.00.09f26-v00.00.09f25
 - Under-fire reaction preserves parent mission while local AI responds to hostile fire.
 - Infantry CHARGE/melee baseline and local Captain authority remain.
-
-Primary v00.00.09f29 QA
-1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29 TEST.
-2. Select one Danish company and press Q. Company AI must go OFF and status must show DANNER KARRÉ, then KARRÉ KLAR.
-3. Verify the 1:1 soldiers visibly redistribute around a square perimeter over several seconds rather than teleporting instantly.
-4. While square is forming it must HOLD FIRE. When ready, previous fire policy is restored.
-5. Select a ready square and verify normal forward fans are hidden and all-direction CLOSE/MEDIUM/LONG rings are shown.
-6. Put an enemy on the side/rear of the square. The square may rotate its abstract active firing face to the nearest threat, but must use reduced square fire output rather than full-company 360-degree fire.
-7. Press F. Square state must end and existing Line visual system must reform the company.
-8. Form square manually, then issue a new direct movement order. Square must be released so the manual route can execute.
-9. Put selected company AI ON, then press Shift+Q. Synthetic mounted threat should trigger automatic square. The parent mission must remain stored rather than being deleted.
-10. Wait for synthetic threat to clear. Automatic square must release and parent/local AI may resume its mission.
-11. Regression: F28 Oberstløjtnant -> Major -> company orders still work after the company leaves square.
-12. Regression: F25 infantry charge/melee and F26 under-fire reaction still operate on normal Line/Column companies.
 
 Next milestone
 - F30: first real Danish mounted cavalry prototype on shared cavalry core; Gardehusar/Dragoon decision to be explicit in OOB data rather than conflated.
