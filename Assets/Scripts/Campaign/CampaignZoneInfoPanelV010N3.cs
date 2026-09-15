@@ -6,14 +6,17 @@ using Object = UnityEngine.Object;
 /// <summary>
 /// Compact contextual zone information panel.
 ///
-/// n6d selection contract:
+/// n6e selection contract:
 /// 1) exact city marker -> canonical City.ZoneId,
-/// 2) confirm the click is inside current Denmark zone geometry,
-/// 3) resolve ownership from canonical city + zone-centre influence sites,
-/// 4) never substitute a nearby zone-centre collider for an area click.
+/// 2) ordinary land click -> ZoneId stored on the actual visible/source polygon
+///    containing the click,
+/// 3) no nearest-centre/site ownership resolver is allowed for ordinary area
+///    selection,
+/// 4) no GrandCampaignZoneMarker collider fallback.
 ///
-/// n6d deliberately embeds the ownership resolver in this file so Unity does not
-/// depend on a separately imported resolver source file during compilation.
+/// This guarantees that the Amt shown by the info panel is the Amt represented by
+/// the polygon under the pointer. Historical accuracy of the polygon itself is a
+/// separate geometry/data question handled by CampaignZoneOverlayV010N.
 /// </summary>
 [DefaultExecutionOrder(24000)]
 public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
@@ -26,14 +29,13 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
 
     private const string ZoneOverlayRootName = "ZONE_OVERLAY_1851_LAND_CLIPPED";
     private const float CampaignPlaneY = 0.74f;
-    private const string EmbeddedResolverMode = "CANONICAL_CITY_PLUS_ZONE_CENTRE_NEAREST_SITE_EMBEDDED";
 
     private readonly List<ZoneArea> zoneAreas = new List<ZoneArea>();
     private CampaignDenmark1851Registry.ZoneDef selectedZone;
     private CampaignDenmark1851Registry.CityDef selectedCity;
     private bool visible;
     private bool zoneGeometryReady;
-    private bool resolverQaLogged;
+    private bool polygonQaLogged;
 
     private GUIStyle panelStyle;
     private GUIStyle titleStyle;
@@ -56,18 +58,18 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         if (!zoneGeometryReady)
             TryLoadZoneAreas();
 
-        if (zoneGeometryReady && !resolverQaLogged)
+        if (zoneGeometryReady && !polygonQaLogged)
         {
-            resolverQaLogged = true;
-            ValidateEmbeddedCanonicalSites(out int cityCorrect, out int centreCorrect);
+            polygonQaLogged = true;
+            ValidatePolygonCoverage(out int cityCorrect, out int centreCorrect);
             Debug.Log(
                 CampaignBuildInfo.LogTag +
                 "|ZoneOwnershipResolver=True" +
-                "|Mode=" + EmbeddedResolverMode +
-                "|CityCanonical=" + cityCorrect + "/" + CampaignDenmark1851Registry.Cities.Length +
-                "|ZoneCentreCanonical=" + centreCorrect + "/" + CampaignDenmark1851Registry.Zones.Length +
-                "|MarkerFallback=False" +
-                "|CompileDependency=Embedded");
+                "|Mode=VISIBLE_POLYGON_METADATA" +
+                "|CityInsideExpectedPolygon=" + cityCorrect + "/" + CampaignDenmark1851Registry.Cities.Length +
+                "|ZoneCentreInsideExpectedPolygon=" + centreCorrect + "/" + CampaignDenmark1851Registry.Zones.Length +
+                "|NearestSiteAreaFallback=False" +
+                "|MarkerFallback=False");
         }
 
         if (GrandCampaignBootstrap.Instance == null || Camera.main == null)
@@ -94,7 +96,6 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         if (!CampaignHudStateV010N2.HudVisible)
             CampaignHudStateV010N2.ToggleHud();
 
-        // Normal zone clicking must never reopen the large legacy selection boxes.
         if (CampaignHudStateV010N2.SelectionEnabled)
             CampaignHudStateV010N2.ToggleSelectionPanel();
 
@@ -116,7 +117,7 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
 
         Ray ray = camera.ScreenPointToRay(Input.mousePosition);
 
-        // A city hit is exact canonical data and always wins.
+        // City identity is canonical data and takes priority over area geometry.
         RaycastHit[] hits = Physics.RaycastAll(ray, 500f);
         Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         for (int h = 0; h < hits.Length; h++)
@@ -147,101 +148,24 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
         Vector3 world = ray.GetPoint(enter);
         Vector2 worldPoint = new Vector2(world.x, world.z);
 
-        // The zone polygons also act as a Denmark/land guard. Open sea must not
-        // receive the nearest Amt simply because an influence site is nearby.
-        bool insideZoneGeometry = false;
+        // The polygon is authoritative for area selection in n6e. This is the key
+        // rule: what the player sees and what the panel reports are the same area.
         for (int i = 0; i < zoneAreas.Count; i++)
         {
-            if (!PointInPolygon(worldPoint, zoneAreas[i].WorldPolygon))
+            ZoneArea area = zoneAreas[i];
+            if (!PointInPolygon(worldPoint, area.WorldPolygon))
                 continue;
 
-            insideZoneGeometry = true;
-            break;
+            zone = FindZone(area.ZoneId);
+            if (zone == null)
+                continue;
+
+            source = "VisibleZonePolygon";
+            return true;
         }
 
-        if (!insideZoneGeometry)
-            return false;
-
-        if (!TryResolveCanonicalOwnershipWorld(world, out string resolvedZoneId))
-            return false;
-
-        zone = FindZone(resolvedZoneId);
-        if (zone == null)
-            return false;
-
-        source = "CanonicalMultiSiteOwnershipEmbedded";
-        return true;
-    }
-
-    /// <summary>
-    /// n6d embedded resolver. Uses the same canonical city and zone-centre sites
-    /// as the prototype multi-site zone partition and therefore has no dependency
-    /// on CampaignZoneOwnershipResolverV010N6C being imported as a separate file.
-    /// </summary>
-    private static bool TryResolveCanonicalOwnershipWorld(Vector3 worldPoint, out string zoneId)
-    {
-        Vector2 geo = CampaignGeoProjection.Unproject(worldPoint);
-        return TryResolveCanonicalOwnershipGeo(geo, out zoneId);
-    }
-
-    private static bool TryResolveCanonicalOwnershipGeo(Vector2 geoPoint, out string zoneId)
-    {
-        zoneId = null;
-        float bestDistance = float.MaxValue;
-
-        CampaignDenmark1851Registry.ZoneDef[] zones = CampaignDenmark1851Registry.Zones;
-        for (int i = 0; i < zones.Length; i++)
-        {
-            CampaignDenmark1851Registry.ZoneDef zone = zones[i];
-            Vector2 site = new Vector2(zone.Longitude, zone.Latitude);
-            float distance = (site - geoPoint).sqrMagnitude;
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                zoneId = zone.Id;
-            }
-        }
-
-        CampaignDenmark1851Registry.CityDef[] cities = CampaignDenmark1851Registry.Cities;
-        for (int i = 0; i < cities.Length; i++)
-        {
-            CampaignDenmark1851Registry.CityDef cityDef = cities[i];
-            Vector2 site = new Vector2(cityDef.Longitude, cityDef.Latitude);
-            float distance = (site - geoPoint).sqrMagnitude;
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                zoneId = cityDef.ZoneId;
-            }
-        }
-
-        return !string.IsNullOrEmpty(zoneId);
-    }
-
-    private static void ValidateEmbeddedCanonicalSites(out int cityCorrect, out int zoneCentreCorrect)
-    {
-        cityCorrect = 0;
-        zoneCentreCorrect = 0;
-
-        CampaignDenmark1851Registry.CityDef[] cities = CampaignDenmark1851Registry.Cities;
-        for (int i = 0; i < cities.Length; i++)
-        {
-            CampaignDenmark1851Registry.CityDef cityDef = cities[i];
-            if (TryResolveCanonicalOwnershipGeo(
-                    new Vector2(cityDef.Longitude, cityDef.Latitude),
-                    out string owner) && owner == cityDef.ZoneId)
-                cityCorrect++;
-        }
-
-        CampaignDenmark1851Registry.ZoneDef[] zones = CampaignDenmark1851Registry.Zones;
-        for (int i = 0; i < zones.Length; i++)
-        {
-            CampaignDenmark1851Registry.ZoneDef zoneDef = zones[i];
-            if (TryResolveCanonicalOwnershipGeo(
-                    new Vector2(zoneDef.Longitude, zoneDef.Latitude),
-                    out string owner) && owner == zoneDef.Id)
-                zoneCentreCorrect++;
-        }
+        // No polygon means open sea or uncovered geometry. Do not guess a county.
+        return false;
     }
 
     private void TryLoadZoneAreas()
@@ -277,8 +201,45 @@ public sealed class CampaignZoneInfoPanelV010N3 : MonoBehaviour
             Debug.Log(
                 CampaignBuildInfo.LogTag +
                 "|ZoneInfoGeometry=True|PolygonParts=" + zoneAreas.Count +
-                "|Resolver=CityThenCanonicalMultiSiteEmbedded|MarkerFallback=False");
+                "|Resolver=VisiblePolygonMetadata|MarkerFallback=False");
         }
+    }
+
+    private void ValidatePolygonCoverage(out int cityCorrect, out int zoneCentreCorrect)
+    {
+        cityCorrect = 0;
+        zoneCentreCorrect = 0;
+
+        CampaignDenmark1851Registry.CityDef[] cities = CampaignDenmark1851Registry.Cities;
+        for (int i = 0; i < cities.Length; i++)
+        {
+            CampaignDenmark1851Registry.CityDef city = cities[i];
+            Vector3 world = CampaignGeoProjection.Project(city.Longitude, city.Latitude, CampaignPlaneY);
+            if (PointInsideExpectedZone(new Vector2(world.x, world.z), city.ZoneId))
+                cityCorrect++;
+        }
+
+        CampaignDenmark1851Registry.ZoneDef[] zones = CampaignDenmark1851Registry.Zones;
+        for (int i = 0; i < zones.Length; i++)
+        {
+            CampaignDenmark1851Registry.ZoneDef zone = zones[i];
+            Vector3 world = CampaignGeoProjection.Project(zone.Longitude, zone.Latitude, CampaignPlaneY);
+            if (PointInsideExpectedZone(new Vector2(world.x, world.z), zone.Id))
+                zoneCentreCorrect++;
+        }
+    }
+
+    private bool PointInsideExpectedZone(Vector2 point, string expectedZoneId)
+    {
+        for (int i = 0; i < zoneAreas.Count; i++)
+        {
+            ZoneArea area = zoneAreas[i];
+            if (area.ZoneId != expectedZoneId)
+                continue;
+            if (PointInPolygon(point, area.WorldPolygon))
+                return true;
+        }
+        return false;
     }
 
     private static bool PointInPolygon(Vector2 point, List<Vector2> polygon)
