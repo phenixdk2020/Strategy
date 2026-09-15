@@ -3,7 +3,7 @@ using UnityEngine;
 [DefaultExecutionOrder(20000)]
 public sealed class PrototypeBuildVersionOverlay : MonoBehaviour
 {
-    public const string BuildVersion = "v00.00.09f29a";
+    public const string BuildVersion = "v00.00.09f29b";
     public const string BuildChannel = "TEST";
 
     private GUIStyle style;
