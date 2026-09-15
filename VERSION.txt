@@ -1,8 +1,8 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29g
+Prototype version: v00.00.09f29h
 Build status: TEST
-Build name: CONTACT COMBAT + FACING ORDERS + UNIFIED HUD
-Visible build marker: PROJECT 1864 | v00.00.09f29g TEST
+Build name: UNIFIED HUD COMPILE HOTFIX
+Visible build marker: PROJECT 1864 | v00.00.09f29h TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
 Design manual baseline: v00.02.13 + tactical design supplements through 09f29g
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
@@ -15,6 +15,19 @@ Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29h - Unified HUD compile hotfix
+- Fixes CS0104 in PrototypeUnifiedCommandHud09F29G.cs where `Object` was ambiguous between `System.Object` and `UnityEngine.Object`.
+- Adds explicit `using Object = UnityEngine.Object;` alias; all FindAnyObjectByType calls now resolve to UnityEngine.Object.
+- No tactical behaviour changes relative to F29G.
+- Visible build marker bumped to v00.00.09f29h TEST.
+- Backup: backup/channel-test-v00.00.09f29g-pre-09f29h-compile-fix.
+
+Primary v00.00.09f29h QA
+1. Unity must compile without CS0104 errors from PrototypeUnifiedCommandHud09F29G.cs.
+2. Visible marker must read PROJECT 1864 | v00.00.09f29h TEST.
+3. Regression: select Oberstløjtnant, Major and Company and verify the unified F29G HUD still appears for all three levels.
+4. Regression: test click/drag facing and company MED-range contact engagement from F29G.
 
 v00.00.09f29g - Contact combat + facing orders + unified HUD + river continuity
 - Adds full selection command-chain visibility: selected company -> owning Major -> Oberstløjtnant; selected Major -> own companies + Oberstløjtnant; selected Oberstløjtnant -> both Majors -> all companies.
@@ -106,5 +119,5 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority.
 
 Next milestone
-- Validate F29G contact combat, click-drag facing, unified three-level HUD, command-chain visibility and river continuity together.
+- Validate F29H compile fix, then validate F29G contact combat, click-drag facing, unified three-level HUD, command-chain visibility and river continuity together.
 - F30: first real Danish mounted cavalry prototype on shared cavalry core.
