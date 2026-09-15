@@ -2,10 +2,11 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f1 backport: RTS box selection from the proven 09H layer.
+// v00.00.09f29k: RTS box selection with officer-order input isolation.
 // LMB click remains owned by PlayerCommander. LMB drag on the battlefield draws a
 // marquee and, on release, selects all Danish regiment centres inside the rectangle.
-// Shift adds; Ctrl toggles. This layer changes selection only - never movement/orders.
+// Shift adds; Ctrl toggles. While a Major/Oberstløjtnant point-order is pending,
+// officer click/drag facing owns LMB exclusively and box selection is suppressed.
 [DefaultExecutionOrder(325)]
 public sealed class PrototypeBoxSelection09H : MonoBehaviour
 {
@@ -30,7 +31,7 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
         if (Object.FindAnyObjectByType<PrototypeBoxSelection09H>() != null)
             return;
 
-        GameObject root = new GameObject("PrototypeBoxSelection_v000009f1");
+        GameObject root = new GameObject("PrototypeBoxSelection_v000009f29k");
         root.AddComponent<PrototypeBoxSelection09H>();
     }
 
@@ -47,6 +48,15 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
 
         if (selectedList == null)
             ResolveSelectionList();
+
+        // Officer point-order/facing drag has higher input authority than marquee
+        // selection. Reset any drag that may have begun on the HUD click itself and
+        // do not draw/apply SELECT while the order transaction is pending.
+        if (OfficerOrderOwnsPointer())
+        {
+            CancelPotentialDrag();
+            return;
+        }
 
         if (Input.GetMouseButtonDown(0))
             BeginPotentialDrag();
@@ -65,6 +75,19 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
             CompletePotentialDrag();
     }
 
+    private static bool OfficerOrderOwnsPointer()
+    {
+        PrototypeOfficerFacingOrder09F29G facing = PrototypeOfficerFacingOrder09F29G.Instance;
+        return facing != null && facing.HasPendingOrder;
+    }
+
+    private void CancelPotentialDrag()
+    {
+        mouseDownTracked = false;
+        dragging = false;
+        selectionAtMouseDown.Clear();
+    }
+
     private void ResolveSelectionList()
     {
         PlayerCommander commander = PlayerCommander.Instance;
@@ -80,7 +103,7 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
 
         if (selectedField == null)
         {
-            Debug.LogError("SELECT-09F1|Installed=False|Reason=PlayerCommander.selected_not_found");
+            Debug.LogError("SELECT-09F29K|Installed=False|Reason=PlayerCommander.selected_not_found");
             enabled = false;
             return;
         }
@@ -89,15 +112,15 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
         if (selectedList != null)
         {
             Debug.Log(
-                "SELECT-09F1|Installed=True|Mode=BoxSelect|ThresholdPx=" +
+                "SELECT-09F29K|Installed=True|Mode=BoxSelect|ThresholdPx=" +
                 DragThresholdPixels.ToString("0") +
-                "|OwnTeam=Denmark|MovementWrites=False");
+                "|OfficerFacingIsolation=True|OwnTeam=Denmark|MovementWrites=False");
         }
     }
 
     private void BeginPotentialDrag()
     {
-        if (cam == null || selectedList == null)
+        if (cam == null || selectedList == null || OfficerOrderOwnsPointer())
             return;
 
         BattleManager battle = BattleManager.Instance;
@@ -185,7 +208,7 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
 
         string mode = ctrlMode ? "Toggle" : shiftMode ? "Add" : "Replace";
         Debug.Log(
-            "SELECT-09F1|BoxComplete=True|Mode=" + mode +
+            "SELECT-09F29K|BoxComplete=True|Mode=" + mode +
             "|Inside=" + inside.Count +
             "|Selected=" + selectedList.Count);
     }
@@ -262,7 +285,7 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!dragging)
+        if (!dragging || OfficerOrderOwnsPointer())
             return;
 
         EnsureGuiStyle();
