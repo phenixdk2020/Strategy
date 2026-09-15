@@ -10,7 +10,7 @@ using UnityEngine;
 [DefaultExecutionOrder(820)]
 public sealed class PrototypeHqFollow09F29L : MonoBehaviour
 {
-    private const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+    private const BindingFlags AnyMember = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
     private const float MajorBehind = 105f;
     private const float MajorRepositionDelta = 55f;
     private const float RegimentalBehind = 210f;
@@ -41,12 +41,14 @@ public sealed class PrototypeHqFollow09F29L : MonoBehaviour
 
     private void Awake()
     {
-        battalionsField = typeof(PrototypeRegimentHierarchy09F27).GetField("battalions", AnyInstance);
-        currentMissionField = typeof(PrototypeRegimentalHQ09F28).GetField("currentMission", AnyInstance);
-        regHasGoalField = typeof(PrototypeRegimentalHQ09F28).GetField("hasHqGoal", AnyInstance);
-        regGoalField = typeof(PrototypeRegimentalHQ09F28).GetField("hqGoal", AnyInstance);
-        majorSafeRelocationMethod = typeof(PrototypeRegimentHierarchy09F27).GetMethod("IsSafeHqRelocation", AnyInstance);
-        regSafeRelocationMethod = typeof(PrototypeRegimentalHQ09F28).GetMethod("IsSafeHqRelocation", AnyInstance);
+        battalionsField = typeof(PrototypeRegimentHierarchy09F27).GetField("battalions", AnyMember);
+        currentMissionField = typeof(PrototypeRegimentalHQ09F28).GetField("currentMission", AnyMember);
+        regHasGoalField = typeof(PrototypeRegimentalHQ09F28).GetField("hasHqGoal", AnyMember);
+        regGoalField = typeof(PrototypeRegimentalHQ09F28).GetField("hqGoal", AnyMember);
+        majorSafeRelocationMethod = typeof(PrototypeRegimentHierarchy09F27).GetMethod(
+            "IsSafeHqRelocation", AnyMember, null, new[] { typeof(Vector3), typeof(Vector3) }, null);
+        regSafeRelocationMethod = typeof(PrototypeRegimentalHQ09F28).GetMethod(
+            "IsSafeHqRelocation", AnyMember, null, new[] { typeof(Vector3), typeof(Vector3) }, null);
 
         Debug.Log(
             "HQ-FOLLOW-09F29L|Installed=True|MajorBehind=" + MajorBehind.ToString("0") +
@@ -79,13 +81,13 @@ public sealed class PrototypeHqFollow09F29L : MonoBehaviour
                 continue;
 
             System.Type type = battalion.GetType();
-            FieldInfo hqField = type.GetField("HqRoot", AnyInstance);
-            FieldInfo aiField = type.GetField("AIEnabled", AnyInstance);
-            FieldInfo hasLastField = type.GetField("HasLastOrder", AnyInstance);
-            FieldInfo orderField = type.GetField("LastOrder", AnyInstance);
-            FieldInfo pointField = type.GetField("LastOrderPoint", AnyInstance);
-            FieldInfo hasGoalField = type.GetField("HasHqGoal", AnyInstance);
-            FieldInfo goalField = type.GetField("HqGoal", AnyInstance);
+            FieldInfo hqField = type.GetField("HqRoot", AnyMember);
+            FieldInfo aiField = type.GetField("AIEnabled", AnyMember);
+            FieldInfo hasLastField = type.GetField("HasLastOrder", AnyMember);
+            FieldInfo orderField = type.GetField("LastOrder", AnyMember);
+            FieldInfo pointField = type.GetField("LastOrderPoint", AnyMember);
+            FieldInfo hasGoalField = type.GetField("HasHqGoal", AnyMember);
+            FieldInfo goalField = type.GetField("HqGoal", AnyMember);
             if (hqField == null || aiField == null || hasLastField == null || orderField == null ||
                 pointField == null || hasGoalField == null || goalField == null)
                 continue;
@@ -157,8 +159,8 @@ public sealed class PrototypeHqFollow09F29L : MonoBehaviour
         }
 
         System.Type missionType = mission.GetType();
-        FieldInfo orderField = missionType.GetField("Order", AnyInstance);
-        FieldInfo objectiveField = missionType.GetField("Objective", AnyInstance);
+        FieldInfo orderField = missionType.GetField("Order", AnyMember);
+        FieldInfo objectiveField = missionType.GetField("Objective", AnyMember);
         if (orderField == null || objectiveField == null)
             return;
 
@@ -245,7 +247,7 @@ public sealed class PrototypeHqFollow09F29L : MonoBehaviour
     {
         if (majorSafeRelocationMethod == null)
             return true;
-        object result = majorSafeRelocationMethod.Invoke(hierarchy, new object[] { from, to });
+        object result = majorSafeRelocationMethod.Invoke(null, new object[] { from, to });
         return !(result is bool) || (bool)result;
     }
 
@@ -253,7 +255,7 @@ public sealed class PrototypeHqFollow09F29L : MonoBehaviour
     {
         if (regSafeRelocationMethod == null)
             return true;
-        object result = regSafeRelocationMethod.Invoke(regimental, new object[] { from, to });
+        object result = regSafeRelocationMethod.Invoke(null, new object[] { from, to });
         return !(result is bool) || (bool)result;
     }
 
