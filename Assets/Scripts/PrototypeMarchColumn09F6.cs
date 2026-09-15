@@ -2,10 +2,11 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f6 unified movement-formation policy, tightened by v00.00.09f10.
+// v00.00.09f6 unified movement-formation policy, tightened by v00.00.09f10 and v00.00.09f29n.
 // Long movement may use Column only outside enemy Long/MaximumRange. Once an enemy
-// is inside Long range the company must remain/deploy in Line, except when a river
-// crossing is actively owned by the bridge router, which temporarily requires Column.
+// is inside Long range the company must remain/deploy in Line. F29N gives explicit
+// CHARGE higher tactical priority than march/bridge formation policy: a charging
+// company is locked in Line and may never be forced into Column.
 [DefaultExecutionOrder(1700)]
 public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
 {
@@ -40,9 +41,9 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
         }
 
         Debug.Log(
-            "MARCH-09F10|Installed=True|Policy=ColumnOnlyOutsideEnemyLongRange|" +
+            "MARCH-09F29N|Installed=True|Policy=ColumnOnlyOutsideEnemyLongRange|" +
             "DestinationEnter=" + EnterColumnDestinationDistance.ToString("0") +
-            "m|EnemyDeploy=DynamicMaximumRange|BridgeException=True");
+            "m|EnemyDeploy=DynamicMaximumRange|ChargeLineLock=True|BridgeExceptionExceptCharge=True");
     }
 
     private void Update()
@@ -67,8 +68,20 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
 
     private void ApplyPolicy(Regiment regiment, BattleManager battle)
     {
+        // F29N: explicit charge owns tactical formation. It is a bayonet assault,
+        // not a march movement, so neither long-move policy nor bridge routing may
+        // reform the company into Column while charge remains active.
+        if (PrototypeInfantryCharge09F25.Instance != null &&
+            PrototypeInfantryCharge09F25.Instance.IsCharging(regiment))
+        {
+            autoColumn.Remove(regiment);
+            if (regiment.Formation != RegimentFormation.Line)
+                regiment.SetFormation(RegimentFormation.Line);
+            return;
+        }
+
         // Bridge routing owns formation while a legal river crossing is active.
-        // This is the only exception to the "enemy inside Long => stay in Line" rule.
+        // This exception applies to ordinary movement only; charge was handled above.
         if (PrototypeRiverBridgeOnly09F3.IsBridgeRouteActive(regiment))
         {
             autoColumn.Add(regiment);
@@ -120,7 +133,7 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
             regiment.SetFormation(RegimentFormation.Column);
 
         Debug.Log(
-            "MARCH-09F10|Unit=" + regiment.RegimentName +
+            "MARCH-09F29N|Unit=" + regiment.RegimentName +
             "|Column=True|Destination=" + destinationDistance.ToString("0.0") +
             "|Enemy=" + FormatDistance(enemyDistance) +
             "|LongRange=" + combatDeploymentDistance.ToString("0.0") +
@@ -133,7 +146,7 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
             regiment.SetFormation(RegimentFormation.Line);
 
         Debug.Log(
-            "MARCH-09F10|Unit=" + regiment.RegimentName +
+            "MARCH-09F29N|Unit=" + regiment.RegimentName +
             "|Column=False|Enemy=" + FormatDistance(enemyDistance) +
             "|LongRange=" + regiment.MaximumRange.ToString("0.0") +
             "|Reason=" + reason);
