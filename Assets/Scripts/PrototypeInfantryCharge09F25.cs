@@ -2,10 +2,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f25
+// v00.00.09f25 core, hardened by v00.00.09f29n.
 // Explicit infantry CHARGE state. This deliberately does NOT use Regiment.OrderAttack(),
-// because normal attack stops at musket range. Charge owns the approach until physical
-// contact, then the existing PrototypeMeleeCombatManager owns melee resolution.
+// because normal attack stops at musket range. Charge owns the approach until deep
+// physical contact, then the existing PrototypeMeleeCombatManager owns melee resolution.
+// F29N guarantees HOLD FIRE + LINE throughout charge and removes the old bridge-column
+// exception so a charging company never reforms into march column.
 [DefaultExecutionOrder(-1050)]
 public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
 {
@@ -34,7 +36,10 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
     private GUIStyle buttonStyle;
     private GUIStyle hintStyle;
 
-    private const float ContactDistance = 7.2f;
+    // F29N: old 7.2 m root-to-root stop left a visually large no-man's-land between
+    // two company formations. 2.2 m puts both visual formations deeply into bayonet
+    // contact while still giving the melee resolver a stable stop threshold.
+    private const float ContactDistance = 2.2f;
     private const float SteerInterval = 0.28f;
     private const float DenmarkChargeSpeed = 4.80f;
     private const float PrussiaChargeSpeed = 5.00f;
@@ -70,10 +75,11 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
             return;
         }
 
-        Debug.Log("CHARGE-09F25|Installed=True|Contact=" + ContactDistance.ToString("0.0") +
+        Debug.Log("CHARGE-09F29N|Installed=True|Contact=" + ContactDistance.ToString("0.0") +
                   "m|SpeedDK=" + DenmarkChargeSpeed.ToString("0.00") +
                   "|SpeedPR=" + PrussiaChargeSpeed.ToString("0.00") +
-                  "|Momentum=" + ChargeMomentumSeconds.ToString("0.0") + "s|Hotkey=V");
+                  "|Momentum=" + ChargeMomentumSeconds.ToString("0.0") +
+                  "s|Formation=LINE_LOCKED|Fire=HOLD_LOCKED|BridgeColumn=False");
     }
 
     private void OnDestroy()
@@ -122,6 +128,13 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
             if (unit == null || state == null || unit.IsRouted || state.Target == null || state.Target.IsRouted)
                 continue;
 
+            // Final authority pass: no other tactical helper may turn a charge into
+            // march column or re-enable musket fire while the charge state exists.
+            if (unit.Formation != RegimentFormation.Line)
+                unit.SetFormation(RegimentFormation.Line);
+            if (unit.FirePolicy != RegimentFirePolicy.HoldFire)
+                unit.SetFirePolicy(RegimentFirePolicy.HoldFire);
+
             float distance = PlanarDistance(unit.transform.position, state.Target.transform.position);
             if (distance <= ContactDistance)
                 continue;
@@ -137,6 +150,26 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
     public bool IsCharging(Regiment regiment)
     {
         return regiment != null && charges.ContainsKey(regiment);
+    }
+
+    // Presentation layers use this to hide musket range cones for both sides once a
+    // charge has become physical melee. The attacker remains IsCharging throughout.
+    public bool IsChargeMeleeParticipant(Regiment regiment)
+    {
+        if (regiment == null)
+            return false;
+
+        foreach (KeyValuePair<Regiment, ChargeState> pair in charges)
+        {
+            ChargeState state = pair.Value;
+            if (state == null || !state.ContactLogged)
+                continue;
+
+            if (state.Unit == regiment || state.Target == regiment)
+                return true;
+        }
+
+        return false;
     }
 
     public bool HasChargeMomentum(Regiment regiment)
@@ -208,10 +241,10 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
             };
             charges[unit] = state;
 
-            Debug.Log("CHARGE-09F25|Start=True|Unit=" + unit.RegimentName +
+            Debug.Log("CHARGE-09F29N|Start=True|Unit=" + unit.RegimentName +
                       "|Target=" + target.RegimentName +
                       "|Distance=" + PlanarDistance(unit.transform.position, target.transform.position).ToString("0.0") +
-                      "|AI=OFF|Fire=HOLD");
+                      "|AI=OFF|Fire=HOLD|Formation=LINE");
         }
     }
 
@@ -239,6 +272,13 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
                 continue;
             }
 
+            // Hard charge invariants. Keep these in Update as well as LateUpdate so
+            // Regiment.Update cannot fire a volley during the frame between helpers.
+            if (unit.FirePolicy != RegimentFirePolicy.HoldFire)
+                unit.SetFirePolicy(RegimentFirePolicy.HoldFire);
+            if (unit.Formation != RegimentFormation.Line)
+                unit.SetFormation(RegimentFormation.Line);
+
             float distance = PlanarDistance(unit.transform.position, state.Target.transform.position);
             if (distance <= ContactDistance)
             {
@@ -247,10 +287,11 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
                 {
                     state.ContactLogged = true;
                     state.ContactStartedAt = Time.time;
-                    Debug.Log("CHARGE-09F25|Contact=True|Unit=" + unit.RegimentName +
+                    Debug.Log("CHARGE-09F29N|Contact=True|Unit=" + unit.RegimentName +
                               "|Target=" + state.Target.RegimentName +
                               "|Distance=" + distance.ToString("0.0") +
-                              "|MomentumWindow=" + ChargeMomentumSeconds.ToString("0.0") +
+                              "|DeepContact=True|Fire=HOLD|Formation=LINE|MomentumWindow=" +
+                              ChargeMomentumSeconds.ToString("0.0") +
                               "s|MeleeAuthority=PrototypeMeleeCombatManager");
                 }
                 continue;
@@ -265,7 +306,8 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
             Vector3 targetPoint = state.Target.transform.position;
             if (PrototypeRiverBridgeOnly09F3.TryGetAttackSteering(unit, targetPoint, out Vector3 bridgeSteering))
             {
-                unit.SetFormation(RegimentFormation.Column);
+                // F29N: bridge steering may alter the path, but never charge formation.
+                unit.SetFormation(RegimentFormation.Line);
                 unit.OrderMove(bridgeSteering);
                 continue;
             }
@@ -289,12 +331,13 @@ public sealed class PrototypeInfantryCharge09F25 : MonoBehaviour
         if (!unit.IsRouted)
         {
             unit.OrderHold();
+            unit.SetFormation(RegimentFormation.Line);
             unit.SetFirePolicy(state.PreviousFirePolicy);
         }
 
         charges.Remove(unit);
-        Debug.Log("CHARGE-09F25|End=True|Unit=" + unit.RegimentName + "|Reason=" + reason +
-                  "|FireRestored=" + state.PreviousFirePolicy);
+        Debug.Log("CHARGE-09F29N|End=True|Unit=" + unit.RegimentName + "|Reason=" + reason +
+                  "|FireRestored=" + state.PreviousFirePolicy + "|Formation=LINE");
     }
 
     private void ClearPlayerRoute(Regiment regiment)
