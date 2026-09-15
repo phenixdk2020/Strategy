@@ -9,12 +9,15 @@ using UnityEngine;
 //    travel-distance permutation is mathematically cheaper.
 // 2) The second Prussian QA company must not inherit the old 18th Regiment flank
 //    waypoint from the pre-regimental scenario.
+// 3) The obsolete F25 local-Captain bridge to the disabled legacy Major is shut down
+//    once the F27 hierarchy is installed, so it cannot re-enable/disable controllers.
 [DefaultExecutionOrder(850)]
 public sealed class PrototypeAttackAIHotfix09F29B : MonoBehaviour
 {
     private FieldInfo currentMissionField;
     private object lastProcessedMission;
     private bool legacyEnemyWaypointCleared;
+    private bool legacyAuthorityConflictDisabled;
     private bool installLogged;
 
     private const float RegimentKnownEnemyRange = 1200f;
@@ -49,6 +52,7 @@ public sealed class PrototypeAttackAIHotfix09F29B : MonoBehaviour
         if (!enabled)
             return;
 
+        DisableLegacyAuthorityConflict();
         NeutralizeLegacyEnemyWaypoint();
         CorrectNewRegimentalAttackRoleAssignment();
 
@@ -61,9 +65,33 @@ public sealed class PrototypeAttackAIHotfix09F29B : MonoBehaviour
                 installLogged = true;
                 Debug.Log(
                     "ATTACK-AI-09F29B|Installed=True|NearestBattalionKeepsFront=True|" +
-                    "ReserveCannotWinByTravelPermutation=True|Legacy18thWaypoint=False");
+                    "ReserveCannotWinByTravelPermutation=True|Legacy18thWaypoint=False|" +
+                    "LegacyLocalCaptainAuthority=False");
             }
         }
+    }
+
+    private void DisableLegacyAuthorityConflict()
+    {
+        if (legacyAuthorityConflictDisabled)
+            return;
+
+        PrototypeRegimentHierarchy09F27 hierarchy = PrototypeRegimentHierarchy09F27.Instance;
+        if (hierarchy == null || !hierarchy.Installed)
+            return;
+
+        PrototypeLocalCaptainAuthority09F25 legacy =
+            Object.FindAnyObjectByType<PrototypeLocalCaptainAuthority09F25>();
+
+        if (legacy != null && legacy.enabled)
+        {
+            legacy.enabled = false;
+            Debug.Log(
+                "ATTACK-AI-09F29B|LegacyLocalCaptainAuthority=False|" +
+                "Reason=F27HierarchyOwnsAuthorityLifecycle");
+        }
+
+        legacyAuthorityConflictDisabled = true;
     }
 
     private void NeutralizeLegacyEnemyWaypoint()
@@ -108,7 +136,7 @@ public sealed class PrototypeAttackAIHotfix09F29B : MonoBehaviour
         }
 
         object mission = currentMissionField.GetValue(regimental);
-        if (mission == null || ReferenceEquals(mission, lastProcessedMission))
+        if (mission == null || object.ReferenceEquals(mission, lastProcessedMission))
             return;
 
         lastProcessedMission = mission;
