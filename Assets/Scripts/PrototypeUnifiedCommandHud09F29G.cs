@@ -3,12 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-// v00.00.09f29g
+// v00.00.09f29h
 // One visual language for Oberstløjtnant, Major and Kaptajn/company command.
 // Supersedes the F29F regimental overlay and F29C Major/Company overlay during runtime.
 // Legacy F27/F28 components stay enabled as command/state engines, but their old bottom
 // panels are fully covered and their mouse events are consumed by this authoritative HUD.
+// F29H compile hotfix: explicitly aliases Object to UnityEngine.Object so System.Object
+// cannot collide with UnityEngine.Object in FindAnyObjectByType calls.
 [DefaultExecutionOrder(-40000)]
 public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
 {
