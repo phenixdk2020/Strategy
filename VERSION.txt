@@ -29,12 +29,16 @@ v00.00.09f29e - Regimental defense + objective visuals + coordinated attack
 - Precise arrival does not override F26 under-fire reaction and does not teleport units.
 - Regimental FORSVAR HER now anchors a continuous defensive frontage around the clicked point. The two battalion centres use approximately +/-84 m lateral separation instead of the generic +/-170 m split, so the six-company front produced by two local battalion reserves meets through the ordered centre instead of leaving an open corridor.
 - Regimental AttackHere front/reserve and front/flank roles are now actually corrected in runtime: the battalion nearest the objective is FRONT and the other becomes RESERVE or FLANK. The original F28 total-travel permutation no longer determines those tactical roles.
-- Adds coordinated explicit AttackTarget deployment for multiple companies attacking the same enemy. Companies receive distinct attack slots instead of independently converging on the target centre.
+- Adds coordinated explicit AttackTarget deployment for multiple companies attacking the same enemy. Companies receive distinct formation-safe attack slots instead of independently converging on the target centre.
 - Coordinated attack keeps OfficerAIController as the physical movement owner, yields to a disabled controller owned by Major/higher command, and suspends itself during F26 under-fire reaction.
 - For 2-4 attackers the first implementation deploys companies on a frontal arc around the target while preserving left/right ordering to reduce crossing; larger groups put additional companies in support positions.
-- At coordinated slots, companies HOLD the tactical position, face the designated target and use the normal fire system; material target movement can trigger replanning.
+- Coordinated attack slots are resolved through F23 formation-footprint safety with current PrototypeBootstrap battlefield bounds; the obsolete V1 static small-map destination clamp is no longer used for physical coordinated attack movement.
+- At coordinated slots, companies HOLD the tactical position, face the designated target and use the normal fire system; material slot movement can trigger replanning while small changes are ignored.
+- Adds PrototypeWideBattlefieldNavigation09F29E for the 5760 x 3840 m battlefield. The old V4/V3/V1 navigation writers and old recovery layer are disabled because their active V4 grid was still bounded to approximately +/-176 x +/-116 m.
+- Wide-map navigation uses PrototypeBootstrap battlefield bounds, preserves persistent final goals and uses lightweight local obstacle detours instead of clamping legal units back to the old small prototype area.
+- PrototypeRiverBridgeOnly09F3 remains the sole river-crossing authority; wide navigation does not reinterpret bridge staging/entry/cross/exit steering as new final goals.
 - Retains F29D semantic zoom/NATO overlays, F29C Major/Company HUD, F29B attack-authority protection and F29A hierarchy/range visual fixes.
-- New telemetry prefixes: HUD-09F29E, REG-HARDEN-09F29E, REG-DEFEND-09F29E, REG-ATTACK-09F29E, HQ-ARRIVAL-09F29E and COORD-ATTACK-09F29E.
+- New telemetry prefixes: HUD-09F29E, REG-HARDEN-09F29E, REG-DEFEND-09F29E, REG-ATTACK-09F29E, HQ-ARRIVAL-09F29E, COORD-ATTACK-09F29E and NAV-WIDE-09F29E.
 - Backup before this revision: backup/channel-test-v00.00.09f29d-pre-09f29e-regimental-visual-defense.
 
 Primary v00.00.09f29e QA
@@ -51,7 +55,10 @@ Primary v00.00.09f29e QA
 11. Trigger under-fire reaction during coordinated approach. F29E coordination must wait and not fight F26 local authority.
 12. Give the companies a fresh Major/higher-command mission. F29E coordination must release immediately when their OfficerAIController is disabled by higher authority.
 13. Verify FRONT+RESERVE / FRONT+FLANK regimental attack keeps the nearest battalion in the FRONT role.
-14. Regression: semantic zoom, NATO counters, square, charge, forced march, bridge routing, river endpoint safety and F29C company/Major HUD remain active.
+14. Move companies outside the old +/-176 x +/-116 navigation rectangle and issue movement orders. They must remain in the enlarged battlefield and must not be clamped or teleported back into the obsolete grid.
+15. Test a route obstructed by trees/buildings; wide navigation should create a local detour while retaining the original final goal.
+16. Test a route across the river; the existing bridge-only phase machine must still stage/cross/exit through the fixed bridge.
+17. Regression: semantic zoom, NATO counters, square, charge, forced march, river endpoint safety and F29C company/Major HUD remain active.
 
 v00.00.09f29d - Semantic zoom + NATO tactical overlay
 - Adds a runtime semantic zoom manager with four visual levels: CLOSE, MEDIUM, OPERATIONAL and STRATEGIC.
@@ -87,7 +94,6 @@ v00.00.09f29b - Battlefield scale + attack AI hardening
 - Frontage and approach layers respect disabled OfficerAIController state and F26 under-fire reaction.
 - Explicit AttackTarget is sticky and no longer replaced by whichever enemy happens to be nearest.
 - AttackNearest gains target hysteresis and locks to explicit AttackTarget after entering the engagement envelope.
-- Old small-map attack-slot clamps are removed.
 - Retains F29A terrain-following hierarchy links, officer target cursor and full company-footprint river endpoint protection.
 
 v00.00.09f29 - Infantry square / cavalry-threat foundation
@@ -110,7 +116,7 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority remain.
 
 Next milestone
-- Stabilize F29E regimental objective/defense/attack QA together with F29D semantic zoom.
+- Stabilize F29E regimental objective/defense/attack/navigation QA together with F29D semantic zoom.
 - F30: first real Danish mounted cavalry prototype on shared cavalry core; Gardehusar/Dragoon decision remains explicit in OOB data rather than conflated.
 - F30 mounted charge must call F29 mounted-threat API and consume square readiness/charge-defense result.
 - After cavalry baseline: mounted/dismounted Dragoon behaviour, then Kanonbatteri/Artilleri, then Combined Arms QA.
