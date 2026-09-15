@@ -1,9 +1,9 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n6c
-Build status: CITY ART ASSET FIX + DETERMINISTIC ZONE OWNERSHIP
-Build name: CAMPAIGN3 CITY ART + ZONE OWNERSHIP HOTFIX 10N6C
+Prototype version: v00.00.10n6d
+Build status: EMBEDDED ZONE RESOLVER COMPILE HOTFIX
+Build name: CAMPAIGN3 EMBEDDED ZONE RESOLVER COMPILE HOTFIX 10N6D
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n6c-city-zone-hotfix
+Work branch: work/channel-campaign3-v10n6d-resolver-compile-hotfix
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
 Design baseline: v00.02.21
@@ -18,58 +18,38 @@ LINEAGE:
 - v00.00.10n6a = CS1612 withdrawal rally-point compile hotfix
 - v00.00.10n6b = authored transparent Proposal 3 A/B/C city-art runtime
 - v00.00.10n6c = valid city PNG payloads + deterministic canonical zone ownership resolver
+- v00.00.10n6d = embedded zone ownership resolver compile hotfix
 
 ROLLBACK:
+- before v10n6d: backup/channel-campaign3-before-v10n6d-resolver-compile-hotfix-20260915
 - before v10n6c: backup/channel-campaign3-before-v10n6c-city-zone-hotfix-20260914
 - before v10n6b: backup/channel-campaign3-before-v10n6b-proposal3-city-art-20260914
 - before v10n6a: backup/channel-campaign3-before-v10n6a-withdrawal-compile-hotfix-20260914
 
-V10N6C ROOT CAUSE / FIX:
-1. CITY ART
-- n6b runtime log showed Proposal3CityArt=False / MissingTexture for A, B and C.
-- The promoted n6b PNG payloads were not the intended valid Proposal 3 resources.
-- n6c replaces all three Resources PNG files with valid transparent 256x256 Proposal 3 assets.
-- CampaignCityIconV010N6 now retries resource import at 1 second intervals and logs a missing-texture state only once instead of every frame.
-- Successful resource load logs the texture dimensions.
-- The visible icon child is CITY_ICON_PROPOSAL3_10N6C.
-- Legacy procedural n6 and previous n6b icon children are removed when the n6c art installs.
-- Old round city rendering remains disabled; one invisible BoxCollider remains the click target.
+V10N6D COMPILE HOTFIX:
+- Unity reported CS0103 in CampaignZoneInfoPanelV010N3 because CampaignZoneOwnershipResolverV010N6C was not visible in the local compile context.
+- The resolver logic is now embedded directly in CampaignZoneInfoPanelV010N3.
+- CampaignZoneInfoPanelV010N3 no longer references CampaignZoneOwnershipResolverV010N6C.
+- The separate CampaignZoneOwnershipResolverV010N6C source/meta files are removed from the n6d branch to keep one authoritative implementation.
+- Exact city clicks still resolve through canonical City.ZoneId.
+- Area clicks still use canonical city + zone-centre nearest-site ownership after the land/zone geometry guard.
+- GrandCampaignZoneMarker collider fallback remains disabled for normal area selection.
+- Resolver QA remains CityCanonical=68/68 and ZoneCentreCanonical=20/20 as the target.
 
-2. ZONE / AMT CLICK OWNERSHIP
-- n6b log showed raw land-clipped polygon coverage of only 53/68 canonical city anchors and 19/20 zone centres.
-- The failures are concentrated on coastal/island points where the coarse Natural Earth 1:50m land mask does not contain the canonical city coordinate.
-- n6c separates CLICK OWNERSHIP from coarse land-mask coverage.
-- Exact city clicks always resolve through canonical City.ZoneId.
-- Area clicks use CampaignZoneOwnershipResolverV010N6C and the same canonical city + zone-centre influence sites as the prototype multi-site partition.
-- Zone-centre collider fallback is removed from normal area selection.
-- Open-sea clicks are rejected by the existing land-clipped zone geometry guard.
-- Resolver QA independently checks all canonical city sites and zone-centre sites.
-
-IMPORTANT GEOMETRY GUARDRAIL:
-- The visible Amt lines are still PROTOTYPE_LAND_CLIPPED_MULTI_SITE_VORONOI.
-- Resolver consistency is NOT a claim that the lines are historically exact 1851 borders.
-- The Natural Earth 1:50m coastline remains too coarse for several small coastal details.
-- Source-backed DigDag Amt/Region polygons remain the required production geometry.
-
-PROPOSAL 3 CITY ART:
+RETAINED N6C CITY ART:
+- Valid Proposal 3 A/B/C PNG resources remain unchanged.
 - C: smallest settlement icon, approximately 2-3 buildings.
 - B: regional-town icon, approximately 5-6 buildings plus church.
 - A: largest development-city icon, approximately 10-15 buildings, church and stronger civic centre.
-- Transparent outside the irregular settlement footprint; no green square TownGround.
-- Population gives only limited scale variation inside each A/B/C tier.
+- Old round city renderer remains disabled.
+- No green TownGround is created.
+- One invisible BoxCollider remains the stable click target.
 
-FILES ADDED/CHANGED IN V10N6C:
-- Assets/Resources/Campaign/CityIcons/City_A_Proposal3.png
-- Assets/Resources/Campaign/CityIcons/City_B_Proposal3.png
-- Assets/Resources/Campaign/CityIcons/City_C_Proposal3.png
-- Assets/Scripts/Campaign/CampaignCityIconV010N6.cs
-- Assets/Scripts/Campaign/CampaignZoneOwnershipResolverV010N6C.cs
-- Assets/Scripts/Campaign/CampaignZoneOwnershipResolverV010N6C.cs.meta
-- Assets/Scripts/Campaign/CampaignZoneInfoPanelV010N3.cs
-- Assets/Scripts/Campaign/CampaignBuildInfo.cs
-- VERSION.txt
-- docs/parts/part-20-55-CAMPAIGN-V10N6C-CITY-ZONE-HOTFIX.md
-- docs/PROJECT-1864-Designmanual.md
+IMPORTANT GEOMETRY GUARDRAIL:
+- Visible Amt lines are still PROTOTYPE_LAND_CLIPPED_MULTI_SITE_VORONOI.
+- Resolver consistency is not a claim that the visible lines are historically exact 1851 borders.
+- Natural Earth 1:50m coastline remains too coarse for some coastal details.
+- Source-backed DigDag Amt/Region polygons remain the production target.
 
 RETAINED SYSTEMS:
 - 20 ZONE-REG-01 zones / 68 CITY-REG-01 cities / 290565 urban population checksum.
@@ -79,22 +59,22 @@ RETAINED SYSTEMS:
 - A/B/C construction rules and city/zone identities.
 
 QA GATES:
-1. Unity 6000.6.0f1 compiles without errors.
-2. Badge/topbar show v00.00.10n6c.
-3. Log contains Proposal3TexturesLoaded=True with A/B/C dimensions.
-4. Log contains Proposal3CityArt=True and Cities=68.
-5. C/B/A city icons are visible and visually distinct.
-6. No round city cylinder and no green TownGround are visible.
-7. Transparent city-art background does not obscure World Imagery.
-8. Direct city click returns the city's canonical ZoneId.
-9. Area click uses Source=CanonicalMultiSiteOwnership.
-10. Normal area selection never uses a GrandCampaignZoneMarker collider fallback.
-11. Resolver QA should report CityCanonical=68/68 and ZoneCentreCanonical=20/20.
-12. Open-sea click does not select an Amt.
-13. Vejle/Aalborg/Hjørring/Thisted/Viborg click regressions are retested.
-14. 20 zones / 68 cities / population 290565 validation remains unchanged.
-15. Raw land-mask coverage warnings may remain until historical/coastline GIS replacement; do not confuse these with resolver QA.
+1. Unity 6000.6.0f1 compiles without CS0103 resolver errors.
+2. Badge/topbar show v00.00.10n6d.
+3. No source reference to CampaignZoneOwnershipResolverV010N6C remains in CampaignZoneInfoPanelV010N3.
+4. Log contains ZoneOwnershipResolver=True and CompileDependency=Embedded.
+5. Resolver QA target is CityCanonical=68/68 and ZoneCentreCanonical=20/20.
+6. Log contains Proposal3TexturesLoaded=True with A/B/C dimensions.
+7. Log contains Proposal3CityArt=True and Cities=68.
+8. C/B/A city icons are visible and visually distinct.
+9. No round city cylinder and no green TownGround are visible.
+10. Direct city click returns the city's canonical ZoneId.
+11. Area click uses Source=CanonicalMultiSiteOwnershipEmbedded.
+12. Normal area selection never uses a GrandCampaignZoneMarker collider fallback.
+13. Open-sea click does not select an Amt.
+14. Vejle/Aalborg/Hjørring/Thisted/Viborg click regressions are retested.
+15. Registry remains 20 zones / 68 cities / population 290565.
 16. Withdrawal orders regressions pass.
 17. World Imagery and streamed 3D terrain remain functional.
 
-QA state: V10N6C IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N6D IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
