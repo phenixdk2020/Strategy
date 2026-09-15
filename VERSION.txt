@@ -1,116 +1,103 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29d
+Prototype version: v00.00.09f29e
 Build status: TEST
-Build name: SEMANTIC ZOOM + NATO TACTICAL OVERLAY
-Visible build marker: PROJECT 1864 | v00.00.09f29d TEST
+Build name: REGIMENTAL DEFENSE + OBJECTIVE VISUALS + COORDINATED ATTACK
+Visible build marker: PROJECT 1864 | v00.00.09f29e TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.12 + tactical design supplements through 09f29d
+Design manual baseline: v00.02.13 + tactical design supplements through 09f29e
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29e design supplement: docs/design-supplements/v00.00.09f29e-regimental-defense-attack-coordination.md
 09f29d design supplement: docs/design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md
 09f29c design supplement: docs/design-supplements/v00.00.09f29c-unified-command-hud.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 
+v00.00.09f29e - Regimental defense + objective visuals + coordinated attack
+- Adds a compact Oberstløjtnant / Regimental HQ HUD using the same F29C red/green visual language as Major and Company control.
+- Regimental HUD is divided into ENHEDSINFO / AI, REGIMENTSORDRER and BATALJONER UNDER OBERSTLØJTNANT.
+- Regimental HUD shows total men, losses, morale, cohesion and average ammunition plus status rows for both subordinate battalions.
+- AI ON is green / AI OFF red; DEF/BAL/OFF are red when inactive and green when active.
+- Regimental order buttons are ANGRIB HER, FORSVAR HER, RYK FREM, TILBAGETRÆK, SAML and STOP/HOLD.
+- The legacy F28 HUD remains as a logic dependency but the new F29E HUD draws over it and consumes the existing 90 px command-panel pointer area so hidden controls cannot double-fire.
+- A committed Regimental objective now remains visible while the Oberstløjtnant is selected. The marker is a terrain-following order-coloured circle plus centre cross and screen-space order label.
+- First persistent objective radii: DEFEND 72 m, ATTACK 58 m, ASSEMBLE 40 m and generic advance/withdraw 50 m.
+- Selecting the Oberstløjtnant now exposes the complete command chain: Oberstløjtnant -> both Majors -> all eight companies.
+- Selecting the Oberstløjtnant also exposes all company mission destination footprints and active routes, making the decomposition from regimental objective to company slots visible without selecting each Major.
+- Precise slot-arrival hardening corrects the old 4.5 m mission-arrival window. If F27 marks a company arrived while its centre is still outside the displayed footprint, F29E completes only the final metres and accepts approximately 0.85 m from the slot centre.
+- Precise arrival does not override F26 under-fire reaction and does not teleport units.
+- Regimental FORSVAR HER now anchors a continuous defensive frontage around the clicked point. The two battalion centres use approximately +/-84 m lateral separation instead of the generic +/-170 m split, so the six-company front produced by two local battalion reserves meets through the ordered centre instead of leaving an open corridor.
+- Regimental AttackHere front/reserve and front/flank roles are now actually corrected in runtime: the battalion nearest the objective is FRONT and the other becomes RESERVE or FLANK. The original F28 total-travel permutation no longer determines those tactical roles.
+- Adds coordinated explicit AttackTarget deployment for multiple companies attacking the same enemy. Companies receive distinct attack slots instead of independently converging on the target centre.
+- Coordinated attack keeps OfficerAIController as the physical movement owner, yields to a disabled controller owned by Major/higher command, and suspends itself during F26 under-fire reaction.
+- For 2-4 attackers the first implementation deploys companies on a frontal arc around the target while preserving left/right ordering to reduce crossing; larger groups put additional companies in support positions.
+- At coordinated slots, companies HOLD the tactical position, face the designated target and use the normal fire system; material target movement can trigger replanning.
+- Retains F29D semantic zoom/NATO overlays, F29C Major/Company HUD, F29B attack-authority protection and F29A hierarchy/range visual fixes.
+- New telemetry prefixes: HUD-09F29E, REG-HARDEN-09F29E, REG-DEFEND-09F29E, REG-ATTACK-09F29E, HQ-ARRIVAL-09F29E and COORD-ATTACK-09F29E.
+- Backup before this revision: backup/channel-test-v00.00.09f29d-pre-09f29e-regimental-visual-defense.
+
+Primary v00.00.09f29e QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29e TEST.
+2. Select the Oberstløjtnant. Verify the compact F29E HUD appears with ENHEDSINFO / AI, REGIMENTSORDRER and both subordinate battalion rows.
+3. Verify Regimental AI and DEF/BAL/OFF use the same green-active / red-inactive state language as F29C.
+4. Place FORSVAR HER and keep the Oberstløjtnant selected. The persistent defence circle/cross must remain at the clicked objective.
+5. With the Oberstløjtnant selected, verify Oberstløjtnant -> both Majors and both Majors -> all eight companies are visible.
+6. Verify all current company destination footprints are visible from Regimental HQ selection, with routes shown for units that have not arrived.
+7. Verify a company is not visually marked arrived while its centre is still several metres outside its displayed destination rectangle.
+8. Place FORSVAR HER on open terrain. The exact clicked centre must be covered by the line rather than left as a corridor between the two battalions.
+9. Repeat FORSVAR HER near the bridge and confirm river/terrain legality remains authoritative while the defence still attempts to cover the ordered centre.
+10. Give 2-4 companies one explicit enemy target. They should deploy to separate attack positions instead of collapsing into one crowd.
+11. Trigger under-fire reaction during coordinated approach. F29E coordination must wait and not fight F26 local authority.
+12. Give the companies a fresh Major/higher-command mission. F29E coordination must release immediately when their OfficerAIController is disabled by higher authority.
+13. Verify FRONT+RESERVE / FRONT+FLANK regimental attack keeps the nearest battalion in the FRONT role.
+14. Regression: semantic zoom, NATO counters, square, charge, forced march, bridge routing, river endpoint safety and F29C company/Major HUD remain active.
+
 v00.00.09f29d - Semantic zoom + NATO tactical overlay
-- Adds a new runtime semantic zoom manager with four visual levels: CLOSE, MEDIUM, OPERATIONAL and STRATEGIC.
+- Adds a runtime semantic zoom manager with four visual levels: CLOSE, MEDIUM, OPERATIONAL and STRATEGIC.
 - HQ visibility is prioritized: Major/Battalion and Regimental HQ receive fixed-screen-size tactical counters from moderate zoom, before generic company counters appear.
 - Major/Battalion counters use NATO echelon II and Regimental/Oberstløjtnant uses III; company-scale infantry uses I.
 - Operational zoom overlays all company-scale formations on both sides with NATO-style infantry counters, facing arrows, strength bars, current/initial men and morale; Danish counters also show ammunition.
 - Friendly counters are blue, enemy red, selected units/HQ gold and routed units grey.
-- Strategic zoom hides company/HQ MeshRenderers and ParticleSystemRenderers while leaving terrain, simulation, colliders, AI, LineRenderers, command links and order state active. The result is a 2D tactical-symbol layer over the 3D battlefield.
+- Strategic zoom hides company/HQ MeshRenderers and ParticleSystemRenderers while leaving terrain, simulation, colliders, AI, LineRenderers, command links and order state active.
 - Zooming back in restores the hidden 3D meshes.
-- Dynamic refresh ensures newly created flag/HQ/company renderers inherit the current strategic visibility state.
 - HQ counters include a screen-space beacon/stem down to the real world position so commanders remain locatable over terrain and units.
-- The two company-scale Prussian QA entities are displayed in the semantic overlay as PR. 1. KOMPAGNI and PR. 2. KOMPAGNI, while their legacy internal identifiers remain unchanged for compatibility.
-- Current QA thresholds use camera height: HQ markers ~72 m, Medium ~135 m, Operational ~235 m, Strategic ~390 m. A later design phase may replace this with projected screen-footprint thresholds.
+- Current QA thresholds use camera height: HQ markers ~72 m, Medium ~135 m, Operational ~235 m, Strategic ~390 m.
 - Adds a top-right tactical-view indicator while not in Close view.
-- New telemetry prefix: SEMANTIC-ZOOM-09F29D.
-- Design proposal and future path documented in docs/design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md.
+- Telemetry prefix: SEMANTIC-ZOOM-09F29D.
 - Backup before this revision: backup/channel-test-v00.00.09f29c-pre-09f29d-semantic-zoom.
 
-Primary v00.00.09f29d QA
-1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29d TEST.
-2. Close zoom retains normal 3D soldiers, flags, HQ models and tactical visuals.
-3. Above ~72 m camera height, Major A, Major B and Oberstløjtnant become clearly visible through HQ counters/beacons.
-4. A selected company gets a counter before full operational company overlay activates.
-5. Operational zoom shows all current Danish and Prussian company-scale formations with I echelon counters.
-6. Major/Battalion shows II; Regimental/Oberstløjtnant shows III.
-7. Verify blue friendly, red enemy, gold selected and grey routed presentation.
-8. Facing arrow must follow each company formation's current forward direction.
-9. Strategic zoom hides company/HQ 3D meshes but preserves terrain, command/range lines, AI, selection colliders and simulation state.
-10. Zoom back below Strategic threshold and verify all 3D company/HQ meshes return.
-11. Verify command relationship lines from f29a remain readable while strategic symbols are active.
-12. Regression: f29c HUD, f29b attack authority, square, charge, bridge routing and river endpoint protection continue unchanged.
-
 v00.00.09f29c - Unified command HUD + company naming
-- Adds one compact 90 px tactical command HUD for both Major/Battalion and Company/Kaptajn selection, visually replacing the overlapping legacy bottom controls without changing the existing simulation-control footprint.
-- Major HUD is divided into ENHEDSINFO / AI, BATALJONSORDRER and KOMPAGNIER UNDER MAJOR.
-- Major HUD shows aggregate men, losses, morale, cohesion and ammunition plus one status row for each of the four subordinate companies with men/current strength, losses, morale and ammunition.
-- AI ON is green and AI OFF red. DEF/BAL/OFF use red for inactive and green for the active doctrine.
-- Battalion order buttons are compact and show the pending point-order in green: ANGRIB HER, FORSVAR HER, RYK FREM, TILBAGETRÆK, SAML and STOP/HOLD.
-- Company HUD is divided into ENHEDSINFO, AI/DOKTRIN, SKYDNING, ORDRER/BEVÆGELSE and FORMATION.
-- Company fire controls are grouped as HOLD/CLOSE/MED/LONG with red inactive / green active state.
-- Fighting withdrawal controls are grouped as -> MED, -> LONG and -> UD, with the active common withdrawal mode shown green when all selected companies share it.
-- TVANG, CHARGE and STOP are in the company movement/order group. Forced march and active charge use green state feedback.
-- STOP is a hard direct company command: AI is turned OFF, the manual route is cleared, fighting withdrawal is cancelled, an active infantry charge is ended, forced march is disabled and the unit receives OrderHold().
-- Formation controls are LINJE, KOLONNE and SQUARE. SQUARE now has a visible company-HUD button and uses the existing F29 square implementation rather than a duplicate formation model.
-- Formation buttons are direct company authority just like the existing F/C/Q hotkeys; selecting a formation switches local company AI OFF so the higher mission cannot immediately overwrite the player's formation choice.
-- Danish company display naming is normalized to 1. KOMPAGNI through 8. KOMPAGNI. Legacy internal prototype identifiers such as 1. Regiment / 5. Regiment / 2. Regiment / 3. Regiment are retained internally for compatibility, while Unity GameObject/display names are corrected at runtime.
-- The unified HUD consumes pointer events in the existing 90 px bottom command area after processing its buttons, preventing hidden legacy IMGUI buttons underneath from double-firing.
+- Adds one compact 90 px tactical command HUD for Major/Battalion and Company/Kaptajn control.
+- Major HUD contains ENHEDSINFO / AI, BATALJONSORDRER and KOMPAGNIER UNDER MAJOR.
+- Company HUD contains ENHEDSINFO, AI/DOKTRIN, SKYDNING, ORDRER/BEVÆGELSE and FORMATION.
+- AI and active state buttons use green-active / red-inactive coding.
+- Company fire controls: HOLD/CLOSE/MED/LONG.
+- Fighting withdrawal controls: -> MED, -> LONG and -> UD.
+- Company movement controls: TVANG, CHARGE and STOP.
+- Formation controls: LINJE, KOLONNE and SQUARE using the existing F29 square implementation.
+- Danish display naming is normalized to 1. KOMPAGNI through 8. KOMPAGNI while legacy internal prototype identifiers remain for compatibility.
 - Backup before this revision: backup/channel-test-v00.00.09f29b-pre-09f29c-hud.
 
-Primary v00.00.09f29c QA
-1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29c TEST.
-2. Select Major A and Major B separately. Verify one compact HUD appears with ENHEDSINFO / AI, BATALJONSORDRER and four subordinate company rows.
-3. Toggle Major AI and DEF/BAL/OFF. AI ON / active doctrine must be green; inactive states must be red.
-4. Select a Danish company. Verify the HUD title uses KOMPAGNI instead of the old Regiment prototype name.
-5. Verify the eight Danish companies display as 1. KOMPAGNI through 8. KOMPAGNI while command hierarchy/lookup still functions.
-6. Verify company SKYDNING shows HOLD/CLOSE/MED/LONG and the selected fire policy is green.
-7. Verify ORDRER/BEVÆGELSE contains -> MED, -> LONG, -> UD, TVANG, CHARGE and STOP.
-8. Start TVANG, CHARGE or withdrawal and verify the relevant active state is shown green where applicable.
-9. Press STOP during a route/withdrawal/charge. Company must stop, local AI must be OFF, forced march must be cleared and no stale movement order may restart it.
-10. Verify FORMATION contains LINJE, KOLONNE and SQUARE. SQUARE must enter the existing F29 forming/ready state and not create a second square implementation.
-11. Verify clicks on the new HUD do not also trigger the hidden legacy HUD controls underneath.
-12. Regression: Major point-orders still show the officer target-area cursor and use existing F27 mission/slot logic.
-13. Regression: f29b attack authority, sticky targets, bridge routing and river endpoint protection remain active.
-
-Retained from v00.00.09f29b - Battlefield scale + attack AI hardening
-- Tactical battlefield is doubled in both linear dimensions from 2880 x 1920 m to 5760 x 3840 m. This is 2x width, 2x depth and 4x area versus f29a.
-- The road and river are generated across the complete enlarged battlefield instead of ending at the previous map bounds.
-- Vegetation coverage expands to the larger battlefield while retaining the same central farm/bridge QA terrain.
-- Terrain mesh segment count remains 576 x 384 to avoid a 4x triangle increase; the larger map therefore uses coarser terrain cells away from the detailed central test area.
-- The tactical scenario now retains two Prussian company-scale formations: 8th Regiment and 18th Regiment. Both are normalized to the 190-man company QA scale.
-- 18th Regiment no longer executes the old one-off flank waypoint from the pre-regimental test scenario; it enters a normal hostile attack mission.
-- Attack frontage planning no longer writes OrderMove/OrderHold every 0.25 seconds. Physical movement is left to the current authority owner.
-- The frontage layer now ignores a company while its OfficerAIController component is deliberately disabled by a Major/higher command layer.
-- The frontage layer also leaves units under the F26 under-fire reaction untouched.
-- Explicit AttackTarget missions are authoritative; the frontage layer no longer replaces them with whichever enemy happens to be nearest that frame.
-- AttackNearest becomes a sticky explicit target after entering the engagement envelope, preventing formations from pivoting repeatedly between nearby enemies.
-- Hard-coded old attack-slot clamps of approximately +/-170 x +/-110 m are removed; advisory slot calculations use the real battlefield bounds.
-- Approach formation policy now respects the same authority locks, so it cannot change a Major-owned company from Line to Column while the Major is placing it.
-- Regimental AttackHere role assignment is corrected: when doctrine calls for one battalion forward plus reserve, the battalion nearest the objective remains the front/assault battalion and the farther battalion becomes reserve. Total-travel permutation can no longer make the nearest battalion retreat while the distant battalion passes it.
-- Offensive front+flank assignment uses the same nearest-battalion-as-front rule.
-- Retains f29a terrain-following command hierarchy lines, company -> Major visibility, Major -> Oberstløjtnant visibility, officer target-area cursor and full company-footprint river endpoint protection.
+v00.00.09f29b - Battlefield scale + attack AI hardening
+- Tactical battlefield is doubled in both linear dimensions from 2880 x 1920 m to 5760 x 3840 m.
+- Road, river and vegetation are generated across the complete enlarged battlefield.
+- Two Prussian company-scale QA formations are retained for target-selection and multi-target testing.
+- Attack frontage planning no longer writes competing OrderMove/OrderHold commands every think cycle.
+- Frontage and approach layers respect disabled OfficerAIController state and F26 under-fire reaction.
+- Explicit AttackTarget is sticky and no longer replaced by whichever enemy happens to be nearest.
+- AttackNearest gains target hysteresis and locks to explicit AttackTarget after entering the engagement envelope.
+- Old small-map attack-slot clamps are removed.
+- Retains F29A terrain-following hierarchy links, officer target cursor and full company-footprint river endpoint protection.
 
 v00.00.09f29 - Infantry square / cavalry-threat foundation
-- Adds first runtime KARRÉ/SQUARE state for Danish infantry companies without replacing the stable Line/Column movement kernel.
-- Q toggles selected Danish companies into manual KARRÉ; F reforms to Line and C leaves square for Column through the existing command system.
-- Manual KARRÉ is a direct player order: selected company AI is switched OFF so current Major mission is released under the existing authority rules.
-- Square formation is physically visualised by redistributing the existing 1:1 infantry render positions around a two-rank perimeter rather than teleporting a separate placeholder icon.
-- Square formation time depends on current cohesion. First QA window is roughly 5.2-8.4 seconds.
-- A square cannot fire while formation is still forming.
-- When ready, square shows all-direction CLOSE/MEDIUM/LONG range rings instead of the normal forward-only fire fan.
-- First square firing model represents one active face at a time and reduces effective fire output with a 0.42 square-fire factor so KARRÉ does not become a 360-degree full-company volley.
-- Square expands the company collision footprint to approximately 20.5 x 20.5 m while active.
-- F29 exposes a mounted-threat API for F30: ReportMountedThreat(company, source, distance, closingSpeed, relativeStrength, charging).
-- AI ON infantry may automatically FORM SQUARE when mounted threat score exceeds the first QA threshold. Distance, closing speed, relative strength and explicit charge state contribute to the score.
-- Automatic square suspends physical movement while preserving the parent Major/Regimental mission. When the mounted threat clears, square reforms and the stored parent mission may resume.
-- AI OFF does not auto-square from mounted threat; direct player authority remains literal.
-- Shift+Q is a temporary QA hook that reports a synthetic cavalry charge against selected AI ON infantry so auto-square can be tested before F30 creates the first real cavalry unit.
-- Future mounted melee/charge code can query IsInSquare(), IsSquareReady() and GetMountedChargeDefenseMultiplier(). A ready square currently exposes x0.34 mounted charge effectiveness; forming square x0.72. These are QA values, not final historical tuning.
-- Console telemetry prefixes: SQUARE-09F29 and SQUARE-THREAT-09F29.
+- Adds manual/AI SQUARE state layered over the Line/Column movement kernel.
+- Q toggles selected Danish companies into square; F reforms to Line and C to Column.
+- Square formation time depends on cohesion and cannot fire while still forming.
+- Ready square uses multi-side range presentation and reduced firing effectiveness so it is not a 360-degree full-company volley.
+- F29 exposes the mounted-threat API used by future cavalry.
+- AI ON infantry may auto-square against a sufficiently strong mounted threat.
+- AI OFF remains literal player authority.
 
 Retained from v00.00.09f28
 - Physical Oberstløjtnant Regimental HQ with two Majors and eight company-scale infantry units.
@@ -123,6 +110,7 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority remain.
 
 Next milestone
-- F30: first real Danish mounted cavalry prototype on shared cavalry core; Gardehusar/Dragoon decision to be explicit in OOB data rather than conflated.
+- Stabilize F29E regimental objective/defense/attack QA together with F29D semantic zoom.
+- F30: first real Danish mounted cavalry prototype on shared cavalry core; Gardehusar/Dragoon decision remains explicit in OOB data rather than conflated.
 - F30 mounted charge must call F29 mounted-threat API and consume square readiness/charge-defense result.
 - After cavalry baseline: mounted/dismounted Dragoon behaviour, then Kanonbatteri/Artilleri, then Combined Arms QA.
