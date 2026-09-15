@@ -1,12 +1,13 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29l
+Prototype version: v00.00.09f29m
 Build status: TEST
-Build name: BATTLEFIELD HARDENING
-Visible build marker: PROJECT 1864 | v00.00.09f29l TEST
+Build name: SQUARE ACTIVE-RENDERER HOTFIX
+Visible build marker: PROJECT 1864 | v00.00.09f29m TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.13 + tactical design supplements through 09f29l
+Design manual baseline: v00.02.13 + tactical design supplements through 09f29m
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29m design supplement: docs/design-supplements/v00.00.09f29m-square-active-renderer-fix.md
 09f29l design supplement: docs/design-supplements/v00.00.09f29l-battlefield-hardening.md
 09f29k design supplement: docs/design-supplements/v00.00.09f29k-charge-targeting.md
 09f29j design supplement: docs/design-supplements/v00.00.09f29j-precontact-line-deployment.md
@@ -19,6 +20,29 @@ Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29m - Square active-renderer hotfix
+- Fixes the F29L Square visual failure where tactical Square state activated but the visible soldiers remained in Line/Column.
+- Root cause: F29/F29L wrote Square positions into PrototypeBattleVisuals09F5, while the active visible renderer is PrototypeBattleVisuals09F7 and F7 explicitly disables F5 at runtime.
+- Adds PrototypeSquareRuntimeHotfix09F29M as the final Square visual writer against the active F7 states/LocalPositions collection.
+- Visible soldiers now interpolate from their current Line/Column positions into a hollow two-rank Square over the existing Square formation timer.
+- Square remains strength-scaled from CurrentStrength, so casualties reduce the visible Square footprint.
+- Hides SelectionFootprint09F5 while Square is active so the normal long yellow Line/Column rectangle disappears.
+- Reapplies the Square collider after PrototypeUnitFootprint09F5 has performed its normal LateUpdate footprint write.
+- Disables the obsolete F29L Square visual writer at runtime; the original F29 tactical Square state remains authoritative for formation time, HOLD FIRE while forming, fire effectiveness and anti-cavalry state.
+- Backup: backup/channel-test-v00.00.09f29l-pre-09f29m-square-fix.
+
+Primary v00.00.09f29m QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29m TEST.
+2. Select one Danish company in Line and press SQUARE.
+3. The normal long yellow Line/Column selection rectangle must disappear immediately.
+4. Visible soldiers must physically leave Line/Column and move toward all four sides of a hollow Square over several seconds.
+5. DANNER KARRÉ must change to KARRÉ KLAR when the existing Square timer completes.
+6. The visible soldiers must remain in Square after READY; the active F7 Line/Column renderer must not pull them back.
+7. Repeat after casualties and verify the Square is visibly smaller.
+8. Press LINJE and verify Square ends and the normal line selection footprint returns.
+9. Regression: F29L HQ follow, river continuity and defensive arrival hysteresis remain active.
+10. Regression: F29K right-click CHARGE and F29J pre-contact Column -> Line deployment remain active.
 
 v00.00.09f29l - Battlefield hardening
 - Major HQ follows active missions independently of Major AI ON/OFF and targets roughly 105 m behind its battalion centre.
@@ -209,6 +233,6 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority.
 
 Next milestone
-- Validate F29L HQ follow, river continuity, visual Square reform and defensive arrival hysteresis together with F29K charge targeting.
+- Validate F29M Square against the active F7 renderer together with F29L HQ follow, river continuity and defensive arrival hysteresis.
 - If stable, proceed to the remaining F29 cleanup and then F30 cavalry.
 - F30: first real Danish mounted cavalry prototype on shared cavalry core.
