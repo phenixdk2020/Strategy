@@ -1,53 +1,48 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29v
+Prototype version: v00.00.09f29w
 Build status: TEST
-Build name: TACTICAL MAP + SEMANTIC ZOOM + OOB STATUS + SQUARE CORRECTIONS
-Visible build marker: PROJECT 1864 | v00.00.09f29v TEST
+Build name: HQ DEPTH / REAR-ECHELON GUARD
+Visible build marker: PROJECT 1864 | v00.00.09f29w TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
-Design supplement: docs/design-supplements/v00.00.09f29v-tactical-ui-square-corrections.md
+Current design supplements:
+- docs/design-supplements/v00.00.09f29w-hq-depth-guard.md
+- docs/design-supplements/v00.00.09f29v-tactical-ui-square-corrections.md
 Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
 
-v00.00.09f29v - Tactical map, semantic zoom, OOB status and Square corrections
-- Backup created before changes: backup/channel-test-v00.00.09f29u-pre-09f29v-minimap-semantic-zoom.
-- Tactical map now uses fixed whole-battlefield bounds instead of recalculating around active units.
-- Camera position/visible footprint moves across the fixed map as a white viewport marker.
-- Major HQs are marked II and Regimental HQ is marked III on the tactical map.
-- Tactical-map interaction remains: single-click own company/HQ selects only; double-click selects and moves behind; empty/enemy click moves camera to map area.
-- Legacy F29P/F29T tactical-map drawing/interaction layers are disabled by the F29V map owner to avoid duplicate maps and mismatched bounds.
-- Semantic zoom is unified by F29V: company NATO counters are continuous from 175 m upward.
-- 3D units and NATO counters coexist from 175 m to 314 m.
-- At 315 m and above 3D unit/HQ meshes are suppressed while NATO counters remain visible.
-- HQ NATO counters remain visible from 72 m upward.
-- Legacy F29D/F29Q semantic layers are disabled by the F29V semantic owner to remove the 235 m handoff gap/duplication risk.
-- OOB company rows now expose tactical status rather than generic HOLD only: KLAR, RYKKER, FORSVAR, RESERVE, FLANKE, SQUARE, KAMP, UNDER ILD, CHARGE, MELEE or ROUT.
-- FORSVAR means assigned/arrived defensive mission; it does not claim an entrenchment bonus. A future trench/entrenchment mechanic may add GRAVET NED as a distinct state.
-- Square correction keeps the actual SquareOutline visible.
-- The generic Major/HQ mission Footprint rectangle is hidden while the company is in Square.
-- Legacy Square Close/Medium/Long 360-degree rings and normal forward range fans remain suppressed in Square.
-- Four 90-degree Square fire sectors remain authoritative (front/right/rear/left).
-- Square fire requires an actual active enemy on the relevant face and inside the unit's current fire-policy range; Regiment.CanFireAt is used as the final volley gate.
-- Independent per-face reload timers remain in use while the legacy global Regiment fire timer is parked during Square.
-- F29S Square sector owner is disabled by F29V to avoid two competing Square fire owners.
-- No movement authority, bridge-only river rule, charge/melee ownership, Side Step ownership or command hierarchy is intentionally changed.
+v00.00.09f29w - HQ depth / rear-echelon guard
+- Backup created before changes: backup/channel-test-v00.00.09f29v-pre-09f29w-hq-depth.
+- Adds PrototypeHqDepthGuard09F29W.
+- Fixes AI-controlled Major and Regimental HQs being allowed to drift too close to or ahead of their subordinate front.
+- Actual nearest active enemy direction is used as the tactical forward axis instead of relying only on the last order point.
+- Major HQ minimum rear depth: 120 m behind its active company center; preferred correction depth: 175 m.
+- Major HQ lateral displacement guard: 240 m from battalion centerline.
+- Regimental HQ minimum rear depth: 220 m behind the midpoint of Major A / Major B; preferred correction depth: 285 m.
+- Regimental HQ lateral displacement guard: 320 m from the Major midpoint centerline.
+- The guard does not move HQ Transforms itself. It only corrects HqGoal/HasHqGoal and leaves physical movement to the existing F27/F28 HQ movers.
+- Existing river/formation-endpoint safety is reused when selecting a corrected rear position.
+- If the direct rear position is illegal, the guard tries progressively deeper and lateral safe alternatives on the same river bank.
+- Manual HQ authority is preserved: Major/Regimental HQs with AI disabled are not auto-corrected.
+- No company movement, combat, Square, Charge, OOB selection, tactical-map or semantic-zoom ownership is changed.
 
-Primary v00.00.09f29v QA
-1. Unity must compile with no red errors before this version is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f29v TEST.
-3. Tactical map remains fixed while camera and units move; the white viewport marker moves around the fixed battlefield.
-4. Tactical map shows Danish companies, enemies and explicit II/III HQ markers.
-5. Single-click friendly map marker changes selection without moving camera; double-click moves behind selected entity.
-6. At 175-314 m, 3D units remain visible and company NATO counters are also visible.
-7. At 315 m and above, 3D company/HQ meshes disappear but NATO counters remain visible.
-8. NATO counters must not disappear at the old 235 m transition.
-9. OOB rows show meaningful company status; reserve companies show RESERVE and defending companies show FORSVAR when appropriate.
-10. Enter Square: the actual square perimeter remains visible.
-11. The generic long/thin mission formation rectangle must disappear while the unit is in Square.
-12. Selected ready Square shows four directional Close/Medium/Long fire sectors.
-13. A Square with no valid enemy inside any sector/range must not fire or emit a new volley.
-14. Place a valid enemy inside one face/range: only that face may acquire/fire it.
-15. Regression: charge/melee, river/bridge safety, OOB hierarchy and movement ownership remain unchanged.
+Primary v00.00.09f29w QA
+1. Unity must compile with no red errors before F29W is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f29w TEST.
+3. Enable Major AI and issue an attack/defend mission: Major must remain behind the active company center relative to the nearest enemy.
+4. Move the company front so the previous HQ position becomes too far forward: HQ receives a new rear goal instead of staying near/in front of the line.
+5. With Regimental AI ON, Oberstløjtnant HQ remains behind the midpoint of Major A/B and does not sit among front-line companies.
+6. Verify HQ corrections do not cross open river/water or choose an illegal formation endpoint.
+7. Manually move a Major or Regimental HQ with AI OFF: F29W must not reclaim or override the player's position.
+8. Regression: F29V fixed minimap, NATO semantic zoom, OOB statuses and Square corrections remain unchanged.
+
+v00.00.09f29v - Tactical map, semantic zoom, OOB status and Square corrections
+- Fixed whole-battlefield tactical map with moving camera viewport.
+- Explicit II/III HQ markers on tactical map.
+- Company NATO counters continuous from 175 m; 3D + NATO from 175-314 m; NATO-only from 315 m upward.
+- Tactical OOB statuses include KLAR, RYKKER, FORSVAR, RESERVE, FLANKE, SQUARE, KAMP, UNDER ILD, CHARGE, MELEE and ROUT.
+- Correct Square outline retained; generic mission footprint hidden during Square.
+- Four 90-degree Square fire sectors require a real valid enemy target before volley.
 
 Recent predecessors
 - v00.00.09f29u: Time API compatibility hotfix.
@@ -55,7 +50,8 @@ Recent predecessors
 - v00.00.09f29s: first Square sector-fire/OOB/test-UI pass.
 - v00.00.09f29r: crop field concealment and map polish.
 
-Current F29V scripts
+Current F29W/F29V scripts
+- Assets/Scripts/PrototypeHqDepthGuard09F29W.cs
 - Assets/Scripts/PrototypeTacticalMapUpgrade09F29V.cs
 - Assets/Scripts/PrototypeSemanticZoomUnified09F29V.cs
 - Assets/Scripts/PrototypeOobStatus09F29V.cs
