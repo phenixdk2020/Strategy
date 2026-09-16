@@ -2,10 +2,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f29q
+// v00.00.09f29q + v00.00.09f29s OOB interaction polish
 // Collapsible Order of Battle navigator.
-// OOB rows are navigation/selection shortcuts only: they do not issue tactical orders
+// OOB rows are selection/navigation shortcuts only: they do not issue tactical orders
 // and therefore do not bypass the existing Kaptajn -> Major -> Oberstløjtnant authority.
+// F29S UX rule: single-click changes command selection without moving the camera;
+// double-click deliberately navigates behind the selected company/HQ.
 [DefaultExecutionOrder(39400)]
 public sealed class PrototypeOobNavigator09F29Q : MonoBehaviour
 {
@@ -76,7 +78,7 @@ public sealed class PrototypeOobNavigator09F29Q : MonoBehaviour
 
         Debug.Log(
             "OOB-09F29Q|Installed=True|Toggle=O|Hierarchy=III-II-I|" +
-            "SingleClick=Select+Focus|DoubleClick=BehindCompany|Status=True|AuthorityBypass=False");
+            "SingleClick=SelectOnly|DoubleClick=BehindSelected|Status=True|AuthorityBypass=False");
     }
 
     private void OnDestroy()
@@ -157,7 +159,10 @@ public sealed class PrototypeOobNavigator09F29Q : MonoBehaviour
                 regimentStrength.ToString(), regimental.Selected, 0, HqColor))
         {
             bool dbl = RegisterClick("REGHQ");
-            SelectRegimentalAndFocus(dbl);
+            if (dbl)
+                SelectRegimentalAndFocus(true);
+            else
+                SelectRegimentalOnly();
         }
         y += RegimentRowHeight + 2f;
 
@@ -179,7 +184,10 @@ public sealed class PrototypeOobNavigator09F29Q : MonoBehaviour
                     AggregateStrength(hierarchy, b).ToString(), selectedBattalion == b, b + 1, HqColor))
             {
                 bool dbl = RegisterClick("MAJOR" + b);
-                SelectMajorAndFocus(b, dbl);
+                if (dbl)
+                    SelectMajorAndFocus(b, true);
+                else
+                    SelectMajorOnly(b);
             }
             y += MajorRowHeight;
 
@@ -205,7 +213,10 @@ public sealed class PrototypeOobNavigator09F29Q : MonoBehaviour
                     if (unit != null)
                     {
                         bool dbl = RegisterClick("COMP" + b + "_" + c);
-                        SelectCompanyAndFocus(unit, dbl);
+                        if (dbl)
+                            SelectCompanyAndFocus(unit, true);
+                        else
+                            SelectCompanyOnly(unit);
                     }
                 }
                 y += CompanyRowHeight;
@@ -249,10 +260,28 @@ public sealed class PrototypeOobNavigator09F29Q : MonoBehaviour
         return doubleClick;
     }
 
+    private void SelectCompanyOnly(Regiment unit)
+    {
+        if (!SelectCompanyCore(unit))
+            return;
+        ConsumePointer();
+        Debug.Log("OOB-09F29S|Select=Company|Unit=" + unit.RegimentName + "|CameraMoved=False");
+    }
+
     public void SelectCompanyAndFocus(Regiment unit, bool behind)
     {
-        if (unit == null || unit.Team != BattleTeam.Denmark)
+        if (!SelectCompanyCore(unit))
             return;
+
+        FocusTransform(unit.transform, behind);
+        ConsumePointer();
+        Debug.Log("OOB-09F29Q|Select=Company|Unit=" + unit.RegimentName + "|Behind=" + behind);
+    }
+
+    private bool SelectCompanyCore(Regiment unit)
+    {
+        if (unit == null || unit.Team != BattleTeam.Denmark)
+            return false;
 
         PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
         if (regimental != null && setRegimentalSelectedMethod != null)
@@ -273,24 +302,24 @@ public sealed class PrototypeOobNavigator09F29Q : MonoBehaviour
                 unit.SetSelected(true);
             }
         }
+        return true;
+    }
 
-        FocusTransform(unit.transform, behind);
+    private void SelectMajorOnly(int battalionIndex)
+    {
+        GameObject hq;
+        if (!SelectMajorCore(battalionIndex, out hq))
+            return;
         ConsumePointer();
-        Debug.Log("OOB-09F29Q|Select=Company|Unit=" + unit.RegimentName + "|Behind=" + behind);
+        Debug.Log("OOB-09F29S|Select=Major|Battalion=" + (battalionIndex + 1) + "|CameraMoved=False");
     }
 
     public void SelectMajorAndFocus(int battalionIndex, bool behind)
     {
-        PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
-        if (regimental != null && setRegimentalSelectedMethod != null)
-            setRegimentalSelectedMethod.Invoke(regimental, new object[] { false });
-
-        PrototypeRegimentHierarchy09F27 hierarchy = PrototypeRegimentHierarchy09F27.Instance;
-        if (hierarchy == null || !hierarchy.Installed || selectMajorMethod == null)
+        GameObject hq;
+        if (!SelectMajorCore(battalionIndex, out hq))
             return;
 
-        selectMajorMethod.Invoke(hierarchy, new object[] { battalionIndex });
-        GameObject hq = hierarchy.GetMajorHq(battalionIndex);
         if (hq != null)
             FocusTransform(hq.transform, behind);
 
@@ -298,18 +327,55 @@ public sealed class PrototypeOobNavigator09F29Q : MonoBehaviour
         Debug.Log("OOB-09F29Q|Select=Major|Battalion=" + (battalionIndex + 1) + "|Behind=" + behind);
     }
 
+    private bool SelectMajorCore(int battalionIndex, out GameObject hq)
+    {
+        hq = null;
+        PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
+        if (regimental != null && setRegimentalSelectedMethod != null)
+            setRegimentalSelectedMethod.Invoke(regimental, new object[] { false });
+
+        PrototypeRegimentHierarchy09F27 hierarchy = PrototypeRegimentHierarchy09F27.Instance;
+        if (hierarchy == null || !hierarchy.Installed || selectMajorMethod == null)
+            return false;
+
+        selectMajorMethod.Invoke(hierarchy, new object[] { battalionIndex });
+        hq = hierarchy.GetMajorHq(battalionIndex);
+        return true;
+    }
+
+    private void SelectRegimentalOnly()
+    {
+        Transform target;
+        if (!SelectRegimentalCore(out target))
+            return;
+        ConsumePointer();
+        Debug.Log("OOB-09F29S|Select=RegimentalHQ|CameraMoved=False");
+    }
+
     public void SelectRegimentalAndFocus(bool behind)
     {
-        PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
-        if (regimental == null || !regimental.Installed || setRegimentalSelectedMethod == null)
+        Transform target;
+        if (!SelectRegimentalCore(out target))
             return;
 
-        setRegimentalSelectedMethod.Invoke(regimental, new object[] { true });
-        if (regimental.HqRoot != null)
-            FocusTransform(regimental.HqRoot.transform, behind);
+        if (target != null)
+            FocusTransform(target, behind);
 
         ConsumePointer();
         Debug.Log("OOB-09F29Q|Select=RegimentalHQ|Behind=" + behind);
+    }
+
+    private bool SelectRegimentalCore(out Transform target)
+    {
+        target = null;
+        PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
+        if (regimental == null || !regimental.Installed || setRegimentalSelectedMethod == null)
+            return false;
+
+        setRegimentalSelectedMethod.Invoke(regimental, new object[] { true });
+        if (regimental.HqRoot != null)
+            target = regimental.HqRoot.transform;
+        return true;
     }
 
     private void ClearCompanySelection()
