@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using UnityEngine;
 
-// v00.00.09f29s
+// v00.00.09f29s + v00.00.09f29u compatibility hotfix
 // TEST-only replacement for the old full-width "DEBUG · ENEMY AI SPAWNER" bar.
 //
 // UX rules:
@@ -40,6 +40,7 @@ public sealed class PrototypeEnemyTestPanel09F29S : MonoBehaviour
 
     private bool open; // Deliberately false: test panel starts collapsed.
     private bool legacyScanComplete;
+    private float legacyScanStartedAt;
     private MonoBehaviour legacySpawner;
     private MethodInfo legacyStartEnemy1;
     private MethodInfo legacyStartEnemy2;
@@ -71,10 +72,11 @@ public sealed class PrototypeEnemyTestPanel09F29S : MonoBehaviour
 
         Instance = this;
         open = false;
+        legacyScanStartedAt = Time.unscaledTime;
 
         Debug.Log(
             "ENEMY-TEST-09F29S|Installed=True|Default=Collapsed|Position=UpperRight|" +
-            "LegacyWideSpawner=Suppress|ReleaseUI=False");
+            "LegacyWideSpawner=Suppress|ReleaseUI=False|TimerApi=UnscaledTime");
     }
 
     private void Start()
@@ -314,9 +316,9 @@ public sealed class PrototypeEnemyTestPanel09F29S : MonoBehaviour
             return;
         }
 
-        // Once BattleManager exists and a few frames have elapsed, no matching legacy
-        // component means the old overlay is not present in this scene/build.
-        if (sceneReady && Time.unscaledTimeSinceLevelLoad > 2.0f)
+        // Once BattleManager exists and the compact panel has had two unscaled seconds
+        // to discover late-created QA components, no match means the old overlay is absent.
+        if (sceneReady && Time.unscaledTime - legacyScanStartedAt > 2.0f)
         {
             legacyScanComplete = true;
             Debug.Log("ENEMY-TEST-09F29S|LegacyWideSpawner=NotFound|CompactPanelOnly=True");
@@ -351,7 +353,7 @@ public sealed class PrototypeEnemyTestPanel09F29S : MonoBehaviour
             }
 
             if (legacyIndexedStart == null && parameters.Length == 1 &&
-                (parameters[0].ParameterType == typeof(int)) &&
+                parameters[0].ParameterType == typeof(int) &&
                 (compact.Contains("start") || compact.Contains("spawn")) &&
                 (compact.Contains("enemy") || compact.Contains("fjende")))
             {
