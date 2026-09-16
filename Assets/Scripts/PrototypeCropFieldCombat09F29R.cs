@@ -10,6 +10,7 @@ public sealed class PrototypeCropFieldCombat09F29R : MonoBehaviour
 {
     private FieldInfo baseAccuracyField;
     private FieldInfo forcedTargetField;
+    private FieldInfo nextFireTimeField;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -24,17 +25,18 @@ public sealed class PrototypeCropFieldCombat09F29R : MonoBehaviour
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
         baseAccuracyField = typeof(Regiment).GetField("baseAccuracy", flags);
         forcedTargetField = typeof(Regiment).GetField("forcedTarget", flags);
+        nextFireTimeField = typeof(Regiment).GetField("nextFireTime", flags);
 
-        if (baseAccuracyField == null)
+        if (baseAccuracyField == null || nextFireTimeField == null)
         {
-            Debug.LogError("CROP-COMBAT-09F29R|Installed=False|Reason=baseAccuracyMissing");
+            Debug.LogError("CROP-COMBAT-09F29R|Installed=False|Reason=CombatReflectionMissing");
             enabled = false;
             return;
         }
 
         Debug.Log(
             "CROP-COMBAT-09F29R|Installed=True|ClosePenalty~2%|MediumPenalty~5%|" +
-            "LongPenalty~10%|LongAcquisitionPenalty=True|BallisticCover=False");
+            "LongPenalty~10%|AcquisitionRangeReduction=True|BallisticCover=False");
     }
 
     private void Update()
@@ -53,6 +55,20 @@ public sealed class PrototypeCropFieldCombat09F29R : MonoBehaviour
                 continue;
 
             float distance = PlanarDistance(shooter.transform.position, target.transform.position);
+            float visibility = PrototypeCropFieldTerrain09F29R.GetVisibilityRangeMultiplier(target);
+
+            // A concealed target is not literally invisible, but a formation will normally
+            // wait until it has a clearer target picture before opening fire. Only delay a
+            // volley that is otherwise ready; never alter reload cadence already in progress.
+            float triggerRange = shooter.GetFireTriggerRange();
+            if (visibility < 0.999f && triggerRange > 0f && distance > triggerRange * visibility)
+            {
+                object nextRaw = nextFireTimeField.GetValue(shooter);
+                if (nextRaw is float nextFire && Time.time >= nextFire)
+                    nextFireTimeField.SetValue(shooter, Time.time + 0.35f);
+                continue;
+            }
+
             float multiplier = GetCombinedTargetMultiplier(shooter, target, distance);
             if (multiplier >= 0.999f)
                 continue;
