@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -18,12 +19,12 @@ public sealed class PrototypeSquareFireSmoke09F29Z : MonoBehaviour
     }
 
     private const float FaceFirepowerFraction = 0.25f;
-    private const float SectorHalfAngle = 45f;
     private const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
     private readonly Dictionary<Regiment, UnitState> states = new Dictionary<Regiment, UnitState>();
     private readonly HashSet<Regiment> seen = new HashSet<Regiment>();
     private FieldInfo legacyFireMethodField;
+    private FieldInfo legacyRuntimeField;
     private bool legacySuppressionLogged;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -38,11 +39,13 @@ public sealed class PrototypeSquareFireSmoke09F29Z : MonoBehaviour
     {
         legacyFireMethodField = typeof(PrototypeSquareCorrections09F29V)
             .GetField("fireVolleyMethod", AnyInstance);
+        legacyRuntimeField = typeof(PrototypeSquareCorrections09F29V)
+            .GetField("runtime", AnyInstance);
 
         Debug.Log(
             "SQUARE-FIRE-09F29Z|Installed=True|Faces=4|FaceArc=90|" +
             "FirepowerPerFace=0.25|DirectionalSmoke=True|LegacyF29VFire=False|" +
-            "F29VVisualsRetained=True");
+            "F29VVisualsRetained=True|HeadingAuthority=F29VLockedRotation");
     }
 
     private void Update()
@@ -65,10 +68,10 @@ public sealed class PrototypeSquareFireSmoke09F29Z : MonoBehaviour
             if (state == null)
                 continue;
 
-            // F29V still owns the locked heading / square outline / four range-sector visuals.
-            // Read the actual stable square heading every frame in case the unit entered square
-            // after this component initialized.
-            state.LockedRotation = unit.transform.rotation;
+            // F29V is the heading authority. The older F29 square layer may briefly turn
+            // the Regiment transform toward a threat earlier in Update; using F29V's
+            // locked heading prevents FRONT/RIGHT/REAR/LEFT from rotating with the target.
+            state.LockedRotation = ReadF29VLockedRotation(unit, state.LockedRotation);
 
             if (!PrototypeInfantrySquare09F29.IsSquareReady(unit))
                 continue;
@@ -106,6 +109,29 @@ public sealed class PrototypeSquareFireSmoke09F29Z : MonoBehaviour
         }
     }
 
+    private Quaternion ReadF29VLockedRotation(Regiment unit, Quaternion fallback)
+    {
+        PrototypeSquareCorrections09F29V owner =
+            UnityEngine.Object.FindAnyObjectByType<PrototypeSquareCorrections09F29V>();
+        if (owner == null || legacyRuntimeField == null || unit == null)
+            return fallback;
+
+        IDictionary runtime = legacyRuntimeField.GetValue(owner) as IDictionary;
+        if (runtime == null || !runtime.Contains(unit))
+            return fallback;
+
+        object legacyState = runtime[unit];
+        if (legacyState == null)
+            return fallback;
+
+        FieldInfo rotationField = legacyState.GetType().GetField("LockedRotation", AnyInstance);
+        if (rotationField == null)
+            return fallback;
+
+        object value = rotationField.GetValue(legacyState);
+        return value is Quaternion ? (Quaternion)value : fallback;
+    }
+
     private UnitState GetState(Regiment unit)
     {
         if (states.TryGetValue(unit, out UnitState state))
@@ -113,7 +139,7 @@ public sealed class PrototypeSquareFireSmoke09F29Z : MonoBehaviour
 
         state = new UnitState
         {
-            LockedRotation = unit.transform.rotation,
+            LockedRotation = ReadF29VLockedRotation(unit, unit.transform.rotation),
             Smoke = CreateSmoke(unit)
         };
 
