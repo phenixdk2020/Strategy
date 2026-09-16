@@ -1,47 +1,56 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29w
+Prototype version: v00.00.09f29x
 Build status: TEST
-Build name: HQ DEPTH / REAR-ECHELON GUARD
-Visible build marker: PROJECT 1864 | v00.00.09f29w TEST
+Build name: SQUARE FIRE + OOB SELECTION HARDENING
+Visible build marker: PROJECT 1864 | v00.00.09f29x TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current design supplements:
+- docs/design-supplements/v00.00.09f29x-square-fire-oob-selection-hardening.md
 - docs/design-supplements/v00.00.09f29w-hq-depth-guard.md
 - docs/design-supplements/v00.00.09f29v-tactical-ui-square-corrections.md
 Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
 
+v00.00.09f29x - Square fire + OOB selection hardening
+- Backup created before changes: backup/channel-test-v00.00.09f29w-pre-09f29x-square-oob-fix.
+- Adds Assets/Scripts/PrototypeSquareOobHardening09F29X.cs.
+- Fixes the wrong yellow Line/Column selection footprint remaining visible while a company is in Square.
+- Keeps the actual SquareOutline and four Square fire sectors as the Square visual authority.
+- Fixes false smoke / false volley feedback caused by F29V parking Regiment.nextFireTime roughly 3600 seconds into the future.
+- Legacy Regiment auto-fire is gated with temporary HoldFire only during Regiment.Update; the player's actual fire policy is restored before F29V sector fire runs.
+- F29V parking is removed again in the same frame before legacy combat telemetry / F7 smoke detection can interpret it as a shot.
+- If no valid Square target fired, no volley timer change is exposed to telemetry.
+- If a real Square sector volley fired, a normal reload timer is preserved so existing smoke / hit / ammunition feedback can still detect the real shot.
+- OOB-derived Company/Major/Regimental selection is preserved through bottom-HUD clicks and officer-order placement/commit.
+- Selection persistence does not move the camera and does not change OOB single-click/double-click semantics.
+- No HQ depth, minimap, NATO semantic zoom, river safety, charge or movement-owner rules are changed.
+
+Primary v00.00.09f29x QA
+1. Unity must compile with no red errors before F29X is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f29x TEST.
+3. Enter Square far from all enemies: no formation-triggered smoke and no RAMMER 0 feedback.
+4. The old long/rectangular yellow SelectionFootprint09F5 is hidden in Square; the real Square outline remains visible.
+5. With a valid enemy in one Square face/range, sector fire must still produce a real volley and normal feedback.
+6. Select a company from OOB, use the bottom HUD and issue an order: selection and bottom HUD remain active afterward.
+7. Repeat OOB command persistence for Major and Oberstløjtnant.
+8. OOB single-click still does not move camera; double-click still focuses behind the selected entity.
+9. Regression: F29W HQ rear-depth guard, F29V fixed tactical map and semantic zoom remain active.
+
 v00.00.09f29w - HQ depth / rear-echelon guard
-- Backup created before changes: backup/channel-test-v00.00.09f29v-pre-09f29w-hq-depth.
 - Adds PrototypeHqDepthGuard09F29W.
 - Fixes AI-controlled Major and Regimental HQs being allowed to drift too close to or ahead of their subordinate front.
 - Actual nearest active enemy direction is used as the tactical forward axis instead of relying only on the last order point.
-- Major HQ minimum rear depth: 120 m behind its active company center; preferred correction depth: 175 m.
-- Major HQ lateral displacement guard: 240 m from battalion centerline.
-- Regimental HQ minimum rear depth: 220 m behind the midpoint of Major A / Major B; preferred correction depth: 285 m.
-- Regimental HQ lateral displacement guard: 320 m from the Major midpoint centerline.
-- The guard does not move HQ Transforms itself. It only corrects HqGoal/HasHqGoal and leaves physical movement to the existing F27/F28 HQ movers.
-- Existing river/formation-endpoint safety is reused when selecting a corrected rear position.
-- If the direct rear position is illegal, the guard tries progressively deeper and lateral safe alternatives on the same river bank.
-- Manual HQ authority is preserved: Major/Regimental HQs with AI disabled are not auto-corrected.
-- No company movement, combat, Square, Charge, OOB selection, tactical-map or semantic-zoom ownership is changed.
-
-Primary v00.00.09f29w QA
-1. Unity must compile with no red errors before F29W is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f29w TEST.
-3. Enable Major AI and issue an attack/defend mission: Major must remain behind the active company center relative to the nearest enemy.
-4. Move the company front so the previous HQ position becomes too far forward: HQ receives a new rear goal instead of staying near/in front of the line.
-5. With Regimental AI ON, Oberstløjtnant HQ remains behind the midpoint of Major A/B and does not sit among front-line companies.
-6. Verify HQ corrections do not cross open river/water or choose an illegal formation endpoint.
-7. Manually move a Major or Regimental HQ with AI OFF: F29W must not reclaim or override the player's position.
-8. Regression: F29V fixed minimap, NATO semantic zoom, OOB statuses and Square corrections remain unchanged.
+- Major HQ minimum rear depth: 120 m; preferred correction depth: 175 m.
+- Regimental HQ minimum rear depth: 220 m behind Major midpoint; preferred correction depth: 285 m.
+- Existing river/formation-endpoint safety remains authoritative.
+- Manual HQ authority is preserved when AI is OFF.
 
 v00.00.09f29v - Tactical map, semantic zoom, OOB status and Square corrections
 - Fixed whole-battlefield tactical map with moving camera viewport.
 - Explicit II/III HQ markers on tactical map.
 - Company NATO counters continuous from 175 m; 3D + NATO from 175-314 m; NATO-only from 315 m upward.
 - Tactical OOB statuses include KLAR, RYKKER, FORSVAR, RESERVE, FLANKE, SQUARE, KAMP, UNDER ILD, CHARGE, MELEE and ROUT.
-- Correct Square outline retained; generic mission footprint hidden during Square.
 - Four 90-degree Square fire sectors require a real valid enemy target before volley.
 
 Recent predecessors
@@ -50,7 +59,8 @@ Recent predecessors
 - v00.00.09f29s: first Square sector-fire/OOB/test-UI pass.
 - v00.00.09f29r: crop field concealment and map polish.
 
-Current F29W/F29V scripts
+Current F29X/F29W/F29V scripts
+- Assets/Scripts/PrototypeSquareOobHardening09F29X.cs
 - Assets/Scripts/PrototypeHqDepthGuard09F29W.cs
 - Assets/Scripts/PrototypeTacticalMapUpgrade09F29V.cs
 - Assets/Scripts/PrototypeSemanticZoomUnified09F29V.cs
