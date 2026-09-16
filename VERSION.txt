@@ -1,47 +1,50 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29y
+Prototype version: v00.00.09f29z
 Build status: TEST
-Build name: DEFENSIVE STABILITY + TEST AI + HUD STATUS + TERRAIN POLISH
-Visible build marker: PROJECT 1864 | v00.00.09f29y TEST
+Build name: SQUARE FACE FIRE + DIRECTIONAL BLACK-POWDER SMOKE
+Visible build marker: PROJECT 1864 | v00.00.09f29z TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current design supplements:
+- docs/design-supplements/v00.00.09f29z-square-face-fire-smoke.md
 - docs/design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md
 - docs/design-supplements/v00.00.09f29x-square-fire-oob-selection-hardening.md
 - docs/design-supplements/v00.00.09f29w-hq-depth-guard.md
 - docs/design-supplements/v00.00.09f29v-tactical-ui-square-corrections.md
 Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
 
-v00.00.09f29y - Defensive stability, TEST enemy AI, Major HUD status and terrain polish
-- Uses existing backup branch backup/channel-test-v00.00.09f29x-pre-09f29y-defend-bank-hq-goal from exact F29X HEAD.
-- Adds Assets/Scripts/PrototypeDefensiveStability09F29Y.cs.
-- DefendHere slots are constrained to the intended river bank; bridge-centred orders inherit the battalion front's current bank.
-- Reserve/flank companies are excluded from Major HQ reference-centre calculations.
-- Major HQ rear direction is based on committed company mission Facing, preventing the rear axis from flipping after companies pass the objective.
-- F27 remains the physical movement owner; F29Y only corrects mission/HQ goals and cancels stale wrong-bank destinations before F27 reissues them.
-- Adds Assets/Scripts/PrototypeEnemyTestToggle09F29Y.cs.
-- Both Prussian QA companies start with Officer AI OFF after OfficerAIPrototypeManager finishes configuration.
-- TEST enemy panel is collapsed by default and each row toggles AI ON/OFF; disabling AI also orders HOLD.
-- Legacy F29S enemy panel is suppressed while its pointer-rect state is synchronized for click isolation.
-- Adds Assets/Scripts/PrototypeMajorHudStatus09F29Y.cs.
-- Major bottom HUD shows the same tactical company status resolver as the OOB: KLAR, RYKKER, FORSVAR, RESERVE, FLANKE, SQUARE, KAMP, UNDER ILD, CHARGE, MELEE, ROUT and related mission states.
-- Adds Assets/Scripts/PrototypeTerrainVisualPolish09F29Y.cs.
-- River visual is rebuilt as two segments with a real dry visual gap under the bridge; navigation rules are unchanged.
-- Crop fields use terrain-conforming golden ground and much denser combined-mesh crop rows; F29R concealment, movement penalty and map geometry remain authoritative and unchanged.
-- Build overlay updated to v00.00.09f29y TEST.
+v00.00.09f29z - Square face fire + directional smoke
+- Backup created before changes: backup/channel-test-v00.00.09f29y-pre-09f29z-square-fire-smoke.
+- Adds Assets/Scripts/PrototypeSquareFireSmoke09F29Z.cs.
+- F29V remains visual authority for Square outline and four range sectors, but its reflected full-company FireVolley path is suppressed.
+- Each Square face (FRONT/RIGHT/REAR/LEFT) owns a separate reload clock.
+- Each face resolves approximately 25% of normal company volley firepower and only fires at a valid enemy inside that face's 90-degree sector and current fire-policy range.
+- Crop-field target visibility/accuracy modifiers still apply to Square fire.
+- Only the face that actually fires emits black-powder smoke; smoke is positioned and oriented along that physical side of the Square.
+- Two or more faces may fire independently when valid enemies exist in different sectors.
+- No valid target means no volley, no smoke and no RAMMER 0 feedback.
+- PrototypeCombatStatusManager gains RegisterExternalVolley for real non-Regiment-timer volleys.
+- Square face ammunition is accumulated fractionally: four 25% face volleys consume one average round/man, instead of charging one full round/man for every face.
+- Existing F29X legacy-auto-fire gate remains active; no second physical movement or fire owner is introduced.
 
-Primary v00.00.09f29y QA
-1. Unity must compile with no red errors before F29Y is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f29y TEST.
-3. At battle start, both TEST enemy buttons show AI OFF and no Prussian unit advances until explicitly enabled.
-4. Enable one enemy, then click its row again: AI switches OFF and that enemy holds.
-5. Issue FORSVAR HER at/near the bridge: front companies and reserve stay on the intended bank unless the actual objective is deliberately placed on the opposite bank.
-6. Major HQ remains behind the non-reserve front and does not follow a reserve/flank company across the bridge.
-7. Major HUD company rows show the same tactical statuses as OOB.
-8. Bridge deck appears dry; no river surface is visible through/over the deck.
-9. Crop-field ground is fully golden and rows are substantially denser; concealment/movement behaviour remains unchanged.
-10. Regression: F29X Square/OOB selection hardening, F29W rear-depth guard, F29V minimap/semantic zoom and existing charge/river movement ownership remain active.
+Primary v00.00.09f29z QA
+1. Unity must compile with no red errors before F29Z is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f29z TEST.
+3. Form Square with no enemy in range: no smoke and no volley feedback.
+4. Put one enemy in FRONT sector: only FRONT emits smoke and resolves hits.
+5. Repeat with RIGHT/REAR/LEFT: smoke must originate along the matching Square face.
+6. Put enemies in two different sectors: both faces may fire on their independent reload clocks.
+7. One face volley must be materially weaker than a full Line volley; target hit resolution uses 25% Square-face firepower.
+8. HOLD FIRE suppresses all four Square faces.
+9. Ammo does not decrement four times too fast; four quarter-face volleys equal one average round/man.
+10. Regression: F29Y defensive/HQ/bridge/crop changes, F29X selection hardening and F29V Square visuals remain active.
+
+v00.00.09f29y - Defensive stability, TEST enemy AI, Major HUD status and terrain polish
+- DefendHere slots constrained to intended river bank and reserves no longer pull Major HQ across the bridge.
+- TEST enemy AI starts OFF and can toggle ON/OFF.
+- Major HUD mirrors OOB tactical company status.
+- Bridge visual has a dry gap and crop fields are denser/golden.
 
 Recent predecessors
 - v00.00.09f29x: Square fire + OOB selection hardening.

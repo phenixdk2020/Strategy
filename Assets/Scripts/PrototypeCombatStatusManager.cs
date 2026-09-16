@@ -13,6 +13,7 @@ public sealed class PrototypeCombatStatusManager : MonoBehaviour
         public int LastVolleyHits;
         public float FeedbackUntil;
         public int VolleySequence;
+        public float ExternalAmmoFractionCarry;
     }
 
     public static PrototypeCombatStatusManager Instance { get; private set; }
@@ -55,6 +56,26 @@ public sealed class PrototypeCombatStatusManager : MonoBehaviour
             Instance = null;
     }
 
+    private CombatState EnsureState(Regiment regiment)
+    {
+        if (regiment == null)
+            return null;
+
+        if (!states.TryGetValue(regiment, out CombatState state))
+        {
+            int startingAmmo = PrototypeCombatTuningManager.GetStartingAmmoRoundsPerMan();
+            state = new CombatState
+            {
+                AmmunitionRoundsPerMan = startingAmmo,
+                StartingAmmunitionRoundsPerMan = startingAmmo,
+                LastObservedNextFireTime = ReadNextFireTime(regiment)
+            };
+            states[regiment] = state;
+        }
+
+        return state;
+    }
+
     private void Update()
     {
         BattleManager battle = BattleManager.Instance;
@@ -66,17 +87,9 @@ public sealed class PrototypeCombatStatusManager : MonoBehaviour
             if (regiment == null)
                 continue;
 
-            if (!states.TryGetValue(regiment, out CombatState state))
-            {
-                int startingAmmo = PrototypeCombatTuningManager.GetStartingAmmoRoundsPerMan();
-                state = new CombatState
-                {
-                    AmmunitionRoundsPerMan = startingAmmo,
-                    StartingAmmunitionRoundsPerMan = startingAmmo,
-                    LastObservedNextFireTime = ReadNextFireTime(regiment)
-                };
-                states[regiment] = state;
-            }
+            CombatState state = EnsureState(regiment);
+            if (state == null)
+                continue;
 
             float currentNextFireTime = ReadNextFireTime(regiment);
 
@@ -112,8 +125,64 @@ public sealed class PrototypeCombatStatusManager : MonoBehaviour
         }
     }
 
+    // F29Z: Square uses four independent face clocks rather than Regiment.nextFireTime.
+    // Register the real face volley here so ammo/feedback remain authoritative without
+    // reintroducing the false +3600-second timer sentinel that caused RAMMER 0 smoke events.
+    // A 25% face volley consumes 0.25 average rounds/man; four face-volley equivalents
+    // therefore consume one full round/man from the existing integer ammunition model.
+    public static void RegisterExternalVolley(
+        Regiment shooter,
+        Regiment target,
+        int hits,
+        float firingFraction,
+        string context)
+    {
+        if (Instance == null || shooter == null)
+            return;
+
+        CombatState state = Instance.EnsureState(shooter);
+        if (state == null || state.AmmunitionRoundsPerMan <= 0)
+            return;
+
+        float fraction = Mathf.Clamp01(firingFraction);
+        int ammoBefore = state.AmmunitionRoundsPerMan;
+        state.ExternalAmmoFractionCarry += fraction;
+
+        int wholeRounds = Mathf.FloorToInt(state.ExternalAmmoFractionCarry + 0.0001f);
+        if (wholeRounds > 0)
+        {
+            state.AmmunitionRoundsPerMan = Mathf.Max(0, state.AmmunitionRoundsPerMan - wholeRounds);
+            state.ExternalAmmoFractionCarry -= wholeRounds;
+        }
+
+        state.VolleySequence++;
+        state.LastVolleyHits = Mathf.Max(0, hits);
+        state.FeedbackUntil = Time.unscaledTime + 2.35f;
+        state.LastObservedNextFireTime = Instance.ReadNextFireTime(shooter);
+
+        float distance = target != null
+            ? Vector3.Distance(shooter.transform.position, target.transform.position)
+            : -1f;
+
+        Debug.Log(
+            "VOLLEY-LOG|Mode=EXTERNAL|Context=" + (string.IsNullOrEmpty(context) ? "NONE" : context) +
+            "|Seq=" + state.VolleySequence +
+            "|Shooter=" + shooter.RegimentName +
+            "|Target=" + (target != null ? target.RegimentName : "None") +
+            "|Distance=" + distance.ToString("0.0") +
+            "|FiringFraction=" + fraction.ToString("0.00") +
+            "|Hits=" + state.LastVolleyHits +
+            "|Ammo=" + ammoBefore + "->" + state.AmmunitionRoundsPerMan +
+            "|AmmoCarry=" + state.ExternalAmmoFractionCarry.ToString("0.00"));
+
+        if (state.AmmunitionRoundsPerMan <= 0 && Instance.nextFireTimeField != null)
+            Instance.nextFireTimeField.SetValue(shooter, float.PositiveInfinity);
+    }
+
     private float ReadNextFireTime(Regiment regiment)
     {
+        if (nextFireTimeField == null || regiment == null)
+            return 0f;
         object value = nextFireTimeField.GetValue(regiment);
         return value is float number ? number : 0f;
     }
