@@ -1,0 +1,673 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public enum PrototypeCavalryKind09F30
+{
+    Gardehusar,
+    Dragon
+}
+
+public enum PrototypeCavalryFormation09F30
+{
+    Line,
+    Column
+}
+
+public enum PrototypeCavalryMode09F30
+{
+    Mounted,
+    Dismounted
+}
+
+public enum PrototypeCavalryAction09F30
+{
+    Hold,
+    Move,
+    Charge,
+    Falter
+}
+
+// v00.00.09f30
+// First shared mounted-cavalry core. Values are prototype QA values, not final historical stats.
+// Gardehusar and Dragon share movement/formation/charge infrastructure; Dragon additionally
+// supports dismount/remount with horses physically left at the dismount point.
+public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
+{
+    private enum BridgePhase
+    {
+        Direct,
+        NearBank,
+        FarBank
+    }
+
+    public string UnitName { get; private set; }
+    public PrototypeCavalryKind09F30 Kind { get; private set; }
+    public PrototypeCavalryFormation09F30 Formation { get; private set; } = PrototypeCavalryFormation09F30.Line;
+    public PrototypeCavalryMode09F30 Mode { get; private set; } = PrototypeCavalryMode09F30.Mounted;
+    public PrototypeCavalryAction09F30 Action { get; private set; } = PrototypeCavalryAction09F30.Hold;
+    public int InitialStrength { get; private set; }
+    public int CurrentStrength { get; private set; }
+    public float Morale { get; private set; } = 100f;
+    public float Cohesion { get; private set; } = 100f;
+    public bool IsSelected { get; private set; }
+    public bool HasCarbine => true;
+    public bool HasPistol => true;
+    public bool HasSabre => true;
+    public Regiment ChargeTarget => chargeTarget;
+
+    private readonly List<Transform> mountedFigures = new List<Transform>();
+    private readonly List<GameObject> mountedRiders = new List<GameObject>();
+    private readonly List<Transform> footFigures = new List<Transform>();
+
+    private Transform mountedRoot;
+    private Transform footRoot;
+    private GameObject selectionMarker;
+    private BoxCollider unitCollider;
+    private Material horseMaterial;
+    private Material uniformMaterial;
+    private Material equipmentMaterial;
+
+    private Vector3 finalDestination;
+    private bool hasDestination;
+    private Regiment chargeTarget;
+    private bool chargeResolved;
+
+    private BridgePhase bridgePhase = BridgePhase.Direct;
+    private int bridgeStartSide;
+    private PrototypeCavalryFormation09F30 formationBeforeBridge;
+
+    private const float BridgeZ = 22f;
+    private const float BridgeBankOffset = 13.5f;
+    private const float ContactDistance = 7.5f;
+    private const float RemountDistance = 18f;
+
+    public void Initialize(
+        string unitName,
+        PrototypeCavalryKind09F30 kind,
+        int strength,
+        Vector3 worldPosition)
+    {
+        UnitName = unitName;
+        Kind = kind;
+        InitialStrength = Mathf.Max(20, strength);
+        CurrentStrength = InitialStrength;
+        transform.position = Ground(worldPosition);
+        transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+
+        horseMaterial = PrototypeBootstrap.CreateSharedMaterial(
+            kind == PrototypeCavalryKind09F30.Gardehusar
+                ? new Color(0.22f, 0.12f, 0.055f)
+                : new Color(0.28f, 0.18f, 0.09f),
+            "F30_Horse_" + kind);
+        uniformMaterial = PrototypeBootstrap.CreateSharedMaterial(
+            kind == PrototypeCavalryKind09F30.Gardehusar
+                ? new Color(0.08f, 0.14f, 0.28f)
+                : new Color(0.13f, 0.20f, 0.30f),
+            "F30_Uniform_" + kind);
+        equipmentMaterial = PrototypeBootstrap.CreateSharedMaterial(
+            new Color(0.05f, 0.045f, 0.035f),
+            "F30_Equipment");
+
+        CreateVisuals();
+        RefreshFormationInstant();
+
+        Debug.Log(
+            "CAVALRY-09F30|Spawn=True|Unit=" + UnitName +
+            "|Kind=" + Kind +
+            "|Strength=" + CurrentStrength +
+            "|Mounted=True|Sabre=True|Carbine=True|Pistol=True");
+    }
+
+    private void OnDestroy()
+    {
+        if (mountedRoot != null && mountedRoot.parent == null)
+            Destroy(mountedRoot.gameObject);
+    }
+
+    private void Update()
+    {
+        if (Action == PrototypeCavalryAction09F30.Charge && chargeTarget != null)
+        {
+            if (chargeTarget.IsRouted || chargeTarget.CurrentStrength <= 0)
+            {
+                OrderHold();
+            }
+            else
+            {
+                finalDestination = chargeTarget.transform.position;
+                if (PlanarDistance(transform.position, chargeTarget.transform.position) <= ContactDistance)
+                    ResolveChargeContact();
+            }
+        }
+
+        UpdateMovement();
+        UpdateVisualFormation();
+
+        if (Action == PrototypeCavalryAction09F30.Hold)
+        {
+            Cohesion = Mathf.Min(100f, Cohesion + 1.1f * Time.deltaTime);
+            Morale = Mathf.Min(100f, Morale + 0.35f * Time.deltaTime);
+        }
+    }
+
+    public void SetSelected(bool value)
+    {
+        IsSelected = value;
+        if (selectionMarker != null)
+            selectionMarker.SetActive(value);
+    }
+
+    public void SetFormation(PrototypeCavalryFormation09F30 formation)
+    {
+        if (bridgePhase != BridgePhase.Direct)
+        {
+            formationBeforeBridge = formation;
+            return;
+        }
+
+        Formation = formation;
+        ResizeCollider();
+    }
+
+    public void OrderMove(Vector3 worldPoint)
+    {
+        chargeTarget = null;
+        chargeResolved = false;
+        Action = PrototypeCavalryAction09F30.Move;
+        BeginRoute(worldPoint);
+    }
+
+    public void OrderCharge(Regiment target)
+    {
+        if (Mode != PrototypeCavalryMode09F30.Mounted || target == null || target.Team != BattleTeam.Prussia)
+            return;
+
+        chargeTarget = target;
+        chargeResolved = false;
+        Action = PrototypeCavalryAction09F30.Charge;
+        BeginRoute(target.transform.position);
+
+        Debug.Log(
+            "CAVALRY-09F30|Unit=" + UnitName +
+            "|Action=CHARGE|Target=" + target.RegimentName);
+    }
+
+    public void OrderHold()
+    {
+        hasDestination = false;
+        chargeTarget = null;
+        chargeResolved = false;
+        bridgePhase = BridgePhase.Direct;
+        Action = PrototypeCavalryAction09F30.Hold;
+    }
+
+    public bool Dismount()
+    {
+        if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Mounted)
+            return false;
+
+        OrderHold();
+        Mode = PrototypeCavalryMode09F30.Dismounted;
+
+        if (mountedRoot != null)
+        {
+            mountedRoot.SetParent(null, true);
+            for (int i = 0; i < mountedRiders.Count; i++)
+                if (mountedRiders[i] != null)
+                    mountedRiders[i].SetActive(false);
+        }
+
+        if (footRoot != null)
+            footRoot.gameObject.SetActive(true);
+
+        ResizeCollider();
+        Debug.Log("CAVALRY-09F30|Unit=" + UnitName + "|Action=DISMOUNT|HorseHolders=True");
+        return true;
+    }
+
+    public bool Remount()
+    {
+        if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Dismounted || mountedRoot == null)
+            return false;
+
+        if (PlanarDistance(transform.position, mountedRoot.position) > RemountDistance)
+        {
+            Debug.LogWarning(
+                "CAVALRY-09F30|Unit=" + UnitName +
+                "|Action=REMOUNT|Success=False|Reason=TooFarFromHorses|Distance=" +
+                PlanarDistance(transform.position, mountedRoot.position).ToString("0.0"));
+            return false;
+        }
+
+        OrderHold();
+        transform.position = Ground(mountedRoot.position);
+        transform.rotation = mountedRoot.rotation;
+        mountedRoot.SetParent(transform, true);
+        mountedRoot.localPosition = Vector3.zero;
+        mountedRoot.localRotation = Quaternion.identity;
+
+        for (int i = 0; i < mountedRiders.Count; i++)
+            if (mountedRiders[i] != null)
+                mountedRiders[i].SetActive(true);
+
+        if (footRoot != null)
+            footRoot.gameObject.SetActive(false);
+
+        Mode = PrototypeCavalryMode09F30.Mounted;
+        RefreshFormationInstant();
+        ResizeCollider();
+        Debug.Log("CAVALRY-09F30|Unit=" + UnitName + "|Action=REMOUNT|Success=True");
+        return true;
+    }
+
+    public string GetStatusLabel()
+    {
+        string mode = Mode == PrototypeCavalryMode09F30.Mounted ? "MOUNTED" : "AFSIDDET";
+        return mode + " | " + Formation.ToString().ToUpperInvariant() + " | " + Action.ToString().ToUpperInvariant();
+    }
+
+    private void BeginRoute(Vector3 goal)
+    {
+        finalDestination = Ground(goal);
+        hasDestination = true;
+
+        int startSide = BankSide(transform.position);
+        int goalSide = BankSide(finalDestination);
+        if (startSide != 0 && goalSide != 0 && startSide != goalSide)
+        {
+            bridgeStartSide = startSide;
+            bridgePhase = BridgePhase.NearBank;
+            formationBeforeBridge = Formation;
+            Formation = PrototypeCavalryFormation09F30.Column;
+            ResizeCollider();
+
+            Debug.Log(
+                "CAVALRY-09F30|Unit=" + UnitName +
+                "|BridgeRoute=True|StartSide=" + bridgeStartSide +
+                "|ColumnForced=True");
+        }
+        else
+        {
+            bridgePhase = BridgePhase.Direct;
+        }
+    }
+
+    private void UpdateMovement()
+    {
+        if (!hasDestination)
+            return;
+
+        Vector3 steering = ResolveSteeringTarget();
+        Vector3 here = transform.position;
+        Vector3 delta = steering - here;
+        delta.y = 0f;
+
+        if (delta.magnitude <= 1.2f)
+        {
+            if (AdvanceBridgePhase())
+                return;
+
+            hasDestination = false;
+            if (Action == PrototypeCavalryAction09F30.Move || Action == PrototypeCavalryAction09F30.Falter)
+                Action = PrototypeCavalryAction09F30.Hold;
+            return;
+        }
+
+        float speed = GetMoveSpeed();
+        Vector3 step = delta.normalized * speed * Mathf.Lerp(0.72f, 1f, Cohesion / 100f) * Time.deltaTime;
+        if (step.magnitude > delta.magnitude)
+            step = delta;
+
+        Vector3 next = Ground(here + step);
+        transform.position = next;
+
+        Quaternion desired = Quaternion.LookRotation(delta.normalized, Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, desired, 5.2f * Time.deltaTime);
+
+        float fatigue = Mode == PrototypeCavalryMode09F30.Mounted ? 0.10f : 0.15f;
+        if (Action == PrototypeCavalryAction09F30.Charge)
+            fatigue = 0.42f;
+        Cohesion = Mathf.Max(28f, Cohesion - fatigue * Time.deltaTime);
+    }
+
+    private Vector3 ResolveSteeringTarget()
+    {
+        if (bridgePhase == BridgePhase.Direct)
+            return finalDestination;
+
+        Vector3 bridge = new Vector3(
+            PrototypeBootstrap.StreamCenterX(BridgeZ),
+            0f,
+            BridgeZ);
+        bridge = Ground(bridge);
+
+        if (bridgePhase == BridgePhase.NearBank)
+            return Ground(bridge + Vector3.right * (bridgeStartSide * BridgeBankOffset));
+
+        return Ground(bridge - Vector3.right * (bridgeStartSide * BridgeBankOffset));
+    }
+
+    private bool AdvanceBridgePhase()
+    {
+        if (bridgePhase == BridgePhase.NearBank)
+        {
+            bridgePhase = BridgePhase.FarBank;
+            return true;
+        }
+
+        if (bridgePhase == BridgePhase.FarBank)
+        {
+            bridgePhase = BridgePhase.Direct;
+            Formation = formationBeforeBridge;
+            ResizeCollider();
+            return true;
+        }
+
+        return false;
+    }
+
+    private float GetMoveSpeed()
+    {
+        if (Mode == PrototypeCavalryMode09F30.Dismounted)
+            return 3.15f;
+
+        if (bridgePhase != BridgePhase.Direct)
+            return 5.6f;
+
+        if (Action == PrototypeCavalryAction09F30.Charge)
+            return 13.2f;
+
+        return Formation == PrototypeCavalryFormation09F30.Column ? 9.4f : 8.2f;
+    }
+
+    private void ResolveChargeContact()
+    {
+        if (chargeResolved || chargeTarget == null)
+            return;
+        chargeResolved = true;
+
+        Regiment target = chargeTarget;
+        bool inSquare = PrototypeInfantrySquare09F29.IsInSquare(target);
+        bool squareReady = inSquare && PrototypeInfantrySquare09F29.IsSquareReady(target);
+
+        if (squareReady)
+        {
+            Morale = Mathf.Max(0f, Morale - 12f);
+            Cohesion = Mathf.Max(0f, Cohesion - 18f);
+
+            Vector3 away = transform.position - target.transform.position;
+            away.y = 0f;
+            if (away.sqrMagnitude < 0.01f)
+                away = -target.transform.forward;
+            finalDestination = Ground(transform.position + away.normalized * 38f);
+            hasDestination = true;
+            chargeTarget = null;
+            Action = PrototypeCavalryAction09F30.Falter;
+
+            Debug.Log(
+                "CAVALRY-CHARGE-09F30|Unit=" + UnitName +
+                "|Target=" + target.RegimentName +
+                "|Contact=SQUARE_READY|Result=FALTER|Hits=0");
+            return;
+        }
+
+        string aspect = GetChargeAspect(target);
+        float rate;
+        float shock;
+        switch (aspect)
+        {
+            case "REAR":
+                rate = 0.065f;
+                shock = 15f;
+                break;
+            case "FLANK":
+                rate = 0.045f;
+                shock = 10f;
+                break;
+            default:
+                rate = 0.025f;
+                shock = 6f;
+                break;
+        }
+
+        if (inSquare && !squareReady)
+        {
+            rate *= 1.25f;
+            shock *= 1.25f;
+        }
+
+        float strengthFactor = Mathf.Lerp(0.55f, 1f, CurrentStrength / (float)Mathf.Max(1, InitialStrength));
+        int hits = Mathf.Clamp(
+            Mathf.RoundToInt(CurrentStrength * rate * strengthFactor * Random.Range(0.82f, 1.18f)),
+            1,
+            18);
+
+        target.ReceiveVolley(hits, shock, null);
+        Cohesion = Mathf.Max(25f, Cohesion - (aspect == "FRONT" ? 9f : 5f));
+        chargeTarget = null;
+        hasDestination = false;
+        Action = PrototypeCavalryAction09F30.Hold;
+
+        Debug.Log(
+            "CAVALRY-CHARGE-09F30|Unit=" + UnitName +
+            "|Target=" + target.RegimentName +
+            "|Aspect=" + aspect +
+            "|TargetSquare=" + inSquare +
+            "|SquareReady=" + squareReady +
+            "|Hits=" + hits +
+            "|Shock=" + shock.ToString("0.0"));
+    }
+
+    private string GetChargeAspect(Regiment target)
+    {
+        Vector3 fromTargetToCavalry = transform.position - target.transform.position;
+        fromTargetToCavalry.y = 0f;
+        if (fromTargetToCavalry.sqrMagnitude < 0.01f)
+            return "FRONT";
+
+        Vector3 facing = target.transform.forward;
+        facing.y = 0f;
+        float dot = Vector3.Dot(facing.normalized, fromTargetToCavalry.normalized);
+        if (dot >= 0.55f)
+            return "FRONT";
+        if (dot <= -0.55f)
+            return "REAR";
+        return "FLANK";
+    }
+
+    private void CreateVisuals()
+    {
+        mountedRoot = new GameObject("MountedVisual09F30").transform;
+        mountedRoot.SetParent(transform, false);
+
+        footRoot = new GameObject("DismountedVisual09F30").transform;
+        footRoot.SetParent(transform, false);
+        footRoot.gameObject.SetActive(false);
+
+        int visualCount = Mathf.Clamp(Mathf.CeilToInt(InitialStrength / 10f), 8, 18);
+        for (int i = 0; i < visualCount; i++)
+        {
+            CreateMountedFigure(i);
+            CreateFootFigure(i);
+        }
+
+        unitCollider = gameObject.AddComponent<BoxCollider>();
+        unitCollider.center = new Vector3(0f, 1.2f, 0f);
+
+        selectionMarker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        selectionMarker.name = "CavalrySelection09F30";
+        selectionMarker.transform.SetParent(transform, false);
+        selectionMarker.transform.localPosition = new Vector3(0f, 0.08f, 0f);
+        selectionMarker.transform.localScale = new Vector3(5.5f, 0.025f, 5.5f);
+        selectionMarker.GetComponent<Renderer>().sharedMaterial = PrototypeBootstrap.CreateSharedMaterial(
+            new Color(0.95f, 0.78f, 0.18f),
+            "F30_CavalrySelection");
+        Collider markerCollider = selectionMarker.GetComponent<Collider>();
+        if (markerCollider != null)
+            Destroy(markerCollider);
+        selectionMarker.SetActive(false);
+
+        ResizeCollider();
+    }
+
+    private void CreateMountedFigure(int index)
+    {
+        GameObject root = new GameObject("Mounted_" + (index + 1));
+        root.transform.SetParent(mountedRoot, false);
+
+        GameObject horseBody = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        horseBody.transform.SetParent(root.transform, false);
+        horseBody.transform.localPosition = new Vector3(0f, 0.78f, 0f);
+        horseBody.transform.localScale = new Vector3(0.55f, 0.62f, 1.55f);
+        horseBody.GetComponent<Renderer>().sharedMaterial = horseMaterial;
+        Destroy(horseBody.GetComponent<Collider>());
+
+        GameObject horseHead = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        horseHead.transform.SetParent(root.transform, false);
+        horseHead.transform.localPosition = new Vector3(0f, 1.13f, 0.95f);
+        horseHead.transform.localScale = new Vector3(0.40f, 0.52f, 0.52f);
+        horseHead.GetComponent<Renderer>().sharedMaterial = horseMaterial;
+        Destroy(horseHead.GetComponent<Collider>());
+
+        GameObject rider = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        rider.name = "Rider";
+        rider.transform.SetParent(root.transform, false);
+        rider.transform.localPosition = new Vector3(0f, 1.72f, -0.10f);
+        rider.transform.localScale = new Vector3(0.32f, 0.48f, 0.32f);
+        rider.GetComponent<Renderer>().sharedMaterial = uniformMaterial;
+        Destroy(rider.GetComponent<Collider>());
+        mountedRiders.Add(rider);
+
+        GameObject weapon = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        weapon.transform.SetParent(rider.transform, false);
+        weapon.transform.localPosition = new Vector3(0.42f, 0.0f, 0.15f);
+        weapon.transform.localScale = new Vector3(0.06f, 0.06f, 1.15f);
+        weapon.GetComponent<Renderer>().sharedMaterial = equipmentMaterial;
+        Destroy(weapon.GetComponent<Collider>());
+
+        mountedFigures.Add(root.transform);
+    }
+
+    private void CreateFootFigure(int index)
+    {
+        GameObject root = new GameObject("Dismounted_" + (index + 1));
+        root.transform.SetParent(footRoot, false);
+
+        GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        body.transform.SetParent(root.transform, false);
+        body.transform.localPosition = new Vector3(0f, 0.72f, 0f);
+        body.transform.localScale = new Vector3(0.29f, 0.48f, 0.29f);
+        body.GetComponent<Renderer>().sharedMaterial = uniformMaterial;
+        Destroy(body.GetComponent<Collider>());
+
+        GameObject carbine = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        carbine.transform.SetParent(root.transform, false);
+        carbine.transform.localPosition = new Vector3(0.22f, 0.78f, 0.18f);
+        carbine.transform.localScale = new Vector3(0.06f, 0.06f, 0.70f);
+        carbine.GetComponent<Renderer>().sharedMaterial = equipmentMaterial;
+        Destroy(carbine.GetComponent<Collider>());
+
+        footFigures.Add(root.transform);
+    }
+
+    private void UpdateVisualFormation()
+    {
+        if (Mode == PrototypeCavalryMode09F30.Mounted)
+        {
+            for (int i = 0; i < mountedFigures.Count; i++)
+            {
+                Vector3 target = MountedPosition(i, mountedFigures.Count);
+                mountedFigures[i].localPosition = Vector3.Lerp(mountedFigures[i].localPosition, target, 8f * Time.deltaTime);
+                mountedFigures[i].localRotation = Quaternion.Slerp(mountedFigures[i].localRotation, Quaternion.identity, 8f * Time.deltaTime);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < footFigures.Count; i++)
+            {
+                Vector3 target = FootPosition(i, footFigures.Count);
+                footFigures[i].localPosition = Vector3.Lerp(footFigures[i].localPosition, target, 8f * Time.deltaTime);
+                footFigures[i].localRotation = Quaternion.Slerp(footFigures[i].localRotation, Quaternion.identity, 8f * Time.deltaTime);
+            }
+        }
+    }
+
+    private void RefreshFormationInstant()
+    {
+        for (int i = 0; i < mountedFigures.Count; i++)
+            mountedFigures[i].localPosition = MountedPosition(i, mountedFigures.Count);
+        for (int i = 0; i < footFigures.Count; i++)
+            footFigures[i].localPosition = FootPosition(i, footFigures.Count);
+    }
+
+    private Vector3 MountedPosition(int index, int total)
+    {
+        if (Formation == PrototypeCavalryFormation09F30.Column)
+        {
+            int columns = 3;
+            int rank = index / columns;
+            int col = index % columns;
+            return new Vector3((col - 1f) * 1.55f, 0f, -rank * 2.2f);
+        }
+
+        int ranks = 2;
+        int columnsLine = Mathf.CeilToInt(total / (float)ranks);
+        int lineRank = index / columnsLine;
+        int lineCol = index % columnsLine;
+        return new Vector3((lineCol - (columnsLine - 1) * 0.5f) * 1.7f, 0f, -lineRank * 2.05f);
+    }
+
+    private Vector3 FootPosition(int index, int total)
+    {
+        if (Formation == PrototypeCavalryFormation09F30.Column)
+        {
+            int columns = 4;
+            int rank = index / columns;
+            int col = index % columns;
+            return new Vector3((col - 1.5f) * 0.78f, 0f, -rank * 0.85f);
+        }
+
+        int ranks = 2;
+        int columnsLine = Mathf.CeilToInt(total / (float)ranks);
+        int lineRank = index / columnsLine;
+        int lineCol = index % columnsLine;
+        return new Vector3((lineCol - (columnsLine - 1) * 0.5f) * 0.78f, 0f, -lineRank * 0.90f);
+    }
+
+    private void ResizeCollider()
+    {
+        if (unitCollider == null)
+            return;
+
+        if (Mode == PrototypeCavalryMode09F30.Dismounted)
+            unitCollider.size = Formation == PrototypeCavalryFormation09F30.Line
+                ? new Vector3(18f, 2.4f, 5f)
+                : new Vector3(6f, 2.4f, 16f);
+        else
+            unitCollider.size = Formation == PrototypeCavalryFormation09F30.Line
+                ? new Vector3(22f, 3.1f, 7f)
+                : new Vector3(7f, 3.1f, 24f);
+    }
+
+    private static int BankSide(Vector3 point)
+    {
+        float riverX = PrototypeBootstrap.StreamCenterX(point.z);
+        float delta = point.x - riverX;
+        if (Mathf.Abs(delta) < 5f)
+            return 0;
+        return delta < 0f ? -1 : 1;
+    }
+
+    private static Vector3 Ground(Vector3 point)
+    {
+        point.y = PrototypeBootstrap.SampleGroundHeight(point.x, point.z) + 0.10f;
+        return point;
+    }
+
+    private static float PlanarDistance(Vector3 a, Vector3 b)
+    {
+        a.y = 0f;
+        b.y = 0f;
+        return Vector3.Distance(a, b);
+    }
+}

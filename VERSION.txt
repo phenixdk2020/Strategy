@@ -1,59 +1,49 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29z
+Prototype version: v00.00.09f30
 Build status: TEST
-Build name: SQUARE FACE FIRE + DIRECTIONAL BLACK-POWDER SMOKE
-Visible build marker: PROJECT 1864 | v00.00.09f29z TEST
+Build name: FIRST CAVALRY CORE - GARDEHUSAR + DRAGON
+Visible build marker: PROJECT 1864 | v00.00.09f30 TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current design supplements:
+- docs/design-supplements/v00.00.09f30-cavalry-core.md
 - docs/design-supplements/v00.00.09f29z-square-face-fire-smoke.md
 - docs/design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md
-- docs/design-supplements/v00.00.09f29x-square-fire-oob-selection-hardening.md
-- docs/design-supplements/v00.00.09f29w-hq-depth-guard.md
-- docs/design-supplements/v00.00.09f29v-tactical-ui-square-corrections.md
 Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
 
+v00.00.09f30 - First cavalry core: Gardehusar + Dragon
+- Backup created before F30: backup/channel-test-v00.00.09f29z-pre-f30-cavalry-core.
+- Adds Assets/Scripts/PrototypeCavalryUnit09F30.cs and PrototypeCavalryManager09F30.cs.
+- Spawns one Danish GARDEHUSAR ESKADRON and one DRAGON ESKADRON as TEST cavalry units.
+- Both use a shared mounted cavalry core with mounted Line/Column formations, move, hold and charge.
+- First QA strengths are 120 Gardehusar and 140 Dragon; these are prototype values, not final historical OOB data.
+- Both profiles expose sabre, carbine and pistol capability metadata; weapon-specific firing is intentionally deferred.
+- Dragon can SID AF and STIG OP. Dismount leaves horse visuals physically at the dismount point and the dismounted unit must return within 18 m to remount.
+- Cavalry movement uses bridge-only crossing when start/goal are on opposite river banks; Column is forced during bridge crossing and the prior formation is restored after crossing.
+- Charge contact distinguishes FRONT / FLANK / REAR relative to infantry facing.
+- Ready Infantry Square stops the first cavalry charge and causes FALTER; a Square still forming remains vulnerable.
+- Charge casualties/shock are first-pass QA values and are not final historical lethality.
+- Adds compact TEST cavalry panel at x=310, toggleable with F10. World-click can also select cavalry. FLYT and CHARGE use next battlefield click as point/target.
+- No cavalry Officer AI, mounted firearms, morale-break/rout state, horse casualties or OOB integration yet; these are subsequent F30 passes.
+
 v00.00.09f29z - Square face fire + directional smoke
-- Backup created before changes: backup/channel-test-v00.00.09f29y-pre-09f29z-square-fire-smoke.
-- Adds Assets/Scripts/PrototypeSquareFireSmoke09F29Z.cs.
-- F29V remains visual authority for Square outline and four range sectors, but its reflected full-company FireVolley path is suppressed.
-- Each Square face (FRONT/RIGHT/REAR/LEFT) owns a separate reload clock.
-- Each face resolves approximately 25% of normal company volley firepower and only fires at a valid enemy inside that face's 90-degree sector and current fire-policy range.
-- Crop-field target visibility/accuracy modifiers still apply to Square fire.
-- Only the face that actually fires emits black-powder smoke; smoke is positioned and oriented along that physical side of the Square.
-- Two or more faces may fire independently when valid enemies exist in different sectors.
-- No valid target means no volley, no smoke and no RAMMER 0 feedback.
-- PrototypeCombatStatusManager gains RegisterExternalVolley for real non-Regiment-timer volleys.
-- Square face ammunition is accumulated fractionally: four 25% face volleys consume one average round/man, instead of charging one full round/man for every face.
-- Existing F29X legacy-auto-fire gate remains active; no second physical movement or fire owner is introduced.
+- Four independent 90-degree Square faces with ~25% firepower per side.
+- Directional black-powder smoke originates only from the side that actually fires.
+- External volley registration keeps ammo/RAMMER feedback correct without fake global fire timers.
 
-Primary v00.00.09f29z QA
-1. Unity must compile with no red errors before F29Z is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f29z TEST.
-3. Form Square with no enemy in range: no smoke and no volley feedback.
-4. Put one enemy in FRONT sector: only FRONT emits smoke and resolves hits.
-5. Repeat with RIGHT/REAR/LEFT: smoke must originate along the matching Square face.
-6. Put enemies in two different sectors: both faces may fire on their independent reload clocks.
-7. One face volley must be materially weaker than a full Line volley; target hit resolution uses 25% Square-face firepower.
-8. HOLD FIRE suppresses all four Square faces.
-9. Ammo does not decrement four times too fast; four quarter-face volleys equal one average round/man.
-10. Regression: F29Y defensive/HQ/bridge/crop changes, F29X selection hardening and F29V Square visuals remain active.
-
-v00.00.09f29y - Defensive stability, TEST enemy AI, Major HUD status and terrain polish
-- DefendHere slots constrained to intended river bank and reserves no longer pull Major HQ across the bridge.
-- TEST enemy AI starts OFF and can toggle ON/OFF.
-- Major HUD mirrors OOB tactical company status.
-- Bridge visual has a dry gap and crop fields are denser/golden.
-
-Recent predecessors
-- v00.00.09f29x: Square fire + OOB selection hardening.
-- v00.00.09f29w: HQ rear-depth guard.
-- v00.00.09f29v: tactical map, semantic zoom, OOB status and Square corrections.
-- v00.00.09f29u: Time API compatibility hotfix.
-- v00.00.09f29t: interactive tactical map.
-- v00.00.09f29s: first Square sector-fire/OOB/test-UI pass.
-- v00.00.09f29r: crop-field concealment and map polish.
+Primary v00.00.09f30 QA
+1. Unity must compile with no red errors before F30 is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f30 TEST.
+3. F10 opens/closes CAVALRY TEST panel.
+4. Select GARDEHUSAR ESKADRON and test FLYT in Line and Column.
+5. Send cavalry to opposite river bank: route must use the bridge and force Column during crossing.
+6. Select DRAGON ESKADRON, SID AF, move dismounted, then return to horse holders and STIG OP.
+7. Charge infantry from FRONT, FLANK and REAR and verify telemetry identifies the aspect.
+8. Charge a ready Square: cavalry must FALTER and Square must take no charge-contact hits.
+9. Charge a Square while still forming: contact must remain possible and more dangerous than a steady front contact.
+10. Regression F29Z: Square FRONT/RIGHT/REAR/LEFT fire and side-correct smoke still function.
+11. Regression F29Y: enemy TEST AI starts OFF, bridge is visually dry and Major HQ does not follow reserve across bridge.
 
 IMPORTANT QA STATUS
 Repository changes are committed to channel-test, but Unity compiler/runtime success must only be marked verified after the project has been opened/tested in Unity 6000.6.0f1 and no red compiler errors are present.
