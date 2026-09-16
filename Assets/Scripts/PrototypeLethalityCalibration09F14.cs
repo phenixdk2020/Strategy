@@ -88,7 +88,8 @@ public sealed class PrototypeLethalityCalibration09F14 : MonoBehaviour
         float distance = PlanarDistance(shooter.transform.position, target.transform.position);
         string band = PrototypeCombatTuningManager.GetRangeBandLabel(shooter, distance);
         int firingMen = PrototypeCombatTuningManager.GetConfiguredFiringMen(shooter);
-        float expected = PrototypeCombatTuningManager.GetExpectedHitsPreview(shooter, distance);
+        float terrainMultiplier = PrototypeCropFieldCombat09F29R.GetCombinedTargetMultiplier(shooter, target, distance);
+        float expected = PrototypeCombatTuningManager.GetExpectedHitsPreview(shooter, distance) * terrainMultiplier;
         int kernelHits = Mathf.Max(0, target.LastVolleyHits);
         int targetStrengthBeforeKernel = target.CurrentStrength + kernelHits;
         int physicalMaximum = Mathf.Max(0, Mathf.Min(firingMen, targetStrengthBeforeKernel));
@@ -114,6 +115,8 @@ public sealed class PrototypeLethalityCalibration09F14 : MonoBehaviour
             }
         }
 
+        PrototypeCropFieldTerrain09F29R.NotifyVolley(shooter);
+
         int totalHits = kernelHits + extraHits;
 
         Debug.Log(
@@ -125,6 +128,7 @@ public sealed class PrototypeLethalityCalibration09F14 : MonoBehaviour
             "|BaseHit=" + PrototypeCombatTuningManager.BaseHitChancePercent.ToString("0.00") + "%" +
             "|RangeFactor=x" + PrototypeCombatTuningManager.GetConfiguredRangeMultiplier(shooter, distance).ToString("0.00") +
             "|Quality=x" + PrototypeCombatTuningManager.GetConfiguredQualityMultiplier(shooter).ToString("0.00") +
+            "|Terrain=x" + terrainMultiplier.ToString("0.00") +
             "|Expected=" + expected.ToString("0.00") +
             "|KernelHits=" + kernelHits +
             "|ExtraHits=" + extraHits +
