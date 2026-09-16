@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 // v00.00.09f29r
 // Crop-field terrain foundation. Fields provide concealment, not ballistic cover:
 // targets are a little harder to acquire/hit, movement is slightly slower, and firing
 // briefly reveals a concealed formation through black-powder smoke/activity.
-[DefaultExecutionOrder(-4300)]
+[DefaultExecutionOrder(1950)]
 public sealed class PrototypeCropFieldTerrain09F29R : MonoBehaviour
 {
     public readonly struct FieldDescriptor
@@ -45,6 +46,7 @@ public sealed class PrototypeCropFieldTerrain09F29R : MonoBehaviour
     private Material fieldBaseMaterial;
     private Material cropMaterial;
     private Material cropDarkMaterial;
+    private FieldInfo moveSpeedField;
     private bool visualsBuilt;
 
     private const float MovementMultiplierDense = 0.92f;
@@ -72,6 +74,7 @@ public sealed class PrototypeCropFieldTerrain09F29R : MonoBehaviour
 
         Instance = this;
         revealUntil.Clear();
+        moveSpeedField = typeof(Regiment).GetField("moveSpeed", BindingFlags.Instance | BindingFlags.NonPublic);
 
         fieldBaseMaterial = PrototypeBootstrap.CreateSharedMaterial(
             new Color(0.63f, 0.53f, 0.17f), "09F29R_FieldBase");
@@ -101,6 +104,40 @@ public sealed class PrototypeCropFieldTerrain09F29R : MonoBehaviour
             BuildFieldVisuals();
         }
 
+        ApplyMovementFriction();
+        CleanupRevealState();
+    }
+
+    private void ApplyMovementFriction()
+    {
+        // F7 rewrites the normal/forced/rout speed every frame at execution order 1850.
+        // This pass deliberately runs immediately afterwards and only scales that value,
+        // so it does not own movement or create a competing route writer. Charge later
+        // reasserts its own speed in LateUpdate and therefore keeps charge authority.
+        if (moveSpeedField == null || PrototypeForcedMarch09F7.Instance == null)
+            return;
+
+        BattleManager battle = BattleManager.Instance;
+        if (battle == null || battle.Regiments == null)
+            return;
+
+        foreach (Regiment regiment in battle.Regiments)
+        {
+            if (regiment == null)
+                continue;
+
+            float multiplier = GetMovementMultiplier(regiment.transform.position);
+            if (multiplier >= 0.999f)
+                continue;
+
+            object raw = moveSpeedField.GetValue(regiment);
+            if (raw is float speed)
+                moveSpeedField.SetValue(regiment, speed * multiplier);
+        }
+    }
+
+    private static void CleanupRevealState()
+    {
         if (revealUntil.Count == 0)
             return;
 
