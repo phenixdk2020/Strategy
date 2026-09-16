@@ -1,10 +1,10 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29t
+Prototype version: v00.00.09f29u
 Build status: TEST
-Build name: INTERACTIVE TACTICAL MAP + COMMAND SELECTION
-Visible build marker: PROJECT 1864 | v00.00.09f29t TEST
+Build name: TIME API COMPATIBILITY HOTFIX
+Visible build marker: PROJECT 1864 | v00.00.09f29u TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.15 + tactical design supplements through 09f29t
+Design manual baseline: v00.02.15 + tactical design supplements through 09f29t; 09f29u is a compatibility-only hotfix
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f29t design supplement: docs/design-supplements/v00.00.09f29t-interactive-tactical-map.md
@@ -15,6 +15,21 @@ Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29u - Time API compatibility hotfix
+- Fixes CS0117 in Assets/Scripts/PrototypeEnemyTestPanel09F29S.cs where Time.unscaledTimeSinceLevelLoad was unavailable in the active Unity API surface.
+- Replaces the unsupported API with a local unscaled timer based on Time.unscaledTime captured when the compact enemy TEST panel starts.
+- Preserves the intended two-second grace period for discovering late-created legacy enemy-spawner UI before concluding that the old wide overlay is absent.
+- No Square, tactical-map, OOB, movement, combat, AI doctrine or command-authority behaviour is changed.
+- Backup: backup/channel-test-v00.00.09f29t-pre-09f29u-time-api-fix.
+
+Primary v00.00.09f29u QA
+1. Unity compiles past the previous CS0117 Time.unscaledTimeSinceLevelLoad error.
+2. Visible marker reads PROJECT 1864 | v00.00.09f29u TEST.
+3. Compact TEST FJENDE panel still starts collapsed.
+4. Legacy wide enemy-spawner bar remains suppressed when present.
+5. Regression: F29T interactive tactical map remains unchanged.
+6. Regression: F29S Square retains four 90-degree fire sectors with approximately 25 percent fire contribution per face.
 
 v00.00.09f29t - Interactive tactical map + command selection
 - Adds click interaction to the existing F29P tactical map without replacing its renderer.
