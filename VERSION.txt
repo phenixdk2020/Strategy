@@ -1,12 +1,13 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29q
+Prototype version: v00.00.09f29r
 Build status: TEST
-Build name: OOB + HQ DISCOVERABILITY + SEMANTIC ZOOM
-Visible build marker: PROJECT 1864 | v00.00.09f29q TEST
+Build name: CROP FIELD CONCEALMENT + MAP POLISH
+Visible build marker: PROJECT 1864 | v00.00.09f29r TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.14 + tactical design supplements through 09f29q
+Design manual baseline: v00.02.15 + tactical design supplements through 09f29r
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29r design supplement: docs/design-supplements/v00.00.09f29r-crop-field-concealment.md
 09f29q design supplement: docs/design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md
 09f29p design supplement: docs/design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md
 09f29o design supplement: docs/design-supplements/v00.00.09f29o-contact-threat-visibility.md
@@ -24,6 +25,34 @@ Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29r - Crop field concealment + map polish
+- Updates the canonical Markdown design manual first to designbaseline v00.02.15 and makes F29R the current terrain/readability baseline.
+- Converts the six F29P field-boundary areas into shared crop-field gameplay geometry with center/width/depth/yaw/density data.
+- Adds yellow/golden field base surfaces plus low crop rows that partially hide infantry legs/lower silhouettes at close zoom.
+- Crop visuals have no colliders and do not become navigation blockers.
+- Dense crop scales movement to about x0.92 after the existing F7 movement-mode speed writer; F29R does not own route or destination.
+- Targets inside crop receive concealment rather than ballistic cover: roughly -2% hit chance at CLOSE, -5% around MEDIUM and -10% toward LONG, density-scaled.
+- Long-range target acquisition is shortened by the crop visibility factor; a ready volley is briefly delayed while the target remains beyond the concealed acquisition threshold.
+- A unit firing from crop is temporarily revealed for about 4.5 seconds by activity/black-powder smoke, reducing the concealment effect.
+- F14 close-range lethality supplement now uses the same F29R terrain multiplier and logs Terrain=x..., so the legacy 16-hit cap cannot erase concealment tuning.
+- Adds yellow crop-field overlays to the existing F29P tactical map using the same gameplay field data; M still governs map visibility.
+- F29Q OOB/HQ navigation, NATO semantic zoom, F29P Side Step/camera, F29O contact/cones, F29N Charge and F29M Square remain unchanged.
+- Full crop trampling/deformation, cavalry-specific crop handling and officer-stat-driven use of concealment remain future work.
+- Backup: backup/channel-test-v00.00.09f29q-pre-09f29r-crop-fields.
+
+Primary v00.00.09f29r QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29r TEST.
+2. Verify six yellow/golden crop fields are visible inside the prior field boundaries.
+3. Walk infantry through a dense field and verify movement is modestly slower without pathfinding detours.
+4. At close zoom verify crop rows hide only lower parts of soldiers rather than entire formations.
+5. Open the tactical map and verify the crop fields appear as yellow map areas; M must hide both map and field overlay.
+6. Compare fire against the same target on open ground versus inside crop at CLOSE/MED/LONG; concealment effect should grow with range.
+7. Check VOLLEY-CAL-09F14 logs for Terrain=x... when the target stands in a crop field.
+8. Fire from inside crop and verify CROP-FIELD-09F29R|Reveal=True appears and concealment is reduced for about 4.5 seconds.
+9. Verify crop never provides direct ballistic damage reduction once a hit has been resolved.
+10. Regression: OOB click/double-click camera navigation and semantic NATO zoom remain functional.
+11. Regression: Side Step does not rotate formation; Charge remains Line/HOLD FIRE and deep-contact melee; Square remains stable.
 
 v00.00.09f29q - OOB + HQ discoverability + semantic zoom polish
 - Updates the canonical Markdown design manual first to designbaseline v00.02.14 and makes F29Q the current tactical command/navigation baseline.
@@ -343,7 +372,7 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority.
 
 Next milestone
-- Validate F29Q OOB selection/focus, earlier HQ/NATO discoverability and 315 m strategic handoff together with F29P tactical map/camera/Side Step.
-- After navigation/readability stability, activate officer-stat-driven tactical opportunity selection so captains can exploit engaged enemies according to skill, initiative, experience and risk judgement.
+- Validate F29R crop visuals, movement friction, concealment, temporary reveal and tactical-map field overlay together with F29Q OOB/NATO navigation.
+- After terrain/readability stability, activate officer-stat-driven tactical opportunity selection so captains can exploit engaged enemies according to skill, initiative, experience and risk judgement, including whether crop concealment makes a lateral approach worthwhile.
 - If stable, finish remaining F29 cleanup and then proceed to F30 cavalry.
 - F30: first real Danish mounted cavalry prototype on shared cavalry core.
