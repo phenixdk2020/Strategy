@@ -1,12 +1,13 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29p
+Prototype version: v00.00.09f29q
 Build status: TEST
-Build name: TACTICAL MAP + CAMERA NAV + LATERAL MANOEUVRE
-Visible build marker: PROJECT 1864 | v00.00.09f29p TEST
+Build name: OOB + HQ DISCOVERABILITY + SEMANTIC ZOOM
+Visible build marker: PROJECT 1864 | v00.00.09f29q TEST
 TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.13 + tactical design supplements through 09f29p
+Design manual baseline: v00.02.14 + tactical design supplements through 09f29q
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
+09f29q design supplement: docs/design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md
 09f29p design supplement: docs/design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md
 09f29o design supplement: docs/design-supplements/v00.00.09f29o-contact-threat-visibility.md
 09f29n design supplement: docs/design-supplements/v00.00.09f29n-charge-melee-hq-spacing.md
@@ -23,6 +24,36 @@ Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
 09f29b design supplement: docs/design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+
+v00.00.09f29q - OOB + HQ discoverability + semantic zoom polish
+- Updates the canonical Markdown design manual first to designbaseline v00.02.14 and makes F29Q the current tactical command/navigation baseline.
+- Adds a collapsible ORDER OF BATTLE panel with the real Danish command hierarchy: III Regiment/Oberstløjtnant -> II Major A/B -> I Companies 1-8.
+- O toggles the OOB; Major A/B groups can independently expand/collapse.
+- Single-clicking an OOB row selects that company/HQ and focuses the camera on it without issuing or altering tactical orders.
+- Double-clicking a company/HQ moves the camera to a close tactical position behind the selected entity; companies therefore open directly behind their current facing.
+- Selected OOB row is highlighted gold. Company rows show CurrentStrength plus compact state: HOLD, movement arrow, ILD, KAMP, SQUARE, CHARGE, MELEE or ROUT.
+- OOB selection uses the existing PlayerCommander/F27/F28 selection authority and does not change AI, doctrine, mission or command ownership.
+- Adds F29Q semantic-zoom polish on top of F29D: HQ discoverability begins around 55 m; MEDIUM around 95 m; full company NATO operational counters around 175 m; strategic 3D suppression around 315 m.
+- F29Q fills only the earlier transition gaps; the proven F29D NATO renderer remains authoritative in its existing ranges.
+- At 315 m and above F29Q suppresses company/HQ mesh presentation and the active F7 3D soldier renderer while leaving simulation, colliders, AI, orders and command links active. Returning below 315 m restores physical 3D.
+- Selected Major receives an extra gold HQ selection halo at semantic zoom so Major A/B remain easy to locate.
+- Early F29Q NATO counters are clickable navigation shortcuts and route through the same OOB selection/focus path.
+- Keeps F29P tactical map, camera navigation, formation-preserving Side Step and visual polish unchanged.
+- Backup: backup/channel-test-v00.00.09f29p-pre-09f29q-oob-semantic-zoom.
+
+Primary v00.00.09f29q QA
+1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29q TEST.
+2. Verify OOB appears upper-left below the build marker; O and the header +/- button collapse/restore it.
+3. Verify hierarchy reads III 1. Regiment/Oberstløjtnant -> II Major A/B -> I eight companies.
+4. Click every company row: correct company must become selected and camera must jump to it.
+5. Double-click a company row: camera must move behind the company and align with its facing.
+6. Click Major A, Major B and Oberstløjtnant rows: correct HQ selection and camera focus must follow.
+7. Selected row must be gold and company rows must update strength/state during movement/combat/Square/Charge/melee/rout.
+8. Zoom to roughly 55-95 m and verify HQ NATO identification appears earlier than the old F29D threshold.
+9. Zoom above roughly 175 m and verify all company NATO counters are available earlier than the old 235 m operational threshold.
+10. Zoom above roughly 315 m and verify physical companies/HQs give way to NATO symbols while the battle simulation continues.
+11. Zoom back below 315 m and verify physical F7 soldiers/HQ meshes return.
+12. Regression: F29P minimap/camera/Side Step, F29O contact/cones, F29N Charge and F29M Square remain functional.
 
 v00.00.09f29p - Tactical map + camera navigation + lateral manoeuvre + visual polish
 - Adds a compact tactical overview map above the command HUD with dynamic bounds around the active battle.
@@ -132,7 +163,7 @@ v00.00.09f29l - Battlefield hardening
 - Withdrawal follow is placed on the safe rear side in the direction of withdrawal.
 - Replaces the visually unreliable F29G water presentation with a denser continuous F29L river ribbon sampled against the actual rendered Battlefield Ground mesh.
 - River width is 7.5 m, longitudinal sampling 1.25 m and water surface lift 0.24 m; older Stream renderers/F29G ribbon are hidden while navigation/colliders remain unchanged.
-- Adds authoritative final visual Square positioning: displayed men physically interpolate from Line/Column into a hollow two-rank square over the existing formation timer.
+- Adds authoritative final visual Square positioning: displayed men physically interpolate from Line/Column into a hollow two-rank square over the existing Square formation timer.
 - Square side length and collider scale with CurrentStrength, so casualties visibly produce a smaller square.
 - Adds defensive arrival hysteresis: latch at 1.35 m, release at 3.20 m; F29E micro-correction is suppressed while latched so defending companies stop shuttling around the blue destination footprint.
 - Under-fire reaction remains authoritative while a defensive slot is latched.
@@ -312,7 +343,7 @@ Retained from v00.00.09f26-v00.00.09f25
 - Infantry CHARGE/melee baseline and local Captain authority.
 
 Next milestone
-- Validate F29P tactical map, camera focus, formation-preserving Side Step and visual polish together with F29O flank-contact engagement.
-- After physical manoeuvre stability, activate officer-stat-driven tactical opportunity selection so captains can exploit engaged enemies according to skill, initiative, experience and risk judgement.
+- Validate F29Q OOB selection/focus, earlier HQ/NATO discoverability and 315 m strategic handoff together with F29P tactical map/camera/Side Step.
+- After navigation/readability stability, activate officer-stat-driven tactical opportunity selection so captains can exploit engaged enemies according to skill, initiative, experience and risk judgement.
 - If stable, finish remaining F29 cleanup and then proceed to F30 cavalry.
 - F30: first real Danish mounted cavalry prototype on shared cavalry core.
