@@ -1,101 +1,65 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f29u
+Prototype version: v00.00.09f29v
 Build status: TEST
-Build name: TIME API COMPATIBILITY HOTFIX
-Visible build marker: PROJECT 1864 | v00.00.09f29u TEST
-TEST versioning rule: every delivered TEST revision receives a visible suffix bump so screenshots and test feedback can always be tied to the exact revision
-Design manual baseline: v00.02.15 + tactical design supplements through 09f29t; 09f29u is a compatibility-only hotfix
-Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
-Current tactical roadmap: docs/backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md
-09f29t design supplement: docs/design-supplements/v00.00.09f29t-interactive-tactical-map.md
-09f29s design supplement: docs/design-supplements/v00.00.09f29s-square-sector-fire.md
-09f29r design supplement: docs/design-supplements/v00.00.09f29r-crop-field-concealment.md
-09f29q design supplement: docs/design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md
-09f29p design supplement: docs/design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md
-Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
+Build name: TACTICAL MAP + SEMANTIC ZOOM + OOB STATUS + SQUARE CORRECTIONS
+Visible build marker: PROJECT 1864 | v00.00.09f29v TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
+Design supplement: docs/design-supplements/v00.00.09f29v-tactical-ui-square-corrections.md
+Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
 
-v00.00.09f29u - Time API compatibility hotfix
-- Fixes CS0117 in Assets/Scripts/PrototypeEnemyTestPanel09F29S.cs where Time.unscaledTimeSinceLevelLoad was unavailable in the active Unity API surface.
-- Replaces the unsupported API with a local unscaled timer based on Time.unscaledTime captured when the compact enemy TEST panel starts.
-- Preserves the intended two-second grace period for discovering late-created legacy enemy-spawner UI before concluding that the old wide overlay is absent.
-- No Square, tactical-map, OOB, movement, combat, AI doctrine or command-authority behaviour is changed.
-- Backup: backup/channel-test-v00.00.09f29t-pre-09f29u-time-api-fix.
+v00.00.09f29v - Tactical map, semantic zoom, OOB status and Square corrections
+- Backup created before changes: backup/channel-test-v00.00.09f29u-pre-09f29v-minimap-semantic-zoom.
+- Tactical map now uses fixed whole-battlefield bounds instead of recalculating around active units.
+- Camera position/visible footprint moves across the fixed map as a white viewport marker.
+- Major HQs are marked II and Regimental HQ is marked III on the tactical map.
+- Tactical-map interaction remains: single-click own company/HQ selects only; double-click selects and moves behind; empty/enemy click moves camera to map area.
+- Legacy F29P/F29T tactical-map drawing/interaction layers are disabled by the F29V map owner to avoid duplicate maps and mismatched bounds.
+- Semantic zoom is unified by F29V: company NATO counters are continuous from 175 m upward.
+- 3D units and NATO counters coexist from 175 m to 314 m.
+- At 315 m and above 3D unit/HQ meshes are suppressed while NATO counters remain visible.
+- HQ NATO counters remain visible from 72 m upward.
+- Legacy F29D/F29Q semantic layers are disabled by the F29V semantic owner to remove the 235 m handoff gap/duplication risk.
+- OOB company rows now expose tactical status rather than generic HOLD only: KLAR, RYKKER, FORSVAR, RESERVE, FLANKE, SQUARE, KAMP, UNDER ILD, CHARGE, MELEE or ROUT.
+- FORSVAR means assigned/arrived defensive mission; it does not claim an entrenchment bonus. A future trench/entrenchment mechanic may add GRAVET NED as a distinct state.
+- Square correction keeps the actual SquareOutline visible.
+- The generic Major/HQ mission Footprint rectangle is hidden while the company is in Square.
+- Legacy Square Close/Medium/Long 360-degree rings and normal forward range fans remain suppressed in Square.
+- Four 90-degree Square fire sectors remain authoritative (front/right/rear/left).
+- Square fire requires an actual active enemy on the relevant face and inside the unit's current fire-policy range; Regiment.CanFireAt is used as the final volley gate.
+- Independent per-face reload timers remain in use while the legacy global Regiment fire timer is parked during Square.
+- F29S Square sector owner is disabled by F29V to avoid two competing Square fire owners.
+- No movement authority, bridge-only river rule, charge/melee ownership, Side Step ownership or command hierarchy is intentionally changed.
 
-Primary v00.00.09f29u QA
-1. Unity compiles past the previous CS0117 Time.unscaledTimeSinceLevelLoad error.
-2. Visible marker reads PROJECT 1864 | v00.00.09f29u TEST.
-3. Compact TEST FJENDE panel still starts collapsed.
-4. Legacy wide enemy-spawner bar remains suppressed when present.
-5. Regression: F29T interactive tactical map remains unchanged.
-6. Regression: F29S Square retains four 90-degree fire sectors with approximately 25 percent fire contribution per face.
+Primary v00.00.09f29v QA
+1. Unity must compile with no red errors before this version is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f29v TEST.
+3. Tactical map remains fixed while camera and units move; the white viewport marker moves around the fixed battlefield.
+4. Tactical map shows Danish companies, enemies and explicit II/III HQ markers.
+5. Single-click friendly map marker changes selection without moving camera; double-click moves behind selected entity.
+6. At 175-314 m, 3D units remain visible and company NATO counters are also visible.
+7. At 315 m and above, 3D company/HQ meshes disappear but NATO counters remain visible.
+8. NATO counters must not disappear at the old 235 m transition.
+9. OOB rows show meaningful company status; reserve companies show RESERVE and defending companies show FORSVAR when appropriate.
+10. Enter Square: the actual square perimeter remains visible.
+11. The generic long/thin mission formation rectangle must disappear while the unit is in Square.
+12. Selected ready Square shows four directional Close/Medium/Long fire sectors.
+13. A Square with no valid enemy inside any sector/range must not fire or emit a new volley.
+14. Place a valid enemy inside one face/range: only that face may acquire/fire it.
+15. Regression: charge/melee, river/bridge safety, OOB hierarchy and movement ownership remain unchanged.
 
-v00.00.09f29t - Interactive tactical map + command selection
-- Adds click interaction to the existing F29P tactical map without replacing its renderer.
-- Single-click on a Danish company selects the company only; the camera remains at the current battle location.
-- Double-click on the same Danish company selects it and moves the camera behind its current facing.
-- The same single-click/double-click rule applies to Major A, Major B and the Oberstløjtnant/regimental HQ.
-- Clicking empty map space moves the camera focus to the corresponding battlefield position.
-- Clicking a red enemy marker does not select the enemy; it moves the camera to that area.
-- Map interaction uses the same dynamic bounds as the visible tactical map.
-- Map clicks are isolated from PlayerCommander and box-selection input for that frame.
-- A pending legacy F9 FORSVAR HER / ANGRIB / EROBR HER order is preserved and may not be accidentally resolved by clicking the minimap.
-- Existing FOCUS/BAG buttons, M toggle, F/Shift+F, F1/F2/F3 and N camera controls remain unchanged.
-- OOB selection remains: single-click select-only, double-click navigate behind entity.
-- F29R yellow map rectangles remain crop-field terrain/concealment overlays, not selection areas.
-- F29S Square sector fire remains authoritative and unchanged.
-- Backup: backup/channel-test-v00.00.09f29s-pre-09f29t-tactical-map-interaction.
+Recent predecessors
+- v00.00.09f29u: Time API compatibility hotfix.
+- v00.00.09f29t: interactive tactical map.
+- v00.00.09f29s: first Square sector-fire/OOB/test-UI pass.
+- v00.00.09f29r: crop field concealment and map polish.
 
-Primary v00.00.09f29t QA
-1. Unity compiles without red errors and marker reads PROJECT 1864 | v00.00.09f29t TEST.
-2. Single-click each Danish company on the tactical map: selection changes but camera does not move.
-3. Double-click the same company: camera moves behind the company and aligns with its facing.
-4. Repeat single/double-click for Major A, Major B and Oberstløjtnant HQ.
-5. Click empty map terrain: camera focuses the corresponding battlefield area.
-6. Click a red enemy marker: enemy is not selected; camera focuses the enemy area.
-7. Start a pending F9 ground/attack order, then click the minimap: the pending order must remain pending and must not be issued by the map click.
-8. M still hides/shows both tactical map and F29R crop overlay.
-9. OOB single-click still selects without camera movement; OOB double-click still moves behind the entity.
-10. Regression: Square uses four 90-degree fire sectors and does not restore a normal forward cone or 360-degree range rings.
-11. Regression: Charge/melee, bridge-only river authority, Side Step and command hierarchy remain unchanged.
-
-v00.00.09f29s - Square sector fire + OOB/test-UI polish
-- Adds PrototypeSquareSectorFire09F29S as the authoritative Square fire/presentation layer.
-- Square uses four fixed 90-degree faces: FRONT, RIGHT, REAR and LEFT.
-- Each face performs its own target selection and keeps its own reload clock.
-- Existing Square accuracy/firing-men scaling yields approximately 24.4 percent of company strength per face, treated as approximately 25 percent.
-- Square heading is locked while active so the complete formation does not rotate toward one threat.
-- Legacy normal forward fire fans and old Square 360-degree rings/outline are suppressed during ready Square state.
-- Close/Medium/Long sector visuals are drawn separately for all four faces when the selected Square has range display active.
-- Regiment.FireVolley remains the authoritative volley resolver, preserving existing accuracy, terrain, morale, smoke and casualty processing.
-- OOB single-click changes command selection without moving the camera; double-click deliberately navigates behind the selected company/HQ.
-- Adds the compact collapsed TEST FJENDE panel and suppresses the old wide enemy-spawner test bar where found.
-- Square and TEST UI changes do not become movement owners.
-
-Primary v00.00.09f29s QA
-1. Select a company and enter Square; physical hollow Square must remain stable.
-2. Normal forward cone and legacy 360-degree Square rings must be absent.
-3. With range display active, verify four directional Close/Medium/Long sectors around the Square.
-4. Place enemies on different faces and verify each face can acquire/fire independently.
-5. Verify approximately one quarter of company fire contribution is associated with each face.
-6. Verify Square does not rotate its whole formation toward a single target.
-7. Single-click OOB company/Major/Oberstløjtnant rows: selection changes but camera remains where it is.
-8. Double-click those rows: camera moves behind the selected entity.
-9. Verify the compact TEST FJENDE panel starts collapsed.
-
-v00.00.09f29r - Crop field concealment + map polish
-- Canonical F29R details and all earlier prototype version history are preserved in docs/archive/VERSION-through-v00.00.09f29r.txt.
-- F29R remains the terrain/concealment baseline: six crop fields, modest movement penalty, concealment without ballistic cover, fire reveal and tactical-map crop overlays.
-
-Current key scripts
-- Assets/Scripts/PrototypeTacticalMapInteraction09F29T.cs
-- Assets/Scripts/PrototypeTacticalMapOrderIsolation09F29T.cs
-- Assets/Scripts/PrototypeSquareSectorFire09F29S.cs
-- Assets/Scripts/PrototypeEnemyTestPanel09F29S.cs
-- Assets/Scripts/PrototypeOobNavigator09F29Q.cs
-- Assets/Scripts/PrototypeCameraNavigation09F29P.cs
-- Assets/Scripts/PrototypeCropFieldMapOverlay09F29R.cs
+Current F29V scripts
+- Assets/Scripts/PrototypeTacticalMapUpgrade09F29V.cs
+- Assets/Scripts/PrototypeSemanticZoomUnified09F29V.cs
+- Assets/Scripts/PrototypeOobStatus09F29V.cs
+- Assets/Scripts/PrototypeSquareCorrections09F29V.cs
 - Assets/Scripts/PrototypeBuildVersionOverlay.cs
 
 IMPORTANT QA STATUS
