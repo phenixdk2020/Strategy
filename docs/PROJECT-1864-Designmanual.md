@@ -1,13 +1,13 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.16**  
-**Aktuel prototype-workbranch: P0A v00.00.09f29y DEFENSIVE STABILITY + TEST AI + HUD STATUS + TERRAIN POLISH TEST**
+**Aktuel designbaseline: v00.02.18**  
+**Aktuel prototype-workbranch: P0A v00.00.09f30 FIRST CAVALRY CORE — GARDEHUSAR + DRAGON TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
 
-Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f29y**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), OOB/HQ-discoverability i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md), crop-field concealment/map polish i [v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md), og den aktuelle defensive/UI/terrain-hardening i [v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md).
+Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f30**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), OOB/HQ-discoverability i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md), crop-field concealment/map polish i [v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md), defensive/UI/terrain-hardening i [v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md), Square face-fire i [v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md), og første mounted cavalry implementation i [v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md).
 
 ## Indhold
 
@@ -33,6 +33,8 @@ Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f2
 - [Designsupplement v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md)
 - [Designsupplement v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md)
 - [Designsupplement v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md)
+- [Designsupplement v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md)
+- [Designsupplement v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -142,7 +144,7 @@ Det visuelle battlemap får tydelige gul/gyldne markflader med lave crop-rækker
 
 På længere sigt skal afgrøder kunne blive trampet ned af store formationer, så concealment reduceres efter gentagen passage, og kaptajn-AI skal kunne bruge marker som en faktor i TacticalOpportunity: dygtige officerer kan søge skjult lateral approach mod en engageret fjende, mens dårligere officerer kan overvurdere markens beskyttelse eller fejlbedømme side-/rear threat. F29R implementerer terrain/concealment-fundamentet; den fulde stat-drevne captain-opportunity beslutning forbliver efterfølgende AI-arbejde.
 
-## v00.00.09f29y Defensive stability, TEST AI, HUD-status og terrain polish — aktuel baseline
+## v00.00.09f29y Defensive stability, TEST AI, HUD-status og terrain polish
 
 `FORSVAR HER` skal være stabilt ved broer og floder. Hvis objective ligger på en tydelig bred, bruges denne bred. Hvis objective ligger i selve bridge/river-zonen, arver den defensive formation den bred som den ikke-reserve front allerede står på. Reserve- og flankekompagnier må ikke trække Major-HQ'ets referencepunkt væk fra fronten, og HQ rear-direction bruger den committed mission-facing i stedet for en vektor der kan vende 180° når fronten passerer objective.
 
@@ -154,11 +156,31 @@ Major-HUD'ens fire subordinate company rows viser fra F29Y samme taktiske runtim
 
 Terrain-polish er visuelt: F29L's kontinuerlige river-mesh erstattes i renderingen af to segmenter med et reelt tørt hul under brodækket, mens river blocker og bridge-only navigation forbliver uændret. Crop fields får terrain-conforming gyldent underlag og langt tættere crop rows; F29R's concealment, movement multiplier, volley reveal og minimap-field geometry ændres ikke.
 
+## v00.00.09f29z Square face fire og directional black-powder smoke
+
+Square har nu fire reelle 90° fire faces: `FRONT / RIGHT / REAR / LEFT`. Hver side har egen reload-clock og disponerer ca. **25 % af normal company volley-firepower**. Et mål kan kun beskydes, hvis det er gyldigt i den konkrete side og inden for den valgte `HOLD / CLOSE / MEDIUM / LONG` policy.
+
+Sortkrudtsrøg emitteres fysisk langs den side, der faktisk affyrer salven. FRONT-røg kommer fra fronten, RIGHT fra højre side osv. Flere sider kan skyde uafhængigt, hvis der står gyldige mål i flere sektorer. Ingen gyldig fjende betyder ingen volley, ingen røg og ingen falsk `RAMMER 0` feedback.
+
+Square-face ammunition registreres fractionally: fire 25 %-face volleys svarer til omtrent én gennemsnitlig patron pr. mand i den eksisterende ammo-model. F29V beholder outline/range-sector visuals, F29X beholder legacy auto-fire gating, og F29Z er den autoritative face-fire resolver.
+
+## v00.00.09f30 First cavalry core — aktuel baseline
+
+F30 introducerer den første fælles mounted cavalry runtime for **Gardehusarer og Dragoner**. Begge bruger samme movement-, formation- og charge-core med mounted `LINE / COLUMN`, direkte move/hold og directional charge-contact. Første styrker og hastigheder er eksplicit QA-værdier, ikke endelige historiske stats.
+
+Gardehusar og Dragon har sabel, karabin og pistol som capability-metadata. Mounted firearms er endnu ikke aktiv combat resolution. Dragonen kan `SID AF`, bevæge sig til fod og senere `STIG OP`; hestene bliver fysisk stående ved dismount-positionen, og dragonen skal tilbage til hestene for at remounte.
+
+Cavalry charge klassificeres relativt til infantry facing som `FRONT / FLANK / REAR`. FRONT er mindst effektiv, FLANK stærkere og REAR stærkest i første QA-model. En færdigdannet Infantry Square stopper første F30 contact og giver cavalry `FALTER`, mens en Square der stadig er under dannelse fortsat er sårbar.
+
+Open water forbliver hard blocker. F30 cavalry ruter til bridge-zonen ved opposite-bank movement og tvinger Column under crossing. Dette er en separat cavalry movement owner; infantry F3/F27 river/navigation writers ændres ikke.
+
+Det midlertidige `CAVALRY TEST [F30]` panel bruges kun til QA og kan foldes ud med F10. Endelig OOB/HUD/semantic-zoom integration, cavalry Officer AI, mounted/dismounted fire, cavalry casualties fra infantry volley, Charge Confidence/Momentum, horse casualties og persistent melee ligger i efterfølgende F30-passes.
+
 ## Directional fire, fire discipline og accuracy
 
-Infantry fire policy bruger `HOLD / CLOSE / MEDIUM / LONG`. Et mål skal være inden for fire-policy-afstanden og relevant forward fire arc. Close/Medium/Long er ordre-/UI-grænser; accuracy ændres kontinuerligt med faktisk afstand.
+Infantry fire policy bruger `HOLD / CLOSE / MEDIUM / LONG`. Et mål skal være inden for fire-policy-afstanden og relevant fire arc. Close/Medium/Long er ordre-/UI-grænser; accuracy ændres kontinuerligt med faktisk afstand.
 
-Næste combat-fase fortsætter med formation-segmenteret `eligibleFiringFraction`, LOS, friendly obstruction, terrain/smoke og target exposure, så kun den del af frontage der faktisk kan skyde bidrager til salven.
+Line/Column bruger den almindelige forward fire model. Square er fra F29Z formation-segmenteret i fire selvstændige 90° faces med ca. 25 % firepower pr. side. Den langsigtede combat-fase fortsætter med mere generel `eligibleFiringFraction`, LOS, friendly obstruction, terrain/smoke og target exposure.
 
 ## Command-visualisation og order lifecycle
 
@@ -184,23 +206,23 @@ Skumring er en phase transition, ikke et universelt hard stop. Battle state kan 
 
 ## Kavaleri, Gardehusarer, dragoner og infantry square
 
-Danske **Gardehusarer og dragoner er separate cavalry-typer**, men bygges på en shared cavalry core. Dansk cavalry modelleres ikke som kun sabel; data-driven weapon profiles kan omfte **sabel, karabin og pistol**, mens de konkrete regimentsspecifikke 1864-profiler research-verificeres før endelige stats låses.
+Danske **Gardehusarer og dragoner er separate cavalry-typer**, men bygges på en shared cavalry core. Dansk cavalry modelleres ikke som kun sabel; data-driven weapon profiles kan omfatte **sabel, karabin og pistol**, mens de konkrete regimentsspecifikke 1864-profiler research-verificeres før endelige stats låses.
 
-Dragoner kan bevæge sig mounted og sidde af til sustained fire/combat. Ved dismount efterlades horses og horse holders som tactical state; remount tager tid og afhænger af hestenes tilstand.
+Dragoner kan bevæge sig mounted og sidde af til sustained fire/combat. Ved dismount efterlades horses og horse holders som tactical state; remount tager tid og afhænger senere også af hestenes tilstand.
 
 Cavalry charge er directional. FRONT mod steady, facing infantry er den mindst fordelagtige contact; FLANK giver større shock; REAR kan give severe casualties/stragglers, cohesion- og morale shock og høj break/rout probability, især hvis infantry allerede er engaged forfra.
 
-Et mounted charge er ikke garanteret at nå melee. `Charge Confidence / Charge Momentum` påvirkes af casualties, horse hesitation, cohesion, morale, terrain og defensive fire. En vel-timet **close-range volley** fra steady infantry skal kunne få et frontalt charge til at `FALTER`, `ABORT` eller i ekstreme tilfælde `ROUT` før fysisk kontakt.
+Et mounted charge er ikke garanteret at nå melee. `Charge Confidence / Charge Momentum` skal påvirkes af casualties, horse hesitation, cohesion, morale, terrain og defensive fire. En vel-timet **close-range volley** fra steady infantry skal kunne få et frontalt charge til at `FALTER`, `ABORT` eller i ekstreme tilfælde `ROUT` før fysisk kontakt. F30-baseline implementerer endnu kun Square-contact FALTER; defensive volley-interception kommer i næste passes.
 
 Infantry får formationerne:
 
 `LINE / COLUMN / SQUARE`
 
-**SQUARE / KARRÉ** er en specifik anti-cavalry formation. Den tager tid at danne, har lav mobility og er stærk mod mounted charge fra flere retninger, men bliver et tættere og mere sårbart mål for artilleri og koncentreret infantry fire. Square må ikke give 360° full-strength volley; fire eligibility fordeles på relevante sider. Cavalry der rammer mens square stadig dannes kan skabe kraftig disorder og høj break/rout risk.
+**SQUARE / KARRÉ** er en specifik anti-cavalry formation. Den tager tid at danne, har lav mobility og er stærk mod mounted charge fra flere retninger, men bliver et tættere og mere sårbart mål for artilleri og koncentreret infantry fire. Square må ikke give 360° full-strength volley; F29Z fordeler den faktiske firepower på fire konkrete sider. Cavalry der rammer mens square stadig dannes kan skabe kraftig disorder og høj break/rout risk.
 
 Cavalry kan også skabe combined-arms pressure uden at charge: en troværdig mounted threat kan tvinge infantry i square og dermed gøre det mere sårbart for artilleri eller infantry manoeuvre.
 
-Efter stabil F29Y defensive/UI/terrain regression er næste systemrækkefølge fortsat: **Gardehusar/Dragoon prototype → mounted/dismounted AI → Kanonbatteri/Artilleri → Combined Arms QA → senere højere Brigade/Division HQ.** F30 forbliver reserveret til den første rigtige mounted cavalry prototype.
+Efter første F30 cavalry-core er næste systemrækkefølge: **mounted/dismounted cavalry AI + defensive-fire/charge-momentum → Kanonbatteri/Artilleri → Combined Arms QA → senere højere Brigade/Division HQ.**
 
 ## Fog of war, scouts og command effectiveness
 
@@ -212,6 +234,8 @@ HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radi
 
 ## Versionshistorik
 
+- **v00.02.18 / P0A v00.00.09f30 FIRST CAVALRY CORE TEST** — Shared mounted cavalry core med Gardehusar + Dragon; Line/Column, move/hold/charge; FRONT/FLANK/REAR contact; ready Square giver cavalry FALTER; Dragon dismount/remount med fysisk horse-holder position; bridge-only cavalry crossing; midlertidigt F10 TEST-panel; mounted firearms, defensive volley interception, cavalry AI og persistent melee udestår.
+- **v00.02.17 / P0A v00.00.09f29z SQUARE FACE FIRE + DIRECTIONAL SMOKE TEST** — Fire selvstændige 90° Square faces med ca. 25 % firepower pr. side, independent reload, sidekorrekt black-powder smoke, fractional ammo consumption og ingen falsk RAMMER 0 uden gyldigt mål.
 - **v00.02.16 / P0A v00.00.09f29y DEFENSIVE STABILITY + TEST AI + HUD STATUS + TERRAIN POLISH TEST** — DefendHere bank-lock ved river/bridge; reserve/flank fjernet fra Major-HQ anchor; stable mission-facing for HQ rear axis; TEST Prussian AI default OFF med reel ON/OFF-toggle; Major-HUD bruger samme company-status som OOB; dry bridge river-render gap; terrain-conforming gyldne crop fields med langt tættere rows; F29R gameplay-terrain uændret.
 - **v00.02.15 / P0A v00.00.09f29r CROP FIELD CONCEALMENT + MAP POLISH TEST** — Gule/gyldne crop fields gjort til gameplay-terrain: concealment uden ballistic cover; ca. -2/-5/-10 % target hit chance ved CLOSE/MEDIUM/LONG; moderat spotting-range reduktion; volley/sortkrudtsrøg reducerer concealment midlertidigt; ca. 8 % infantry movement penalty; crop rows og minimap-markering bruger samme field geometry; ingen hard colliders/path blockers; senere trample og stat-drevet Captain TacticalOpportunity dokumenteret.
 - **v00.02.14 / P0A v00.00.09f29q OOB + HQ DISCOVERABILITY + SEMANTIC ZOOM TEST** — Sammenklappeligt OOB-panel med III/II/I-hierarki; company/HQ selection og camera navigation fra OOB; dobbeltklik til taktisk kamera bag valgt entity; kompakt strength/state i OOB; selected row fremhæves; semantic zoom thresholds ca. 55/95/175/315 m; HQ NATO-counters prioriteres visuelt; OOB, minimap og battlefield NATO counters bruger samme echelon-/affiliation-sprog.
