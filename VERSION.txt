@@ -15,6 +15,7 @@ Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-
 v00.00.09f30 - First cavalry core: Gardehusar + Dragon
 - Backup created before F30: backup/channel-test-v00.00.09f29z-pre-f30-cavalry-core.
 - Adds Assets/Scripts/PrototypeCavalryUnit09F30.cs and PrototypeCavalryManager09F30.cs.
+- Adds PrototypeCavalrySquareThreat09F30.cs so a real F30 mounted charge feeds the existing F29 Square threat model. Danish infantry uses the public F29 threat API; Prussian TEST infantry mirrors the same threat score when its Officer AI is ON so Danish cavalry can exercise automatic Square response.
 - Spawns one Danish GARDEHUSAR ESKADRON and one DRAGON ESKADRON as TEST cavalry units.
 - Both use a shared mounted cavalry core with mounted Line/Column formations, move, hold and charge.
 - First QA strengths are 120 Gardehusar and 140 Dragon; these are prototype values, not final historical OOB data.
@@ -30,6 +31,7 @@ v00.00.09f30 - First cavalry core: Gardehusar + Dragon
 v00.00.09f29z - Square face fire + directional smoke
 - Four independent 90-degree Square faces with ~25% firepower per side.
 - Directional black-powder smoke originates only from the side that actually fires.
+- F29Z reads F29V's locked Square heading, so legacy threat-facing cannot rotate the FRONT/RIGHT/REAR/LEFT fire sectors.
 - External volley registration keeps ammo/RAMMER feedback correct without fake global fire timers.
 
 Primary v00.00.09f30 QA
@@ -40,10 +42,11 @@ Primary v00.00.09f30 QA
 5. Send cavalry to opposite river bank: route must use the bridge and force Column during crossing.
 6. Select DRAGON ESKADRON, SID AF, move dismounted, then return to horse holders and STIG OP.
 7. Charge infantry from FRONT, FLANK and REAR and verify telemetry identifies the aspect.
-8. Charge a ready Square: cavalry must FALTER and Square must take no charge-contact hits.
-9. Charge a Square while still forming: contact must remain possible and more dangerous than a steady front contact.
-10. Regression F29Z: Square FRONT/RIGHT/REAR/LEFT fire and side-correct smoke still function.
-11. Regression F29Y: enemy TEST AI starts OFF, bridge is visually dry and Major HQ does not follow reserve across bridge.
+8. With Prussian TEST AI ON, an incoming Danish cavalry charge should feed the mounted-threat score and allow the infantry AI to begin forming Square before contact.
+9. Charge a ready Square: cavalry must FALTER and Square must take no charge-contact hits.
+10. Charge a Square while still forming: contact must remain possible and more dangerous than a steady front contact.
+11. Regression F29Z: Square FRONT/RIGHT/REAR/LEFT fire and side-correct smoke still function.
+12. Regression F29Y: enemy TEST AI starts OFF, bridge is visually dry and Major HQ does not follow reserve across bridge.
 
 IMPORTANT QA STATUS
 Repository changes are committed to channel-test, but Unity compiler/runtime success must only be marked verified after the project has been opened/tested in Unity 6000.6.0f1 and no red compiler errors are present.
