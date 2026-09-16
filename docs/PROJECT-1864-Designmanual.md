@@ -1,13 +1,13 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.13**  
-**Aktuel prototype-workbranch: P0A v00.00.09f29e REGIMENTAL DEFENSE + OBJECTIVE VISUALS + COORDINATED ATTACK TEST**
+**Aktuel designbaseline: v00.02.14**  
+**Aktuel prototype-workbranch: P0A v00.00.09f29q OOB + HQ DISCOVERABILITY + SEMANTIC ZOOM TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
 
-Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f29e**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), og den aktuelle regimental defense/objective/attack-coordination hardening i [v00.00.09f29e — Regimental Defense, Objective Visuals & Coordinated Attack](design-supplements/v00.00.09f29e-regimental-defense-attack-coordination.md).
+Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f29q**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), og den aktuelle OOB/HQ-discoverability/semantic-zoom hardening i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md).
 
 ## Indhold
 
@@ -29,6 +29,8 @@ Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f2
 - [Designsupplement v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md)
 - [Designsupplement v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md)
 - [Designsupplement v00.00.09f29e — Regimental Defense, Objective Visuals & Coordinated Attack](design-supplements/v00.00.09f29e-regimental-defense-attack-coordination.md)
+- [Designsupplement v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md)
+- [Designsupplement v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -94,9 +96,9 @@ I **OPERATIONAL** beholdes 3D-modellerne, mens alle companies får 2D tactical c
 
 I **STRATEGIC** skjules MeshRenderers og ParticleSystemRenderers under companies og HQ'er. Terrain, simulation, colliders, AI, LineRenderers, command links og ordre-state fortsætter uændret. Dermed bliver zoomet reelt en ren taktisk 2D-symbolvisning oven på det eksisterende 3D-terrain, og command-chain lines kan stadig læses.
 
-Første QA bruger camera height som proxy: HQ marker ca. 72 m, Medium ca. 135 m, Operational ca. 235 m og Strategic ca. 390 m. Den langsigtede model bør kunne bruge projected screen footprint i pixels, fordi det er mere robust over for FOV, opløsning og kameraændringer. Smooth 3D↔2D crossfade, counter-click selection, overlap avoidance, very-far battalion aggregation og Brigade/Division echelons (`X`/`XX`) ligger som næste designtrin.
+F29Q flytter skiftene tidligere, fordi NATO-symbolerne skal være et aktivt navigationsværktøj og ikke først dukke op ved ekstrem højde. QA-thresholds er nu: HQ marker ca. **55 m**, Medium ca. **95 m**, Operational ca. **175 m** og Strategic ca. **315 m**. Den langsigtede model bør stadig kunne bruge projected screen footprint i pixels, fordi det er mere robust over for FOV, opløsning og kameraændringer. Smooth 3D↔2D crossfade, overlap avoidance, very-far battalion aggregation og Brigade/Division echelons (`X`/`XX`) ligger som næste designtrin.
 
-## v00.00.09f29e Regimental defense, objective visuals og coordinated attack — aktuel baseline
+## v00.00.09f29e Regimental defense, objective visuals og coordinated attack
 
 Oberstløjtnanten bruger nu samme kompakte 90 px HUD-sprog som Major og Company: **ENHEDSINFO / AI**, **REGIMENTSORDRER** og **BATALJONER UNDER OBERSTLØJTNANT**. AI ON/OFF og DEF/BAL/OFF følger samme grøn-aktiv / rød-inaktiv regel. HUD'en viser total styrke/tab/morale/cohesion/ammunition samt status for begge Majorer/bataljoner.
 
@@ -113,6 +115,18 @@ Ved `ANGRIB HER` er tactical role assignment runtime-korrigeret: ved FRONT+RESER
 Når flere companies har samme eksplicitte `AttackTarget`, får de separate formation-safe assault slots omkring target i stedet for alle at lukke direkte mod target-centret. 2–4 companies fordeles på en frontal arc med bevaret left/right ordering; yderligere companies lægges som support. `OfficerAIController` er stadig den fysiske movement owner. F29E må ikke skrive gennem en disabled controller og suspenderes under F26 under-fire reaction.
 
 Map enlargement fra F29B kræver også navigation, der faktisk arbejder på **5760 × 3840 m**. Det gamle V4-lag var stadig bygget omkring den tidligere ±176 × ±116 m QA-grid og kunne derfor behandle gyldige enheder på det større kort som værende uden for navigation-bounds. F29E deaktiverer de obsolete small-grid navigation writers på det store map og bruger dynamic `PrototypeBootstrap` battlefield bounds med persistent goals og let obstacle-detour; det eksisterende bridge-only phase system forbliver autoritet for river crossing.
+
+## v00.00.09f29q OOB navigation, HQ discoverability og semantic zoom — aktuel baseline
+
+Spilleren skal kunne finde enhver egen enhed eller HQ uden først at lokalisere den visuelt på 3D-slagmarken. F29Q introducerer derfor et sammenklappeligt **ORDER OF BATTLE**-panel som navigationsindeks for den eksisterende fysiske kommandokæde. Panelet er et UI-/navigationlag og må ikke omgå command authority eller ordre-delay; selection og kamera-fokus ændrer ikke enhedens mission.
+
+OOB-hierarkiet følger den faktiske danske command chain og bruger samme NATO-echelon-sprog som semantic zoom: `III` = regiment/Oberstløjtnant, `II` = bataljon/Major og `I` = kompagni. Major A og Major B kan foldes ud/ind, og deres fire kompagnier vises direkte under dem. Company-rows viser kompakt styrke og en taktisk state-markør for fx bevægelse, kamp, under ild, Square, Charge/melee eller Rout.
+
+**Ét klik på en OOB-row** selecter enheden/HQ'et og fokuserer kameraet på den. **Dobbeltklik på et kompagni** placerer kameraet taktisk bag formationen i dens facing-retning. Den valgte OOB-row fremhæves gul/guld, så det er tydeligt hvilken entity der er aktiv. Panelet kan foldes helt sammen og må ikke blokere bottom command HUD.
+
+HQ-discoverability skal være stærkere end almindelig company-readability. Major- og Oberstløjtnant-counters har derfor fast screen-space minimumsstørrelse, tydelige `II HQ`/`III HQ`-symboler og beacon/stem til world-position. Når kameraet zoomes ud skifter presentationen tidligere til NATO-symboler; fysisk 3D er stadig primær tæt på, mens operational/strategic view prioriterer command structure og counters.
+
+Den fælles navigation består nu af tre komplementære lag: **OOB → entity selection/focus**, **taktisk minimap → geografisk orientering**, og **semantic zoom/NATO counters → direkte battlefield-identifikation ved udzoomning**. Samme echelon- og affiliation-sprog bruges på tværs af lagene, så spilleren ikke skal lære tre forskellige symbolsystemer. Arkitekturen skal senere kunne udvides med brigade/division, fog-of-war knowledge states og flere regimenter uden at ændre grundprincippet.
 
 ## Directional fire, fire discipline og accuracy
 
@@ -160,7 +174,7 @@ Infantry får formationerne:
 
 Cavalry kan også skabe combined-arms pressure uden at charge: en troværdig mounted threat kan tvinge infantry i square og dermed gøre det mere sårbart for artilleri eller infantry manoeuvre.
 
-Efter stabil F29E defense/objective/attack/navigation regression er næste systemrækkefølge fortsat: **Gardehusar/Dragoon prototype → mounted/dismounted AI → Kanonbatteri/Artilleri → Combined Arms QA → senere højere Brigade/Division HQ.** F30 forbliver reserveret til den første rigtige mounted cavalry prototype.
+Efter stabil F29Q OOB/semantic-zoom/navigation regression er næste systemrækkefølge fortsat: **Gardehusar/Dragoon prototype → mounted/dismounted AI → Kanonbatteri/Artilleri → Combined Arms QA → senere højere Brigade/Division HQ.** F30 forbliver reserveret til den første rigtige mounted cavalry prototype.
 
 ## Fog of war, scouts og command effectiveness
 
@@ -172,6 +186,7 @@ HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radi
 
 ## Versionshistorik
 
+- **v00.02.14 / P0A v00.00.09f29q OOB + HQ DISCOVERABILITY + SEMANTIC ZOOM TEST** — Sammenklappeligt OOB-panel med III/II/I-hierarki; company/HQ selection og camera-focus direkte fra OOB; dobbeltklik til taktisk kamera bag company; kompakt strength/state i OOB; selected row fremhæves; semantic zoom thresholds flyttet tidligere til ca. 55/95/175/315 m; HQ NATO-counters prioriteres visuelt; OOB, minimap og battlefield NATO counters bruger samme echelon-/affiliation-sprog.
 - **v00.02.13 / P0A v00.00.09f29e REGIMENTAL DEFENSE + OBJECTIVE VISUALS + COORDINATED ATTACK TEST** — Unified Oberstløjtnant HUD; persistent regimental objective circle/cross; full Oberstløjtnant→Major→Company hierarchy and company destination visibility; precise final-slot arrival; continuous defensive frontage through ordered centre; nearest-battalion FRONT role enforcement; coordinated explicit AttackTarget deployment; enlarged-map navigation guard replacing obsolete ±176/±116 navigation bounds while retaining bridge-only river authority.
 - **v00.02.12 / P0A v00.00.09f29d SEMANTIC ZOOM + NATO TACTICAL OVERLAY TEST** — Fire semantic zoom levels; HQ-prioriterede screen-space counters/beacons; NATO-echelon I/II/III; operational company overlays med strength/morale/ammo/facing; strategic view skjuler company/HQ meshes men bevarer simulation, colliders og LineRenderers; designet udvideligt til Brigade X, Division XX, screen-footprint thresholds, clickable counters og fog-of-war symbol states.
 - **v00.02.11 / P0A v00.00.09f29c UNIFIED COMMAND HUD TEST** — Fælles kompakt Major/Company bottom HUD; rød/grøn state coding; Major subordinate overview med mænd/tab/morale/ammo; grouped company shooting, withdrawal, forced march, charge, STOP og LINJE/KOLONNE/SQUARE; F29 SQUARE gjort synlig i company HUD; danske company display names normaliseret til 1.-8. KOMPAGNI mens gamle Regiment strings bevares som interne compatibility-id'er.
