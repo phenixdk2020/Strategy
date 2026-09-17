@@ -1,13 +1,13 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.19**  
-**Aktuel prototype-workbranch: P0A v00.00.09f30a COMMAND + SQUARE + OFFICER AI HARDENING TEST**
+**Aktuel designbaseline: v00.02.20**  
+**Aktuel prototype-workbranch: P0A v00.00.09f30b HIGHER COMMAND HQ + ATTACHMENT TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
 
-Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f30a**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), OOB/HQ-discoverability i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md), crop-field concealment/map polish i [v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md), defensive/UI/terrain-hardening i [v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md), Square face-fire i [v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md), første mounted cavalry implementation i [v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md), og den aktuelle command/officer-hardening i [v00.00.09f30a — Command, Square and Officer AI Hardening](design-supplements/v00.00.09f30a-command-officer-hardening.md).
+Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f30b**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), OOB/HQ-discoverability i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md), crop-field concealment/map polish i [v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md), defensive/UI/terrain-hardening i [v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md), Square face-fire i [v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md), første mounted cavalry implementation i [v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md), command/officer-hardening i [v00.00.09f30a — Command, Square and Officer AI Hardening](design-supplements/v00.00.09f30a-command-officer-hardening.md), og den aktuelle højere kommandokæde i [v00.00.09f30b — Higher Command HQ](design-supplements/v00.00.09f30b-higher-command-hq.md).
 
 ## Indhold
 
@@ -36,6 +36,7 @@ Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f3
 - [Designsupplement v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md)
 - [Designsupplement v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md)
 - [Designsupplement v00.00.09f30a — Command, Square and Officer AI Hardening](design-supplements/v00.00.09f30a-command-officer-hardening.md)
+- [Designsupplement v00.00.09f30b — Higher Command HQ](design-supplements/v00.00.09f30b-higher-command-hq.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -53,11 +54,11 @@ Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f3
 
 ## v00.00.09f28 Regiment Control Test — implementeringsstatus
 
-F28 er første samlede regiment-control MVP. Den danske prototypekæde er nu designmæssigt og runtime-mæssigt:
+F28 er første samlede regiment-control MVP. Den danske prototypekæde var først designmæssigt og runtime-mæssigt:
 
 `Oberstløjtnant → Major A / Major B → 4 kompagnier pr. Major → 8 kompagnier i regimentet`
 
-**Kaptajn** er company-chef, **Major** bataljonschef, **Oberstløjtnant** regimentschef, **Oberst** brigadechef og **Generalmajor** divisionschef som standardnavne i spillet. Konkrete historiske OOB-data kan afvige ved tab, fravær eller midlertidig kommando.
+**Kaptajn** er company-chef, **Major** bataljonschef og **Oberstløjtnant** regimentschef i den aktuelle test-OOB. Fra F30B er **Brigadechef** og **Divisionschef** selvstændige command roles over regimentet; den konkrete historiske officersgrad/navn er scenario/OOB-data og må ikke hardcodes som identisk med command role.
 
 Oberstløjtnanten giver missionsordrer til Majorerne — ikke direkte til kompagnierne. Regiments-AI kan i første MVP disponere de to bataljoner side om side, med én bataljon i reserve eller med én bataljon på flankemission. Majorerne omsætter regimentsintentionen til company-slots og lokal udførelse.
 
@@ -101,7 +102,7 @@ I **OPERATIONAL** beholdes 3D-modellerne, mens alle companies får 2D tactical c
 
 I **STRATEGIC** skjules MeshRenderers og ParticleSystemRenderers under companies og HQ'er. Terrain, simulation, colliders, AI, LineRenderers, command links og ordre-state fortsætter uændret. Dermed bliver zoomet reelt en ren taktisk 2D-symbolvisning oven på det eksisterende 3D-terrain, og command-chain lines kan stadig læses.
 
-F29Q flytter skiftene tidligere, fordi NATO-symbolerne skal være et aktivt navigationsværktøj og ikke først dukke op ved ekstrem højde. QA-thresholds er nu: HQ marker ca. **55 m**, Medium ca. **95 m**, Operational ca. **175 m** og Strategic ca. **315 m**. Den langsigtede model bør stadig kunne bruge projected screen footprint i pixels, fordi det er mere robust over for FOV, opløsning og kameraændringer. Smooth 3D↔2D crossfade, overlap avoidance, very-far battalion aggregation og Brigade/Division echelons (`X`/`XX`) ligger som næste designtrin.
+F29Q flytter skiftene tidligere, fordi NATO-symbolerne skal være et aktivt navigationsværktøj og ikke først dukke op ved ekstrem højde. QA-thresholds er nu: HQ marker ca. **55 m**, Medium ca. **95 m**, Operational ca. **175 m** og Strategic ca. **315 m**. Den langsigtede model bør stadig kunne bruge projected screen footprint i pixels, fordi det er mere robust over for FOV, opløsning og kameraændringer. Smooth 3D↔2D crossfade, overlap avoidance og very-far battalion aggregation er fortsat relevante; Brigade/Division-echelonerne `X`/`XX` er fra F30B en aktiv del af OOB/HQ-strukturen.
 
 ## v00.00.09f29e Regimental defense, objective visuals og coordinated attack
 
@@ -131,7 +132,7 @@ OOB-hierarkiet følger den faktiske danske command chain og bruger samme NATO-ec
 
 HQ-discoverability skal være stærkere end almindelig company-readability. Major- og Oberstløjtnant-counters har derfor fast screen-space minimumsstørrelse, tydelige `II HQ`/`III HQ`-symboler og beacon/stem til world-position. Når kameraet zoomes ud skifter presentationen tidligere til NATO-symboler; fysisk 3D er stadig primær tæt på, mens operational/strategic view prioriterer command structure og counters.
 
-Den fælles navigation består nu af tre komplementære lag: **OOB → command selection og eksplicit dobbeltklik-navigation**, **taktisk minimap → geografisk orientering/navigation**, og **semantic zoom/NATO counters → direkte battlefield-identifikation ved udzoomning**. Samme echelon- og affiliation-sprog bruges på tværs af lagene, så spilleren ikke skal lære tre forskellige symbolsystemer. Arkitekturen skal senere kunne udvides med brigade/division, fog-of-war knowledge states og flere regimenter uden at ændre grundprincippet.
+Den fælles navigation består nu af tre komplementære lag: **OOB → command selection og eksplicit dobbeltklik-navigation**, **taktisk minimap → geografisk orientering/navigation**, og **semantic zoom/NATO counters → direkte battlefield-identifikation ved udzoomning**. Samme echelon- og affiliation-sprog bruges på tværs af lagene, så spilleren ikke skal lære tre forskellige symbolsystemer. Fra F30B er OOB-kæden udvidet til `XX Division → X Brigade → III Regiment → II Battalion → I unit`, og cavalry/support ligger som attached assets frem for ekstra infanterikompagnier.
 
 ## v00.00.09f29r Crop fields, concealment og map polish
 
@@ -165,7 +166,7 @@ Sortkrudtsrøg emitteres fysisk langs den side, der faktisk affyrer salven. FRON
 
 Square-face ammunition registreres fractionally: fire 25 %-face volleys svarer til omtrent én gennemsnitlig patron pr. mand i den eksisterende ammo-model. F29V beholder outline/range-sector visuals, F29X beholder legacy auto-fire gating, og F29Z er den autoritative face-fire resolver.
 
-## v00.00.09f30 First cavalry core — aktuel baseline
+## v00.00.09f30 First cavalry core
 
 F30 introducerer den første fælles mounted cavalry runtime for **Gardehusarer og Dragoner**. Begge bruger samme movement-, formation- og charge-core med mounted `LINE / COLUMN`, direkte move/hold og directional charge-contact. Første styrker og hastigheder er eksplicit QA-værdier, ikke endelige historiske stats.
 
@@ -179,7 +180,7 @@ Det oprindelige F30 `CAVALRY TEST [F30]`/F10-panel var kun en bootstrap til den 
 
 Endelig cavalry Officer AI, mounted/dismounted fire, cavalry casualties fra infantry volley, Charge Confidence/Momentum, horse casualties og persistent melee ligger i efterfølgende F30-passes.
 
-## v00.00.09f30a Command, Square og Officer AI hardening — aktuel baseline
+## v00.00.09f30a Command, Square og Officer AI hardening
 
 F30A gør infantry-commandlaget stabilt nok til videre cavalry/combined-arms QA. OOB-selection behandles som reel command selection og bevares efter HUD-knapper og point-order commits uden automatisk kameraflytning. Regimentsordrer har vedvarende blå pending/active-state så længe underenheder stadig udfører ordren.
 
@@ -197,6 +198,18 @@ AI-officer fighting withdrawal er samtidig fastlagt som designregel: Kaptajn/Maj
 
 Kavaleriet følger fra F30A samme **unit-selection/command UX** som øvrige taktiske enheder i stedet for et separat testpanel. Gardehusar og Dragon er company-scale OOB-rækker (`I`), single-click selecter uden kamera, double-click placerer kameraet bag enheden, og selection viser den normale 90 px bund-HUD. Mounted højreklik på fjende udfører charge; højreklik på terræn flytter. Dragon beholder `SID AF / STIG OP`. Dette er UI/command-flow integration; cavalry Officer AI og skydevåben er fortsat næste F30-arbejde.
 
+## v00.00.09f30b Higher Command HQ og attachments — aktuel baseline
+
+F30B gør **Brigadechef** og **Divisionschef** til fysiske, selectable HQ-lag i taktiske slag. Den aktive command chain er nu `XX Division → X Brigade → III Regiment → II Bataljon → I Kompagni/enhed`. Higher HQ giver mission intent; eksisterende Regiment/Major-lag beholder mission-decomposition og fysisk company movement, så én movement owner-reglen ikke brydes.
+
+F30B adskiller permanent OOB fra midlertidig taktisk kommando med `OrganicParent`, `CurrentCommandParent` og `AttachmentType = Organic / Attached / Detached / Reserve`. 1. Regiment er organic under 1. Brigade. Gardehusar og Dragon er independent higher-command cavalry-assets og starter attached til 1. Brigade; Brigade-HUD kan midlertidigt attach'e dem til 1. Regiment uden at gøre dem til infanterikompagnier eller ændre deres egen movement core. Det kommende Kanonbatteri skal bruge samme model.
+
+Det gamle separate infantry-OOB og cavalry-OOB erstattes i F30B af ét samlet træ med `XX/X/III/II/I`, hvor cavalry står under `ATTACHED / SUPPORT`. Single-click vælger uden kameraflytning og double-click går bag valgt HQ/enhed. Division/Brigade kan også vælges fysisk på battlefield og bruger en højere 90 px command-HUD med `ANGRIB HER / FORSVAR HER / RYK FREM / TILBAGETRÆK / SAML / STOP-HOLD`.
+
+I første single-brigade/single-regiment QA delegeres en Division-/Brigadeordre gennem det eksisterende Regimental HQ-system. Command-links viser Division→Brigade→Regiment samt Brigade/Regiment→cavalry ud fra aktiv `CurrentCommandParent`. Higher Officer AI er endnu ikke autonom; F30B etablerer strukturen og den manuelle mission chain før artilleri og combined-arms AI.
+
+F30B hardener samtidig de runtime-fejl der blev set efter F30A: charge-targeting revaliderer F25 reflection bindings før capture, et tidligt runtime safety-net reparerer transient manglende BattleManager/charge references, og den løbende ParticleSystem-repair fortsætter uden at spamme en Console-linje for hver ny sortkrudtsrøg-emitter.
+
 ## Directional fire, fire discipline og accuracy
 
 Infantry fire policy bruger `HOLD / CLOSE / MEDIUM / LONG`. Et mål skal være inden for fire-policy-afstanden og relevant fire arc. Close/Medium/Long er ordre-/UI-grænser; accuracy ændres kontinuerligt med faktisk afstand.
@@ -207,7 +220,7 @@ Line/Column bruger den almindelige forward fire model. Square er fra F29Z format
 
 Fysiske HQ-entities, command-links, courier/order lifecycle, fog-of-war reports og semantic zoom er den fælles retning. Valg af et HQ viser relationer til direkte underenheder. Valg af et company viser desuden relationen tilbage til dets direkte Major, og valg af en Major viser relationen op til den aktuelle Oberstløjtnant, så command chain kan læses begge veje under QA og senere semantic zoom.
 
-Ved Regimental HQ selection vises i F29E også det fulde downstream hierarchy og aktuelle company mission destinations. Command relationship lines, persistent HQ objective markering og konkrete future courier/order routes er tre forskellige overlays og må ikke semantisk blandes sammen.
+Ved Regimental HQ selection vises i F29E også det fulde downstream hierarchy og aktuelle company mission destinations. Fra F30B fortsætter hierarchy visibility op gennem Brigade og Division og ud til attached support-assets. Command relationship lines, persistent HQ objective markering og konkrete future courier/order routes er tre forskellige overlays og må ikke semantisk blandes sammen.
 
 Ordrer transporteres senere gennem et egentligt courier/order-lifecycle-system. En aktiv ordre kan vises som en route fra afsender-HQ til modtager med en bevægelig courier-markør, hvis position svarer til faktisk simulation progress.
 
@@ -243,7 +256,7 @@ Infantry får formationerne:
 
 Cavalry kan også skabe combined-arms pressure uden at charge: en troværdig mounted threat kan tvinge infantry i square og dermed gøre det mere sårbart for artilleri eller infantry manoeuvre.
 
-Efter første F30 cavalry-core er næste systemrækkefølge: **mounted/dismounted cavalry AI + defensive-fire/charge-momentum → Kanonbatteri/Artilleri → Combined Arms QA → senere højere Brigade/Division HQ.**
+Efter F30B higher-command fundamentet er næste systemrækkefølge: **mounted/dismounted cavalry AI + defensive-fire/charge-momentum → Kanonbatteri/Artilleri på attachment-modellen → Combined Arms QA → flere Regimenter/Brigader og fuld higher Officer AI**.
 
 ## Fog of war, scouts og command effectiveness
 
@@ -255,6 +268,7 @@ HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radi
 
 ## Versionshistorik
 
+- **v00.02.20 / P0A v00.00.09f30b HIGHER COMMAND HQ + ATTACHMENT TEST** — Fysisk Division-/Brigade-HQ; samlet XX/X/III/II/I OOB; higher mission delegation til eksisterende Regimental HQ pipeline; OrganicParent/CurrentCommandParent/AttachmentType; Gardehusar/Dragon default under Brigade med mulighed for midlertidig Regiment attachment; terrain-following higher command-links; F30A runtime NullReference hardening og reduceret particle-repair logspam; Kanonbatteri klargjort til samme attachment-model.
 - **v00.02.19 / P0A v00.00.09f30a COMMAND + SQUARE + OFFICER AI HARDENING TEST** — OOB/HUD selection persistence; Square footprint/cone/smoke transition hardening; vedvarende blå regimentsordre-state; autoritativt FORSVAR HER objective/facing med threat-based AUTO-facing; attack-role prioritering efter mænd + erfaring; tidligere Column→Line deployment; friendly fire-lane Side Step; AI-officer fighting withdrawal fastlagt som designregel; F30 Cavalry TEST/F10-panel erstattet af normal battlefield/OOB selection og bottom-HUD command flow for Gardehusar/Dragon.
 - **v00.02.18 / P0A v00.00.09f30 FIRST CAVALRY CORE TEST** — Shared mounted cavalry core med Gardehusar + Dragon; Line/Column, move/hold/charge; FRONT/FLANK/REAR contact; ready Square giver cavalry FALTER; Dragon dismount/remount med fysisk horse-holder position; bridge-only cavalry crossing; midlertidigt F10 TEST-panel; mounted firearms, defensive volley interception, cavalry AI og persistent melee udestår.
 - **v00.02.17 / P0A v00.00.09f29z SQUARE FACE FIRE + DIRECTIONAL SMOKE TEST** — Fire selvstændige 90° Square faces med ca. 25 % firepower pr. side, independent reload, sidekorrekt black-powder smoke, fractional ammo consumption og ingen falsk RAMMER 0 uden gyldigt mål.
@@ -265,7 +279,7 @@ HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radi
 - **v00.02.12 / P0A v00.00.09f29d SEMANTIC ZOOM + NATO TACTICAL OVERLAY TEST** — Fire semantic zoom levels; HQ-prioriterede screen-space counters/beacons; NATO-echelon I/II/III; operational company overlays med strength/morale/ammo/facing; strategic view skjuler company/HQ meshes men bevarer simulation, colliders og LineRenderers; designet udvideligt til Brigade X, Division XX, screen-footprint thresholds, clickable counters og fog-of-war symbol states.
 - **v00.02.11 / P0A v00.00.09f29c UNIFIED COMMAND HUD TEST** — Fælles kompakt Major/Company bottom HUD; rød/grøn state coding; Major subordinate overview med mænd/tab/morale/ammo; grouped company shooting, withdrawal, forced march, charge, STOP og LINJE/KOLONNE/SQUARE; F29 SQUARE gjort synlig i company HUD; danske company display names normaliseret til 1.-8. KOMPAGNI mens gamle Regiment strings bevares som interne compatibility-id'er.
 - **v00.02.10 / P0A v00.00.09f29b BATTLEFIELD + ATTACK AI TEST** — Tactical battlefield 5760 × 3840 m; to Prussian company-scale QA-enheder; single physical movement owner-regel; explicit `AttackTarget` sticky ved contact; frontage-planner gjort movement-write-free; approach formation respekterer Major/under-fire authority; F29a command-chain visuals og river footprint safety retained.
-- **v00.02.09 / P0A v00.00.09f28 REGIMENT CONTROL TEST** — Dansk command chain fastlagt som Kaptajn → Major → Oberstløjtnant → Oberst → Generalmajor; to bataljoner / to Majorer / otte kompagnier under fysisk Oberstløjtnant-HQ; hierarchical authority/reclaim og dynamic HQ command zones; Gardehusarer og dragoner separeret som cavalry-typer på shared core; sabel/karabin/pistol som data-driven cavalry weapon model; FRONT/FLANK/REAR charge shock; close-range volley kan FALTER/ABORT cavalry charge; infantry `SQUARE/KARRÉ` besluttet med reel formation time, multi-side defense og artilleri-trade-off.
+- **v00.02.09 / P0A v00.00.09f28 REGIMENT CONTROL TEST** — Dansk command chain fastlagt som Kaptajn → Major → Oberstløjtnant, senere udvidet med Brigadechef/Divisionschef i F30B; to bataljoner / to Majorer / otte kompagnier under fysisk Oberstløjtnant-HQ; hierarchical authority/reclaim og dynamic HQ command zones; Gardehusarer og dragoner separeret som cavalry-typer på shared core; sabel/karabin/pistol som data-driven cavalry weapon model; FRONT/FLANK/REAR charge shock; close-range volley kan FALTER/ABORT cavalry charge; infantry `SQUARE/KARRÉ` besluttet med reel formation time, multi-side defense og artilleri-trade-off.
 - **v00.02.08 / P0A v00.00.09 TACTICAL COMMAND TEST work branch** — Shared `OfficerAIController`/`OfficerProfile`; delegation, doctrine, commander aggression intent, directional infantry fire, HOLD/CLOSE/MEDIUM/LONG, time control, battle supply/night/cavalry/fog-of-war retning.
 - **v00.02.08 / P0A v00.00.08** — Våbenprofil/reload, experience, volley feedback, ammunition/casualty model og første expanded systems baseline.
 - **v00.02.07** — P0A v00.00.07: statisk Unity 6.6 QA-hardening før runtime-validering.
