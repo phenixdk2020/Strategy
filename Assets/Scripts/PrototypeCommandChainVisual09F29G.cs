@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f29g
-// Final hierarchy-visibility pass executed after F29A/F29E visuals.
-// A selected company now shows the full authority chain:
-// Company -> owning Major -> Oberstløjtnant.
-// Selecting a Major shows Major -> all own companies plus Major -> Oberstløjtnant.
-// Selecting the Oberstløjtnant shows the complete Regiment -> Majors -> Companies tree.
+// v00.00.09f29g + v00.00.09f30b higher-command extension
+// Company -> Major -> Regiment remains the proven lower chain.
+// F30B additionally reveals the complete lower subtree when Brigade/Division HQ is selected.
 [DefaultExecutionOrder(33000)]
 public sealed class PrototypeCommandChainVisual09F29G : MonoBehaviour
 {
@@ -26,7 +23,7 @@ public sealed class PrototypeCommandChainVisual09F29G : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
-        if (Object.FindAnyObjectByType<PrototypeCommandChainVisual09F29G>() == null)
+        if (UnityEngine.Object.FindAnyObjectByType<PrototypeCommandChainVisual09F29G>() == null)
             new GameObject("PrototypeCommandChainVisual_v000009f29g")
                 .AddComponent<PrototypeCommandChainVisual09F29G>();
     }
@@ -50,6 +47,9 @@ public sealed class PrototypeCommandChainVisual09F29G : MonoBehaviour
 
         int selectedMajor = GetSelectedMajor();
         bool regimentSelected = regimental != null && regimental.Installed && regimental.Selected;
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        bool higherSelected = higher != null && higher.Installed &&
+                              higher.SelectedLevel != PrototypeHigherCommandLevel09F30B.None;
 
         IDictionary linksByBattalion = companyLinksField != null
             ? companyLinksField.GetValue(hierarchy) as IDictionary
@@ -70,7 +70,7 @@ public sealed class PrototypeCommandChainVisual09F29G : MonoBehaviour
                 if (companies[i] != null && companies[i].IsSelected)
                     anyCompanySelected = true;
 
-            bool showAllCompanyLinks = regimentSelected || selectedMajor == b;
+            bool showAllCompanyLinks = higherSelected || regimentSelected || selectedMajor == b;
 
             if (linksByBattalion != null && linksByBattalion.Contains(b))
             {
@@ -96,7 +96,7 @@ public sealed class PrototypeCommandChainVisual09F29G : MonoBehaviour
                 regimental != null && regimental.HqRoot != null)
             {
                 LineRenderer line = majorLinks[b];
-                bool show = regimentSelected || selectedMajor == b || anyCompanySelected;
+                bool show = higherSelected || regimentSelected || selectedMajor == b || anyCompanySelected;
                 line.enabled = show;
                 if (show)
                     DrawTerrainLink(line, regimental.HqRoot.transform.position, major.transform.position, LinkHeight + 0.10f);
@@ -106,7 +106,7 @@ public sealed class PrototypeCommandChainVisual09F29G : MonoBehaviour
         if (!logged)
         {
             logged = true;
-            Debug.Log("HQ-CHAIN-09F29G|Installed=True|CompanyToMajor=True|MajorToRegimental=True|FullTreeOnRegimentalSelection=True");
+            Debug.Log("HQ-CHAIN-09F30B|Installed=True|CompanyToMajor=True|MajorToRegimental=True|HigherSelectionShowsFullLowerTree=True");
         }
     }
 
