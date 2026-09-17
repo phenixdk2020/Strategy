@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Lightweight IMGUI theme used by the v00.00.09f15 HQ panel.
+// Lightweight IMGUI theme used by the tactical prototype HUDs.
 // It intentionally stays procedural so the prototype has no external UI asset dependency.
 public static class PrototypeUiTheme09F15
 {
@@ -10,6 +10,8 @@ public static class PrototypeUiTheme09F15
     private static Texture2D buttonHoverTexture;
     private static Texture2D buttonActiveTexture;
     private static Texture2D accentTexture;
+    private static Texture2D dangerTexture;
+    private static Texture2D dangerHoverTexture;
 
     public static readonly Color Text = new Color(0.94f, 0.92f, 0.82f);
     public static readonly Color MutedText = new Color(0.72f, 0.72f, 0.66f);
@@ -61,6 +63,14 @@ public static class PrototypeUiTheme09F15
         return style;
     }
 
+    public static GUIStyle Section(int fontSize = 9)
+    {
+        GUIStyle style = Label(fontSize, true);
+        style.normal.textColor = Accent;
+        style.alignment = TextAnchor.MiddleLeft;
+        return style;
+    }
+
     public static GUIStyle Button(int fontSize = 10)
     {
         EnsureTextures();
@@ -92,6 +102,23 @@ public static class PrototypeUiTheme09F15
         return style;
     }
 
+    public static GUIStyle DangerBox(int fontSize = 9)
+    {
+        EnsureTextures();
+        GUIStyle style = new GUIStyle(GUI.skin.box);
+        style.normal.background = dangerTexture;
+        style.hover.background = dangerHoverTexture;
+        style.active.background = dangerHoverTexture;
+        style.normal.textColor = Color.white;
+        style.hover.textColor = Color.white;
+        style.active.textColor = Color.white;
+        style.fontSize = fontSize;
+        style.fontStyle = FontStyle.Bold;
+        style.alignment = TextAnchor.MiddleCenter;
+        style.padding = new RectOffset(6, 6, 2, 2);
+        return style;
+    }
+
     private static void EnsureTextures()
     {
         if (panelTexture != null)
@@ -103,6 +130,8 @@ public static class PrototypeUiTheme09F15
         buttonHoverTexture = MakeTexture(new Color(0.26f, 0.29f, 0.20f, 1f));
         buttonActiveTexture = MakeTexture(new Color(0.39f, 0.33f, 0.16f, 1f));
         accentTexture = MakeTexture(new Color(0.76f, 0.64f, 0.30f, 1f));
+        dangerTexture = MakeTexture(new Color(0.48f, 0.14f, 0.12f, 0.98f));
+        dangerHoverTexture = MakeTexture(new Color(0.66f, 0.20f, 0.16f, 1f));
     }
 
     private static Texture2D MakeTexture(Color color)
