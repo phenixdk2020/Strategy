@@ -1,17 +1,50 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30a
+Prototype version: v00.00.09f30b
 Build status: TEST
-Build name: COMMAND + SQUARE + OFFICER AI HARDENING
-Visible build marker: PROJECT 1864 | v00.00.09f30a TEST
+Build name: HIGHER COMMAND HQ + ATTACHMENT
+Visible build marker: PROJECT 1864 | v00.00.09f30b TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current design supplements:
+- docs/design-supplements/v00.00.09f30b-higher-command-hq.md
 - docs/design-supplements/v00.00.09f30a-command-officer-hardening.md
 - docs/design-supplements/v00.00.09f30-cavalry-core.md
 - docs/design-supplements/v00.00.09f29z-square-face-fire-smoke.md
 - docs/design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md
 Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
+
+v00.00.09f30b - Higher Command HQ + Attachment
+- Backup created before F30B: backup/channel-test-v00.00.09f30a-pre-09f30b-higher-command-hq at commit 05059d0a367bff9d04200098aa83fb22c431af22.
+- Adds physical 1. DIVISION HQ / DIVISIONSCHEF and 1. BRIGADE HQ / BRIGADECHEF above the existing 1. Regiment HQ.
+- Tactical chain is now represented as XX Division -> X Brigade -> III Regiment -> II Battalion -> I Company/attached unit.
+- Higher HQ owns mission intent and attachment only; the proven Regimental HQ / Major layers remain the physical mission-decomposition and company movement authority.
+- Adds generic PrototypeCommandAttachment09F30B metadata: OrganicParent, CurrentCommandParent and AttachmentType (Organic/Attached/Detached/Reserve).
+- 1. Regiment is organic under 1. Brigade. Gardehusar and Dragon are independent higher-command assets, default attached to 1. Brigade rather than modelled as extra infantry companies under a Major.
+- Brigade HUD can toggle Gardehusar/Dragon CurrentCommandParent between 1. Brigade and 1. Regiment. This changes command ownership/linkage, not physical movement ownership.
+- Adds a unified OOB replacing the separate infantry/cavalry panels: XX Division, X Brigade, III Regiment, II Majors/Battalions, I Companies and I cavalry support rows.
+- Higher OOB keeps the established rule: single click selects without camera movement; double click selects and moves the camera behind the entity.
+- Division/Brigade HQ can also be selected directly in the battlefield and receive their own bottom command HUD.
+- Higher missions expose ANGRIB HER / FORSVAR HER / RYK FREM / TILBAGETRÆK / SAML / STOP-HOLD. In the current single-brigade/single-regiment prototype, mission intent delegates down to the existing Regimental HQ pipeline.
+- Command links now represent Division -> Brigade -> Regiment and the active command parent for Gardehusar/Dragon.
+- Brigade/Division HQ auto-follow behind the lower HQ chain; this is a separate higher-HQ movement owner and does not write company routes.
+- Adds PrototypeRuntimeNullGuard09F30B for the two repeated runtime NullReference families reported in F30A: BattleManager.Instance loss during Regiment fire-target search, and missing F29K/F25 reflection handles during legacy charge target-pick capture.
+- Artillery is not spawned in F30B, but future Kanonbatteri uses the same OrganicParent/CurrentCommandParent/AttachmentType model.
+- Higher Officer AI is not yet autonomous in F30B; the player can issue higher missions, while the existing lower HQ AI executes/decomposes them.
+
+Primary v00.00.09f30b QA
+1. Unity must compile with no red errors before F30B is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f30b TEST.
+3. The repeated NullReference errors from PrototypeChargeTargeting09F29K.CaptureLegacyTargetPick and Regiment.FindNearestEnemyInFireArc must no longer spam the Console.
+4. OOB shows XX 1. Division -> X 1. Brigade -> III 1. Regiment -> II Major A/B -> I companies plus ATTACHED/SUPPORT cavalry.
+5. Single-click Division/Brigade in OOB selects without moving camera; double-click moves camera behind the selected HQ.
+6. Division/Brigade can also be selected directly on the battlefield and show the higher-command bottom HUD.
+7. Selecting Division/Brigade shows terrain-following parent/child command links.
+8. Issue a Brigade or Division point-order; it must delegate to 1. Regiment and execute through the existing Regimental HQ/Major/company chain.
+9. Gardehusar and Dragon default to BRIGADE command parent; Brigade HUD attachment buttons can switch each to REGIMENT and back.
+10. Changing cavalry attachment changes the command link/label only and must not break normal cavalry world/OOB selection or its movement/charge HUD.
+11. Regression F30A: OOB selection persistence, Square visual/smoke hardening, defensive facing, strongest-company attack allocation, early Line deployment and fire-lane Side Step still function.
+12. Regression F30/F29Z: cavalry-vs-Square, bridge-only crossing, Square four-face fire and directional smoke still function.
 
 v00.00.09f30a - Command, Square and Officer AI hardening
 - Backup baseline before F30A: backup/channel-test-v00.00.09f30-pre-f30a-hardening, pointing at the F30 cavalry-core baseline.
@@ -53,27 +86,6 @@ v00.00.09f29z - Square face fire + directional smoke
 - Directional black-powder smoke originates only from the side that actually fires.
 - F29Z reads F29V's locked Square heading, so legacy threat-facing cannot rotate the FRONT/RIGHT/REAR/LEFT fire sectors.
 - External volley registration keeps ammo/RAMMER feedback correct without fake global fire timers.
-
-Primary v00.00.09f30a QA
-1. Unity must compile with no red errors before F30A is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f30a TEST.
-3. Select company/Major/Oberstløjtnant from OOB; use HUD button or complete a point-order. Selection and bottom HUD must remain.
-4. Give SQUARE: the old Line/formation rectangle must disappear already while FORMING, while the actual Square remains visible.
-5. Square range-sector lines must remain visible over small terrain undulations.
-6. Reform SQUARE -> LINE without a live volley: no black-powder smoke or fake fire pose may be emitted.
-7. Select Oberstløjtnant and issue a regiment order: clicked/pending and active order remain blue until no subordinate mission is executing it.
-8. FORSVAR HER with dragged facing: battalion/regiment frontage forms around the clicked objective and faces the arrow direction.
-9. FORSVAR HER without facing: AUTO-facing should point toward the nearest relevant enemy; if none exists it retains the existing front direction.
-10. ANGREB HER: stronger companies by men + experience should occupy assault/front roles before weaker units; a pure reserve role should normally receive the weakest suitable unit.
-11. Attack/move in Column toward an enemy: Line reform must begin roughly hostile MaximumRange + 35 m and should be visually complete before the unit enters enemy Long/MaximumRange.
-12. Put one AI-controlled friendly company between another firing company and its target. The obstruction must cause a Line-preserving left/right Side Step; if the front company is already effectively firing on that same enemy, the rear company should step to a free lane instead.
-13. Side Step must not rotate the formation 90 degrees, enter Column, cross into water or override Square/charge/melee/bridge/under-fire states.
-14. No CAVALRY TEST/F10 panel is shown. Select Gardehusar/Dragon directly in the battlefield and from cavalry rows below OOB.
-15. Cavalry OOB single-click selects without camera movement; double-click selects and moves camera behind the unit.
-16. Selected cavalry shows the normal bottom command area. Right-click terrain moves; right-click enemy infantry charges while mounted.
-17. Bottom HUD CHARGE/STOP/LINE/COLUMN works; Dragon SID AF/STIG OP remains functional.
-18. Regression F30: cavalry-vs-Square and bridge-only crossing still function.
-19. Regression F29Z: four Square fire faces and directional smoke still function.
 
 IMPORTANT QA STATUS
 Repository changes are committed to channel-test, but Unity compiler/runtime success must only be marked verified after the project has been opened/tested in Unity 6000.6.0f1 and no red compiler errors are present.
