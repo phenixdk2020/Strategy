@@ -26,6 +26,11 @@ v00.00.09f30a - Command, Square and Officer AI hardening
 - Fire-lane Side Step is AI/higher-command tactical behaviour; a direct manual forced-target order is not silently displaced by this local AI correction.
 - Existing charge, melee, Square, bridge route, under-fire reaction and immediate close-contact states remain higher-priority and cannot be overridden by Side Step.
 - AI-officer controlled fighting withdrawal remains a committed design rule for a later runtime pass: officers may choose withdrawal based on losses, morale/cohesion, ammunition, flank/rear threat, support and officer stats rather than only player input.
+- F30's temporary CAVALRY TEST/F10 panel is removed from normal QA. Gardehusar and Dragon are selected as normal tactical units in the world or OOB and use the bottom command HUD.
+- Cavalry OOB rows follow the same single-click = select only, double-click = camera behind interaction as infantry/HQ.
+- Mounted cavalry right-click on terrain = MOVE; right-click on enemy infantry = CHARGE. Bottom HUD exposes CHARGE, STOP/HOLD, LINE, COLUMN and Dragon SID AF/STIG OP.
+- Cavalry and infantry/HQ selection are mutually exclusive so only one command HUD remains active.
+- Cavalry Officer AI, mounted firearms and dismounted Dragon fire remain later F30 work.
 
 v00.00.09f30 - First cavalry core: Gardehusar + Dragon
 - Backup created before F30: backup/channel-test-v00.00.09f29z-pre-f30-cavalry-core.
@@ -40,8 +45,8 @@ v00.00.09f30 - First cavalry core: Gardehusar + Dragon
 - Charge contact distinguishes FRONT / FLANK / REAR relative to infantry facing.
 - Ready Infantry Square stops the first cavalry charge and causes FALTER; a Square still forming remains vulnerable.
 - Charge casualties/shock are first-pass QA values and are not final historical lethality.
-- Adds compact TEST cavalry panel at x=310, toggleable with F10. World-click can also select cavalry. FLYT and CHARGE use next battlefield click as point/target.
-- No cavalry Officer AI, mounted firearms, morale-break/rout state, horse casualties or OOB integration yet; these are subsequent F30 passes.
+- The original F30 implementation included a compact TEST cavalry panel at x=310/F10; F30A supersedes that temporary control path with normal world/OOB/bottom-HUD unit control.
+- No cavalry Officer AI, mounted firearms, morale-break/rout state or horse casualties yet; these are subsequent F30 passes.
 
 v00.00.09f29z - Square face fire + directional smoke
 - Four independent 90-degree Square faces with ~25% firepower per side.
@@ -63,8 +68,12 @@ Primary v00.00.09f30a QA
 11. Attack/move in Column toward an enemy: Line reform must begin roughly hostile MaximumRange + 35 m and should be visually complete before the unit enters enemy Long/MaximumRange.
 12. Put one AI-controlled friendly company between another firing company and its target. The obstruction must cause a Line-preserving left/right Side Step; if the front company is already effectively firing on that same enemy, the rear company should step to a free lane instead.
 13. Side Step must not rotate the formation 90 degrees, enter Column, cross into water or override Square/charge/melee/bridge/under-fire states.
-14. Regression F30: cavalry F10 panel, Gardehusar/Dragon movement, Dragon dismount/remount and cavalry-vs-Square behaviour still function.
-15. Regression F29Z: four Square fire faces and directional smoke still function.
+14. No CAVALRY TEST/F10 panel is shown. Select Gardehusar/Dragon directly in the battlefield and from cavalry rows below OOB.
+15. Cavalry OOB single-click selects without camera movement; double-click selects and moves camera behind the unit.
+16. Selected cavalry shows the normal bottom command area. Right-click terrain moves; right-click enemy infantry charges while mounted.
+17. Bottom HUD CHARGE/STOP/LINE/COLUMN works; Dragon SID AF/STIG OP remains functional.
+18. Regression F30: cavalry-vs-Square and bridge-only crossing still function.
+19. Regression F29Z: four Square fire faces and directional smoke still function.
 
 IMPORTANT QA STATUS
 Repository changes are committed to channel-test, but Unity compiler/runtime success must only be marked verified after the project has been opened/tested in Unity 6000.6.0f1 and no red compiler errors are present.
