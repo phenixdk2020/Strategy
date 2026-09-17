@@ -21,9 +21,11 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
     private Camera cam;
     private bool installed;
     private bool pendingCharge;
+    private bool orderConsumedThisFrame;
     private float installRetry;
 
     private FieldInfo playerSelectedField;
+    private FieldInfo selectedBattalionField;
     private MethodInfo setRegimentalSelectedMethod;
 
     private GUIStyle panelStyle;
@@ -32,7 +34,6 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
     private GUIStyle labelStyle;
     private GUIStyle valueStyle;
     private GUIStyle activeStyle;
-    private GUIStyle inactiveStyle;
     private GUIStyle neutralStyle;
 
     public bool Installed => installed;
@@ -58,6 +59,7 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
 
         Instance = this;
         playerSelectedField = typeof(PlayerCommander).GetField("selected", PrivateInstance);
+        selectedBattalionField = typeof(PrototypeRegimentHierarchy09F27).GetField("selectedBattalion", PrivateInstance);
         setRegimentalSelectedMethod = typeof(PrototypeRegimentalHQ09F28).GetMethod("SetSelected", PrivateInstance);
     }
 
@@ -69,6 +71,8 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
 
     private void Update()
     {
+        orderConsumedThisFrame = false;
+
         if (cam == null)
             cam = Camera.main;
 
@@ -81,6 +85,12 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
             }
             return;
         }
+
+        // Selection from the normal infantry/HQ OOB is authoritative. If the user
+        // changes command level there, cavalry relinquishes its selection on the next
+        // update instead of leaving two bottom HUDs active.
+        if (selected != null && HasOtherCommandSelection())
+            ClearSelection();
 
         HandlePendingChargePick();
         HandleWorldSelection();
@@ -162,7 +172,7 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
 
     private void HandleWorldSelection()
     {
-        if (cam == null || !Input.GetMouseButtonDown(0))
+        if (orderConsumedThisFrame || cam == null || !Input.GetMouseButtonDown(0))
             return;
         if (pendingCharge)
             return;
@@ -193,6 +203,11 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
             return;
         if (!Input.GetMouseButtonDown(0) || IsPointerOverUi(Input.mousePosition))
             return;
+
+        // Consume this world click even when it was not a valid enemy. Otherwise the
+        // same mouse-down would immediately fall through to normal selection and clear
+        // the cavalry unit whose CHARGE target is being picked.
+        orderConsumedThisFrame = true;
 
         Regiment target = RaycastRegiment(Input.mousePosition);
         if (target != null && target.Team == BattleTeam.Prussia &&
@@ -234,6 +249,31 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
             Debug.Log("CAVALRY-09F30A|RightClick=GROUND|Order=MOVE|Unit=" + selected.UnitName +
                       "|Goal=" + point.x.ToString("0.0") + "," + point.z.ToString("0.0"));
         }
+    }
+
+    private bool HasOtherCommandSelection()
+    {
+        PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
+        if (regimental != null && regimental.Selected)
+            return true;
+
+        PrototypeRegimentHierarchy09F27 hierarchy = PrototypeRegimentHierarchy09F27.Instance;
+        if (hierarchy != null && selectedBattalionField != null)
+        {
+            object value = selectedBattalionField.GetValue(hierarchy);
+            if (value is int && (int)value >= 0)
+                return true;
+        }
+
+        PlayerCommander commander = PlayerCommander.Instance;
+        if (commander != null && playerSelectedField != null)
+        {
+            List<Regiment> list = playerSelectedField.GetValue(commander) as List<Regiment>;
+            if (list != null && list.Count > 0)
+                return true;
+        }
+
+        return false;
     }
 
     private void ClearInfantryAndHqSelection()
@@ -427,7 +467,6 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
         labelStyle = PrototypeUiTheme09F15.Label(8);
         valueStyle = PrototypeUiTheme09F15.Label(8);
         activeStyle = PrototypeUiTheme09F15.AccentBox(8);
-        inactiveStyle = PrototypeUiTheme09F15.DangerBox(8);
         neutralStyle = PrototypeUiTheme09F15.Button(8);
     }
 }
