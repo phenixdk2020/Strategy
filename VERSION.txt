@@ -1,65 +1,51 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30c
+Prototype version: v00.00.09f30d
 Build status: TEST
-Build name: CAVALRY OFFICER AI + DYNAMIC ATTACHMENT + MANUAL OVERRIDE
-Visible build marker: PROJECT 1864 | v00.00.09f30c TEST
+Build name: OOB SCROLL + DRAG/DROP + CAVALRY/HQ VISUAL POLISH
+Visible build marker: PROJECT 1864 | v00.00.09f30d TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current design supplements:
+- docs/design-supplements/v00.00.09f30d-oob-scroll-dnd-cavalry-visuals.md
 - docs/design-supplements/v00.00.09f30c-cavalry-ai-dynamic-attachment.md
 - docs/design-supplements/v00.00.09f30b-higher-command-hq.md
 - docs/design-supplements/v00.00.09f30a-command-officer-hardening.md
 - docs/design-supplements/v00.00.09f30-cavalry-core.md
-- docs/design-supplements/v00.00.09f29z-square-face-fire-smoke.md
-Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
+
+v00.00.09f30d - OOB scroll + drag/drop + cavalry/HQ visual polish
+- Backup before F30D: backup/channel-test-v00.00.09f30c-pre-09f30d-oob-scroll-dnd-horses at F30C HEAD 1beb7d141c620fb62c703095782e56037a710547.
+- Replaces the F30C OOB presentation with a wider fixed-column layout for unit name, men, status, AI and attachment state.
+- Removes command-role text from the structural OOB labels. The regiment row is now simply `1. REGIMENT`; `Oberstløjtnant` is metadata/tooltip/HUD information rather than an extra line in the tree. Division/Brigade follow the same rule.
+- Adds a real scroll view. The OOB header remains fixed; the hierarchy scrolls with mouse wheel/scrollbar when future units make the tree taller than the available panel height.
+- Adds direct cavalry drag-and-drop attachment in the OOB. Drag Gardehusar/Dragon and drop on 1. Division, 1. Brigade, 1. Regiment, 1. Battalion or 2. Battalion to change CurrentCommandParent live.
+- Attachment remains explicit with ATT in its own column. The row physically moves to the selected command parent after drop.
+- Major rows expose AI/MAN in a dedicated AI column. Company/cavalry status is no longer squeezed together with men/attachment text.
+- Cavalry visual density is increased from approximately one visible mounted figure per ten men to approximately one per five men: Gardehusar 120 -> 24 visible riders, Dragon 140 -> 28 visible riders.
+- The additional mounted figures are inserted into the existing F30 formation lists, so Line/Column movement and Dragon dismount/remount continue to use the normal cavalry visual formation pipeline.
+- Adds horse legs/hooves, neck/tail/ear detail to cavalry horses and legs/hooves/tail/ears to Brigade/Division HQ horses. HQ layout remains commander forward with staff behind; the horses are mounted staff, not separate riderless horses.
+
+Primary v00.00.09f30d QA
+1. Unity must compile with no red errors before F30D is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f30d TEST.
+3. OOB has no overlapping text at 100% UI scale: men/status/AI/ATT use separate columns.
+4. Regiment row displays `1. REGIMENT`; `OBERSTLØJTNANT` must not appear as a separate structural line.
+5. With current small OOB the scroll bar may be absent; reduce window height or later add enough rows and verify the vertical scrollbar appears and header remains fixed.
+6. Drag Gardehusar or Dragon row onto Division/Brigade/Regiment/Major A/Major B equivalent row. On release the cavalry row must move under that parent and command-link ownership must follow the existing F30C attachment state.
+7. A simple click on cavalry row still selects it; a drag must not also trigger a selection/order.
+8. Gardehusar displays about 24 riders and Dragon about 28, with Line/Column still reforming normally.
+9. Dragon dismount leaves the expanded horse group at the horse-holder position and hides riders; remount restores mounted riders.
+10. Brigade/Division HQ horses visibly have four legs/hooves and retain commander-front/staff-rear arrangement.
+11. Regression F30C: cavalry Officer AI, manual override, dynamic CurrentCommandParent and symmetric command-tree remain functional.
 
 v00.00.09f30c - Cavalry Officer AI + Dynamic Attachment + Manual Override
-- Backup before F30C: backup/channel-test-v00.00.09f30b-pre-09f30c-cavalry-ai-attachments at F30B HEAD 407fa095598753e06d155b1e84a6aa89a09821d2.
-- Adds PrototypeCavalryOfficerAI09F30C. Gardehusar and Dragon cavalry officers start AI ON for QA and independently seek a FLANK or REAR approach before committing a mounted charge.
-- Cavalry AI evaluates live Prussian infantry targets, strongly avoids charging a ready Square, prefers enemies already locally engaged, moves in Column during approach, reforms Line before charge, and uses the existing F30 FRONT/FLANK/REAR charge resolver at contact.
-- Cavalry AI replans if the target moves materially. River/open-water safety remains owned by the existing F30 bridge-only mounted routing; maneuver endpoints are kept outside the visual river corridor and inside battlefield bounds.
-- Direct player command authority is explicit. A right-click battlefield order or cavalry bottom-HUD command disables that unit's cavalry AI, and the player can re-enable AI from the cavalry HUD at any time.
-- Adds live CurrentCommandParent cycling for cavalry: 1. Division -> 1. Brigade -> 1. Regiment -> Major A / 1. Battalion -> Major B / 2. Battalion -> back to Division. OrganicParent remains 1. Division / Cavalry.
-- If cavalry is attached directly to Major A/B, its local cavalry AI only acts while that Major's Battalion AI is ON. If the parent Major AI is OFF, cavalry reports WAIT PARENT AI instead of silently ignoring command authority.
-- Replaces the fixed F30B higher OOB presentation with F30C dynamic OOB. The cavalry row physically moves under Division, Brigade, Regiment, Major A or Major B as CurrentCommandParent changes and is marked [ATT].
-- Cavalry OOB row also exposes AI/MAN state. Single-click selection and double-click camera behavior remain unchanged.
-- Symmetric command-tree rendering remains active for any Danish selection. F30C support links now originate from the actual CurrentCommandParent, including Major A/B.
-- The selected cavalry bottom HUD adds AI ON/OFF, current attachment parent and live AI phase/target status.
-- Manual control remains available at every level: higher HQ missions, Regiment/Major commands, direct company control, and direct cavalry move/formation/charge all continue to use player authority when explicitly issued.
-- F30C does NOT yet add mounted firearms, dismounted Dragon fire, horse casualties, persistent cavalry melee, or artillery. Those remain subsequent combined-arms work.
-
-Primary v00.00.09f30c QA
-1. Unity must compile with no red errors before F30C is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f30c TEST.
-3. OOB initially shows Gardehusar and Dragon under their live command parent and each row is marked [ATT].
-4. Select cavalry and press TILKNYT repeatedly: the OOB row must move live through Division, Brigade, Regiment, Major A and Major B without respawning the unit.
-5. The support command line must move to the same parent shown by OOB.
-6. Selecting any Danish company/HQ/cavalry entity must show the complete Division -> Brigade -> Regiment -> Major -> Company tree plus current support links in both directions.
-7. With cavalry AI ON under Brigade/Regiment/Division, observe the cavalry officer acquire an enemy, move toward a flank/rear approach and only then commit CHARGE when the geometry is favorable.
-8. A ready Infantry Square must not receive a deliberate autonomous cavalry charge; cavalry should hold pressure instead.
-9. Attach cavalry to Major A/B while that Major AI is OFF: cavalry shows WAIT PARENT AI. Turn the Major AI ON and cavalry may resume autonomous maneuvering.
-10. Right-click a selected cavalry unit to a manual destination or use a cavalry HUD command: its AI must switch OFF/MANUAL and must not overwrite the player's order.
-11. Re-enable AI from the cavalry HUD: the cavalry officer may reacquire/replan from its current position.
-12. Regression F30B: physical Division/Brigade HQ, higher missions and higher OOB selection/focus still work.
-13. Regression F30A/F29Z/F30: Square visual/smoke behavior, fire-lane Side Step, early Line deployment, bridge-only cavalry crossing and Square-vs-cavalry contact still work.
+- Cavalry officers seek flank/rear before charge, avoid ready Square, allow manual override and support live parent changes through Division/Brigade/Regiment/Major A/Major B.
 
 v00.00.09f30b - Higher Command HQ + Attachment
-- Added physical Division and Brigade HQ above the existing Regiment -> Battalion -> Company chain.
-- Added OrganicParent / CurrentCommandParent / AttachmentType and unified XX/X/III/II/I OOB.
-- Added higher mission delegation into the proven Regimental HQ pipeline and terrain-following command links.
-- Added F30A runtime NullReference hardening. Artillery is prepared to use the same attachment model but is not spawned yet.
+- Physical Division/Brigade HQ, unified command chain and generic OrganicParent/CurrentCommandParent attachment model.
 
-v00.00.09f30a - Command, Square and Officer AI hardening
-- OOB/HUD selection persistence, Square footprint/cone/smoke hardening, persistent blue regiment-order state, authoritative defensive objective/facing, strongest-company attack allocation, earlier Column->Line deployment and friendly fire-lane Side Step.
-- Cavalry moved from temporary F10 panel to normal world/OOB selection and bottom-HUD command flow.
-
-v00.00.09f30 - First cavalry core
-- Shared mounted cavalry core for Gardehusar + Dragon with Line/Column, move/hold/charge, FRONT/FLANK/REAR charge contact, bridge-only crossing and Dragon dismount/remount.
-- Ready Infantry Square causes cavalry FALTER on contact.
-
-v00.00.09f29z - Square face fire + directional smoke
-- Four independent 90-degree Square faces with approximately 25% firepower per side and side-correct black-powder smoke.
+v00.00.09f30a - Command/Square/Officer hardening
+- OOB selection persistence, Square visual/smoke hardening, stronger attack allocation, early Line deployment and fire-lane Side Step.
 
 IMPORTANT QA STATUS
 Repository changes are committed to channel-test, but Unity compiler/runtime success must only be marked verified after the project has been opened/tested in Unity 6000.6.0f1 and no red compiler errors are present.
