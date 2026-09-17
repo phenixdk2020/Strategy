@@ -175,7 +175,9 @@ Cavalry charge klassificeres relativt til infantry facing som `FRONT / FLANK / R
 
 Open water forbliver hard blocker. F30 cavalry ruter til bridge-zonen ved opposite-bank movement og tvinger Column under crossing. Dette er en separat cavalry movement owner; infantry F3/F27 river/navigation writers ændres ikke.
 
-Det midlertidige `CAVALRY TEST [F30]` panel bruges kun til QA og kan foldes ud med F10. Endelig OOB/HUD/semantic-zoom integration, cavalry Officer AI, mounted/dismounted fire, cavalry casualties fra infantry volley, Charge Confidence/Momentum, horse casualties og persistent melee ligger i efterfølgende F30-passes.
+Det oprindelige F30 `CAVALRY TEST [F30]`/F10-panel var kun en bootstrap til den første mounted runtime. F30A erstatter dette parallelle kontrolsystem med normal tactical selection: Gardehusar/Dragon vælges i 3D eller OOB, bruger bund-HUD'en, højreklik terræn = move og højreklik fjende = mounted charge. OOB single-click vælger uden kameraflytning; double-click går bag enheden. Kavaleri og infantry/HQ selection er gensidigt eksklusive, så kun ét command HUD er aktivt.
+
+Endelig cavalry Officer AI, mounted/dismounted fire, cavalry casualties fra infantry volley, Charge Confidence/Momentum, horse casualties og persistent melee ligger i efterfølgende F30-passes.
 
 ## v00.00.09f30a Command, Square og Officer AI hardening — aktuel baseline
 
@@ -192,6 +194,8 @@ Column→Line deployment starter nu omkring **35 m uden for fjendens MaximumRang
 Side Step er udvidet fra ren overlap-korrektion til **friendly fire-lane deconfliction**. Hvis et friendly company står mellem et skydende company og dets live target, skifter den taktisk mindst nyttige formation sidelæns uden 90° rotation og uden Column. Hvis front-company allerede selv har en god skudposition mod samme mål, bevares den og det bageste company stepper til en fri lane. Square, charge, melee, bridge routing, under-fire emergency reaction og direct manual authority har fortsat højere prioritet.
 
 AI-officer fighting withdrawal er samtidig fastlagt som designregel: Kaptajn/Major skal senere kunne vælge kontrolleret withdrawal ud fra tab, lokal styrkebalance, morale/cohesion, ammunition, flank/rear threat, støtte, terræn og officerstats. Det må ikke være en automatisk panic-trigger; den eksisterende fighting-withdrawal executor genbruges når decision-laget implementeres.
+
+Kavaleriet følger fra F30A samme **unit-selection/command UX** som øvrige taktiske enheder i stedet for et separat testpanel. Gardehusar og Dragon er company-scale OOB-rækker (`I`), single-click selecter uden kamera, double-click placerer kameraet bag enheden, og selection viser den normale 90 px bund-HUD. Mounted højreklik på fjende udfører charge; højreklik på terræn flytter. Dragon beholder `SID AF / STIG OP`. Dette er UI/command-flow integration; cavalry Officer AI og skydevåben er fortsat næste F30-arbejde.
 
 ## Directional fire, fire discipline og accuracy
 
@@ -251,7 +255,7 @@ HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radi
 
 ## Versionshistorik
 
-- **v00.02.19 / P0A v00.00.09f30a COMMAND + SQUARE + OFFICER AI HARDENING TEST** — OOB/HUD selection persistence; Square footprint/cone/smoke transition hardening; vedvarende blå regimentsordre-state; autoritativt FORSVAR HER objective/facing med threat-based AUTO-facing; attack-role prioritering efter mænd + erfaring; tidligere Column→Line deployment; friendly fire-lane Side Step; AI-officer fighting withdrawal fastlagt som designregel.
+- **v00.02.19 / P0A v00.00.09f30a COMMAND + SQUARE + OFFICER AI HARDENING TEST** — OOB/HUD selection persistence; Square footprint/cone/smoke transition hardening; vedvarende blå regimentsordre-state; autoritativt FORSVAR HER objective/facing med threat-based AUTO-facing; attack-role prioritering efter mænd + erfaring; tidligere Column→Line deployment; friendly fire-lane Side Step; AI-officer fighting withdrawal fastlagt som designregel; F30 Cavalry TEST/F10-panel erstattet af normal battlefield/OOB selection og bottom-HUD command flow for Gardehusar/Dragon.
 - **v00.02.18 / P0A v00.00.09f30 FIRST CAVALRY CORE TEST** — Shared mounted cavalry core med Gardehusar + Dragon; Line/Column, move/hold/charge; FRONT/FLANK/REAR contact; ready Square giver cavalry FALTER; Dragon dismount/remount med fysisk horse-holder position; bridge-only cavalry crossing; midlertidigt F10 TEST-panel; mounted firearms, defensive volley interception, cavalry AI og persistent melee udestår.
 - **v00.02.17 / P0A v00.00.09f29z SQUARE FACE FIRE + DIRECTIONAL SMOKE TEST** — Fire selvstændige 90° Square faces med ca. 25 % firepower pr. side, independent reload, sidekorrekt black-powder smoke, fractional ammo consumption og ingen falsk RAMMER 0 uden gyldigt mål.
 - **v00.02.16 / P0A v00.00.09f29y DEFENSIVE STABILITY + TEST AI + HUD STATUS + TERRAIN POLISH TEST** — DefendHere bank-lock ved river/bridge; reserve/flank fjernet fra Major-HQ anchor; stable mission-facing for HQ rear axis; TEST Prussian AI default OFF med reel ON/OFF-toggle; Major-HUD bruger samme company-status som OOB; dry bridge river-render gap; terrain-conforming gyldne crop fields med langt tættere rows; F29R gameplay-terrain uændret.
