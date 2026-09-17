@@ -82,6 +82,9 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             if (!ParentAllowsDelegatedAI(state.Unit))
             {
                 state.Phase = "WAIT PARENT AI";
+                if (state.Unit.Action == PrototypeCavalryAction09F30.Move ||
+                    state.Unit.Action == PrototypeCavalryAction09F30.Charge)
+                    state.Unit.OrderHold();
                 continue;
             }
             if (Time.time < state.NextThink)
@@ -173,7 +176,8 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             return;
 
         bool directWorldOrder = Input.GetMouseButtonDown(1);
-        bool bottomHudClick = Input.GetMouseButtonDown(0) && Input.mousePosition.y <= BottomHudHeight;
+        bool bottomHudClick = Input.GetMouseButtonDown(0) && Input.mousePosition.y <= BottomHudHeight &&
+                              !PrototypeCavalryCommandControl09F30C.IsPointerOverControlStrip(Input.mousePosition);
         if (directWorldOrder || bottomHudClick)
             SetAIEnabled(selected, false, directWorldOrder ? "PLAYER_RIGHT_CLICK" : "PLAYER_HUD_COMMAND");
     }

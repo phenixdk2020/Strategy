@@ -78,6 +78,17 @@ public sealed class PrototypeCavalryCommandControl09F30C : MonoBehaviour
         else SetParent(unit, DivisionId);
     }
 
+    public static bool IsPointerOverControlStrip(Vector3 mousePosition)
+    {
+        float y = Screen.height - HudHeight + 61f;
+        float x = Mathf.Max(660f, Screen.width - 455f);
+        float available = Screen.width - x - 8f;
+        if (available < 330f)
+            x = Mathf.Max(8f, Screen.width - 338f);
+        Vector2 gui = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
+        return new Rect(x, y, Screen.width - x - 8f, 22f).Contains(gui);
+    }
+
     private void OnGUI()
     {
         PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
