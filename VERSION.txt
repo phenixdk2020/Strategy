@@ -1,84 +1,88 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n6h
-Build status: CITY ART VISIBILITY HOTFIX + AMT BOUNDARY CONTINUITY
-Build name: CAMPAIGN3 CITY ART VISIBILITY + AMT BOUNDARY CONTINUITY 10N6H
+Prototype version: v00.00.10n7a
+Build status: MAP ONLY + CITY ART CLEANUP
+Build name: CAMPAIGN3 MAP ONLY + CITY ART CLEANUP 10N7A
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n6h-boundary-city-facing
+Work branch: work/channel-campaign3-v10n7a-map-only-city-cleanup
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.26
+Design baseline: v00.02.27
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
-- v00.00.10n6f = dense parish-centroid grid approximation + city-art attempt + QA army cleanup
-- v00.00.10n6g = source parish polygon edges + polygon-backed Amt click resolver
-- v00.00.10n6h = guaranteed city-art rendering + short-gap boundary continuity pass
+- v00.00.10n6h = city-art visibility + source-polygon Amt continuity experiment
+- v00.00.10n7a = deliberate scope reset: map only + one Proposal-3 city renderer
 
 ROLLBACK:
+- before v10n7a: backup/channel-campaign3-before-v10n7a-map-only-city-cleanup-20260917
 - before v10n6h: backup/channel-campaign3-before-v10n6h-boundary-city-facing-20260915
-- before v10n6g: backup/channel-campaign3-before-v10n6g-exact-parish-polygons-20260915
 
-V10N6H CITY ART VISIBILITY:
-- CampaignCityArtV010N6H supersedes the n6g city-art renderer at runtime.
-- The renderer uses a dedicated PROJECT1864/CampaignCityBillboard shader.
-- Shader contract: Cull Off, ZWrite Off, ZTest Always, alpha blending.
-- City art therefore cannot disappear because of terrain depth or backface culling.
-- A bottom-anchored billboard mesh is used rather than Unity's default centered Quad primitive.
-- Proposal-3 Resources textures remain preferred.
-- If a texture is unavailable, a visible generated fallback settlement is used.
-- A/B/C base scales: A=4.80, B=3.65, C=2.65.
-- Old CITY_ICON_ and CITY_ART_ children are removed before n6h installation.
-- Old round city renderer remains hidden; no green TownGround is generated.
-- Stable BoxCollider click targets remain on the city marker parents.
+V10N7A SCOPE RESET:
+- Amt/county boundaries are deliberately disabled.
+- Amt/county click selection and Amt info panels are deliberately disabled.
+- Historical parish polygon overlays, grid overlays and continuity bridges are not displayed.
+- World Imagery, streamed terrain, city registry, city labels and other retained campaign systems remain active.
+- The purpose is to stabilise city graphics before county borders are rebuilt in a later version.
 
-V10N6H AMT BOUNDARY CONTINUITY:
-- n6g source parish polygons remain the authoritative geometry and click source.
-- CampaignAmtBoundaryContinuityV010N6H does not alter Amt ownership.
-- It only bridges short line-chain endpoint gaps when both boundary directions are compatible.
-- Maximum bridge distance: 0.040 geographic degrees.
-- Direction threshold: dot >= 0.72 at both endpoints.
-- This targets visual gaps caused by neighbouring parish polygons using different vertex subdivision.
-- Source parish geometry, click resolver and ZoneId ownership remain unchanged.
+V10N7A CITY ART:
+- CampaignMapOnlyCityArtV010N7A is the single runtime owner of city graphics.
+- Older n6/n6g/n6h city renderers are disabled continuously.
+- Proposal-3 assets are the only permitted visual style.
+- No beige/generated alternative city style is rendered as fallback.
+- Missing Proposal-3 assets produce an explicit error instead of silently changing style.
+- Bottom-center anchored billboard mesh; no X/Z art offset from the canonical city marker.
+- Ground lift: 0.24 world units.
+- Base scale: A=2.20, B=1.60, C=1.15.
+- Old round city marker renderers are hidden and TownGround is not generated.
+- Stable BoxCollider remains for city interaction.
+- A and B Proposal-3 assets are upgraded to sharper 128x128 RGBA source art in this pass; C remains Proposal-3 and is rendered at the smallest scale pending the final unified source-art refresh.
 
-HISTORICAL GUARDRAIL:
-- Source parish geography remains documented as 1 January 1820 and DigDag-derived.
-- HistoricallyExact1851 remains FALSE.
-- Exact dated DigDag Amt/Region polygons for 1 January 1851 remain the production target.
+V10N7A RUNTIME OWNERSHIP:
+- Disabled: CampaignHistoricalAmtPolygonsV010N6G.
+- Disabled: CampaignHistoricalAmtOverlayV010N6F.
+- Disabled: CampaignAmtBoundaryContinuityV010N6H.
+- Disabled: n6g/n6f/n3 Amt info panels.
+- Disabled: CampaignCityArtV010N6H / V010N6G / CampaignCityIconV010N6.
+- Removed visual roots include n6g/n6h/n6f/n5 Amt-line roots.
 
 RETAINED SYSTEMS:
 - 20 ZONE-REG-01 zones / 68 CITY-REG-01 cities / 290565 urban population checksum.
-- Direct city click uses canonical City.ZoneId.
-- Ordinary land click uses source parish polygon point-in-polygon.
-- QA army at Vejle remains removed.
 - World Imagery + streamed 3D terrain.
+- City labels and canonical city positions.
+- A/B/C construction rules and CityId/ZoneId data.
 - Tactical withdrawal systems.
+- QA army at Vejle remains removed.
 
-FILES ADDED/CHANGED IN V10N6H:
-- Assets/Shaders/CampaignCityBillboard.shader
-- Assets/Shaders/CampaignCityBillboard.shader.meta
-- Assets/Scripts/Campaign/CampaignCityArtV010N6H.cs
-- Assets/Scripts/Campaign/CampaignCityArtV010N6H.cs.meta
-- Assets/Scripts/Campaign/CampaignAmtBoundaryContinuityV010N6H.cs
-- Assets/Scripts/Campaign/CampaignAmtBoundaryContinuityV010N6H.cs.meta
+FILES ADDED/CHANGED IN V10N7A:
+- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7A.cs
+- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7A.cs.meta
+- Assets/Scripts/Campaign/CampaignBehaviourExtensionsV010N7A.cs
+- Assets/Scripts/Campaign/CampaignBehaviourExtensionsV010N7A.cs.meta
+- Assets/Resources/Campaign/CityIcons/City_A_Proposal3.png
+- Assets/Resources/Campaign/CityIcons/City_B_Proposal3.png
 - Assets/Scripts/Campaign/CampaignBuildInfo.cs
 - VERSION.txt
-- docs/parts/part-25-60-CAMPAIGN-V10N6H-CITY-ART-BOUNDARY-CONTINUITY.md
+- docs/parts/part-26-61-CAMPAIGN-V10N7A-MAP-ONLY-CITY-CLEANUP.md
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. Topbar/badge show v00.00.10n6h.
-3. Log reports CityArtN6H=True|Cities=68.
-4. A/B/C city graphics are visibly present at normal campaign zoom.
-5. Small C towns are visibly present.
-6. City graphics remain visible above terrain at all campaign camera angles.
-7. No round city cylinders or green TownGround are visible.
-8. Log reports AmtPolygonOverlay=True from n6g source polygons.
-9. Log reports AmtBoundaryContinuity=True and bridge count.
-10. The continuity pass does not change Amt ownership.
-11. Aalborg/Hjørring, Thisted/Viborg and Randers/Viborg are visually retested.
-12. Direct city clicks still return canonical City.ZoneId.
-13. Ordinary land clicks still use SourceParishPolygon.
+2. Topbar/badge show v00.00.10n7a.
+3. No yellow Amt/county boundary lines are visible.
+4. Clicking ordinary land does not open an Amt/county panel.
+5. Log reports MapOnly=True and CountyBorders=False.
+6. Log reports CityArtN7A=True|Cities=68.
+7. All 68 city art markers are present.
+8. Only Proposal-3 visual language is visible; no beige fallback/debug settlement style.
+9. No round city cylinders or green TownGround are visible.
+10. A/B/C city sizes are visibly distinct but materially smaller than n6h.
+11. City labels remain readable.
+12. Coastal cities visually anchor at their canonical marker position; no renderer offset into sea.
+13. World Imagery and streamed terrain remain functional.
 14. QA army at Vejle remains absent.
-15. Registry remains 20 zones / 68 cities / 290565 population.
+15. Registry remains 20 zones / 68 cities / population 290565.
 
-QA state: V10N6H IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+NEXT PHASE:
+- Do not reintroduce Amt/county borders until city-art QA is accepted.
+- Later county rebuild must use one authoritative geometry source for line, click and highlight.
+
+QA state: V10N7A IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
