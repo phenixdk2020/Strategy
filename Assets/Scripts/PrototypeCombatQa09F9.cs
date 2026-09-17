@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f9 combat QA layer.
+// v00.00.09f9 combat QA layer + v00.00.09f30b log-noise hardening.
 // Keeps officer engagement-distance autonomy, raises TEST hit probability so
 // Close/Medium/Long differences are easier to observe, and repairs the 09f7
 // black-powder ParticleSystem velocity curves so all XYZ curves use one mode.
@@ -12,14 +12,12 @@ public sealed class PrototypeCombatQa09F9 : MonoBehaviour
     public const float DanishQaAccuracy = 0.050f;
     public const float PrussianQaAccuracy = 0.052f;
 
-    // Unity 6.6 marks Object.GetInstanceID() obsolete at error level.
-    // We only need to remember which particle systems have already been repaired,
-    // so keep the actual component references instead of relying on an internal ID.
     private readonly HashSet<ParticleSystem> fixedParticleSystems =
         new HashSet<ParticleSystem>();
 
     private FieldInfo baseAccuracyField;
     private bool accuracyApplied;
+    private bool particleRepairLogged;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -88,6 +86,7 @@ public sealed class PrototypeCombatQa09F9 : MonoBehaviour
         if (systems == null || systems.Length == 0)
             return;
 
+        int repairedThisPass = 0;
         foreach (ParticleSystem ps in systems)
         {
             if (ps == null || fixedParticleSystems.Contains(ps))
@@ -98,18 +97,20 @@ public sealed class PrototypeCombatQa09F9 : MonoBehaviour
 
             ParticleSystem.VelocityOverLifetimeModule velocity = ps.velocityOverLifetime;
             velocity.enabled = true;
-
-            // Unity requires x/y/z curves in Velocity over Lifetime to use the same mode.
-            // Use TwoConstants for all three axes. X/Z stay at zero; Y keeps the
-            // gentle randomized upward drift used for black-powder smoke.
             velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
             velocity.y = new ParticleSystem.MinMaxCurve(0.10f, 0.45f);
             velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
             fixedParticleSystems.Add(ps);
-            Debug.Log(
-                "PARTICLE-FIX-09F9|Object=" + ps.name +
-                "|VelocityMode=TwoConstantsXYZ|Fixed=True");
+            repairedThisPass++;
+        }
+
+        // F30B: repair every newly spawned smoke system, but do not spam one Console line
+        // for every volley/face emitter. The first successful pass proves the repair is live.
+        if (repairedThisPass > 0 && !particleRepairLogged)
+        {
+            particleRepairLogged = true;
+            Debug.Log("PARTICLE-FIX-09F30B|BlackPowderSmoke09F7=True|VelocityMode=TwoConstantsXYZ|FurtherRepairs=Silent");
         }
     }
 }
