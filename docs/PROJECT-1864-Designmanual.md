@@ -1,13 +1,13 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.18**  
-**Aktuel prototype-workbranch: P0A v00.00.09f30 FIRST CAVALRY CORE — GARDEHUSAR + DRAGON TEST**
+**Aktuel designbaseline: v00.02.19**  
+**Aktuel prototype-workbranch: P0A v00.00.09f30a COMMAND + SQUARE + OFFICER AI HARDENING TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
 
-Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f30**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), OOB/HQ-discoverability i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md), crop-field concealment/map polish i [v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md), defensive/UI/terrain-hardening i [v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md), Square face-fire i [v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md), og første mounted cavalry implementation i [v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md).
+Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f30a**. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), OOB/HQ-discoverability i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md), crop-field concealment/map polish i [v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md), defensive/UI/terrain-hardening i [v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md), Square face-fire i [v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md), første mounted cavalry implementation i [v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md), og den aktuelle command/officer-hardening i [v00.00.09f30a — Command, Square and Officer AI Hardening](design-supplements/v00.00.09f30a-command-officer-hardening.md).
 
 ## Indhold
 
@@ -35,6 +35,7 @@ Den aktuelle tactical-command/regiment-control baseline ligger på **v00.00.09f3
 - [Designsupplement v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md)
 - [Designsupplement v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md)
 - [Designsupplement v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md)
+- [Designsupplement v00.00.09f30a — Command, Square and Officer AI Hardening](design-supplements/v00.00.09f30a-command-officer-hardening.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -176,6 +177,22 @@ Open water forbliver hard blocker. F30 cavalry ruter til bridge-zonen ved opposi
 
 Det midlertidige `CAVALRY TEST [F30]` panel bruges kun til QA og kan foldes ud med F10. Endelig OOB/HUD/semantic-zoom integration, cavalry Officer AI, mounted/dismounted fire, cavalry casualties fra infantry volley, Charge Confidence/Momentum, horse casualties og persistent melee ligger i efterfølgende F30-passes.
 
+## v00.00.09f30a Command, Square og Officer AI hardening — aktuel baseline
+
+F30A gør infantry-commandlaget stabilt nok til videre cavalry/combined-arms QA. OOB-selection behandles som reel command selection og bevares efter HUD-knapper og point-order commits uden automatisk kameraflytning. Regimentsordrer har vedvarende blå pending/active-state så længe underenheder stadig udfører ordren.
+
+Square-transitioner må ikke læses som skud. Legacy Line/mission footprint skjules allerede under `FORMING`, Square-sector linjer løftes/terrain-conformes, og LINE↔SQUARE overgang synkroniserer ældre volley-detektorer, så kun en faktisk volley kan skabe sortkrudtsrøg.
+
+`FORSVAR HER` bruger det klikkede objective som autoritativt centrum. En trukket pil er den autoritative facing; uden pil vælges nærmeste relevante fjende som AUTO-facing og ellers den eksisterende frontretning. River/slot-safety må korrigere ulovlige enkelt-slots, men må ikke omskrive selve missionens objective eller vende fronten vilkårligt.
+
+`ANGRIB HER` fordeler roller efter **mænd + erfaring**. Første QA-score er `CurrentStrength × (0,60 + 0,40 × Experience/100)`: stærkeste egnede companies får assault/front, næste stærke kan få flank/support, og svageste egnede company bruges normalt som ren reserve. Terrain/bridge/charge safety ligger stadig højere end denne prioritering.
+
+Column→Line deployment starter nu omkring **35 m uden for fjendens MaximumRange**, så den fysiske 3-rank Line-reform kan være færdig inden enheden går ind i fjendtligt skudhold. Bridge crossing er fortsat undtagelsen der kan tvinge Column gennem en smal passage.
+
+Side Step er udvidet fra ren overlap-korrektion til **friendly fire-lane deconfliction**. Hvis et friendly company står mellem et skydende company og dets live target, skifter den taktisk mindst nyttige formation sidelæns uden 90° rotation og uden Column. Hvis front-company allerede selv har en god skudposition mod samme mål, bevares den og det bageste company stepper til en fri lane. Square, charge, melee, bridge routing, under-fire emergency reaction og direct manual authority har fortsat højere prioritet.
+
+AI-officer fighting withdrawal er samtidig fastlagt som designregel: Kaptajn/Major skal senere kunne vælge kontrolleret withdrawal ud fra tab, lokal styrkebalance, morale/cohesion, ammunition, flank/rear threat, støtte, terræn og officerstats. Det må ikke være en automatisk panic-trigger; den eksisterende fighting-withdrawal executor genbruges når decision-laget implementeres.
+
 ## Directional fire, fire discipline og accuracy
 
 Infantry fire policy bruger `HOLD / CLOSE / MEDIUM / LONG`. Et mål skal være inden for fire-policy-afstanden og relevant fire arc. Close/Medium/Long er ordre-/UI-grænser; accuracy ændres kontinuerligt med faktisk afstand.
@@ -234,6 +251,7 @@ HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radi
 
 ## Versionshistorik
 
+- **v00.02.19 / P0A v00.00.09f30a COMMAND + SQUARE + OFFICER AI HARDENING TEST** — OOB/HUD selection persistence; Square footprint/cone/smoke transition hardening; vedvarende blå regimentsordre-state; autoritativt FORSVAR HER objective/facing med threat-based AUTO-facing; attack-role prioritering efter mænd + erfaring; tidligere Column→Line deployment; friendly fire-lane Side Step; AI-officer fighting withdrawal fastlagt som designregel.
 - **v00.02.18 / P0A v00.00.09f30 FIRST CAVALRY CORE TEST** — Shared mounted cavalry core med Gardehusar + Dragon; Line/Column, move/hold/charge; FRONT/FLANK/REAR contact; ready Square giver cavalry FALTER; Dragon dismount/remount med fysisk horse-holder position; bridge-only cavalry crossing; midlertidigt F10 TEST-panel; mounted firearms, defensive volley interception, cavalry AI og persistent melee udestår.
 - **v00.02.17 / P0A v00.00.09f29z SQUARE FACE FIRE + DIRECTIONAL SMOKE TEST** — Fire selvstændige 90° Square faces med ca. 25 % firepower pr. side, independent reload, sidekorrekt black-powder smoke, fractional ammo consumption og ingen falsk RAMMER 0 uden gyldigt mål.
 - **v00.02.16 / P0A v00.00.09f29y DEFENSIVE STABILITY + TEST AI + HUD STATUS + TERRAIN POLISH TEST** — DefendHere bank-lock ved river/bridge; reserve/flank fjernet fra Major-HQ anchor; stable mission-facing for HQ rear axis; TEST Prussian AI default OFF med reel ON/OFF-toggle; Major-HUD bruger samme company-status som OOB; dry bridge river-render gap; terrain-conforming gyldne crop fields med langt tættere rows; F29R gameplay-terrain uændret.
