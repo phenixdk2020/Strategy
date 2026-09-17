@@ -2,13 +2,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-// v00.00.09f29k
+// v00.00.09f29k + v00.00.09f30b null-safety
 // Charge input hardening without replacing the proven F25 charge/melee engine.
-// - Existing CHARGE/V activation is converted into an ARMED state.
-// - ARMED charge is confirmed with RIGHT CLICK on an enemy formation.
-// - LEFT CLICK never confirms a charge; clicking elsewhere cancels target-pick normally.
-// - A valid/invalid right click is consumed before PlayerCommander can turn it into a move order.
-// - Unified HUD CHARGE button is visibly green while target-pick is armed.
+// F30B: reflection bindings are revalidated before capture so a transient missing
+// FieldInfo/MethodInfo cannot spam CaptureLegacyTargetPick NullReferenceException.
 [DefaultExecutionOrder(-900)]
 public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
 {
@@ -27,6 +24,7 @@ public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
 
     private readonly List<Regiment> armedUnits = new List<Regiment>();
     private bool armed;
+    private bool reflectionWarningLogged;
 
     private Texture2D greenTexture;
     private GUIStyle armedButtonStyle;
@@ -50,14 +48,7 @@ public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
         }
         Instance = this;
 
-        pendingTargetPickField = typeof(PrototypeInfantryCharge09F25)
-            .GetField("pendingTargetPick", PrivateInstance);
-        pendingUnitsField = typeof(PrototypeInfantryCharge09F25)
-            .GetField("pendingUnits", PrivateInstance);
-        issueChargeMethod = typeof(PrototypeInfantryCharge09F25)
-            .GetMethod("IssueCharge", PrivateInstance);
-
-        if (pendingTargetPickField == null || pendingUnitsField == null || issueChargeMethod == null)
+        if (!EnsureReflectionBindings())
         {
             Debug.LogError("CHARGE-09F29K|Installed=False|Reason=F25ReflectionMissing");
             enabled = false;
@@ -65,7 +56,7 @@ public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
         }
 
         Debug.Log("CHARGE-09F29K|Installed=True|Arm=CHARGE_OR_V|Confirm=RIGHT_CLICK_ENEMY|" +
-                  "LeftClickConfirm=False|MoveOrderSuppression=True|ArmedButtonGreen=True");
+                  "LeftClickConfirm=False|MoveOrderSuppression=True|ArmedButtonGreen=True|F30BNullGuard=True");
     }
 
     private void OnDestroy()
@@ -83,9 +74,16 @@ public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
         if (charge == null || cam == null)
             return;
 
-        // The F25 engine still owns CHARGE mechanics. F29K only steals its legacy
-        // left-click target-pick state and replaces that input transaction with an
-        // explicit armed/right-click workflow.
+        if (!EnsureReflectionBindings())
+        {
+            if (!reflectionWarningLogged)
+            {
+                reflectionWarningLogged = true;
+                Debug.LogWarning("CHARGE-09F30B|CaptureSkipped=True|Reason=F25ReflectionUnavailable|LegacyEnginePreserved=True");
+            }
+            return;
+        }
+
         CaptureLegacyTargetPick();
 
         if (!armed)
@@ -109,31 +107,45 @@ public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
             Regiment target = GetEnemyUnderMouse();
             if (target != null)
             {
-                issueChargeMethod.Invoke(charge, new object[] { new List<Regiment>(armedUnits), target });
-                Debug.Log("CHARGE-09F29K|Confirmed=True|Target=" + target.RegimentName +
-                          "|Companies=" + armedUnits.Count + "|Input=RIGHT_CLICK");
-                ClearArmed();
+                if (issueChargeMethod != null)
+                {
+                    issueChargeMethod.Invoke(charge, new object[] { new List<Regiment>(armedUnits), target });
+                    Debug.Log("CHARGE-09F29K|Confirmed=True|Target=" + target.RegimentName +
+                              "|Companies=" + armedUnits.Count + "|Input=RIGHT_CLICK");
+                    ClearArmed();
+                }
             }
             else
             {
                 Debug.Log("CHARGE-09F29K|Confirmed=False|Reason=RIGHT_CLICK_NO_ENEMY|StillArmed=True");
             }
 
-            // PlayerCommander runs later (execution order 300). Prevent the same RMB
-            // edge from also creating a normal move/attack order.
             Input.ResetInputAxes();
             return;
         }
 
-        // A normal left-click on the battlefield means the player changed their mind
-        // or wants a different selection. It must never confirm charge.
         if (Input.GetMouseButtonDown(0) && !PointerOverBottomHud())
             CancelArmed("LEFT_CLICK_SELECTION");
     }
 
+    private bool EnsureReflectionBindings()
+    {
+        if (pendingTargetPickField == null)
+            pendingTargetPickField = typeof(PrototypeInfantryCharge09F25)
+                .GetField("pendingTargetPick", PrivateInstance);
+        if (pendingUnitsField == null)
+            pendingUnitsField = typeof(PrototypeInfantryCharge09F25)
+                .GetField("pendingUnits", PrivateInstance);
+        if (issueChargeMethod == null)
+            issueChargeMethod = typeof(PrototypeInfantryCharge09F25)
+                .GetMethod("IssueCharge", PrivateInstance);
+
+        return pendingTargetPickField != null && pendingUnitsField != null && issueChargeMethod != null;
+    }
+
     private void CaptureLegacyTargetPick()
     {
-        if (charge == null)
+        if (charge == null || !EnsureReflectionBindings())
             return;
 
         object pendingValue = pendingTargetPickField.GetValue(charge);
@@ -141,13 +153,10 @@ public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
             return;
 
         List<Regiment> legacyUnits = pendingUnitsField.GetValue(charge) as List<Regiment>;
-
-        // Immediately disarm the F25 left-click picker so it cannot consume LMB.
         pendingTargetPickField.SetValue(charge, false);
 
         if (armed)
         {
-            // Clicking CHARGE (or V) again while armed is a deliberate toggle-off.
             if (legacyUnits != null)
                 legacyUnits.Clear();
             CancelArmed("TOGGLE_OFF");
@@ -214,9 +223,7 @@ public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
             Regiment regiment = collider != null ? collider.GetComponentInParent<Regiment>() : null;
             if (regiment != null && regiment.Team == BattleTeam.Prussia &&
                 !regiment.IsRouted && regiment.CurrentStrength > 0)
-            {
                 return regiment;
-            }
         }
         return null;
     }
@@ -234,8 +241,6 @@ public sealed class PrototypeChargeTargeting09F29K : MonoBehaviour
         EnsureStyles();
         GUI.depth = -130000;
 
-        // Draw over the existing unified CHARGE button. The original button remains the
-        // click target; this layer only makes the ARMED state visually explicit.
         float width = Screen.width;
         float infoW = Mathf.Clamp(width * 0.20f, 220f, 300f);
         float aiW = Mathf.Clamp(width * 0.17f, 195f, 250f);
