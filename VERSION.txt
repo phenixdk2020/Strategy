@@ -1,16 +1,31 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30
+Prototype version: v00.00.09f30a
 Build status: TEST
-Build name: FIRST CAVALRY CORE - GARDEHUSAR + DRAGON
-Visible build marker: PROJECT 1864 | v00.00.09f30 TEST
+Build name: COMMAND + SQUARE + OFFICER AI HARDENING
+Visible build marker: PROJECT 1864 | v00.00.09f30a TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current design supplements:
+- docs/design-supplements/v00.00.09f30a-command-officer-hardening.md
 - docs/design-supplements/v00.00.09f30-cavalry-core.md
 - docs/design-supplements/v00.00.09f29z-square-face-fire-smoke.md
 - docs/design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md
 Historical VERSION snapshot through v00.00.09f29r: docs/archive/VERSION-through-v00.00.09f29r.txt
+
+v00.00.09f30a - Command, Square and Officer AI hardening
+- Backup baseline before F30A: backup/channel-test-v00.00.09f30-pre-f30a-hardening, pointing at the F30 cavalry-core baseline.
+- OOB-selected company, Major or Oberstløjtnant selection is preserved through bottom-HUD button presses and point-order completion without forcing a camera move.
+- Square presentation hardening removes legacy Line/mission formation boxes for FORMING and active Square, lifts/conforms Square range-sector lines over terrain and guards Square enter/exit so formation changes cannot trigger fake volley smoke.
+- Regimental order buttons show a persistent blue pending/active state while subordinate missions still execute that order.
+- FORSVAR HER now treats the clicked objective as authoritative. Explicit facing arrows define the defensive front. Without an explicit arrow, AUTO facing uses the nearest relevant enemy and falls back to current formation facing.
+- ATTACK HERE company-role allocation now prioritises current men + experience. Assault/front roles receive the strongest available companies; a pure reserve role receives the weakest suitable company.
+- AssaultPower QA formula: CurrentStrength * (0.60 + 0.40 * Experience/100). Terrain/bridge safety still has higher priority than role strength.
+- Column -> Line pre-contact deployment starts about 35 m outside hostile MaximumRange instead of only 10 m outside it. This gives the physical Line reform time to complete before entering the enemy firing envelope.
+- Side Step now handles both close formation overlap and friendly-fire-lane obstruction. If one company blocks another company's live firing lane, the tactically less useful formation steps left/right while preserving Line and facing. If the front company is already productively engaging the same target, the rear company moves to gain a clear lane instead.
+- Fire-lane Side Step is AI/higher-command tactical behaviour; a direct manual forced-target order is not silently displaced by this local AI correction.
+- Existing charge, melee, Square, bridge route, under-fire reaction and immediate close-contact states remain higher-priority and cannot be overridden by Side Step.
+- AI-officer controlled fighting withdrawal remains a committed design rule for a later runtime pass: officers may choose withdrawal based on losses, morale/cohesion, ammunition, flank/rear threat, support and officer stats rather than only player input.
 
 v00.00.09f30 - First cavalry core: Gardehusar + Dragon
 - Backup created before F30: backup/channel-test-v00.00.09f29z-pre-f30-cavalry-core.
@@ -34,19 +49,22 @@ v00.00.09f29z - Square face fire + directional smoke
 - F29Z reads F29V's locked Square heading, so legacy threat-facing cannot rotate the FRONT/RIGHT/REAR/LEFT fire sectors.
 - External volley registration keeps ammo/RAMMER feedback correct without fake global fire timers.
 
-Primary v00.00.09f30 QA
-1. Unity must compile with no red errors before F30 is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f30 TEST.
-3. F10 opens/closes CAVALRY TEST panel.
-4. Select GARDEHUSAR ESKADRON and test FLYT in Line and Column.
-5. Send cavalry to opposite river bank: route must use the bridge and force Column during crossing.
-6. Select DRAGON ESKADRON, SID AF, move dismounted, then return to horse holders and STIG OP.
-7. Charge infantry from FRONT, FLANK and REAR and verify telemetry identifies the aspect.
-8. With Prussian TEST AI ON, an incoming Danish cavalry charge should feed the mounted-threat score and allow the infantry AI to begin forming Square before contact.
-9. Charge a ready Square: cavalry must FALTER and Square must take no charge-contact hits.
-10. Charge a Square while still forming: contact must remain possible and more dangerous than a steady front contact.
-11. Regression F29Z: Square FRONT/RIGHT/REAR/LEFT fire and side-correct smoke still function.
-12. Regression F29Y: enemy TEST AI starts OFF, bridge is visually dry and Major HQ does not follow reserve across bridge.
+Primary v00.00.09f30a QA
+1. Unity must compile with no red errors before F30A is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f30a TEST.
+3. Select company/Major/Oberstløjtnant from OOB; use HUD button or complete a point-order. Selection and bottom HUD must remain.
+4. Give SQUARE: the old Line/formation rectangle must disappear already while FORMING, while the actual Square remains visible.
+5. Square range-sector lines must remain visible over small terrain undulations.
+6. Reform SQUARE -> LINE without a live volley: no black-powder smoke or fake fire pose may be emitted.
+7. Select Oberstløjtnant and issue a regiment order: clicked/pending and active order remain blue until no subordinate mission is executing it.
+8. FORSVAR HER with dragged facing: battalion/regiment frontage forms around the clicked objective and faces the arrow direction.
+9. FORSVAR HER without facing: AUTO-facing should point toward the nearest relevant enemy; if none exists it retains the existing front direction.
+10. ANGREB HER: stronger companies by men + experience should occupy assault/front roles before weaker units; a pure reserve role should normally receive the weakest suitable unit.
+11. Attack/move in Column toward an enemy: Line reform must begin roughly hostile MaximumRange + 35 m and should be visually complete before the unit enters enemy Long/MaximumRange.
+12. Put one AI-controlled friendly company between another firing company and its target. The obstruction must cause a Line-preserving left/right Side Step; if the front company is already effectively firing on that same enemy, the rear company should step to a free lane instead.
+13. Side Step must not rotate the formation 90 degrees, enter Column, cross into water or override Square/charge/melee/bridge/under-fire states.
+14. Regression F30: cavalry F10 panel, Gardehusar/Dragon movement, Dragon dismount/remount and cavalry-vs-Square behaviour still function.
+15. Regression F29Z: four Square fire faces and directional smoke still function.
 
 IMPORTANT QA STATUS
 Repository changes are committed to channel-test, but Unity compiler/runtime success must only be marked verified after the project has been opened/tested in Unity 6000.6.0f1 and no red compiler errors are present.
