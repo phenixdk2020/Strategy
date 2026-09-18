@@ -410,8 +410,12 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
     private bool DrawRow(Rect rect, float indent, string echelon, string name, string men, string status,
         string ai, string attach, bool selected, int stripe, string tooltip)
     {
+        // Button must be processed before the visual row. Drawing an empty IMGUI button
+        // after the labels covered the Division/Brigade/Regiment/Battalion/Company text,
+        // leaving only cavalry rows visible because cavalry uses DrawRowVisual directly.
+        bool clicked = GUI.Button(rect, new GUIContent(string.Empty, tooltip), rowStyle);
         DrawRowVisual(rect, indent, echelon, name, men, status, ai, attach, selected, stripe, tooltip);
-        return GUI.Button(rect, new GUIContent(string.Empty, tooltip), rowStyle);
+        return clicked;
     }
 
     private void DrawRowVisual(Rect rect, float indent, string echelon, string name, string men, string status,

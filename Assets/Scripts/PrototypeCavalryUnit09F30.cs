@@ -301,6 +301,8 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             bridgePhase = BridgePhase.NearBank;
             formationBeforeBridge = Formation;
             Formation = PrototypeCavalryFormation09F30.Column;
+            IsReforming = true;
+            FormationReadyFraction = 0f;
             ResizeCollider();
 
             Debug.Log(
@@ -414,7 +416,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             return 5.6f;
 
         if (Action == PrototypeCavalryAction09F30.Charge)
-            return 13.2f;
+            return IsReforming ? 4.4f : 13.2f;
 
         return Formation == PrototypeCavalryFormation09F30.Column ? 9.4f : 8.2f;
     }
