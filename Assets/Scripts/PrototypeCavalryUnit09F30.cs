@@ -37,7 +37,8 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     {
         Direct,
         NearBank,
-        FarBank
+        FarBank,
+        ExitBank
     }
 
     public string UnitName { get; private set; }
@@ -54,6 +55,10 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     public bool HasPistol => true;
     public bool HasSabre => true;
     public Regiment ChargeTarget => chargeTarget;
+    public bool IsBridgeRouteActive => bridgePhase != BridgePhase.Direct;
+    public bool IsReforming { get; private set; }
+    public float FormationReadyFraction { get; private set; } = 1f;
+    public string BridgePhaseLabel => bridgePhase == BridgePhase.Direct ? "DIRECT" : bridgePhase.ToString().ToUpperInvariant();
 
     private readonly List<Transform> mountedFigures = new List<Transform>();
     private readonly List<GameObject> mountedRiders = new List<GameObject>();
@@ -79,6 +84,9 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     private const float BridgeZ = 22f;
     private const float BridgeBankOffset = 13.5f;
     private const float ContactDistance = 7.5f;
+    private const float MountedReformSpeed = 8.0f;
+    private const float FootReformSpeed = 5.0f;
+    private const float FormationReadyTolerance = 0.55f;
     private const float RemountDistance = 18f;
 
     public void Initialize(
@@ -165,8 +173,16 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             return;
         }
 
+        if (Formation == formation)
+            return;
+
         Formation = formation;
+        IsReforming = true;
+        FormationReadyFraction = 0f;
         ResizeCollider();
+
+        Debug.Log("CAVALRY-09F30H|Unit=" + UnitName + "|Formation=" + Formation +
+                  "|Reforming=True|Ranks=" + (Formation == PrototypeCavalryFormation09F30.Line ? "4" : "4-abreast"));
     }
 
     public void OrderMove(Vector3 worldPoint)
@@ -271,6 +287,12 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         finalDestination = Ground(goal);
         hasDestination = true;
 
+        // Preserve an active bridge transaction. F30C Officer AI can reissue a maneuver
+        // goal while the unit is crossing; resetting the phase here stranded 1:1 cavalry
+        // on/near the bridge.
+        if (bridgePhase != BridgePhase.Direct)
+            return;
+
         int startSide = BankSide(transform.position);
         int goalSide = BankSide(finalDestination);
         if (startSide != 0 && goalSide != 0 && startSide != goalSide)
@@ -344,7 +366,14 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         if (bridgePhase == BridgePhase.NearBank)
             return Ground(bridge + Vector3.right * (bridgeStartSide * BridgeBankOffset));
 
-        return Ground(bridge - Vector3.right * (bridgeStartSide * BridgeBankOffset));
+        if (bridgePhase == BridgePhase.FarBank)
+            return Ground(bridge - Vector3.right * (bridgeStartSide * BridgeBankOffset));
+
+        // Do not reform immediately at the far bridge lip. A 1:1 two-abreast cavalry
+        // column is long; move the head far enough onto the bank for the whole column
+        // to clear the bridge before restoring the normal four-rank line.
+        float exit = BridgeExitClearance();
+        return Ground(bridge - Vector3.right * (bridgeStartSide * exit));
     }
 
     private bool AdvanceBridgePhase()
@@ -357,9 +386,19 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
         if (bridgePhase == BridgePhase.FarBank)
         {
+            bridgePhase = BridgePhase.ExitBank;
+            return true;
+        }
+
+        if (bridgePhase == BridgePhase.ExitBank)
+        {
             bridgePhase = BridgePhase.Direct;
             Formation = formationBeforeBridge;
+            IsReforming = true;
+            FormationReadyFraction = 0f;
             ResizeCollider();
+            Debug.Log("CAVALRY-09F30H|Unit=" + UnitName +
+                      "|BridgeRoute=False|CrossingComplete=True|Reform=" + Formation);
             return true;
         }
 
@@ -572,24 +611,48 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     private void UpdateVisualFormation()
     {
+        int ready = 0;
+        int total = 0;
+
         if (Mode == PrototypeCavalryMode09F30.Mounted)
         {
+            total = mountedFigures.Count;
             for (int i = 0; i < mountedFigures.Count; i++)
             {
+                if (mountedFigures[i] == null)
+                    continue;
+
                 Vector3 target = MountedPosition(i, mountedFigures.Count);
-                mountedFigures[i].localPosition = Vector3.Lerp(mountedFigures[i].localPosition, target, 8f * Time.deltaTime);
-                mountedFigures[i].localRotation = Quaternion.Slerp(mountedFigures[i].localRotation, Quaternion.identity, 8f * Time.deltaTime);
+                mountedFigures[i].localPosition = Vector3.MoveTowards(
+                    mountedFigures[i].localPosition, target, MountedReformSpeed * Time.deltaTime);
+                mountedFigures[i].localRotation = Quaternion.RotateTowards(
+                    mountedFigures[i].localRotation, Quaternion.identity, 120f * Time.deltaTime);
+
+                if (Vector3.Distance(mountedFigures[i].localPosition, target) <= FormationReadyTolerance)
+                    ready++;
             }
         }
         else
         {
+            total = footFigures.Count;
             for (int i = 0; i < footFigures.Count; i++)
             {
+                if (footFigures[i] == null)
+                    continue;
+
                 Vector3 target = FootPosition(i, footFigures.Count);
-                footFigures[i].localPosition = Vector3.Lerp(footFigures[i].localPosition, target, 8f * Time.deltaTime);
-                footFigures[i].localRotation = Quaternion.Slerp(footFigures[i].localRotation, Quaternion.identity, 8f * Time.deltaTime);
+                footFigures[i].localPosition = Vector3.MoveTowards(
+                    footFigures[i].localPosition, target, FootReformSpeed * Time.deltaTime);
+                footFigures[i].localRotation = Quaternion.RotateTowards(
+                    footFigures[i].localRotation, Quaternion.identity, 120f * Time.deltaTime);
+
+                if (Vector3.Distance(footFigures[i].localPosition, target) <= FormationReadyTolerance)
+                    ready++;
             }
         }
+
+        FormationReadyFraction = total > 0 ? Mathf.Clamp01(ready / (float)total) : 1f;
+        IsReforming = FormationReadyFraction < 0.90f;
     }
 
     private void RefreshFormationInstant()
@@ -602,19 +665,35 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     private Vector3 MountedPosition(int index, int total)
     {
-        if (Formation == PrototypeCavalryFormation09F30.Column)
+        // Bridge/defile column: two abreast. This is intentionally independent of the
+        // normal COLUMN formation so a bridge crossing can remain narrow without changing
+        // the player's normal march doctrine.
+        if (bridgePhase != BridgePhase.Direct)
         {
-            int columns = 3;
-            int rank = index / columns;
-            int col = index % columns;
-            return new Vector3((col - 1f) * 1.55f, 0f, -rank * 2.2f);
+            int bridgeColumns = 2;
+            int rank = index / bridgeColumns;
+            int col = index % bridgeColumns;
+            return new Vector3((col - 0.5f) * 1.55f, 0f, -rank * 2.15f);
         }
 
-        int ranks = 2;
+        // Normal march/manoeuvre column: four abreast.
+        if (Formation == PrototypeCavalryFormation09F30.Column)
+        {
+            int columns = 4;
+            int rank = index / columns;
+            int col = index % columns;
+            return new Vector3((col - 1.5f) * 1.55f, 0f, -rank * 2.15f);
+        }
+
+        // Project decision F30H: normal cavalry line and charge line are both four ranks.
+        int ranks = 4;
         int columnsLine = Mathf.CeilToInt(total / (float)ranks);
         int lineRank = index / columnsLine;
         int lineCol = index % columnsLine;
-        return new Vector3((lineCol - (columnsLine - 1) * 0.5f) * 1.7f, 0f, -lineRank * 2.05f);
+        return new Vector3(
+            (lineCol - (columnsLine - 1) * 0.5f) * 1.70f,
+            0f,
+            -(lineRank - (ranks - 1) * 0.5f) * 1.75f);
     }
 
     private Vector3 FootPosition(int index, int total)
@@ -640,13 +719,35 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             return;
 
         if (Mode == PrototypeCavalryMode09F30.Dismounted)
+        {
             unitCollider.size = Formation == PrototypeCavalryFormation09F30.Line
                 ? new Vector3(18f, 2.4f, 5f)
                 : new Vector3(6f, 2.4f, 16f);
+            return;
+        }
+
+        int men = Mathf.Max(1, CurrentStrength);
+        if (bridgePhase != BridgePhase.Direct)
+        {
+            int rows = Mathf.CeilToInt(men / 2f);
+            unitCollider.size = new Vector3(5.2f, 3.1f, Mathf.Max(24f, rows * 2.15f + 3f));
+        }
+        else if (Formation == PrototypeCavalryFormation09F30.Line)
+        {
+            int columns = Mathf.CeilToInt(men / 4f);
+            unitCollider.size = new Vector3(Mathf.Max(22f, columns * 1.70f + 3f), 3.1f, 10f);
+        }
         else
-            unitCollider.size = Formation == PrototypeCavalryFormation09F30.Line
-                ? new Vector3(22f, 3.1f, 7f)
-                : new Vector3(7f, 3.1f, 24f);
+        {
+            int rows = Mathf.CeilToInt(men / 4f);
+            unitCollider.size = new Vector3(8.2f, 3.1f, Mathf.Max(24f, rows * 2.15f + 3f));
+        }
+    }
+
+    private float BridgeExitClearance()
+    {
+        int rows = Mathf.CeilToInt(Mathf.Max(1, CurrentStrength) / 2f);
+        return Mathf.Max(42f, rows * 2.15f + 18f);
     }
 
     private static int BankSide(Vector3 point)
