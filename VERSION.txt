@@ -1,83 +1,41 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30e
+Prototype version: v00.00.09f30f
 Build status: TEST
-Build name: 1:1 CAVALRY + HISTORICAL VISUAL FIDELITY
-Visible build marker: PROJECT 1864 | v00.00.09f30e TEST
+Build name: IMPLEMENTATION + FIX HISTORY CONSOLIDATION
+Visible build marker: PROJECT 1864 | v00.00.09f30f TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
+Gameplay baseline: v00.00.09f30e
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
-Current design supplements:
-- docs/design-supplements/v00.00.09f30e-1to1-cavalry-visuals.md
-- docs/design-supplements/v00.00.09f30d-oob-scroll-dnd-cavalry-visuals.md
-- docs/design-supplements/v00.00.09f30c-cavalry-ai-dynamic-attachment.md
-- docs/design-supplements/v00.00.09f30b-higher-command-hq.md
-- docs/design-supplements/v00.00.09f30a-command-officer-hardening.md
-- docs/design-supplements/v00.00.09f30-cavalry-core.md
+Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+Historical snapshot through F29R: docs/archive/VERSION-through-v00.00.09f29r.txt
 
-v00.00.09f30e - 1:1 Cavalry + Historical Visual Fidelity
-- Backup before F30E: backup/channel-test-v00.00.09f30d-pre-09f30e-1to1-cavalry-visuals at F30D HEAD d8d52bfbdbfac184ecabc201b021b72897c1db35.
-- Tactical cavalry visual scale is now 1:1, matching the infantry direction: one simulated cavalryman = one visible mounted figure at tactical detail.
-- Gardehusar Eskadron: InitialStrength 120 -> 120 visible mounted riders.
-- Dragon Eskadron: InitialStrength 140 -> 140 visible mounted riders.
-- Dragon dismounted representation is also filled to 1:1: 140 men on foot when SID AF is used; the 140 mounted horse figures remain physically at the horse-holder position with riders hidden.
-- F30E fills the existing F30/F30D formation lists rather than creating a decorative parallel formation, so all 120/140 figures use the existing Line/Column movement pipeline.
-- Existing early F30/F30D mounted figures are visually upgraded and recoloured so the full formation reads consistently instead of having a low-detail first block and a different-detail tail.
-- Gardehusar visual identity: light-blue hussar silhouette, silver braid, black fur headgear, red pelisse/plume accents and sabre.
-- Dragon visual identity: dark-blue coat, red facings, crested dark helmet, carbine and sabre.
-- Horses use a fuller low-poly silhouette with body/chest/neck/head/muzzle, four legs and hooves, mane, tail, ears, saddle/cloth, bridle and reins. Several brown horse tones break up the previous cloned-block appearance.
-- Brigade/Division mounted HQ staff receive rider legs, arms, boots, helmet/crest, collar and sabre on top of the F30D horse-leg pass; they remain mounted officer/staff groups, not horses standing beside dismounted officers.
-- One-to-one formation footprint is continuously reasserted after Line/Column and mounted/dismounted transitions so the logical selection/collision footprint matches the larger visible formation.
-- F30E hardening registers the visual upgrade of legacy F30/F30D riders with mountedRiders, so Dragon SID AF hides both old and new rider geometry instead of leaving ghost riders on the horses.
-- WEDGE is not added as a default 1851/1864 formation. F30E retains LINE/COLUMN; ECHELON LEFT/RIGHT remains the next historically grounded cavalry-formation candidate.
-- OOB scroll, drag/drop attachment, dynamic CurrentCommandParent, cavalry Officer AI and manual override remain F30D/F30C behavior and are not replaced by this visual pass.
+v00.00.09f30f - Implementation + Fix History Consolidation
+- Backup before F30F: backup/channel-test-v00.00.09f30e-pre-09f30f-history-consolidation at F30E HEAD 83409c58a761b01854f36c5acbcfe41a453491cb.
+- Adds docs/IMPLEMENTATION-AND-FIX-HISTORY.md as the consolidated chronological record from the project foundation through F30E.
+- The history separately identifies implemented features, hardening and known bug/hotfix corrections.
+- Explicitly records the complete F30E implementation: 120/120 Gardehusar, 140/140 Dragon, Dragon 1:1 dismount, historical visual differentiation, HQ mounted polish and 1:1 footprint hardening.
+- Consolidates fixes including compile errors, route/authority conflicts, HUD regressions, Square renderer mismatch, charge input/formation/fire, contact/pathfinding, selection persistence, Square smoke/footprint/cones, defense facing, friendly fire lanes, F30 runtime NullReferences, command-tree direction, OOB overlap/scroll/drag-drop and F30E ghost-rider/collider hardening.
+- No tactical gameplay rules are changed from F30E.
+- Designmanual is updated in the follow-up F30F documentation commit.
 
-Primary v00.00.09f30e QA
-1. Unity must compile with no red errors before F30E is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f30e TEST.
-3. Gardehusar visually contains 120 mounted riders; Dragon visually contains 140 mounted riders.
-4. Cavalry Line should become a broad 1:1 frontage; Column should become a deep 3-abreast 1:1 march column without figures stacking at the origin.
-5. Gardehusar and Dragon must be visually distinguishable at tactical zoom by uniform/headgear/equipment, not only by OOB name.
-6. All horses must have four readable legs/hooves and improved head/neck/tail detail; HQ mounts remain visibly mounted.
-7. Dragon SID AF: riders disappear from the 140 horses, 140 dismounted dragon figures appear, and horses remain at the dismount location.
-8. Dragon STIG OP restores riders and hides the foot formation.
-9. Regression F30D: OOB fixed columns, scrollbar and cavalry drag/drop attachment still function.
-10. Regression F30C: autonomous flank/rear cavalry Officer AI and direct player manual override still function.
-11. Performance must be observed at tactical zoom because 1:1 cavalry intentionally increases visible GameObjects substantially.
+Primary v00.00.09f30f QA
+1. Unity must compile with no red errors.
+2. Visible marker reads PROJECT 1864 | v00.00.09f30f TEST.
+3. Runtime cavalry/AI/OOB behavior must remain identical to F30E.
+4. docs/IMPLEMENTATION-AND-FIX-HISTORY.md must cover the documented lineage from foundation through F30E.
+5. Designmanual baseline must reference F30F history after the follow-up documentation commit.
 
+CURRENT IMPLEMENTED BASELINE — inherited from F30E
+- 1:1 cavalry tactical scale: Gardehusar 120/120; Dragon 140/140.
+- Dragon 1:1 SID AF/STIG OP with horse-holder position.
+- Distinct Gardehusar/Dragon visual identity and improved cavalry/HQ mounts.
+- OOB fixed columns, scrollbar and drag/drop attachments.
+- Dynamic CurrentCommandParent: Division / Brigade / Regiment / Major A / Major B.
+- Cavalry Officer AI seeks flank/rear and respects direct manual override.
+- Physical Division + Brigade + Regiment + Battalion + Company hierarchy.
+- Infantry Line/Column/Square, fire policies, charge/melee, under-fire and mission authority.
+- Semantic zoom/NATO, tactical map, crop concealment and navigation hardening.
 
-v00.00.09f30d - OOB scroll + drag/drop + cavalry/HQ visual polish
-- Backup before F30D: backup/channel-test-v00.00.09f30c-pre-09f30d-oob-scroll-dnd-horses at F30C HEAD 1beb7d141c620fb62c703095782e56037a710547.
-- Replaces the F30C OOB presentation with a wider fixed-column layout for unit name, men, status, AI and attachment state.
-- Removes command-role text from the structural OOB labels. The regiment row is now simply `1. REGIMENT`; `Oberstløjtnant` is metadata/tooltip/HUD information rather than an extra line in the tree. Division/Brigade follow the same rule.
-- Adds a real scroll view. The OOB header remains fixed; the hierarchy scrolls with mouse wheel/scrollbar when future units make the tree taller than the available panel height.
-- Adds direct cavalry drag-and-drop attachment in the OOB. Drag Gardehusar/Dragon and drop on 1. Division, 1. Brigade, 1. Regiment, 1. Battalion or 2. Battalion to change CurrentCommandParent live.
-- Attachment remains explicit with ATT in its own column. The row physically moves to the selected command parent after drop.
-- Major rows expose AI/MAN in a dedicated AI column. Company/cavalry status is no longer squeezed together with men/attachment text.
-- Cavalry visual density is increased from approximately one visible mounted figure per ten men to approximately one per five men: Gardehusar 120 -> 24 visible riders, Dragon 140 -> 28 visible riders.
-- The additional mounted figures are inserted into the existing F30 formation lists, so Line/Column movement and Dragon dismount/remount continue to use the normal cavalry visual formation pipeline.
-- Adds horse legs/hooves, neck/tail/ear detail to cavalry horses and legs/hooves/tail/ears to Brigade/Division HQ horses. HQ layout remains commander forward with staff behind; the horses are mounted staff, not separate riderless horses.
-
-Primary v00.00.09f30d QA
-1. Unity must compile with no red errors before F30D is considered verified.
-2. Visible marker reads PROJECT 1864 | v00.00.09f30d TEST.
-3. OOB has no overlapping text at 100% UI scale: men/status/AI/ATT use separate columns.
-4. Regiment row displays `1. REGIMENT`; `OBERSTLØJTNANT` must not appear as a separate structural line.
-5. With current small OOB the scroll bar may be absent; reduce window height or later add enough rows and verify the vertical scrollbar appears and header remains fixed.
-6. Drag Gardehusar or Dragon row onto Division/Brigade/Regiment/Major A/Major B equivalent row. On release the cavalry row must move under that parent and command-link ownership must follow the existing F30C attachment state.
-7. A simple click on cavalry row still selects it; a drag must not also trigger a selection/order.
-8. Gardehusar displays about 24 riders and Dragon about 28, with Line/Column still reforming normally.
-9. Dragon dismount leaves the expanded horse group at the horse-holder position and hides riders; remount restores mounted riders.
-10. Brigade/Division HQ horses visibly have four legs/hooves and retain commander-front/staff-rear arrangement.
-11. Regression F30C: cavalry Officer AI, manual override, dynamic CurrentCommandParent and symmetric command-tree remain functional.
-
-v00.00.09f30c - Cavalry Officer AI + Dynamic Attachment + Manual Override
-- Cavalry officers seek flank/rear before charge, avoid ready Square, allow manual override and support live parent changes through Division/Brigade/Regiment/Major A/Major B.
-
-v00.00.09f30b - Higher Command HQ + Attachment
-- Physical Division/Brigade HQ, unified command chain and generic OrganicParent/CurrentCommandParent attachment model.
-
-v00.00.09f30a - Command/Square/Officer hardening
-- OOB selection persistence, Square visual/smoke hardening, stronger attack allocation, early Line deployment and fire-lane Side Step.
-
-IMPORTANT QA STATUS
-Repository changes are committed to channel-test, but Unity compiler/runtime success must only be marked verified after the project has been opened/tested in Unity 6000.6.0f1 and no red compiler errors are present.
+FULL CHANGE/FIX LINEAGE
+See docs/IMPLEMENTATION-AND-FIX-HISTORY.md. The full document is intentionally separated from this active VERSION header to keep the build status readable while preserving the complete history.
