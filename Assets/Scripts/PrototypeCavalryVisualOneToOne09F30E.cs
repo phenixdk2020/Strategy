@@ -23,9 +23,9 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
 
     private void Update()
     {
-        if (done || Time.unscaledTime < nextTry)
+        if (Time.unscaledTime < nextTry)
             return;
-        nextTry = Time.unscaledTime + 0.5f;
+        nextTry = Time.unscaledTime + 0.35f;
 
         PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
         PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
@@ -33,21 +33,29 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
             cavalry.Gardehusar == null || cavalry.Dragon == null)
             return;
 
-        int garde = EnhanceUnit(cavalry.Gardehusar);
-        int dragon = EnhanceUnit(cavalry.Dragon);
-        EnhanceHigherHq(higher.BrigadeHqRoot);
-        EnhanceHigherHq(higher.DivisionHqRoot);
-
-        done = garde == cavalry.Gardehusar.InitialStrength &&
-               dragon == cavalry.Dragon.InitialStrength;
-
-        if (done)
+        if (!done)
         {
-            Debug.Log(
-                "VISUAL-09F30E|OneToOne=True|Gardehusar=" + garde + "/" + cavalry.Gardehusar.InitialStrength +
-                "|Dragon=" + dragon + "/" + cavalry.Dragon.InitialStrength +
-                "|DragonDismounted=1to1|HQMountedStaffPolish=True");
+            int garde = EnhanceUnit(cavalry.Gardehusar);
+            int dragon = EnhanceUnit(cavalry.Dragon);
+            EnhanceHigherHq(higher.BrigadeHqRoot);
+            EnhanceHigherHq(higher.DivisionHqRoot);
+
+            done = garde == cavalry.Gardehusar.InitialStrength &&
+                   dragon == cavalry.Dragon.InitialStrength;
+
+            if (done)
+            {
+                Debug.Log(
+                    "VISUAL-09F30E|OneToOne=True|Gardehusar=" + garde + "/" + cavalry.Gardehusar.InitialStrength +
+                    "|Dragon=" + dragon + "/" + cavalry.Dragon.InitialStrength +
+                    "|DragonDismounted=1to1|HQMountedStaffPolish=True");
+            }
         }
+
+        // F30 core recalculates a small QA collider when formation/mode changes.
+        // Reassert the real 1:1 footprint after Line/Column and mounted/dismounted transitions.
+        MaintainOneToOneCollider(cavalry.Gardehusar);
+        MaintainOneToOneCollider(cavalry.Dragon);
     }
 
     private static int EnhanceUnit(PrototypeCavalryUnit09F30 unit)
@@ -97,8 +105,21 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
         Material white = PrototypeBootstrap.CreateSharedMaterial(
             new Color(0.90f, 0.90f, 0.84f), "F30E_White_" + unit.Kind);
 
-        for (int i = 0; i < mountedFigures.Count; i++)
-            EnhanceExistingMountedFigure(mountedFigures[i], unit.Kind, i, horseMaterials, uniform, red, black, metal, silver, skin, leather, white);
+        int existingMountedCount = mountedFigures.Count;
+        for (int i = 0; i < existingMountedCount; i++)
+        {
+            GameObject riderDetail = EnhanceExistingMountedFigure(
+                mountedFigures[i], unit.Kind, i, horseMaterials,
+                uniform, red, black, metal, silver, skin, leather, white);
+            if (riderDetail != null)
+                mountedRiders.Add(riderDetail);
+        }
+
+        if (unit.Kind == PrototypeCavalryKind09F30.Dragon)
+        {
+            for (int i = 0; i < footFigures.Count; i++)
+                EnhanceExistingDismountedDragon(footFigures[i], red, black, metal, leather);
+        }
 
         int targetMounted = Mathf.Max(1, unit.InitialStrength);
         while (mountedFigures.Count < targetMounted)
@@ -220,7 +241,7 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
         return root.transform;
     }
 
-    private static void EnhanceExistingMountedFigure(
+    private static GameObject EnhanceExistingMountedFigure(
         Transform figure,
         PrototypeCavalryKind09F30 kind,
         int index,
@@ -235,7 +256,7 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
         Material white)
     {
         if (figure == null || figure.Find("F30E_IdentityDetails") != null)
-            return;
+            return null;
 
         Material horse = horses[index % horses.Length];
         Transform[] children = figure.GetComponentsInChildren<Transform>(true);
@@ -251,12 +272,42 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
                 n.Contains("muzzle") || n.Contains("neck") || n.Contains("ear") || n.Contains("tail"))
                 r.sharedMaterial = horse;
             else if (n == "rider" || n == "body")
+            {
                 r.sharedMaterial = uniform;
+                r.enabled = false;
+            }
         }
 
         GameObject detail = new GameObject("F30E_IdentityDetails");
         detail.transform.SetParent(figure, false);
         BuildRider(detail.transform, kind, uniform, red, black, metal, silver, skin, leather, white);
+        return detail;
+    }
+
+    private static void EnhanceExistingDismountedDragon(
+        Transform figure,
+        Material red,
+        Material black,
+        Material metal,
+        Material leather)
+    {
+        if (figure == null || figure.Find("F30E_DismountedDetail") != null)
+            return;
+
+        GameObject detail = new GameObject("F30E_DismountedDetail");
+        detail.transform.SetParent(figure, false);
+        CreatePart(detail.transform, PrimitiveType.Cube, "RedCollar",
+            new Vector3(0f, 1.25f, -0.02f), new Vector3(0.42f, 0.10f, 0.32f),
+            Quaternion.identity, red);
+        CreatePart(detail.transform, PrimitiveType.Sphere, "HelmetBowl",
+            new Vector3(0f, 1.88f, 0f), new Vector3(0.31f, 0.24f, 0.33f),
+            Quaternion.identity, black);
+        CreatePart(detail.transform, PrimitiveType.Cube, "HelmetCrest",
+            new Vector3(0f, 2.12f, -0.04f), new Vector3(0.11f, 0.28f, 0.32f),
+            Quaternion.identity, metal);
+        CreatePart(detail.transform, PrimitiveType.Cube, "CarbineDetail",
+            new Vector3(0.28f, 0.88f, 0.18f), new Vector3(0.055f, 0.055f, 0.80f),
+            Quaternion.Euler(-8f, 0f, -4f), leather);
     }
 
     private static void BuildRider(
@@ -477,6 +528,21 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
 
         GameObject marker = new GameObject("F30E_HQMountedPolish");
         marker.transform.SetParent(hq.transform, false);
+    }
+
+    private static void MaintainOneToOneCollider(PrototypeCavalryUnit09F30 unit)
+    {
+        if (unit == null)
+            return;
+
+        FieldInfo mountedFiguresField = typeof(PrototypeCavalryUnit09F30).GetField("mountedFigures", PrivateInstance);
+        FieldInfo unitColliderField = typeof(PrototypeCavalryUnit09F30).GetField("unitCollider", PrivateInstance);
+        List<Transform> mountedFigures = mountedFiguresField != null
+            ? mountedFiguresField.GetValue(unit) as List<Transform> : null;
+        BoxCollider collider = unitColliderField != null
+            ? unitColliderField.GetValue(unit) as BoxCollider : null;
+
+        ResizeOneToOneCollider(unit, collider, mountedFigures != null ? mountedFigures.Count : 0);
     }
 
     private static void ResizeOneToOneCollider(

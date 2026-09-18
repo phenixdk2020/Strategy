@@ -26,7 +26,8 @@ v00.00.09f30e - 1:1 Cavalry + Historical Visual Fidelity
 - Dragon visual identity: dark-blue coat, red facings, crested dark helmet, carbine and sabre.
 - Horses use a fuller low-poly silhouette with body/chest/neck/head/muzzle, four legs and hooves, mane, tail, ears, saddle/cloth, bridle and reins. Several brown horse tones break up the previous cloned-block appearance.
 - Brigade/Division mounted HQ staff receive rider legs, arms, boots, helmet/crest, collar and sabre on top of the F30D horse-leg pass; they remain mounted officer/staff groups, not horses standing beside dismounted officers.
-- One-to-one formation footprint is reflected in the cavalry collider width/depth so the logical selection/collision footprint better matches the much larger visible Line/Column.
+- One-to-one formation footprint is continuously reasserted after Line/Column and mounted/dismounted transitions so the logical selection/collision footprint matches the larger visible formation.
+- F30E hardening registers the visual upgrade of legacy F30/F30D riders with mountedRiders, so Dragon SID AF hides both old and new rider geometry instead of leaving ghost riders on the horses.
 - WEDGE is not added as a default 1851/1864 formation. F30E retains LINE/COLUMN; ECHELON LEFT/RIGHT remains the next historically grounded cavalry-formation candidate.
 - OOB scroll, drag/drop attachment, dynamic CurrentCommandParent, cavalry Officer AI and manual override remain F30D/F30C behavior and are not replaced by this visual pass.
 
