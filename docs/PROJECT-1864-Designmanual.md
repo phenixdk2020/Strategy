@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.17**  
+**Aktuel designbaseline: v00.02.28**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10n4 HUD + ZONE SELECTION + SHARED BORDER HOTFIX**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n7b WAY 1 / CITY ART POLISH**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -34,6 +34,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 14: 49 — Campaign3 v00.00.10n2: HUD-cleanup og kystklippede zonegrænser](parts/part-14-49-CAMPAIGN-V10N2-UI-COASTLINE.md)
 - [Del 15: 50 — Campaign3 v00.00.10n3: skarpere zonegrænser + kompakt zoneinfo](parts/part-15-50-CAMPAIGN-V10N3-ZONE-POLISH-INFO.md)
 - [Del 16: 51 — Campaign3 v00.00.10n4: HUD-default, korrekt zonevalg og delte interne grænser](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md)
+- [Del 27: 62 — Campaign3 v00.00.10n7b: Vej 1 / City Art Polish](parts/part-27-62-CAMPAIGN-V10N7B-CITY-ART-POLISH.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -151,6 +152,18 @@ Zone-line renderer registrerer samtidig hvilke forskellige ZoneIds der ejer hver
 Historisk guardrail er uændret: zoneidentiteterne er kanoniske, men den nuværende center-derived polygongeometri er stadig prototype og ikke historisk 1851-facit.
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 16 / Campaign3 v00.00.10n4](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md).
+
+## Campaign3 v00.00.10n7b — Vej 1 / City Art Polish
+
+Designbaseline v00.02.28 følger den besluttede Vej 1: Amt/county-systemet forbliver eksplicit slået fra, mens city-art stabiliseres isoleret. `CampaignMapOnlyCityArtV010N7B` overtager som eneste runtime owner af byernes grafik og deaktiverer n7a samt ældre n6/n6g/n6h city-renderers.
+
+Kun **Proposal 3 — Isometric Miniature Town** er tilladt som visuel stil. Der må ikke vises beige/generated fallback-byer. Byikonerne gøres væsentligt mindre end i n7a: A=1.55, B=1.12 og C=0.78. Bottom-center anchor, ingen X/Z-art-offset og ground lift 0.16 fastholdes, så især kystbyer ikke opleves visuelt flyttet ud i vandet.
+
+Texture sampling bruger Bilinear + Clamp og mip bias -0.75 som første skarpheds-pass. Klikcollideren forbliver større end selve ikonet, så mindre grafik ikke gør city selection vanskeligere.
+
+Amt/county boundaries, county click ownership, county highlight og county info panels må ikke genindføres i n7b. Den senere County Rebuild skal bruge **én authoritative historisk polygonkilde** til visible boundary, click ownership og selected-area highlight.
+
+Den fulde implementation/QA-specifikation ligger i [Del 27 / Campaign3 v00.00.10n7b](parts/part-27-62-CAMPAIGN-V10N7B-CITY-ART-POLISH.md).
 
 ## v00.00.09 Tactical Command Test — implementeringsstatus
 
