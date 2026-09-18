@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30f TEST**  
-**Gameplay-baseline: v00.00.09f30e**  
+**Konsolideret ved v00.00.09f30g TEST**  
+**Gameplay-baseline: v00.00.09f30g**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30E. F30F ændrer ikke gameplay; den konsoliderer historikken.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30G. F30F konsoliderede historikken; F30G tilføjer OOB/input/visibility-hardening.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -342,9 +342,26 @@ Fejlrettelser/hardening:
 - F30D 1:5 visual proxy er superseded af 1:1.
 - WEDGE ikke implementeret som standardformation; LINE/COLUMN forbliver aktive. ECHELON LEFT/RIGHT er næste planlagte cavalry formation.
 
+### v00.00.09f30f — Implementation & Fix History Consolidation
+- Ingen combat/movement-regler ændret fra F30E.
+- VERSION.txt gjort til kort aktiv buildstatus.
+- docs/IMPLEMENTATION-AND-FIX-HISTORY.md etableret som samlet lineage og fejlrettelsesregister.
+
+### v00.00.09f30g — OOB Input + Higher HQ/Cavalry Visibility Hotfix
+Fejlrettelser/hardening:
+- Legacy F29V OOB status-overlay deaktiveret, så sort `190 KLAR` patch ikke længere overlapper unified OOB.
+- Old infantry/cavalry/F30B/F30C OOB renderers eksplicit disabled under F30D+.
+- Cavalry OOB row bruger ikke længere GUI.Button, som stjal MouseDown/MouseUp fra drag-state-maskinen.
+- Single-click selection, double-click camera focus og hold+drag attachment er separeret i samme cavalry row.
+- Gardehusar/Dragon får semantic I/CAV counters.
+- Brigade/Division får semantic X/XX HQ counters.
+- Strategic mesh suppression/restoration omfatter cavalry og higher HQ.
+- Gardehusar/Dragon QA startpositioner flyttet tættere på dansk formation.
+- Brigade/Division follow-distance reduceret for normal QA-læsbarhed; higher HQ clamped til battlefield bounds.
+
 ## 7. Samlet fejlrettelsesregister
 
-De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30E:
+De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30G:
 
 1. Unity compile CS0136 local-variable collision.
 2. Deprecated/obsolete object lookup cleanup.
@@ -383,10 +400,14 @@ De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/harden
 35. HQ/cavalry horses manglede læselige ben/hove.
 36. Dragon dismount kunne efterlade legacy ghost-rider geometry.
 37. 1:1 cavalry collider kunne blive overskrevet af gammel proxy ResizeCollider efter formation/mode change.
+38. Legacy F29V `190 KLAR` status-overlay blev fortsat tegnet oven på unified OOB.
+39. Cavalry OOB `GUI.Button` konsumerede mouse events og blokerede selection/drag-drop state machine.
+40. Gardehusar/Dragon manglede semantic-zoom counters og var derfor svære at lokalisere i operational/strategic view.
+41. Brigade/Division HQ manglede semantic counters og lå for langt bag regiments-HQ til normal QA-læsbarhed.
 
-## 8. Status ved F30F
+## 8. Status ved F30G
 
-F30F er en dokumentations-/baselineversion. Runtime gameplay er fortsat F30E, bortset fra den synlige buildmarker der bumpes til F30F.
+F30G er aktiv TEST-baseline. Runtime gameplay bygger videre på F30E, med F30G UI/input/visibility/QA-placement hotfixes ovenpå.
 
 Aktuel implementeret tactical scope:
 - 1:1 infantry og cavalry tactical visuals.
@@ -397,7 +418,7 @@ Aktuel implementeret tactical scope:
 - Manual override på alle implementerede control-lag.
 - Infantry Line/Column/Square, fire policy, charge/melee, under-fire, withdrawal infrastructure.
 - Cavalry Line/Column, mounted move/charge, Dragon dismount/remount, flank/rear Officer AI.
-- Semantic zoom/NATO, tactical map, crop concealment og terrain/navigation hardening.
+- Semantic zoom/NATO inklusive cavalry I/CAV og Brigade/Division X/XX HQ counters, tactical map, crop concealment og terrain/navigation hardening.
 
 Ikke færdigt endnu:
 - Artillery/kanonbatteri.
