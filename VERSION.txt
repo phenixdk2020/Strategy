@@ -1,17 +1,48 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30d
+Prototype version: v00.00.09f30e
 Build status: TEST
-Build name: OOB SCROLL + DRAG/DROP + CAVALRY/HQ VISUAL POLISH
-Visible build marker: PROJECT 1864 | v00.00.09f30d TEST
+Build name: 1:1 CAVALRY + HISTORICAL VISUAL FIDELITY
+Visible build marker: PROJECT 1864 | v00.00.09f30e TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Current design supplements:
+- docs/design-supplements/v00.00.09f30e-1to1-cavalry-visuals.md
 - docs/design-supplements/v00.00.09f30d-oob-scroll-dnd-cavalry-visuals.md
 - docs/design-supplements/v00.00.09f30c-cavalry-ai-dynamic-attachment.md
 - docs/design-supplements/v00.00.09f30b-higher-command-hq.md
 - docs/design-supplements/v00.00.09f30a-command-officer-hardening.md
 - docs/design-supplements/v00.00.09f30-cavalry-core.md
+
+v00.00.09f30e - 1:1 Cavalry + Historical Visual Fidelity
+- Backup before F30E: backup/channel-test-v00.00.09f30d-pre-09f30e-1to1-cavalry-visuals at F30D HEAD d8d52bfbdbfac184ecabc201b021b72897c1db35.
+- Tactical cavalry visual scale is now 1:1, matching the infantry direction: one simulated cavalryman = one visible mounted figure at tactical detail.
+- Gardehusar Eskadron: InitialStrength 120 -> 120 visible mounted riders.
+- Dragon Eskadron: InitialStrength 140 -> 140 visible mounted riders.
+- Dragon dismounted representation is also filled to 1:1: 140 men on foot when SID AF is used; the 140 mounted horse figures remain physically at the horse-holder position with riders hidden.
+- F30E fills the existing F30/F30D formation lists rather than creating a decorative parallel formation, so all 120/140 figures use the existing Line/Column movement pipeline.
+- Existing early F30/F30D mounted figures are visually upgraded and recoloured so the full formation reads consistently instead of having a low-detail first block and a different-detail tail.
+- Gardehusar visual identity: light-blue hussar silhouette, silver braid, black fur headgear, red pelisse/plume accents and sabre.
+- Dragon visual identity: dark-blue coat, red facings, crested dark helmet, carbine and sabre.
+- Horses use a fuller low-poly silhouette with body/chest/neck/head/muzzle, four legs and hooves, mane, tail, ears, saddle/cloth, bridle and reins. Several brown horse tones break up the previous cloned-block appearance.
+- Brigade/Division mounted HQ staff receive rider legs, arms, boots, helmet/crest, collar and sabre on top of the F30D horse-leg pass; they remain mounted officer/staff groups, not horses standing beside dismounted officers.
+- One-to-one formation footprint is reflected in the cavalry collider width/depth so the logical selection/collision footprint better matches the much larger visible Line/Column.
+- WEDGE is not added as a default 1851/1864 formation. F30E retains LINE/COLUMN; ECHELON LEFT/RIGHT remains the next historically grounded cavalry-formation candidate.
+- OOB scroll, drag/drop attachment, dynamic CurrentCommandParent, cavalry Officer AI and manual override remain F30D/F30C behavior and are not replaced by this visual pass.
+
+Primary v00.00.09f30e QA
+1. Unity must compile with no red errors before F30E is considered verified.
+2. Visible marker reads PROJECT 1864 | v00.00.09f30e TEST.
+3. Gardehusar visually contains 120 mounted riders; Dragon visually contains 140 mounted riders.
+4. Cavalry Line should become a broad 1:1 frontage; Column should become a deep 3-abreast 1:1 march column without figures stacking at the origin.
+5. Gardehusar and Dragon must be visually distinguishable at tactical zoom by uniform/headgear/equipment, not only by OOB name.
+6. All horses must have four readable legs/hooves and improved head/neck/tail detail; HQ mounts remain visibly mounted.
+7. Dragon SID AF: riders disappear from the 140 horses, 140 dismounted dragon figures appear, and horses remain at the dismount location.
+8. Dragon STIG OP restores riders and hides the foot formation.
+9. Regression F30D: OOB fixed columns, scrollbar and cavalry drag/drop attachment still function.
+10. Regression F30C: autonomous flank/rear cavalry Officer AI and direct player manual override still function.
+11. Performance must be observed at tactical zoom because 1:1 cavalry intentionally increases visible GameObjects substantially.
+
 
 v00.00.09f30d - OOB scroll + drag/drop + cavalry/HQ visual polish
 - Backup before F30D: backup/channel-test-v00.00.09f30c-pre-09f30d-oob-scroll-dnd-horses at F30C HEAD 1beb7d141c620fb62c703095782e56037a710547.
