@@ -1,43 +1,45 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n7a
-Build status: MAP ONLY + CITY ART CLEANUP
-Build name: CAMPAIGN3 MAP ONLY + CITY ART CLEANUP 10N7A
+Prototype version: v00.00.10n7b
+Build status: WAY 1 / CITY ART POLISH
+Build name: CAMPAIGN3 WAY 1 CITY ART POLISH 10N7B
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n7a-map-only-city-cleanup
+Work branch: work/channel-campaign3-v10n7b-city-art-polish
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.27
+Design baseline: v00.02.28
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
 - v00.00.10n6h = city-art visibility + source-polygon Amt continuity experiment
 - v00.00.10n7a = deliberate scope reset: map only + one Proposal-3 city renderer
+- v00.00.10n7b = WAY 1 city-art polish: counties stay OFF; only city art is changed
 
 ROLLBACK:
+- before v10n7b: backup/channel-campaign3-before-v10n7b-city-art-polish-20260918
 - before v10n7a: backup/channel-campaign3-before-v10n7a-map-only-city-cleanup-20260917
-- before v10n6h: backup/channel-campaign3-before-v10n6h-boundary-city-facing-20260915
 
-V10N7A SCOPE RESET:
-- Amt/county boundaries are deliberately disabled.
-- Amt/county click selection and Amt info panels are deliberately disabled.
-- Historical parish polygon overlays, grid overlays and continuity bridges are not displayed.
-- World Imagery, streamed terrain, city registry, city labels and other retained campaign systems remain active.
-- The purpose is to stabilise city graphics before county borders are rebuilt in a later version.
+V10N7B WAY 1:
+- Amt/county boundaries stay deliberately disabled.
+- Amt/county click selection and Amt info panels stay deliberately disabled.
+- No county geometry tuning is performed in this build.
+- World Imagery, streamed terrain, city registry, city labels and retained campaign systems remain active.
+- City art must be accepted before county borders are rebuilt.
 
-V10N7A CITY ART:
-- CampaignMapOnlyCityArtV010N7A is the single runtime owner of city graphics.
-- Older n6/n6g/n6h city renderers are disabled continuously.
-- Proposal-3 assets are the only permitted visual style.
-- No beige/generated alternative city style is rendered as fallback.
-- Missing Proposal-3 assets produce an explicit error instead of silently changing style.
-- Bottom-center anchored billboard mesh; no X/Z art offset from the canonical city marker.
-- Ground lift: 0.24 world units.
-- Base scale: A=2.20, B=1.60, C=1.15.
-- Old round city marker renderers are hidden and TownGround is not generated.
-- Stable BoxCollider remains for city interaction.
-- A and B Proposal-3 assets are upgraded to sharper 128x128 RGBA source art in this pass; C remains Proposal-3 and is rendered at the smallest scale pending the final unified source-art refresh.
+V10N7B CITY ART:
+- CampaignMapOnlyCityArtV010N7B supersedes n7a at runtime.
+- n7a plus all n6/n6g/n6h city renderers are disabled continuously.
+- Proposal 3 - Isometric Miniature Town remains the only permitted visual language.
+- No beige/generated fallback settlement is rendered.
+- Missing Proposal-3 textures log an explicit blocking city-art error.
+- Bottom-center anchored billboard mesh; no X/Z offset from the canonical city marker.
+- Ground lift reduced to 0.16 world units.
+- Base scale reduced to A=1.55, B=1.12, C=0.78.
+- Texture sampling uses Bilinear + Clamp + mipMapBias=-0.75 for a crisper result at campaign zoom.
+- Click collider remains larger than the visible art for usability.
+- Old round city marker renderers remain hidden and TownGround is not generated.
 
-V10N7A RUNTIME OWNERSHIP:
+V10N7B RUNTIME OWNERSHIP:
+- Disabled: CampaignMapOnlyCityArtV010N7A.
 - Disabled: CampaignHistoricalAmtPolygonsV010N6G.
 - Disabled: CampaignHistoricalAmtOverlayV010N6F.
 - Disabled: CampaignAmtBoundaryContinuityV010N6H.
@@ -46,43 +48,41 @@ V10N7A RUNTIME OWNERSHIP:
 - Removed visual roots include n6g/n6h/n6f/n5 Amt-line roots.
 
 RETAINED SYSTEMS:
-- 20 ZONE-REG-01 zones / 68 CITY-REG-01 cities / 290565 urban population checksum.
+- 20 ZONE-REG-01 zone IDs / 68 CITY-REG-01 cities / 290565 urban population checksum.
 - World Imagery + streamed 3D terrain.
 - City labels and canonical city positions.
 - A/B/C construction rules and CityId/ZoneId data.
 - Tactical withdrawal systems.
 - QA army at Vejle remains removed.
 
-FILES ADDED/CHANGED IN V10N7A:
-- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7A.cs
-- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7A.cs.meta
-- Assets/Scripts/Campaign/CampaignBehaviourExtensionsV010N7A.cs
-- Assets/Scripts/Campaign/CampaignBehaviourExtensionsV010N7A.cs.meta
-- Assets/Resources/Campaign/CityIcons/City_A_Proposal3.png
-- Assets/Resources/Campaign/CityIcons/City_B_Proposal3.png
+FILES ADDED/CHANGED IN V10N7B:
+- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7B.cs
+- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7B.cs.meta
 - Assets/Scripts/Campaign/CampaignBuildInfo.cs
 - VERSION.txt
-- docs/parts/part-26-61-CAMPAIGN-V10N7A-MAP-ONLY-CITY-CLEANUP.md
+- docs/parts/part-27-62-CAMPAIGN-V10N7B-CITY-ART-POLISH.md
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. Topbar/badge show v00.00.10n7a.
+2. Topbar/badge show v00.00.10n7b.
 3. No yellow Amt/county boundary lines are visible.
 4. Clicking ordinary land does not open an Amt/county panel.
-5. Log reports MapOnly=True and CountyBorders=False.
-6. Log reports CityArtN7A=True|Cities=68.
+5. Log reports Way1=True, MapOnly=True and CountyBorders=False.
+6. Log reports CityArtN7B=True|Cities=68.
 7. All 68 city art markers are present.
 8. Only Proposal-3 visual language is visible; no beige fallback/debug settlement style.
 9. No round city cylinders or green TownGround are visible.
-10. A/B/C city sizes are visibly distinct but materially smaller than n6h.
-11. City labels remain readable.
-12. Coastal cities visually anchor at their canonical marker position; no renderer offset into sea.
-13. World Imagery and streamed terrain remain functional.
-14. QA army at Vejle remains absent.
-15. Registry remains 20 zones / 68 cities / population 290565.
+10. A/B/C city sizes are clearly smaller than n7a/n6h.
+11. Small C towns remain readable at normal close/operational campaign zoom.
+12. City labels remain readable and are not dominated by the icons.
+13. Coastal cities anchor at the canonical city marker; the smaller visual footprint must not appear as a city placed in open water.
+14. World Imagery and streamed terrain remain functional.
+15. QA army at Vejle remains absent.
+16. Registry remains 20 zones / 68 cities / population 290565.
 
 NEXT PHASE:
 - Do not reintroduce Amt/county borders until city-art QA is accepted.
-- Later county rebuild must use one authoritative geometry source for line, click and highlight.
+- Later county rebuild must use one authoritative historical geometry source for line, click and highlight.
+- County geometry must never be approximated by competing line/selection systems again.
 
-QA state: V10N7A IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N7B IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
