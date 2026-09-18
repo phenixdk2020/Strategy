@@ -12,6 +12,20 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 - **IDÉ** — relevant mulighed, som skal undersøges eller besluttes før den bliver bindende design.
 - **RESEARCH** — historiske detaljer skal verificeres før endelige værdier/organisation låses.
 
+## Aktiv Campaign gate — v00.00.10n7b
+
+**Vej 1 er valgt som aktiv campaign-retning.** City-art stabiliseres før Amt/county-systemet genindføres.
+
+| ID | Status | Emne | Exit-kriterium |
+| --- | --- | --- | --- |
+| C-701 | AKTIV | Proposal-3 city art som eneste stil | Alle 68 byer viser samme Proposal-3 visual language; ingen beige/generated fallback. |
+| C-702 | AKTIV | City scale polish | A=1.55, B=1.12, C=0.78 giver læsbare men ikke dominerende icons. |
+| C-703 | AKTIV | City sharpness | Bilinear + Clamp + mip bias -0.75 giver tydeligere art uden uacceptabel shimmer. |
+| C-704 | AKTIV | Coastal city anchoring | Canonical marker + bottom-center billboard; ingen X/Z-offset og ingen oplevet city-placement ude i åbent vand. |
+| C-705 | AKTIV | Legacy city cleanup | n7a/n6/n6g/n6h renderers, round markers og TownGround forbliver skjult. |
+| C-706 | BESLUTTET | County/Amt pause | Amt boundaries, selection, highlight og info forbliver OFF indtil city-art QA er accepteret. |
+| C-707 | PLANLAGT | County Rebuild | Én authoritative historical polygon source skal senere drive line, click ownership og selected-area highlight. |
+
 ## Aktiv gate — P0A v00.00.08
 
 | ID | Status | Emne | Exit-kriterium |
