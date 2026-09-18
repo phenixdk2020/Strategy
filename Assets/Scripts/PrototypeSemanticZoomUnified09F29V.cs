@@ -90,7 +90,10 @@ public sealed class PrototypeSemanticZoomUnified09F29V : MonoBehaviour
         float height = cam.transform.position.y;
 
         if (height >= CompanyNatoStart)
+        {
             DrawCompanyCounters();
+            DrawCavalryCounters();
+        }
         if (height >= HqStart)
             DrawHqCounters();
         if (height >= 95f)
@@ -122,6 +125,39 @@ public sealed class PrototypeSemanticZoomUnified09F29V : MonoBehaviour
         }
     }
 
+    private void DrawCavalryCounters()
+    {
+        PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
+        if (cavalry == null || !cavalry.Installed)
+            return;
+
+        DrawCavalryCounter(cavalry.Gardehusar);
+        DrawCavalryCounter(cavalry.Dragon);
+    }
+
+    private void DrawCavalryCounter(PrototypeCavalryUnit09F30 unit)
+    {
+        if (unit == null || unit.CurrentStrength <= 0)
+            return;
+        if (!TryProject(unit.transform.position + Vector3.up * 3.2f, out Vector2 anchor))
+            return;
+
+        Rect frame = new Rect(anchor.x - 28f, anchor.y - 45f, 56f, 32f);
+        if (!IsUseful(frame))
+            return;
+
+        Color color = unit.IsSelected ? Selected : Friendly;
+        GUI.Box(frame, GUIContent.none, counterStyle);
+        DrawBorder(frame, color, unit.IsSelected ? 3f : 2f);
+        GUI.Label(new Rect(frame.x, frame.y - 13f, frame.width, 11f), "I", echelonStyle);
+        GUI.Label(new Rect(frame.x, frame.y + 1f, frame.width, 20f), "CAV", symbolStyle);
+
+        string name = unit.Kind == PrototypeCavalryKind09F30.Gardehusar
+            ? "GARDEHUSAR ESKADRON"
+            : "DRAGON ESKADRON";
+        GUI.Label(new Rect(frame.center.x - 84f, frame.yMax, 168f, 13f), name, nameStyle);
+    }
+
     private void DrawHqCounters()
     {
         PrototypeRegimentHierarchy09F27 hierarchy = PrototypeRegimentHierarchy09F27.Instance;
@@ -141,7 +177,21 @@ public sealed class PrototypeSemanticZoomUnified09F29V : MonoBehaviour
         if (regiment != null && regiment.Installed && regiment.HqRoot != null &&
             TryProject(regiment.HqRoot.transform.position + Vector3.up * 4.5f, out Vector2 regAnchor))
         {
-            DrawHqCounter(regAnchor, "III", "OBERSTLØJTNANT", regiment.Selected, true);
+            DrawHqCounter(regAnchor, "III", "1. REGIMENT | OBERSTLØJTNANT", regiment.Selected, true);
+        }
+
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null && higher.Installed)
+        {
+            if (higher.BrigadeHqRoot != null &&
+                TryProject(higher.BrigadeHqRoot.transform.position + Vector3.up * 5f, out Vector2 brigadeAnchor))
+                DrawHqCounter(brigadeAnchor, "X", "1. BRIGADE | BRIGADECHEF",
+                    higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Brigade, true);
+
+            if (higher.DivisionHqRoot != null &&
+                TryProject(higher.DivisionHqRoot.transform.position + Vector3.up * 5f, out Vector2 divisionAnchor))
+                DrawHqCounter(divisionAnchor, "XX", "1. DIVISION | DIVISIONSCHEF",
+                    higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Division, true);
         }
     }
 
@@ -207,6 +257,20 @@ public sealed class PrototypeSemanticZoomUnified09F29V : MonoBehaviour
         PrototypeRegimentalHQ09F28 regiment = PrototypeRegimentalHQ09F28.Instance;
         if (regiment != null && regiment.Installed && regiment.HqRoot != null)
             SetMeshVisibility(regiment.HqRoot, visible);
+
+        PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
+        if (cavalry != null && cavalry.Installed)
+        {
+            if (cavalry.Gardehusar != null) SetMeshVisibility(cavalry.Gardehusar.gameObject, visible);
+            if (cavalry.Dragon != null) SetMeshVisibility(cavalry.Dragon.gameObject, visible);
+        }
+
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null && higher.Installed)
+        {
+            if (higher.BrigadeHqRoot != null) SetMeshVisibility(higher.BrigadeHqRoot, visible);
+            if (higher.DivisionHqRoot != null) SetMeshVisibility(higher.DivisionHqRoot, visible);
+        }
     }
 
     private static void SetMeshVisibility(GameObject root, bool visible)

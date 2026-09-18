@@ -126,6 +126,8 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
         BattleManager battle = BattleManager.Instance;
         if (battle != null && battle.IsPointerOverSimulationControls(Input.mousePosition))
             return;
+        if (Input.mousePosition.y <= 90f || PrototypeHigherCommandOob09F30D.IsPointerOverPanel(Input.mousePosition))
+            return;
 
         mouseDownTracked = true;
         dragging = false;
@@ -182,6 +184,17 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
                 inside.Add(regiment);
         }
 
+        // If there are no infantry centres in the box, allow the same marquee gesture
+        // to select cavalry or a higher HQ. Current command architecture is single-select
+        // for these entity types, so the entity nearest the marquee centre wins.
+        if (inside.Count == 0 && TrySelectNonInfantry(screenRect))
+            return;
+
+        PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
+        if (cavalry != null) cavalry.ClearSelection();
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null) higher.ClearSelectionOnly();
+
         // PlayerCommander handles the initial click on mouse-down. Restore the exact
         // pre-drag selection before applying the marquee result.
         RestoreMouseDownSelection();
@@ -211,6 +224,69 @@ public sealed class PrototypeBoxSelection09H : MonoBehaviour
             "SELECT-09F29K|BoxComplete=True|Mode=" + mode +
             "|Inside=" + inside.Count +
             "|Selected=" + selectedList.Count);
+    }
+
+    private bool TrySelectNonInfantry(Rect screenRect)
+    {
+        Vector2 center = screenRect.center;
+        float best = float.MaxValue;
+        PrototypeCavalryUnit09F30 bestCavalry = null;
+        PrototypeHigherCommandLevel09F30B bestHigher = PrototypeHigherCommandLevel09F30B.None;
+
+        PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
+        if (cavalry != null && cavalry.Installed)
+        {
+            PrototypeCavalryUnit09F30[] candidates = { cavalry.Gardehusar, cavalry.Dragon };
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                PrototypeCavalryUnit09F30 unit = candidates[i];
+                if (unit == null) continue;
+                Vector3 p = cam.WorldToScreenPoint(unit.transform.position);
+                Vector2 screen = new Vector2(p.x, p.y);
+                if (p.z <= 0f || !screenRect.Contains(screen, true)) continue;
+                float d = Vector2.SqrMagnitude(screen - center);
+                if (d < best) { best = d; bestCavalry = unit; bestHigher = PrototypeHigherCommandLevel09F30B.None; }
+            }
+        }
+
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null && higher.Installed)
+        {
+            GameObject[] roots = { higher.BrigadeHqRoot, higher.DivisionHqRoot };
+            PrototypeHigherCommandLevel09F30B[] levels = {
+                PrototypeHigherCommandLevel09F30B.Brigade,
+                PrototypeHigherCommandLevel09F30B.Division
+            };
+            for (int i = 0; i < roots.Length; i++)
+            {
+                if (roots[i] == null) continue;
+                Vector3 p = cam.WorldToScreenPoint(roots[i].transform.position);
+                Vector2 screen = new Vector2(p.x, p.y);
+                if (p.z <= 0f || !screenRect.Contains(screen, true)) continue;
+                float d = Vector2.SqrMagnitude(screen - center);
+                if (d < best) { best = d; bestCavalry = null; bestHigher = levels[i]; }
+            }
+        }
+
+        if (bestCavalry != null && cavalry != null)
+        {
+            ClearSelection();
+            if (higher != null) higher.ClearSelectionOnly();
+            cavalry.SelectUnit(bestCavalry);
+            Debug.Log("SELECT-09F30H|BoxEntity=CAVALRY|Unit=" + bestCavalry.UnitName);
+            return true;
+        }
+
+        if (bestHigher != PrototypeHigherCommandLevel09F30B.None && higher != null)
+        {
+            ClearSelection();
+            if (cavalry != null) cavalry.ClearSelection();
+            higher.SelectLevel(bestHigher, false);
+            Debug.Log("SELECT-09F30H|BoxEntity=HIGHER_HQ|Level=" + bestHigher);
+            return true;
+        }
+
+        return false;
     }
 
     private void RestoreMouseDownSelection()

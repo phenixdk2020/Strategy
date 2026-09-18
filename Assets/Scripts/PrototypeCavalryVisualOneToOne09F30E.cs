@@ -562,15 +562,20 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
             return;
         }
 
-        if (unit.Formation == PrototypeCavalryFormation09F30.Line)
+        if (unit.IsBridgeRouteActive)
         {
-            int columns = Mathf.CeilToInt(visibleCount / 2f);
-            collider.size = new Vector3(Mathf.Max(22f, columns * 1.70f + 3f), 3.2f, 7f);
+            int rows = Mathf.CeilToInt(visibleCount / 2f);
+            collider.size = new Vector3(5.2f, 3.2f, Mathf.Max(24f, rows * 2.15f + 3f));
+        }
+        else if (unit.Formation == PrototypeCavalryFormation09F30.Line)
+        {
+            int columns = Mathf.CeilToInt(visibleCount / 4f);
+            collider.size = new Vector3(Mathf.Max(22f, columns * 1.70f + 3f), 3.2f, 10f);
         }
         else
         {
-            int ranks = Mathf.CeilToInt(visibleCount / 3f);
-            collider.size = new Vector3(7f, 3.2f, Mathf.Max(24f, ranks * 2.20f + 3f));
+            int rows = Mathf.CeilToInt(visibleCount / 4f);
+            collider.size = new Vector3(8.2f, 3.2f, Mathf.Max(24f, rows * 2.15f + 3f));
         }
     }
 

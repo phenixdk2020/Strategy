@@ -133,12 +133,12 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         rear.Normalize();
 
         BrigadeHqRoot = CreateHigherHq(
-            "DK_Brigade_HQ_Brigadechef", "X HQ", PrototypeHigherCommandLevel09F30B.Brigade,
+            "DK_Brigade_HQ_Brigadechef", "X HQ\n1. BRIGADE", PrototypeHigherCommandLevel09F30B.Brigade,
             Ground(regimentPos + rear * BrigadeFollowDistance + Vector3.forward * 75f),
             new Color(0.07f, 0.17f, 0.31f));
 
         DivisionHqRoot = CreateHigherHq(
-            "DK_Division_HQ_Divisionschef", "XX HQ", PrototypeHigherCommandLevel09F30B.Division,
+            "DK_Division_HQ_Divisionschef", "XX HQ\n1. DIVISION", PrototypeHigherCommandLevel09F30B.Division,
             Ground(BrigadeHqRoot.transform.position + rear * DivisionFollowDistance - Vector3.forward * 95f),
             new Color(0.09f, 0.20f, 0.36f));
 

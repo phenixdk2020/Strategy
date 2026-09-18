@@ -35,11 +35,32 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
     private GUIStyle valueStyle;
     private GUIStyle activeStyle;
     private GUIStyle neutralStyle;
+    private GUIStyle redStyle;
+    private Texture2D panelTexture;
+    private Texture2D headerTexture;
+    private Texture2D greenTexture;
+    private Texture2D greenHoverTexture;
+    private Texture2D redTexture;
+    private Texture2D redHoverTexture;
+    private Texture2D neutralTexture;
+    private Texture2D neutralHoverTexture;
 
     public bool Installed => installed;
     public PrototypeCavalryUnit09F30 Gardehusar => gardehusar;
     public PrototypeCavalryUnit09F30 Dragon => dragon;
     public PrototypeCavalryUnit09F30 SelectedUnit => selected;
+    public bool PendingCharge => pendingCharge;
+
+    public void BeginChargePick()
+    {
+        if (selected != null && selected.Mode == PrototypeCavalryMode09F30.Mounted)
+            pendingCharge = true;
+    }
+
+    public void CancelChargePick()
+    {
+        pendingCharge = false;
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -355,6 +376,8 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
     {
         if (mouse.y <= HudHeight)
             return true;
+        if (PrototypeHigherCommandOob09F30D.IsPointerOverPanel(mouse))
+            return true;
         if (PrototypeOobNavigator09F29Q.IsPointerOverPanel(mouse))
             return true;
         if (PrototypeCavalryOob09F30A.IsPointerOverPanel(mouse))
@@ -374,86 +397,113 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
         Rect panel = new Rect(0f, Screen.height - HudHeight, Screen.width, HudHeight);
         GUI.Box(panel, GUIContent.none, panelStyle);
 
-        string title = selected.UnitName + " | " +
-                       (selected.Kind == PrototypeCavalryKind09F30.Gardehusar ? "GARDEHUSAR" : "DRAGON") +
-                       " | KAVALERIKOMMANDO";
-        GUI.Box(new Rect(5f, panel.y + 3f, panel.width - 10f, 17f), title, headerStyle);
+        string kind = selected.Kind == PrototypeCavalryKind09F30.Gardehusar ? "GARDEHUSAR" : "DRAGON";
+        GUI.Box(new Rect(5f, panel.y + 3f, panel.width - 10f, 17f),
+            selected.UnitName + " | " + kind + " | KAVALERIKOMMANDO", headerStyle);
 
-        float infoWidth = Mathf.Clamp(panel.width * 0.34f, 340f, 470f);
-        float commandX = infoWidth + 12f;
-        float commandWidth = panel.width - commandX - 8f;
-        float y = panel.y + 22f;
+        float width = panel.width;
+        float infoWidth = Mathf.Clamp(width * 0.22f, 235f, 305f);
+        float aiWidth = Mathf.Clamp(width * 0.19f, 210f, 270f);
+        float weaponWidth = Mathf.Clamp(width * 0.20f, 220f, 285f);
+        float infoX = 6f;
+        float aiX = infoX + infoWidth + 5f;
+        float weaponX = aiX + aiWidth + 5f;
+        float commandX = weaponX + weaponWidth + 5f;
+        float commandWidth = width - commandX - 6f;
+        float y = panel.y + 21f;
 
-        GUI.Label(new Rect(8f, y, infoWidth - 12f, 11f), "ENHEDSINFO", sectionStyle);
-
+        GUI.Label(new Rect(infoX + 1f, y, infoWidth - 3f, 10f), "ENHEDSINFO", sectionStyle);
         int losses = Mathf.Max(0, selected.InitialStrength - selected.CurrentStrength);
-        GUI.Label(new Rect(10f, y + 12f, infoWidth - 16f, 14f),
+        GUI.Label(new Rect(infoX + 3f, y + 10f, infoWidth - 6f, 13f),
             "Mænd " + selected.CurrentStrength + "/" + selected.InitialStrength +
-            " | Tab " + losses +
-            " | Moral " + selected.Morale.ToString("0") +
-            " | Coh " + selected.Cohesion.ToString("0"), valueStyle);
-        GUI.Label(new Rect(10f, y + 26f, infoWidth - 16f, 14f),
-            selected.GetStatusLabel() + " | Sabel / Karabin / Pistol", valueStyle);
-        GUI.Label(new Rect(10f, y + 40f, infoWidth - 16f, 14f),
-            "Højreklik jord = flyt | Højreklik fjende = " +
-            (selected.Mode == PrototypeCavalryMode09F30.Mounted ? "charge" : "angreb afventer dismounted fire"), valueStyle);
+            " | Tab " + losses + " | Moral " + selected.Morale.ToString("0"), valueStyle);
+        GUI.Label(new Rect(infoX + 3f, y + 23f, infoWidth - 6f, 13f),
+            "Coh " + selected.Cohesion.ToString("0") + " | " + selected.GetStatusLabel(), valueStyle);
+        GUI.Label(new Rect(infoX + 3f, y + 36f, infoWidth - 6f, 13f),
+            selected.IsBridgeRouteActive
+                ? "BRO " + selected.BridgePhaseLabel + " | 2-ABREAST"
+                : (selected.IsReforming
+                    ? "REFORMER " + Mathf.RoundToInt(selected.FormationReadyFraction * 100f) + "%"
+                    : "FORMATION KLAR"), valueStyle);
+        GUI.Label(new Rect(infoX + 3f, y + 49f, infoWidth - 6f, 13f),
+            "Højreklik jord = flyt | fjende = charge", valueStyle);
 
-        GUI.Label(new Rect(commandX, y, commandWidth, 11f), "ORDRER / FORMATION", sectionStyle);
+        PrototypeCavalryOfficerAI09F30C aiController = PrototypeCavalryOfficerAI09F30C.Instance;
+        bool aiOn = aiController != null && aiController.IsAIEnabled(selected);
+        string phase = aiController != null ? aiController.GetPhase(selected) : "—";
+        string target = aiController != null ? aiController.GetTargetName(selected) : "—";
+        string parent = PrototypeCavalryCommandControl09F30C.GetParent(selected);
 
-        const float gap = 5f;
-        float buttonW = (commandWidth - gap * 5f) / 6f;
-        float row1 = y + 13f;
-        float row2 = y + 39f;
+        GUI.Label(new Rect(aiX, y, aiWidth, 10f), "AI / DOKTRIN", sectionStyle);
+        if (GUI.Button(new Rect(aiX, y + 11f, aiWidth * 0.45f, 20f),
+                aiOn ? "AI ON" : "AI OFF", aiOn ? activeStyle : redStyle))
+        {
+            if (aiController != null)
+                aiController.ToggleAI(selected);
+        }
+        GUI.Label(new Rect(aiX, y + 35f, aiWidth, 12f), "Plan: FLANK / REAR → CHARGE", valueStyle);
+        GUI.Label(new Rect(aiX, y + 47f, aiWidth, 12f), "Status: " + phase, valueStyle);
+        GUI.Label(new Rect(aiX, y + 59f, aiWidth, 12f), "Mål: " + target + " | " + parent, valueStyle);
 
-        if (GUI.Button(new Rect(commandX, row1, buttonW, 22f),
-                pendingCharge ? "VÆLG MÅL" : "CHARGE",
-                pendingCharge ? activeStyle : neutralStyle))
+        GUI.Label(new Rect(weaponX, y, weaponWidth, 10f), "VÅBEN / TILSTAND", sectionStyle);
+        GUI.Label(new Rect(weaponX, y + 11f, weaponWidth, 13f),
+            "Sabel | Karabin | Pistol", valueStyle);
+        GUI.Label(new Rect(weaponX, y + 24f, weaponWidth, 13f),
+            selected.Mode == PrototypeCavalryMode09F30.Mounted ? "MOUNTED" : "AFSIDDET", valueStyle);
+        GUI.Label(new Rect(weaponX, y + 37f, weaponWidth, 13f),
+            selected.Formation == PrototypeCavalryFormation09F30.Line
+                ? "4-GELED LINJE"
+                : (selected.IsBridgeRouteActive ? "BROKOLONNE 2" : "MARCHKOLONNE 4"), valueStyle);
+        GUI.Label(new Rect(weaponX, y + 50f, weaponWidth, 13f),
+            "Mounted fire: ikke implementeret endnu", valueStyle);
+
+        GUI.Label(new Rect(commandX, y, commandWidth, 10f), "ORDRER / BEVÆGELSE", sectionStyle);
+        const float gap = 3f;
+        float actionY = y + 11f;
+        float actionW = (commandWidth - gap * 2f) / 3f;
+
+        if (GUI.Button(new Rect(commandX, actionY, actionW, 20f),
+                pendingCharge ? "VÆLG MÅL" : "CHARGE", pendingCharge ? activeStyle : redStyle))
         {
             if (selected.Mode == PrototypeCavalryMode09F30.Mounted)
                 pendingCharge = !pendingCharge;
         }
-
-        if (GUI.Button(new Rect(commandX + (buttonW + gap), row1, buttonW, 22f),
-                "STOP / HOLD", selected.Action == PrototypeCavalryAction09F30.Hold ? activeStyle : neutralStyle))
+        if (GUI.Button(new Rect(commandX + actionW + gap, actionY, actionW, 20f),
+                "STOP / HOLD", selected.Action == PrototypeCavalryAction09F30.Hold ? activeStyle : redStyle))
         {
             selected.OrderHold();
             pendingCharge = false;
         }
 
-        if (GUI.Button(new Rect(commandX + (buttonW + gap) * 2f, row1, buttonW, 22f),
-                "LINJE", selected.Formation == PrototypeCavalryFormation09F30.Line ? activeStyle : neutralStyle))
-            selected.SetFormation(PrototypeCavalryFormation09F30.Line);
-
-        if (GUI.Button(new Rect(commandX + (buttonW + gap) * 3f, row1, buttonW, 22f),
-                "KOLONNE", selected.Formation == PrototypeCavalryFormation09F30.Column ? activeStyle : neutralStyle))
-            selected.SetFormation(PrototypeCavalryFormation09F30.Column);
-
-        if (selected.Kind == PrototypeCavalryKind09F30.Dragon)
+        string modeLabel = selected.Kind == PrototypeCavalryKind09F30.Dragon
+            ? (selected.Mode == PrototypeCavalryMode09F30.Mounted ? "SID AF" : "STIG OP")
+            : "MOUNTED";
+        if (GUI.Button(new Rect(commandX + (actionW + gap) * 2f, actionY, actionW, 20f),
+                modeLabel, selected.Kind == PrototypeCavalryKind09F30.Dragon ? neutralStyle : activeStyle))
         {
-            string modeLabel = selected.Mode == PrototypeCavalryMode09F30.Mounted ? "SID AF" : "STIG OP";
-            if (GUI.Button(new Rect(commandX + (buttonW + gap) * 4f, row1, buttonW, 22f), modeLabel, neutralStyle))
+            if (selected.Kind == PrototypeCavalryKind09F30.Dragon)
             {
                 pendingCharge = false;
-                if (selected.Mode == PrototypeCavalryMode09F30.Mounted)
-                    selected.Dismount();
-                else
-                    selected.Remount();
+                if (selected.Mode == PrototypeCavalryMode09F30.Mounted) selected.Dismount();
+                else selected.Remount();
             }
         }
 
-        GUI.Label(new Rect(commandX, row2 + 2f, commandWidth, 18f),
-            "AI: endnu ikke implementeret i F30 | Mounted firearms/dismounted fire kommer i næste cavalry-pass",
-            labelStyle);
+        GUI.Label(new Rect(commandX, y + 35f, commandWidth, 10f), "FORMATION", sectionStyle);
+        float formationY = y + 46f;
+        float formationW = (commandWidth - gap) / 2f;
+        if (GUI.Button(new Rect(commandX, formationY, formationW, 20f), "4-GELED LINJE",
+                selected.Formation == PrototypeCavalryFormation09F30.Line && !selected.IsBridgeRouteActive ? activeStyle : redStyle))
+            selected.SetFormation(PrototypeCavalryFormation09F30.Line);
+        if (GUI.Button(new Rect(commandX + formationW + gap, formationY, formationW, 20f), "MARCHKOLONNE",
+                selected.Formation == PrototypeCavalryFormation09F30.Column && !selected.IsBridgeRouteActive ? activeStyle : redStyle))
+            selected.SetFormation(PrototypeCavalryFormation09F30.Column);
 
         Event current = Event.current;
         if (current != null && panel.Contains(current.mousePosition) &&
-            (current.type == EventType.MouseDown ||
-             current.type == EventType.MouseUp ||
-             current.type == EventType.MouseDrag ||
-             current.type == EventType.ScrollWheel))
-        {
+            (current.type == EventType.MouseDown || current.type == EventType.MouseUp ||
+             current.type == EventType.MouseDrag || current.type == EventType.ScrollWheel))
             current.Use();
-        }
     }
 
     private void EnsureStyles()
@@ -461,12 +511,72 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
         if (panelStyle != null)
             return;
 
-        panelStyle = PrototypeUiTheme09F15.Panel(9);
-        headerStyle = PrototypeUiTheme09F15.Header(10);
-        sectionStyle = PrototypeUiTheme09F15.Section(8);
-        labelStyle = PrototypeUiTheme09F15.Label(8);
-        valueStyle = PrototypeUiTheme09F15.Label(8);
-        activeStyle = PrototypeUiTheme09F15.AccentBox(8);
-        neutralStyle = PrototypeUiTheme09F15.Button(8);
+        panelTexture = MakeTexture(new Color(0.055f, 0.065f, 0.055f, 0.995f), "CAVHUD30H_PANEL");
+        headerTexture = MakeTexture(new Color(0.13f, 0.16f, 0.11f, 1f), "CAVHUD30H_HEADER");
+        greenTexture = MakeTexture(new Color(0.16f, 0.43f, 0.19f, 1f), "CAVHUD30H_GREEN");
+        greenHoverTexture = MakeTexture(new Color(0.22f, 0.56f, 0.25f, 1f), "CAVHUD30H_GREEN_HOVER");
+        redTexture = MakeTexture(new Color(0.43f, 0.14f, 0.12f, 1f), "CAVHUD30H_RED");
+        redHoverTexture = MakeTexture(new Color(0.57f, 0.19f, 0.16f, 1f), "CAVHUD30H_RED_HOVER");
+        neutralTexture = MakeTexture(new Color(0.20f, 0.22f, 0.17f, 1f), "CAVHUD30H_NEUTRAL");
+        neutralHoverTexture = MakeTexture(new Color(0.30f, 0.33f, 0.24f, 1f), "CAVHUD30H_NEUTRAL_HOVER");
+
+        panelStyle = new GUIStyle(GUI.skin.box);
+        panelStyle.normal.background = panelTexture;
+        panelStyle.border = new RectOffset(1, 1, 1, 1);
+        panelStyle.padding = new RectOffset(4, 4, 3, 3);
+
+        headerStyle = new GUIStyle(GUI.skin.box);
+        headerStyle.normal.background = headerTexture;
+        headerStyle.normal.textColor = new Color(0.96f, 0.94f, 0.84f);
+        headerStyle.fontSize = 10;
+        headerStyle.fontStyle = FontStyle.Bold;
+        headerStyle.alignment = TextAnchor.MiddleLeft;
+        headerStyle.padding = new RectOffset(7, 5, 1, 1);
+
+        labelStyle = new GUIStyle(GUI.skin.label);
+        labelStyle.normal.textColor = new Color(0.94f, 0.93f, 0.85f);
+        labelStyle.fontSize = 9;
+        labelStyle.alignment = TextAnchor.MiddleLeft;
+
+        sectionStyle = new GUIStyle(labelStyle);
+        sectionStyle.normal.textColor = new Color(0.77f, 0.67f, 0.35f);
+        sectionStyle.fontSize = 8;
+        sectionStyle.fontStyle = FontStyle.Bold;
+
+        valueStyle = new GUIStyle(labelStyle);
+        valueStyle.fontSize = 8;
+        valueStyle.clipping = TextClipping.Clip;
+
+        activeStyle = MakeButtonStyle(greenTexture, greenHoverTexture);
+        redStyle = MakeButtonStyle(redTexture, redHoverTexture);
+        neutralStyle = MakeButtonStyle(neutralTexture, neutralHoverTexture);
     }
+
+    private static GUIStyle MakeButtonStyle(Texture2D normal, Texture2D hover)
+    {
+        GUIStyle style = new GUIStyle(GUI.skin.button);
+        style.normal.background = normal;
+        style.hover.background = hover;
+        style.active.background = hover;
+        style.focused.background = hover;
+        style.normal.textColor = Color.white;
+        style.hover.textColor = Color.white;
+        style.active.textColor = Color.white;
+        style.fontSize = 8;
+        style.fontStyle = FontStyle.Bold;
+        style.alignment = TextAnchor.MiddleCenter;
+        style.padding = new RectOffset(2, 2, 1, 1);
+        return style;
+    }
+
+    private static Texture2D MakeTexture(Color color, string name)
+    {
+        Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+        texture.name = name;
+        texture.hideFlags = HideFlags.HideAndDontSave;
+        texture.SetPixel(0, 0, color);
+        texture.Apply(false, true);
+        return texture;
+    }
+
 }
