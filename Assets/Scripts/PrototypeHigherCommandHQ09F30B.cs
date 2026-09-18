@@ -34,8 +34,8 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
     private const float HudHeight = 90f;
-    private const float BrigadeFollowDistance = 265f;
-    private const float DivisionFollowDistance = 355f;
+    private const float BrigadeFollowDistance = 125f;
+    private const float DivisionFollowDistance = 190f;
     private const float BrigadeMoveSpeed = 6.0f;
     private const float DivisionMoveSpeed = 5.2f;
     private const int LinkSamples = 28;
@@ -755,6 +755,10 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
     private static Vector3 Ground(Vector3 p)
     {
+        float xLimit = Mathf.Max(20f, PrototypeBootstrap.BattlefieldHalfWidth - 18f);
+        float zLimit = Mathf.Max(20f, PrototypeBootstrap.BattlefieldHalfDepth - 18f);
+        p.x = Mathf.Clamp(p.x, -xLimit, xLimit);
+        p.z = Mathf.Clamp(p.z, -zLimit, zLimit);
         p.y = PrototypeBootstrap.SampleGroundHeight(p.x, p.z) + 0.10f;
         return p;
     }

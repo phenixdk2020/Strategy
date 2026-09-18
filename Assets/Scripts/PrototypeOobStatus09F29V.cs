@@ -51,6 +51,11 @@ public sealed class PrototypeOobStatus09F29V : MonoBehaviour
 
     private void OnGUI()
     {
+        // F30D+ owns the complete OOB columns. Never draw the F29V right-column patch
+        // on top of the unified OOB; this was the source of the repeated black "190 KLAR" layer.
+        if (UnityEngine.Object.FindAnyObjectByType<PrototypeHigherCommandOob09F30D>() != null)
+            return;
+
         PrototypeOobNavigator09F29Q oob = PrototypeOobNavigator09F29Q.Instance;
         PrototypeRegimentHierarchy09F27 hierarchy = PrototypeRegimentHierarchy09F27.Instance;
         if (oob == null || hierarchy == null || !hierarchy.Installed || !IsOobOpen(oob))

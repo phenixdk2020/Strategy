@@ -1,41 +1,35 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30f
+Prototype version: v00.00.09f30g
 Build status: TEST
-Build name: IMPLEMENTATION + FIX HISTORY CONSOLIDATION
-Visible build marker: PROJECT 1864 | v00.00.09f30f TEST
+Build name: OOB INPUT + LEGACY OVERLAY + HIGHER HQ/CAVALRY VISIBILITY HOTFIX
+Visible build marker: PROJECT 1864 | v00.00.09f30g TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay baseline: v00.00.09f30e
+Gameplay baseline: v00.00.09f30g
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
-Historical snapshot through F29R: docs/archive/VERSION-through-v00.00.09f29r.txt
 
-v00.00.09f30f - Implementation + Fix History Consolidation
-- Backup before F30F: backup/channel-test-v00.00.09f30e-pre-09f30f-history-consolidation at F30E HEAD 83409c58a761b01854f36c5acbcfe41a453491cb.
-- Adds docs/IMPLEMENTATION-AND-FIX-HISTORY.md as the consolidated chronological record from the project foundation through F30E.
-- The history separately identifies implemented features, hardening and known bug/hotfix corrections.
-- Explicitly records the complete F30E implementation: 120/120 Gardehusar, 140/140 Dragon, Dragon 1:1 dismount, historical visual differentiation, HQ mounted polish and 1:1 footprint hardening.
-- Consolidates fixes including compile errors, route/authority conflicts, HUD regressions, Square renderer mismatch, charge input/formation/fire, contact/pathfinding, selection persistence, Square smoke/footprint/cones, defense facing, friendly fire lanes, F30 runtime NullReferences, command-tree direction, OOB overlap/scroll/drag-drop and F30E ghost-rider/collider hardening.
-- No tactical gameplay rules are changed from F30E.
-- Designmanual is updated in the follow-up F30F documentation commit.
+v00.00.09f30g - OOB Input + Legacy Overlay + Higher HQ/Cavalry Visibility Hotfix
+- Backup before F30G: backup/channel-test-v00.00.09f30f-pre-09f30g-oob-legacy-overlay-fix at F30F HEAD d5f94d9f7c21ca0bbc2f66809f5f0f1acabf6e36.
+- FIX: PrototypeOobStatus09F29V no longer draws its legacy black company-status patch over the unified F30D+ OOB.
+- FIX: unified OOB explicitly disables the legacy infantry OOB, old cavalry OOB, old F30B/F30C higher OOB and F29V status overlay while keeping helper methods available.
+- FIX: cavalry OOB rows no longer use GUI.Button, which consumed MouseDown/MouseUp before the drag state machine.
+- Cavalry OOB interaction is now explicitly: single click = select, double click = focus behind, hold+move = drag, release over Division/Brigade/Regiment/Major A/Major B = reparent attachment.
+- FIX: Gardehusar and Dragon receive semantic-zoom I/CAV counters in operational/strategic views and when selected at medium/HQ-marker zoom.
+- FIX: Division X/XX and Brigade HQ receive semantic-zoom HQ counters alongside Major/Regimental HQ.
+- Strategic mesh suppression/restoration now includes cavalry and higher HQ roots so counters and 3D representation do not fight each other.
+- QA placement: Gardehusar/Dragon initial positions moved closer to the Danish formation (-520, +/-245) instead of (-560, +/-330).
+- QA placement: Brigade follow distance reduced from 265m to 125m; Division follow distance from 355m to 190m, keeping higher HQ readable in the normal test area.
+- Higher HQ ground placement is clamped inside battlefield bounds.
+- F30E 1:1 cavalry visuals, F30C cavalry Officer AI and F30D dynamic attachment/OOB scroll remain intact.
 
-Primary v00.00.09f30f QA
-1. Unity must compile with no red errors.
-2. Visible marker reads PROJECT 1864 | v00.00.09f30f TEST.
-3. Runtime cavalry/AI/OOB behavior must remain identical to F30E.
-4. docs/IMPLEMENTATION-AND-FIX-HISTORY.md must cover the documented lineage from foundation through F30E.
-5. Designmanual baseline must reference F30F history after the follow-up documentation commit.
-
-CURRENT IMPLEMENTED BASELINE — inherited from F30E
-- 1:1 cavalry tactical scale: Gardehusar 120/120; Dragon 140/140.
-- Dragon 1:1 SID AF/STIG OP with horse-holder position.
-- Distinct Gardehusar/Dragon visual identity and improved cavalry/HQ mounts.
-- OOB fixed columns, scrollbar and drag/drop attachments.
-- Dynamic CurrentCommandParent: Division / Brigade / Regiment / Major A / Major B.
-- Cavalry Officer AI seeks flank/rear and respects direct manual override.
-- Physical Division + Brigade + Regiment + Battalion + Company hierarchy.
-- Infantry Line/Column/Square, fire policies, charge/melee, under-fire and mission authority.
-- Semantic zoom/NATO, tactical map, crop concealment and navigation hardening.
-
-FULL CHANGE/FIX LINEAGE
-See docs/IMPLEMENTATION-AND-FIX-HISTORY.md. The full document is intentionally separated from this active VERSION header to keep the build status readable while preserving the complete history.
+Primary F30G QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30g TEST.
+2. No black legacy 190 KLAR column appears over the unified OOB.
+3. Single click Gardehusar/Dragon selects it and opens the cavalry bottom HUD.
+4. Double click Gardehusar/Dragon focuses camera behind it.
+5. Drag Gardehusar/Dragon row and release over Division/Brigade/Regiment/1. Bataljon/2. Bataljon; row moves under that CurrentCommandParent and keeps ATT.
+6. Division and Brigade HQ are visible as physical mounted HQ groups at close zoom and as X/XX HQ counters at semantic zoom.
+7. Gardehusar/Dragon are visible physically at close zoom and as I/CAV counters at operational/strategic zoom.
+8. Strategic zoom hides their meshes while keeping colliders/simulation alive; zooming back restores meshes.
+9. Regression: infantry OOB selection, Major/Regimental HQ selection, OOB scrollbar, cavalry AI/manual override and 1:1 120/140 visuals remain functional.

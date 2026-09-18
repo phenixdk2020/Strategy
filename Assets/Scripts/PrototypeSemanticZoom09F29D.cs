@@ -146,7 +146,10 @@ public sealed class PrototypeSemanticZoom09F29D : MonoBehaviour
         bool showSelectedCompanies = height >= HqMarkerStartHeight;
 
         if (showCompanies || showSelectedCompanies)
+        {
             DrawCompanyCounters(showCompanies);
+            DrawCavalryCounters(showCompanies);
+        }
 
         if (showHq)
             DrawHqCounters();
@@ -230,6 +233,63 @@ public sealed class PrototypeSemanticZoom09F29D : MonoBehaviour
         }
     }
 
+    private void DrawCavalryCounters(bool showAll)
+    {
+        PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
+        if (cavalry == null || !cavalry.Installed)
+            return;
+
+        DrawCavalryCounter(cavalry.Gardehusar, showAll);
+        DrawCavalryCounter(cavalry.Dragon, showAll);
+    }
+
+    private void DrawCavalryCounter(PrototypeCavalryUnit09F30 unit, bool showAll)
+    {
+        if (unit == null || unit.CurrentStrength <= 0)
+            return;
+
+        bool selected = unit.IsSelected;
+        if (!showAll && !selected)
+            return;
+
+        Vector3 world = unit.transform.position + Vector3.up * 3.2f;
+        if (!TryProject(world, out Vector2 anchor))
+            return;
+
+        float width = currentLevel == ZoomLevel.Strategic ? 64f : 56f;
+        float height = currentLevel == ZoomLevel.Strategic ? 36f : 31f;
+        Rect frame = AnchoredRect(anchor, width, height, 18f);
+        if (!IsUsefulRect(frame))
+            return;
+
+        Color affiliation = selected ? Selected : Friendly;
+        GUI.Box(frame, GUIContent.none,
+            currentLevel == ZoomLevel.Strategic ? strongCounterStyle : counterStyle);
+        DrawBorder(frame, affiliation, selected ? 3f : 2f);
+        GUI.Label(new Rect(frame.x, frame.y - 13f, frame.width, 12f), "I", echelonStyle);
+        GUI.Label(new Rect(frame.x + 2f, frame.y + 1f, frame.width - 4f, frame.height - 7f), "CAV", symbolStyle);
+
+        DrawSolid(new Rect(frame.x + 4f, frame.yMax - 5f, frame.width - 8f, 3f), BarBack);
+        float fraction = unit.InitialStrength > 0
+            ? Mathf.Clamp01(unit.CurrentStrength / (float)unit.InitialStrength)
+            : 0f;
+        DrawSolid(new Rect(frame.x + 4f, frame.yMax - 5f, (frame.width - 8f) * fraction, 3f), affiliation);
+
+        string label = unit.Kind == PrototypeCavalryKind09F30.Gardehusar
+            ? "GARDEHUSAR ESKADRON"
+            : "DRAGON ESKADRON";
+        GUI.Label(new Rect(frame.center.x - 100f, frame.yMax + 1f, 200f, 13f), label, nameStyle);
+
+        if (currentLevel == ZoomLevel.Operational || currentLevel == ZoomLevel.Strategic)
+        {
+            string state = unit.CurrentStrength + "/" + unit.InitialStrength +
+                           "  M" + unit.Morale.ToString("0") +
+                           "  C" + unit.Cohesion.ToString("0") +
+                           "  " + unit.Action.ToString().ToUpperInvariant();
+            GUI.Label(new Rect(frame.center.x - 100f, frame.yMax + 13f, 200f, 12f), state, statStyle);
+        }
+    }
+
     private void DrawHqCounters()
     {
         PrototypeRegimentHierarchy09F27 hierarchy = PrototypeRegimentHierarchy09F27.Instance;
@@ -266,6 +326,38 @@ public sealed class PrototypeSemanticZoom09F29D : MonoBehaviour
                 40f,
                 regimental.Selected ? Selected : Friendly,
                 true);
+        }
+
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null && higher.Installed)
+        {
+            AggregateStats regimentStats = AggregateRegiment(hierarchy);
+
+            if (higher.BrigadeHqRoot != null)
+            {
+                DrawHqCounter(
+                    higher.BrigadeHqRoot.transform.position,
+                    "X",
+                    "1. BRIGADE | BRIGADECHEF",
+                    regimentStats,
+                    88f,
+                    42f,
+                    higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Brigade ? Selected : Friendly,
+                    true);
+            }
+
+            if (higher.DivisionHqRoot != null)
+            {
+                DrawHqCounter(
+                    higher.DivisionHqRoot.transform.position,
+                    "XX",
+                    "1. DIVISION | DIVISIONSCHEF",
+                    regimentStats,
+                    94f,
+                    44f,
+                    higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Division ? Selected : Friendly,
+                    true);
+            }
         }
     }
 
@@ -395,6 +487,20 @@ public sealed class PrototypeSemanticZoom09F29D : MonoBehaviour
         PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
         if (regimental != null && regimental.Installed && regimental.HqRoot != null)
             SetMeshVisibility(regimental.HqRoot, !suppress);
+
+        PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
+        if (cavalry != null && cavalry.Installed)
+        {
+            if (cavalry.Gardehusar != null) SetMeshVisibility(cavalry.Gardehusar.gameObject, !suppress);
+            if (cavalry.Dragon != null) SetMeshVisibility(cavalry.Dragon.gameObject, !suppress);
+        }
+
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null && higher.Installed)
+        {
+            if (higher.BrigadeHqRoot != null) SetMeshVisibility(higher.BrigadeHqRoot, !suppress);
+            if (higher.DivisionHqRoot != null) SetMeshVisibility(higher.DivisionHqRoot, !suppress);
+        }
 
         meshesSuppressed = suppress;
     }

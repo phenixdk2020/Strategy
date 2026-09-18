@@ -101,11 +101,18 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
 
         PrototypeHigherCommandOob09F30C oldC = UnityEngine.Object.FindAnyObjectByType<PrototypeHigherCommandOob09F30C>();
         PrototypeHigherCommandOob09F30B oldB = UnityEngine.Object.FindAnyObjectByType<PrototypeHigherCommandOob09F30B>();
+        PrototypeOobNavigator09F29Q oldInfantry = PrototypeOobNavigator09F29Q.Instance;
+        PrototypeOobStatus09F29V oldStatus = UnityEngine.Object.FindAnyObjectByType<PrototypeOobStatus09F29V>();
+        PrototypeCavalryOob09F30A oldCavalry = UnityEngine.Object.FindAnyObjectByType<PrototypeCavalryOob09F30A>();
+
         if (oldC != null) oldC.enabled = false;
         if (oldB != null) oldB.enabled = false;
+        if (oldInfantry != null) oldInfantry.enabled = false;
+        if (oldStatus != null) oldStatus.enabled = false;
+        if (oldCavalry != null) oldCavalry.enabled = false;
 
         legacyDisabled = true;
-        Debug.Log("OOB-09F30D|Installed=True|FixedColumns=True|ScrollView=True|DragDropAttachment=True|OfficerRoleMovedOutOfTreeLabel=True");
+        Debug.Log("OOB-09F30G|Installed=True|LegacyPanels=False|LegacyStatusOverlay=False|FixedColumns=True|ScrollView=True|DragDropAttachment=True");
     }
 
     public static bool IsPointerOverPanel(Vector3 mousePosition)
@@ -324,10 +331,13 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
         PrototypeCavalryOfficerAI09F30C aiController = PrototypeCavalryOfficerAI09F30C.Instance;
         string ai = aiController != null && aiController.IsAIEnabled(unit) ? "AI" : "MAN";
         Rect rect = RowRect(y, width);
-        DrawRow(rect, indent, "I", "↳ " + unit.UnitName, unit.CurrentStrength.ToString(), ShortCavalryStatus(unit), ai, "ATT",
-            unit.IsSelected, key == "GARDE" ? 41 : 42,
-            "Organic: 1. Division / Kavaleri | Aktuel kommando: " + parent + " | Træk rækken til et HQ for at ændre attachment");
+        DrawRowVisual(rect, indent, "I", "↳ " + unit.UnitName, unit.CurrentStrength.ToString(),
+            ShortCavalryStatus(unit), ai, "ATT", unit.IsSelected, key == "GARDE" ? 41 : 42,
+            "Organic: 1. Division / Kavaleri | Aktuel kommando: " + parent +
+            " | Klik = vælg | Dobbeltklik = fokus | Træk = ændr attachment");
 
+        // IMPORTANT: cavalry rows do not use GUI.Button here. GUI.Button consumes the
+        // MouseDown/MouseUp events required by the explicit click-vs-drag state machine.
         HandleCavalryDrag(rect, unit, cavalry, higher, key);
         return y + RowHeight;
     }
@@ -400,19 +410,24 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
     private bool DrawRow(Rect rect, float indent, string echelon, string name, string men, string status,
         string ai, string attach, bool selected, int stripe, string tooltip)
     {
+        DrawRowVisual(rect, indent, echelon, name, men, status, ai, attach, selected, stripe, tooltip);
+        return GUI.Button(rect, new GUIContent(string.Empty, tooltip), rowStyle);
+    }
+
+    private void DrawRowVisual(Rect rect, float indent, string echelon, string name, string men, string status,
+        string ai, string attach, bool selected, int stripe, string tooltip)
+    {
         GUI.DrawTexture(rect, selected ? selectedTexture : (((stripe & 1) == 0) ? rowTexture : altTexture));
-        bool clicked = GUI.Button(rect, new GUIContent(string.Empty, tooltip), rowStyle);
 
         float menX = rect.xMax - 162f;
-        GUI.Label(new Rect(rect.x + 4f + indent, rect.y, 31f, rect.height), echelon, echelonStyle);
+        GUI.Label(new Rect(rect.x + 4f + indent, rect.y, 31f, rect.height), new GUIContent(echelon, tooltip), echelonStyle);
         float nameX = rect.x + 36f + indent;
         float nameW = Mathf.Max(40f, menX - nameX - 4f);
-        GUI.Label(new Rect(nameX, rect.y, nameW, rect.height), name, nameStyle);
+        GUI.Label(new Rect(nameX, rect.y, nameW, rect.height), new GUIContent(name, tooltip), nameStyle);
         GUI.Label(new Rect(menX, rect.y, 44f, rect.height), men, rightStyle);
         GUI.Label(new Rect(menX + 45f, rect.y, 51f, rect.height), status, rightStyle);
         GUI.Label(new Rect(menX + 97f, rect.y, 31f, rect.height), ai, rightStyle);
         GUI.Label(new Rect(menX + 129f, rect.y, 33f, rect.height), attach, rightStyle);
-        return clicked;
     }
 
     private static Rect RowRect(float y, float width)

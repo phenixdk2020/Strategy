@@ -108,13 +108,13 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
             "GARDEHUSAR ESKADRON",
             PrototypeCavalryKind09F30.Gardehusar,
             120,
-            new Vector3(-560f, 0f, -330f));
+            new Vector3(-520f, 0f, -245f));
 
         dragon = Spawn(
             "DRAGON ESKADRON",
             PrototypeCavalryKind09F30.Dragon,
             140,
-            new Vector3(-560f, 0f, 330f));
+            new Vector3(-520f, 0f, 245f));
 
         installed = gardehusar != null && dragon != null;
         if (!installed)
