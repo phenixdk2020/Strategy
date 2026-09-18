@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30g TEST**  
-**Gameplay-baseline: v00.00.09f30g**  
+**Konsolideret ved v00.00.09f30h TEST**  
+**Gameplay-baseline: v00.00.09f30h**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30G. F30F konsoliderede historikken; F30G tilføjer OOB/input/visibility-hardening.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30H. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderer cavalry formation, bridge, HUD, semantic zoom og selection.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -359,9 +359,31 @@ Fejlrettelser/hardening:
 - Gardehusar/Dragon QA startpositioner flyttet tættere på dansk formation.
 - Brigade/Division follow-distance reduceret for normal QA-læsbarhed; higher HQ clamped til battlefield bounds.
 
+### v00.00.09f30h — Cavalry 4-Rank + Bridge + HUD + NATO + Selection Hardening
+Implementeret:
+- Normal cavalry Line og Charge Line = fire geledder.
+- Normal mounted Column = fire abreast.
+- Bridge/defile = two abreast.
+- Physical formation reform med per-rider slot movement og HUD progress.
+- Full charge speed først når reform er tilstrækkeligt færdig.
+- Persistent bridge phases NearBank -> FarBank -> ExitBank -> Direct.
+- Exit clearance skalerer efter længden af den fulde 1:1 to-abreast kolonne.
+- Reissued AI/player destination under crossing bevarer bridge transaction.
+- Cavalry HUD bruger company-HUD layout/farvesprog og viser faktisk Officer AI phase/target/parent.
+- Authoritative F29V semantic zoom viser I/CAV Gardehusar/Dragon og X/XX Brigade/Division HQ med navne.
+- Box-selection kan vælge cavalry/higher HQ når ingen infantry-centre er i boksen.
+- Close labels og let mounted detail polish.
+
+Fejlrettelser/hardening:
+- F30E collider-maintenance kunne ellers overskrive F30H footprint og er opdateret til 4-rank/4-abreast/2-abreast.
+- OOB non-cavalry rows var blanke fordi en tom GUI.Button blev tegnet efter labels; draw-order er vendt.
+- Aktiv semantic owner var F29V, mens F30G først havde ændret legacy F29D; F30H retter den reelle runtime-owner.
+- Cavalry bridge route kunne nulstilles af AI replan/new OrderMove under crossing; aktiv bridge phase bevares.
+- 1:1 column reformer ikke længere ved den fjerne brokant mens halen stadig er på broen.
+
 ## 7. Samlet fejlrettelsesregister
 
-De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30G:
+De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30H:
 
 1. Unity compile CS0136 local-variable collision.
 2. Deprecated/obsolete object lookup cleanup.
@@ -404,10 +426,17 @@ De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/harden
 39. Cavalry OOB `GUI.Button` konsumerede mouse events og blokerede selection/drag-drop state machine.
 40. Gardehusar/Dragon manglede semantic-zoom counters og var derfor svære at lokalisere i operational/strategic view.
 41. Brigade/Division HQ manglede semantic counters og lå for langt bag regiments-HQ til normal QA-læsbarhed.
+42. F30G ændrede legacy F29D semantic layer, mens runtime F29V disabled det; cavalry/higher-HQ counters udeblev.
+43. OOB non-cavalry rows blev visuelt dækket af en tom GUI.Button tegnet efter labels.
+44. 1:1 cavalry bridge transaction kunne nulstilles af reissued AI/player destination.
+45. Bridge crossing reformerede for tidligt ved far bank før den fulde 1:1 column var fri.
+46. F30E collider maintenance kunne overskrive F30H formation footprint.
+47. Cavalry Line/Column transition var for hurtig og læstes som magisk snap.
+48. Cavalry HUD brugte et separat layout og obsolete tekst om at AI ikke var implementeret.
 
-## 8. Status ved F30G
+## 8. Status ved F30H
 
-F30G er aktiv TEST-baseline. Runtime gameplay bygger videre på F30E, med F30G UI/input/visibility/QA-placement hotfixes ovenpå.
+F30H er aktiv TEST-baseline. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
 
 Aktuel implementeret tactical scope:
 - 1:1 infantry og cavalry tactical visuals.
@@ -417,7 +446,7 @@ Aktuel implementeret tactical scope:
 - OOB scroll + drag/drop.
 - Manual override på alle implementerede control-lag.
 - Infantry Line/Column/Square, fire policy, charge/melee, under-fire, withdrawal infrastructure.
-- Cavalry Line/Column, mounted move/charge, Dragon dismount/remount, flank/rear Officer AI.
+- Cavalry 4-rank Line/Charge, 4-abreast march Column, 2-abreast bridge/defile, fysisk reform, mounted move/charge, Dragon dismount/remount og flank/rear Officer AI.
 - Semantic zoom/NATO inklusive cavalry I/CAV og Brigade/Division X/XX HQ counters, tactical map, crop concealment og terrain/navigation hardening.
 
 Ikke færdigt endnu:

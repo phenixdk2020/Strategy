@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f29b TEST  
+**Prototypebaseline:** v00.00.09f30h TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -595,6 +595,57 @@ Difficulty må **ikke** skjult ændre:
 
 ---
 
+# DEL H2 — CAVALRY F30H FORMATION OG BRIDGE
+
+## 35A. Mounted cavalry formation
+
+F30H fastlåser følgende PROJECT 1864 runtime-regler for Gardehusar og Dragon i den aktuelle 1:1 prototype:
+
+- normal **Line = 4 geledder**;
+- **Charge = 4 geledder**;
+- normal **Column = 4 abreast**;
+- bridge/defile crossing = **2 abreast**.
+
+Den tidligere 2-geleds cavalry Line er superseded i runtime. Dette er en projekt-/gameplayregel for den aktuelle prototype og skal behandles som datadrevet doctrine på sigt.
+
+## 35B. Cavalry formation-change
+
+Line ↔ Column må ikke teleportere rytterne.
+
+- Hver mounted figure flytter fysisk til sin nye formations-slot.
+- HUD skal kunne vise reform-progress.
+- En cavalry charge må ikke få fuld charge-speed mens formationen stadig er under væsentlig reformering.
+- AI og spiller bruger samme formation-change-regel.
+
+## 35C. Cavalry bridge transaction
+
+En aktiv cavalry bridge crossing har højere movement-prioritet end normal Officer AI replanning.
+
+Crossing-faser:
+
+1. NearBank
+2. FarBank
+3. ExitBank
+4. Direct
+
+Regler:
+
+- crossing tvinger 2-abreast bridge column;
+- en ny destination under crossing må opdatere final goal men må ikke nulstille bridge phase;
+- efter far bank skal hovedet bevæge sig langt nok frem til, at den fulde 1:1 column er fri af broen;
+- først derefter gendannes den ønskede normalformation;
+- bridge-only terrain authority gælder både player og Officer AI.
+
+## 35D. Cavalry selection/HUD/semantic presentation
+
+- Cavalry skal kunne vælges i world, OOB og via RTS marquee når ingen infantry-enhed ligger i boksen.
+- Brigade/Division HQ skal tilsvarende kunne vælges i world/OOB og via marquee.
+- Cavalry HUD skal bruge samme visuelle baseline som company HUD.
+- Semantic zoom skal vise Gardehusar/Dragon som I/CAV med navn og Brigade/Division som X/XX HQ med navn.
+- Strategic mesh suppression må ikke fjerne simulation/collider/selection authority.
+
+---
+
 # DEL I — TESTUND-TAGELSER OG FREMTIDIGE REGLER
 
 ## 36. Midlertidige QA-regler
@@ -627,9 +678,9 @@ Følgende er godkendte designretninger, men er ikke nødvendigvis fuldt runtime-
 
 Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgende minimum:
 
-1. Ændringen må ikke bryde bridge-only crossing.
+1. Ændringen må ikke bryde bridge-only crossing; cavalry skal gennemføre NearBank → FarBank → ExitBank og først reformere efter fuld clearance.
 2. En enhed inden for Long må ikke uventet gå i Column.
-3. Line/Column transition skal være visuelt fysisk.
+3. Line/Column transition skal være visuelt fysisk; cavalry bruger F30H 4-rank Line / 4-abreast Column / 2-abreast bridge column.
 4. Selection/destination footprint skal matche formationen.
 5. Fire cone og faktisk firing eligibility skal være enige.
 6. Fire policy må ikke forveksles med tvungen standoff-distance.
@@ -645,6 +696,14 @@ Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgen
 ---
 
 ## 39. Versionslog for dette regelsæt
+
+### v00.00.09f30h
+
+- Cavalry normal Line og Charge fastlåst til 4 geledder.
+- Normal Column = 4 abreast; bridge/defile = 2 abreast.
+- Physical reform og reduced charge-speed under reform gjort kanonisk.
+- Persistent cavalry bridge transaction med ExitBank-clearance.
+- Company-style cavalry HUD, semantic I/CAV + X/XX HQ og marquee-selection tilføjet som presentation/selection-regel.
 
 ### v00.00.09f29b
 
