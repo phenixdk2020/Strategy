@@ -180,8 +180,19 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             reason.EndsWith("_CASCADE", System.StringComparison.Ordinal);
 
         state.Enabled = enabled;
-        state.AwaitHigherMission =
-            enabled && higherCascade && !state.HasHigherMission;
+
+        if (enabled && higherCascade)
+        {
+            // Re-arming through Division/Brigade never resumes a stale autonomous
+            // or inherited cavalry mission. A fresh HQ order must arrive first.
+            state.HasHigherMission = false;
+            state.HigherMissionOrder = MajorOrder09F18.None;
+            state.AwaitHigherMission = true;
+        }
+        else
+        {
+            state.AwaitHigherMission = false;
+        }
 
         if (enabled)
             unit.ClearManualFormationOverride();
