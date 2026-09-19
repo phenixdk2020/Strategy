@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30k TEST  
+**Prototypebaseline:** v00.00.09f30l TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -718,6 +718,17 @@ Når Dragon får SID AF:
 
 ---
 
+## 35K. Cavalry visual/animation LOD
+
+- Cavalry tactical scale forbliver 1:1: én simuleret cavalryman = én synlig mounted figure ved tactical rendering.
+- Visual LOD må kun reducere detail-rendering, aldrig CurrentStrength, casualties, collider authority eller tactical formation slots.
+- Mounted MOVE skal have synlig horse gait; CHARGE skal være tydeligt hurtigere/mere aggressiv end normal MOVE.
+- Horse leg/hoof, head/tail og rider motion må være procedural indtil rigged assets erstatter prototypen.
+- HOLD skal returnere til en stabil neutral pose.
+- Gardehusar og Dragon skal have tydeligt forskellig uniform/equipment silhouette.
+
+---
+
 # DEL I — TESTUND-TAGELSER OG FREMTIDIGE REGLER
 
 ## 36. Midlertidige QA-regler
@@ -768,6 +779,12 @@ Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgen
 ---
 
 ## 39. Versionslog for dette regelsæt
+
+### v00.00.09f30l
+
+- Cavalry 1:1 visual-count fastholdt under LOD.
+- Mounted gait skal artikulere horse/rider og CHARGE skal visuelt adskilles fra normal MOVE.
+- Close-detail LOD må ikke ændre simulation/collider/formation authority.
 
 ### v00.00.09f30k
 

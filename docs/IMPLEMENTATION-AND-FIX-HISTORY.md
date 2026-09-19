@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30k TEST**  
+**Konsolideret ved v00.00.09f30l TEST**  
 **Gameplay-baseline: v00.00.09f30k**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30K. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30L. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -419,6 +419,17 @@ Fejlrettelser/hardening:
 - Higher doctrine føres ind i Regimental execution pipeline.
 - OOB viser Brigade/Division AI ON/OFF.
 
+### v00.00.09f30l — Cavalry Visual Fidelity + Gait Polish
+- Visual-only pass; F30K gameplay authority retained.
+- Existing 120/140 1:1 cavalry reused.
+- Horse body/chest/neck/head/muzzle/leg/hoof/mane/tail silhouette reshaped.
+- Six deterministic horse coat tones + sparse blaze/sock variation.
+- Gardehusar/Dragon close-detail equipment reinforced.
+- Close-detail LOD above ~210m camera altitude.
+- Mounted gait articulates horse legs/hooves, head, tail and rider instead of only whole-root rocking.
+- CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
+- HOLD restores neutral articulated pose.
+
 ## 7. Samlet fejlrettelsesregister
 
 De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30K:
@@ -493,12 +504,12 @@ De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/harden
 68. Brigade/Division HUD manglede AI ON/OFF og doctrine controls.
 69. Attached cavalry kunne ignorere AI-OFF på Brigade/Division/Regiment parent.
 
-## 8. Status ved F30K
+## 8. Status ved F30L
 
-F30K er aktiv TEST-baseline. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
+F30L er aktiv TEST visual/build-baseline oven på F30K gameplay authority. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
 
 Aktuel implementeret tactical scope:
-- 1:1 infantry og cavalry tactical visuals.
+- 1:1 infantry og cavalry tactical visuals; F30L cavalry close-detail/gait LOD uden ændring af simuleret styrke.
 - 8-company Danish regiment med 2 Majors + Oberstløjtnant.
 - Brigade- og Division-HQ.
 - Dynamic support attachment til Division/Brigade/Regiment/Major.
