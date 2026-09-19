@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.29**  
+**Aktuel designbaseline: v00.02.30**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10n7c WAY 1 / EMBEDDED CITY ASSET RESET**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n7d CITY INFO + LEGACY STARTUP HOTFIX**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -36,6 +36,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 16: 51 — Campaign3 v00.00.10n4: HUD-default, korrekt zonevalg og delte interne grænser](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md)
 - [Del 27: 62 — Campaign3 v00.00.10n7b: Vej 1 / City Art Polish](parts/part-27-62-CAMPAIGN-V10N7B-CITY-ART-POLISH.md)
 - [Del 28: 63 — Campaign3 v00.00.10n7c: Embedded City Asset Reset](parts/part-28-63-CAMPAIGN-V10N7C-EMBEDDED-CITY-ASSET-RESET.md)
+- [Del 29: 64 — Campaign3 v00.00.10n7d: City Info + Legacy Startup Hotfix](parts/part-29-64-CAMPAIGN-V10N7D-CITY-INFO-HOTFIX.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -153,6 +154,16 @@ Zone-line renderer registrerer samtidig hvilke forskellige ZoneIds der ejer hver
 Historisk guardrail er uændret: zoneidentiteterne er kanoniske, men den nuværende center-derived polygongeometri er stadig prototype og ikke historisk 1851-facit.
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 16 / Campaign3 v00.00.10n4](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md).
+
+## Campaign3 v00.00.10n7d — City Info + Legacy Startup Hotfix
+
+Designbaseline v00.02.30 bevarer n7c's embedded Proposal-3 city art og Vej 1 scope. n7d stopper n7a/n7b fra at auto-create uden for deres egen buildversion og fjerner dermed den stale n7b `Proposal3TextureMissing` startup-log.
+
+Direkte klik på en by åbner nu INFO-panelet eksplicit via `CampaignHudStateV010N2.ShowSelectionPanel()`. Panelet viser bynavn, tier, indbyggertal 1850, ZoneId og heavy-military build rule.
+
+En audit mod den indbyggede Natural Earth 1:50m landmaske klassificerer kun 53/68 canonical city coordinates som land og giver falske negative for flere legitime kyst-/øbyer. Derfor må Natural Earth 1:50m ikke bruges til automatisk at flytte city anchors. CITY-REG-01's WGS84-positioner forbliver authoritative; visuel kyst-QA skal ske mod imagery eller senere højopløst landmask.
+
+[Del 29 / v00.00.10n7d](parts/part-29-64-CAMPAIGN-V10N7D-CITY-INFO-HOTFIX.md)
 
 ## Campaign3 v00.00.10n7c — Embedded City Asset Reset
 
