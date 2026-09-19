@@ -443,7 +443,8 @@ Fejlrettelser/hardening:
 - Two-cavalry/two-battalion assignment chooses the lower total travel-cost pairing to reduce crossing.
 - Attack-task cavalry returns to its prior parent as RESERVE after infantry execution completes and any committed charge finishes.
 - New non-attack higher mission releases temporary attack attachment.
-- Direct cavalry RMB clears inherited higher mission and restores manual authority.
+- Direct cavalry RMB clears inherited higher mission and restores manual authority, including when cavalry Officer AI is already OFF.
+- Temporary attack release is tracked per cavalry unit, so only actually task-attached cavalry returns to reserve and unrelated cavalry charges cannot block release.
 
 ## 7. Samlet fejlrettelsesregister
 
