@@ -28,14 +28,23 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
 
     private const float ThinkInterval = 1.15f;
     private const float SearchRange = 1200f;
-    private const float RearDepth = 115f;
-    private const float RearLateral = 42f;
-    private const float FlankOffset = 105f;
-    private const float FlankRearBias = 38f;
-    private const float ChargeCommitRange = 250f;
+    private const float RearDepth = 145f;
+    private const float RearLateral = 70f;
+    private const float FlankOffset = 145f;
+    private const float FlankRearBias = 50f;
+    private const float ChargeCommitRange = 155f;
     private const float ArriveTolerance = 24f;
     private const float ReplanTargetMove = 42f;
     private const float MaxManeuverSeconds = 26f;
+
+    // F30N: cavalry screens outside the infantry body until a real tactical
+    // opportunity exists. Movement paths route around hostile infantry bubbles.
+    private const float EnemyAvoidRadius = 105f;
+    private const float EnemyDetourRadius = 138f;
+    private const float StandOffMinDistance = 115f;
+    private const float StandOffDistance = 145f;
+    private const float OpportunityCohesionThreshold = 62f;
+    private const float OpportunityMoraleThreshold = 58f;
     private const float BottomHudHeight = 90f;
 
     private readonly Dictionary<PrototypeCavalryUnit09F30, State> states =
@@ -194,9 +203,16 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         state.NextThink = Time.time + 0.15f;
 
         if (order == MajorOrder09F18.HoldPosition)
+        {
             unit.OrderHold();
+        }
         else
-            unit.OrderMove(goal, state.HigherMissionFacing, true);
+        {
+            Vector3 initialGoal = order == MajorOrder09F18.AttackHere
+                ? AvoidEnemyBubbleOnRoute(unit.transform.position, goal, state.PreferredSide)
+                : goal;
+            unit.OrderMove(initialGoal, state.HigherMissionFacing, true);
+        }
 
         Debug.Log("CAV-HQ-09F30M|Unit=" + unit.UnitName +
                   "|Order=" + order +
@@ -298,7 +314,6 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         if (unit == null)
             return;
 
-        float distance = PlanarDistance(unit.transform.position, state.HigherMissionGoal);
         if (state.HigherMissionOrder == MajorOrder09F18.HoldPosition)
         {
             if (unit.Action != PrototypeCavalryAction09F30.Hold)
@@ -307,14 +322,33 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             return;
         }
 
+        Vector3 plannedGoal = state.HigherMissionOrder == MajorOrder09F18.AttackHere
+            ? AvoidEnemyBubbleOnRoute(
+                unit.transform.position,
+                state.HigherMissionGoal,
+                state.PreferredSide)
+            : state.HigherMissionGoal;
+
+        float distance = PlanarDistance(unit.transform.position, plannedGoal);
         if (distance > 14f)
         {
             if (!unit.HasDestination ||
-                PlanarDistance(unit.FinalDestination, state.HigherMissionGoal) > 5f)
-                unit.OrderMove(state.HigherMissionGoal, state.HigherMissionFacing, true);
+                PlanarDistance(unit.FinalDestination, plannedGoal) > 5f)
+                unit.OrderMove(plannedGoal, state.HigherMissionFacing, true);
 
-            state.Phase = "HQ " + HigherMissionLabel(state.HigherMissionOrder) +
-                          " " + distance.ToString("0") + "m";
+            bool detouring = PlanarDistance(plannedGoal, state.HigherMissionGoal) > 8f;
+            state.Phase = detouring
+                ? "HQ ANGRIB / OMGÅR FJENDE"
+                : "HQ " + HigherMissionLabel(state.HigherMissionOrder) +
+                  " " + PlanarDistance(unit.transform.position, state.HigherMissionGoal).ToString("0") + "m";
+            return;
+        }
+
+        // A detour waypoint is only an intermediate safety point. Re-evaluate the
+        // route on the next frame instead of treating it as mission arrival.
+        if (PlanarDistance(plannedGoal, state.HigherMissionGoal) > 8f)
+        {
+            state.Phase = "HQ ANGRIB / DETOUR KLAR";
             return;
         }
 
@@ -325,7 +359,7 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         {
             state.HasHigherMission = false;
             state.HigherMissionOrder = MajorOrder09F18.None;
-            state.Phase = "SEEK";
+            state.Phase = "SCREEN / SØGER MULIGHED";
             state.NextThink = Time.time + 0.2f;
             return;
         }
@@ -397,28 +431,74 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             return;
         }
 
-        bool reachedManeuverPoint = distanceToPoint <= ArriveTolerance || unit.Action == PrototypeCavalryAction09F30.Hold;
-        bool goodAspect = aspect == "FLANK" || aspect == "REAR";
-        bool timedOut = state.ManeuverStarted > 0f && Time.time - state.ManeuverStarted >= MaxManeuverSeconds;
+        bool infantryEngaged = IsTargetEngagedByFriendlyInfantry(target);
+        bool targetWeakened =
+            target.Cohesion <= OpportunityCohesionThreshold ||
+            target.Morale <= OpportunityMoraleThreshold;
+        bool chargeOpportunity = infantryEngaged || targetWeakened;
 
-        if ((reachedManeuverPoint && goodAspect && distanceToTarget <= ChargeCommitRange) ||
-            (timedOut && goodAspect && distanceToTarget <= ChargeCommitRange * 1.2f))
+        // Do not loiter inside the hostile infantry body while waiting for an opening.
+        // Pull back to a screen distance and continue observing.
+        if (!chargeOpportunity && distanceToTarget < StandOffMinDistance)
         {
-            unit.SetFormation(PrototypeCavalryFormation09F30.Line);
-            unit.OrderCharge(target);
-            state.Phase = "CHARGE " + aspect;
-            Debug.Log("CAV-AI-09F30C|Unit=" + unit.UnitName + "|Decision=CHARGE|Aspect=" + aspect +
-                      "|Target=" + target.RegimentName + "|Distance=" + distanceToTarget.ToString("0"));
+            PlanStandOffEvasion(state);
             return;
         }
 
-        if (targetMoved > ReplanTargetMove || reachedManeuverPoint || timedOut)
+        bool reachedManeuverPoint =
+            distanceToPoint <= ArriveTolerance ||
+            unit.Action == PrototypeCavalryAction09F30.Hold;
+        bool goodAspect = aspect == "FLANK" || aspect == "REAR";
+        bool timedOut =
+            state.ManeuverStarted > 0f &&
+            Time.time - state.ManeuverStarted >= MaxManeuverSeconds;
+
+        if (targetMoved > ReplanTargetMove)
         {
             PlanManeuver(state, false);
             return;
         }
 
-        state.Phase = "MANØVRER " + PlannedAspectLabel(state.ManeuverPoint, target);
+        // F30N: geometry alone is no longer enough to trigger a charge. Cavalry
+        // waits until friendly infantry has fixed the target in local fire contact,
+        // or the target has become materially disorganised.
+        if (chargeOpportunity &&
+            ((reachedManeuverPoint && goodAspect && distanceToTarget <= ChargeCommitRange) ||
+             (timedOut && goodAspect && distanceToTarget <= ChargeCommitRange)))
+        {
+            unit.SetFormation(PrototypeCavalryFormation09F30.Line);
+            unit.OrderCharge(target);
+            state.Phase = "CHARGE " + aspect +
+                          (infantryEngaged ? " / INF KONTAKT" : " / SVÆKKET MÅL");
+            Debug.Log("CAV-AI-09F30N|Unit=" + unit.UnitName +
+                      "|Decision=CHARGE|Aspect=" + aspect +
+                      "|Target=" + target.RegimentName +
+                      "|Distance=" + distanceToTarget.ToString("0") +
+                      "|InfantryEngaged=" + infantryEngaged +
+                      "|TargetMorale=" + target.Morale.ToString("0") +
+                      "|TargetCohesion=" + target.Cohesion.ToString("0"));
+            return;
+        }
+
+        if (reachedManeuverPoint && !chargeOpportunity)
+        {
+            unit.SetFormation(PrototypeCavalryFormation09F30.Line);
+            if (unit.Action != PrototypeCavalryAction09F30.Hold)
+                unit.OrderHold();
+
+            state.Phase = "SCREEN / VENTER PÅ INF-KONTAKT";
+            return;
+        }
+
+        if (reachedManeuverPoint || timedOut)
+        {
+            PlanManeuver(state, false);
+            return;
+        }
+
+        state.Phase = chargeOpportunity
+            ? "MANØVRER / MULIGHED ÅBEN"
+            : "SCREEN / " + PlannedAspectLabel(state.ManeuverPoint, target);
     }
 
     private void PlanManeuver(State state, bool newTarget)
@@ -434,28 +514,230 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         forward.Normalize();
         Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
 
-        float sideDot = Vector3.Dot(Flat(unit.transform.position - target.transform.position), right);
-        int naturalSide = Mathf.Abs(sideDot) > 0.05f ? (sideDot >= 0f ? 1 : -1) : state.PreferredSide;
+        float sideDot = Vector3.Dot(
+            Flat(unit.transform.position - target.transform.position),
+            right);
+        int naturalSide = Mathf.Abs(sideDot) > 0.05f
+            ? (sideDot >= 0f ? 1 : -1)
+            : state.PreferredSide;
 
-        Vector3 rear = target.transform.position - forward * RearDepth + right * (naturalSide * RearLateral);
-        Vector3 flank = target.transform.position + right * (naturalSide * FlankOffset) - forward * FlankRearBias;
+        Vector3 rear =
+            target.transform.position -
+            forward * RearDepth +
+            right * (naturalSide * RearLateral);
+        Vector3 flank =
+            target.transform.position +
+            right * (naturalSide * FlankOffset) -
+            forward * FlankRearBias;
+
         rear = SafeMountedPoint(rear, target.transform.position);
         flank = SafeMountedPoint(flank, target.transform.position);
 
         float rearCost = PlanarDistance(unit.transform.position, rear) * 0.88f;
         float flankCost = PlanarDistance(unit.transform.position, flank);
-        state.ManeuverPoint = rearCost <= flankCost * 1.18f ? rear : flank;
+        Vector3 desired = rearCost <= flankCost * 1.18f ? rear : flank;
+
+        Vector3 routed = AvoidEnemyBubbleOnRoute(
+            unit.transform.position,
+            desired,
+            naturalSide);
+
+        state.ManeuverPoint = routed;
         state.TargetAnchor = target.transform.position;
         state.PreferredSide = naturalSide;
-        state.ManeuverStarted = newTarget || state.ManeuverStarted <= 0f ? Time.time : state.ManeuverStarted;
-        state.Phase = "MANØVRER " + PlannedAspectLabel(state.ManeuverPoint, target);
+        state.ManeuverStarted =
+            newTarget || state.ManeuverStarted <= 0f
+                ? Time.time
+                : state.ManeuverStarted;
+
+        bool detour = PlanarDistance(routed, desired) > 8f;
+        state.Phase = detour
+            ? "MANØVRER / OMGÅR FJENDE"
+            : "SCREEN / " + PlannedAspectLabel(desired, target);
 
         unit.SetFormation(PrototypeCavalryFormation09F30.Column);
-        unit.OrderMove(state.ManeuverPoint);
+        unit.OrderMove(routed);
 
-        Debug.Log("CAV-AI-09F30C|Unit=" + unit.UnitName + "|Decision=MANEUVER|Goal=" +
-                  state.ManeuverPoint.x.ToString("0") + "," + state.ManeuverPoint.z.ToString("0") +
-                  "|Aim=" + PlannedAspectLabel(state.ManeuverPoint, target) + "|Target=" + target.RegimentName);
+        Debug.Log("CAV-AI-09F30N|Unit=" + unit.UnitName +
+                  "|Decision=" + (detour ? "DETOUR" : "SCREEN") +
+                  "|Goal=" + routed.x.ToString("0") + "," + routed.z.ToString("0") +
+                  "|Desired=" + desired.x.ToString("0") + "," + desired.z.ToString("0") +
+                  "|Aim=" + PlannedAspectLabel(desired, target) +
+                  "|Target=" + target.RegimentName);
+    }
+
+    private void PlanStandOffEvasion(State state)
+    {
+        if (state == null || state.Unit == null || !ValidTarget(state.Target))
+            return;
+
+        PrototypeCavalryUnit09F30 unit = state.Unit;
+        Regiment target = state.Target;
+
+        Vector3 away = Flat(unit.transform.position - target.transform.position);
+        if (away.sqrMagnitude < 0.01f)
+            away = -Flat(target.transform.forward);
+        if (away.sqrMagnitude < 0.01f)
+            away = Vector3.left;
+        away.Normalize();
+
+        Vector3 tangent = Vector3.Cross(Vector3.up, away).normalized * state.PreferredSide;
+        Vector3 desired =
+            target.transform.position +
+            away * StandOffDistance +
+            tangent * 28f;
+        desired = SafeMountedPoint(desired, target.transform.position);
+        desired = AvoidEnemyBubbleOnRoute(
+            unit.transform.position,
+            desired,
+            state.PreferredSide);
+
+        state.ManeuverPoint = desired;
+        state.TargetAnchor = target.transform.position;
+        state.ManeuverStarted = Time.time;
+        state.Phase = "SCREEN / BRYDER AFSTAND";
+
+        unit.SetFormation(PrototypeCavalryFormation09F30.Column);
+        unit.OrderMove(desired);
+
+        Debug.Log("CAV-AI-09F30N|Unit=" + unit.UnitName +
+                  "|Decision=STAND_OFF|Target=" + target.RegimentName +
+                  "|Distance=" +
+                  PlanarDistance(unit.transform.position, target.transform.position).ToString("0") +
+                  "|Goal=" + desired.x.ToString("0") + "," + desired.z.ToString("0"));
+    }
+
+    private static bool IsTargetEngagedByFriendlyInfantry(Regiment target)
+    {
+        if (!ValidTarget(target) || BattleManager.Instance == null ||
+            BattleManager.Instance.Regiments == null)
+            return false;
+
+        foreach (Regiment friendly in BattleManager.Instance.Regiments)
+        {
+            if (friendly == null ||
+                friendly.Team != BattleTeam.Denmark ||
+                friendly.IsRouted ||
+                friendly.CurrentStrength <= 0)
+                continue;
+
+            if (PrototypeAttackContact09F29G.GetLocalContactTarget(friendly) == target)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static Vector3 AvoidEnemyBubbleOnRoute(
+        Vector3 start,
+        Vector3 desired,
+        int preferredSide)
+    {
+        BattleManager battle = BattleManager.Instance;
+        if (battle == null || battle.Regiments == null)
+            return desired;
+
+        Regiment obstacle = null;
+        float firstT = 2f;
+
+        foreach (Regiment enemy in battle.Regiments)
+        {
+            if (!ValidTarget(enemy))
+                continue;
+
+            float t;
+            float clearance = DistancePointToSegmentXZ(
+                enemy.transform.position,
+                start,
+                desired,
+                out t);
+
+            if (t <= 0.06f || t >= 0.94f || clearance >= EnemyAvoidRadius)
+                continue;
+
+            if (t < firstT)
+            {
+                firstT = t;
+                obstacle = enemy;
+            }
+        }
+
+        if (obstacle == null)
+            return desired;
+
+        Vector3 travel = Flat(desired - start);
+        if (travel.sqrMagnitude < 0.01f)
+            return desired;
+        travel.Normalize();
+
+        Vector3 perpendicular = Vector3.Cross(Vector3.up, travel).normalized;
+        Vector3 candidateA = SafeMountedPoint(
+            obstacle.transform.position +
+            perpendicular * EnemyDetourRadius -
+            travel * 18f,
+            obstacle.transform.position);
+        Vector3 candidateB = SafeMountedPoint(
+            obstacle.transform.position -
+            perpendicular * EnemyDetourRadius -
+            travel * 18f,
+            obstacle.transform.position);
+
+        float costA = DetourCost(start, candidateA, desired);
+        float costB = DetourCost(start, candidateB, desired);
+
+        if (Mathf.Abs(costA - costB) < 12f)
+            return preferredSide >= 0 ? candidateA : candidateB;
+
+        return costA <= costB ? candidateA : candidateB;
+    }
+
+    private static float DetourCost(
+        Vector3 start,
+        Vector3 candidate,
+        Vector3 desired)
+    {
+        float cost =
+            PlanarDistance(start, candidate) +
+            PlanarDistance(candidate, desired);
+
+        BattleManager battle = BattleManager.Instance;
+        if (battle == null || battle.Regiments == null)
+            return cost;
+
+        foreach (Regiment enemy in battle.Regiments)
+        {
+            if (!ValidTarget(enemy))
+                continue;
+
+            float d = PlanarDistance(candidate, enemy.transform.position);
+            if (d < EnemyAvoidRadius)
+                cost += (EnemyAvoidRadius - d) * 20f + 500f;
+        }
+
+        return cost;
+    }
+
+    private static float DistancePointToSegmentXZ(
+        Vector3 point,
+        Vector3 a,
+        Vector3 b,
+        out float t)
+    {
+        Vector2 p = new Vector2(point.x, point.z);
+        Vector2 p0 = new Vector2(a.x, a.z);
+        Vector2 p1 = new Vector2(b.x, b.z);
+        Vector2 segment = p1 - p0;
+
+        float lengthSq = segment.sqrMagnitude;
+        if (lengthSq <= 0.0001f)
+        {
+            t = 0f;
+            return Vector2.Distance(p, p0);
+        }
+
+        t = Mathf.Clamp01(Vector2.Dot(p - p0, segment) / lengthSq);
+        Vector2 closest = p0 + segment * t;
+        return Vector2.Distance(p, closest);
     }
 
     private static Regiment AcquireTarget(PrototypeCavalryUnit09F30 unit, int preferredSide)
