@@ -370,6 +370,68 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         Action = PrototypeCavalryAction09F30.Hold;
     }
 
+    public void ReceiveInfantryVolley(int hits, float shock, Regiment attacker)
+    {
+        if (CurrentStrength <= 0)
+            return;
+
+        int resolvedHits = Mathf.Clamp(hits, 0, CurrentStrength);
+        CurrentStrength -= resolvedHits;
+        Morale = Mathf.Max(0f, Morale - resolvedHits * 0.45f - shock);
+        Cohesion = Mathf.Max(0f, Cohesion - resolvedHits * 0.55f - shock * 0.85f);
+
+        if (CurrentStrength <= 0)
+        {
+            CurrentStrength = 0;
+            hasDestination = false;
+            chargeTarget = null;
+            chargeResolved = false;
+            Action = PrototypeCavalryAction09F30.Hold;
+
+            if (mountedRoot != null)
+                mountedRoot.gameObject.SetActive(false);
+            if (footRoot != null)
+                footRoot.gameObject.SetActive(false);
+
+            Debug.Log("CAVALRY-FIRE-09F30N|Unit=" + UnitName +
+                      "|Result=DESTROYED|Attacker=" +
+                      (attacker != null ? attacker.RegimentName : "UNKNOWN"));
+            return;
+        }
+
+        // A materially effective volley can break an uncommitted cavalry approach.
+        // A committed charge is harder to stop, but still takes morale/cohesion loss.
+        bool severeVolley =
+            resolvedHits >= 4 ||
+            Morale <= 45f ||
+            Cohesion <= 42f;
+
+        if (severeVolley && Action != PrototypeCavalryAction09F30.Charge)
+        {
+            Vector3 away = attacker != null
+                ? Flat(transform.position - attacker.transform.position)
+                : -Flat(transform.forward);
+            if (away.sqrMagnitude < 0.01f)
+                away = Vector3.left;
+            away.Normalize();
+
+            finalDestination = Ground(transform.position + away * 48f);
+            hasDestination = true;
+            hasExplicitFinalFacing = false;
+            chargeTarget = null;
+            chargeResolved = false;
+            Action = PrototypeCavalryAction09F30.Falter;
+        }
+
+        Debug.Log("CAVALRY-FIRE-09F30N|Unit=" + UnitName +
+                  "|Attacker=" + (attacker != null ? attacker.RegimentName : "UNKNOWN") +
+                  "|Hits=" + resolvedHits +
+                  "|Strength=" + CurrentStrength +
+                  "|Morale=" + Morale.ToString("0") +
+                  "|Cohesion=" + Cohesion.ToString("0") +
+                  "|Action=" + Action);
+    }
+
     public bool Dismount()
     {
         if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Mounted ||
