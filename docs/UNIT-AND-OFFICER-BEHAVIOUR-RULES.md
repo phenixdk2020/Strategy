@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30m TEST  
+**Prototypebaseline:** v00.00.09f30n TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -729,6 +729,24 @@ Når Dragon får SID AF:
 
 ---
 
+## 35M. Cavalry screen, engagement opportunity og infantry anti-cavalry response
+
+- Autonomous cavalry må ikke ride direkte gennem en intakt fjendtlig infantry-formation for at nå et flank/rear point.
+- Hostile infantry danner avoidance-bubbles; CAV bruger intermediate detour-waypoints og fortsætter derefter mod sit oprindelige tactical point.
+- CAV skal normalt holde screen/stand-off afstand, indtil et reelt charge-vindue opstår.
+- Flank/rear geometri alene er ikke tilstrækkelig til charge.
+- Primært charge-vindue: mindst ét venligt infantry-company har målet i aktiv local fire-contact.
+- Sekundært charge-vindue: målet er tydeligt svækket i morale eller cohesion.
+- Ready Square er fortsat en no-charge condition for autonomous cavalry.
+- Enemy infantry må vælge CAV som ildmål inden for gældende fire-policy range og fire arc.
+- Anti-cavalry musketild bruger samme reload/range/accuracy/smoke authority som normal infantry fire.
+- Treffer mod CAV reducerer strength, morale og cohesion; en hård salve kan bryde en ikke-committed approach til FALTER.
+- Mounted-threat/Square-vurdering er team-neutral.
+- Screening/maneuvering cavalry giver lavere Square-threat end en committed charge.
+- Auto-Square må ikke udløbe, mens den relevante mounted threat fortsat er til stede.
+
+---
+
 ## 35L. Higher-command delegation og cavalry task attachment
 
 - Division AI ON propagates delegated authority til Brigade, Regiment, Major A/B, company Officer AI og attached cavalry.
@@ -815,6 +833,15 @@ Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgen
 ---
 
 ## 39. Versionslog for dette regelsæt
+
+### v00.00.09f30n
+
+- Higher-HQ HUD visual parity with Regimental HQ.
+- Cavalry screen/stand-off + engagement-gated charge logic.
+- Hostile infantry route avoidance/detour.
+- Infantry fire against cavalry and cavalry volley reaction.
+- Team-neutral persistent mounted-threat/Square response.
+
 
 ### v00.00.09f30m
 
