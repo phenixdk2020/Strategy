@@ -60,6 +60,8 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     private Vector3 divisionObjective;
 
     private bool temporaryAttackAttachmentsActive;
+    private bool gardeTemporarilyAttached;
+    private bool dragonTemporarilyAttached;
     private string gardeReturnParent = string.Empty;
     private string dragonReturnParent = string.Empty;
 
@@ -442,6 +444,9 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             dragonReturnParent = dragon != null ? GetCavalryCommandParent(dragon) : string.Empty;
         }
 
+        gardeTemporarilyAttached = false;
+        dragonTemporarilyAttached = false;
+
         Vector3 a = hierarchy.GetBattalionCenter(0);
         Vector3 b = hierarchy.GetBattalionCenter(1);
 
@@ -456,46 +461,66 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
             if (normal <= swapped)
             {
-                SetTemporaryCavalryParent(garde, PrototypeCavalryCommandControl09F30C.MajorAId);
-                SetTemporaryCavalryParent(dragon, PrototypeCavalryCommandControl09F30C.MajorBId);
+                gardeTemporarilyAttached = SetTemporaryCavalryParent(
+                    garde, PrototypeCavalryCommandControl09F30C.MajorAId);
+                dragonTemporarilyAttached = SetTemporaryCavalryParent(
+                    dragon, PrototypeCavalryCommandControl09F30C.MajorBId);
             }
             else
             {
-                SetTemporaryCavalryParent(garde, PrototypeCavalryCommandControl09F30C.MajorBId);
-                SetTemporaryCavalryParent(dragon, PrototypeCavalryCommandControl09F30C.MajorAId);
+                gardeTemporarilyAttached = SetTemporaryCavalryParent(
+                    garde, PrototypeCavalryCommandControl09F30C.MajorBId);
+                dragonTemporarilyAttached = SetTemporaryCavalryParent(
+                    dragon, PrototypeCavalryCommandControl09F30C.MajorAId);
             }
         }
         else
         {
             if (garde != null && IsCavalrySubordinateToLevel(garde, level))
-                SetTemporaryCavalryParent(garde,
+                gardeTemporarilyAttached = SetTemporaryCavalryParent(
+                    garde,
                     PlanarDistance(garde.transform.position, a) <= PlanarDistance(garde.transform.position, b)
                         ? PrototypeCavalryCommandControl09F30C.MajorAId
                         : PrototypeCavalryCommandControl09F30C.MajorBId);
 
             if (dragon != null && IsCavalrySubordinateToLevel(dragon, level))
-                SetTemporaryCavalryParent(dragon,
+                dragonTemporarilyAttached = SetTemporaryCavalryParent(
+                    dragon,
                     PlanarDistance(dragon.transform.position, a) <= PlanarDistance(dragon.transform.position, b)
                         ? PrototypeCavalryCommandControl09F30C.MajorAId
                         : PrototypeCavalryCommandControl09F30C.MajorBId);
         }
 
-        temporaryAttackAttachmentsActive = true;
-        Debug.Log("HQ-CAV-ATTACH-09F30M|AttackTask=True|GardeParent=" +
-                  (garde != null ? GetCavalryCommandParent(garde) : "—") +
+        temporaryAttackAttachmentsActive =
+            gardeTemporarilyAttached || dragonTemporarilyAttached;
+
+        if (!temporaryAttackAttachmentsActive)
+        {
+            gardeReturnParent = string.Empty;
+            dragonReturnParent = string.Empty;
+        }
+
+        Debug.Log("HQ-CAV-ATTACH-09F30M|AttackTask=" +
+                  (temporaryAttackAttachmentsActive ? "True" : "False") +
+                  "|GardeAttached=" + gardeTemporarilyAttached +
+                  "|DragonAttached=" + dragonTemporarilyAttached +
+                  "|GardeParent=" + (garde != null ? GetCavalryCommandParent(garde) : "—") +
                   "|DragonParent=" + (dragon != null ? GetCavalryCommandParent(dragon) : "—") +
                   "|ReturnGarde=" + gardeReturnParent + "|ReturnDragon=" + dragonReturnParent);
     }
 
-    private static void SetTemporaryCavalryParent(PrototypeCavalryUnit09F30 unit, string parent)
+    private static bool SetTemporaryCavalryParent(PrototypeCavalryUnit09F30 unit, string parent)
     {
         if (unit == null)
-            return;
+            return false;
 
         PrototypeCommandAttachment09F30B attachment =
             unit.GetComponent<PrototypeCommandAttachment09F30B>();
-        if (attachment != null)
-            attachment.SetCurrentCommandParent(parent, PrototypeAttachmentType09F30B.Attached);
+        if (attachment == null)
+            return false;
+
+        attachment.SetCurrentCommandParent(parent, PrototypeAttachmentType09F30B.Attached);
+        return true;
     }
 
     private void UpdateTemporaryAttackAttachments()
@@ -506,8 +531,10 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         if (regimental.HasActiveMissionExecutors(MajorOrder09F18.AttackHere))
             return;
 
-        if (IsCavalryInCommittedCharge(cavalry != null ? cavalry.Gardehusar : null) ||
-            IsCavalryInCommittedCharge(cavalry != null ? cavalry.Dragon : null))
+        if ((gardeTemporarilyAttached &&
+             IsCavalryInCommittedCharge(cavalry != null ? cavalry.Gardehusar : null)) ||
+            (dragonTemporarilyAttached &&
+             IsCavalryInCommittedCharge(cavalry != null ? cavalry.Dragon : null)))
             return;
 
         ReleaseTemporaryAttackAttachments("ATTACK_COMPLETE");
@@ -523,10 +550,14 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         if (!temporaryAttackAttachmentsActive || cavalry == null)
             return;
 
-        ReleaseCavalryToReserve(cavalry.Gardehusar, gardeReturnParent, -1);
-        ReleaseCavalryToReserve(cavalry.Dragon, dragonReturnParent, 1);
+        if (gardeTemporarilyAttached)
+            ReleaseCavalryToReserve(cavalry.Gardehusar, gardeReturnParent, -1);
+        if (dragonTemporarilyAttached)
+            ReleaseCavalryToReserve(cavalry.Dragon, dragonReturnParent, 1);
 
         temporaryAttackAttachmentsActive = false;
+        gardeTemporarilyAttached = false;
+        dragonTemporarilyAttached = false;
         gardeReturnParent = string.Empty;
         dragonReturnParent = string.Empty;
 
