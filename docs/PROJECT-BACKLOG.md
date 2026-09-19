@@ -238,3 +238,26 @@ Når en ny idé opstår:
 3. Når implementeringen starter, skifter den til **AKTIV** med konkrete exit-/testkriterier.
 4. Når funktionen er implementeret og QA-valideret, flyttes den til versionshistorik/implementeringsstatus og backlogpunktet markeres afsluttet i en senere backlog-revision.
 5. Nye chatsamtaler om PROJECT 1864 skal konsolideres her og i relevante designafsnit, så beslutninger ikke kun eksisterer i samtalehistorikken.
+
+
+## B-290 — Battlefield Expansion + Hills before Artillery
+
+**Status:** BESLUTTET / NÆSTE TERRAIN-SPOR  
+**Prioritet:** Høj før første fulde Artillery Core
+
+### Beslutning
+Før artilleri udbygges til fuld gameplay-test skal tactical battlefield udvides og have tydelige højdedrag/bakker, så kanoner kan testes fra højere stillinger og med reelle skudfelter.
+
+### Retning
+- større tactical map end den nuværende QA-flade;
+- mindst 1–2 større højdedrag og flere bløde terrænbølger;
+- eksisterende river/bridge beholdes som combined-arms testelement;
+- åbne marker, veje og skov-/coverzoner skal stadig være læselige;
+- artilleripositioner på højder skal kunne testes mod dead ground og skjult approach;
+- senere terrain/LOS-pass skal håndtere crest, dead ground, slope og deployability;
+- artilleri må senere ikke deployere på for stejle skråninger eller i ulovligt terrain.
+
+### Foreslået sekvens
+1. Battlefield Expansion / Hills.
+2. Terrain + LOS baseline.
+3. First Artillery Core.

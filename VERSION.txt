@@ -1,43 +1,43 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30h
+Prototype version: v00.00.09f30i
 Build status: TEST
-Build name: CAVALRY 4-RANK + BRIDGE + HUD + NATO + SELECTION HARDENING
-Visible build marker: PROJECT 1864 | v00.00.09f30h TEST
+Build name: CAVALRY AUTHORITY + SINGLE HUD + SELECTION/ORDER VISUALS + ANIMATION
+Visible build marker: PROJECT 1864 | v00.00.09f30i TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay baseline: v00.00.09f30h
+Gameplay baseline: v00.00.09f30i
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
 
-v00.00.09f30h - Cavalry 4-Rank + Bridge + HUD + NATO + Selection Hardening
-- Backup before F30H: backup/channel-test-v00.00.09f30g-pre-09f30h-cavalry-hq-ui-formation-visuals at F30G HEAD 1b13fc94ba81024665c891ef50a7d824d3ec9085.
-- Project decision: mounted cavalry normal LINE = four ranks. CHARGE uses the same four-rank line.
-- Normal mounted COLUMN = four abreast. Bridge/defile crossing = two abreast.
-- LINE/COLUMN transitions are no longer near-instant Lerp snaps; each 1:1 mounted figure moves toward its new slot with explicit reform progress.
-- HUD shows REFORMER xx%; cavalry charge movement is limited to 4.4 m/s while reforming and reaches full 13.2 m/s only after the formation is substantially ready.
-- Bridge phase machine extended NearBank -> FarBank -> ExitBank -> Direct. The head clears far enough for the full 1:1 two-abreast column to leave the bridge before restoring the requested formation.
-- Reissued AI/player move goals no longer reset an active cavalry bridge transaction.
-- F30E one-to-one collider maintenance updated to F30H footprints so it cannot overwrite the new 4-rank/4-abreast/2-abreast core.
-- Cavalry HUD rebuilt on the same 90px visual grid, colors and section language as the company HUD: ENHEDSINFO, AI/DOKTRIN, VÅBEN/TILSTAND, ORDRER/BEVÆGELSE, FORMATION.
-- Cavalry HUD now exposes actual F30C Officer AI phase/target/parent instead of the obsolete F30 text claiming AI was not implemented.
-- Active semantic owner PrototypeSemanticZoomUnified09F29V now renders I/CAV NATO counters + names for Gardehusar/Dragon and X/XX HQ counters + names for Brigade/Division.
-- Strategic mesh suppression/restoration now includes cavalry and higher HQ.
-- Close-view higher HQ labels include 1. BRIGADE / 1. DIVISION names; cavalry receives a close-view I + unit-name billboard.
-- RTS box-selection can select cavalry or Brigade/Division HQ when no infantry centre is inside the marquee. Current cavalry/higher-HQ command model remains single-select; nearest eligible non-infantry entity to marquee centre wins.
-- OOB blank-row regression fixed: invisible row button is processed before row visuals, so Division/Brigade/Regiment/Battalion/Company text is no longer painted over.
-- Cavalry OOB click/double-click/drag-drop attachment behavior from F30G remains.
-- Lightweight cavalry visual polish adds saddle roll/crossbelt/buckle detail to the 1:1 mounted figures without changing simulation authority.
+v00.00.09f30i - Cavalry Authority + Single HUD + Selection/Order Visuals + Animation
+- Backup before F30I: backup/channel-test-v00.00.09f30h-pre-09f30i-cavalry-authority-hud at F30H HEAD f55e35ff36fc45b06fc7bc63398a2c52198a3187.
+- FIX: cavalry Officer AI now starts OFF / MANUEL. Gardehusar and Dragon no longer autonomously leave their initial four-rank line immediately after spawn.
+- FIX: cavalry AI toggle race removed. Clicking AI ON/OFF no longer gets interpreted as a generic manual HUD click before OnGUI toggles it.
+- Direct world move orders still take manual authority; manual CHARGE, STOP/HOLD, formation and Dragon SID AF/STIG OP commands explicitly disable cavalry AI.
+- PrototypeCavalryCommandControl09F30C keeps attachment helpers but no longer draws a second cavalry HUD/control strip.
+- PrototypeBottomCommandBar09F2 keeps F5 enemy gate/hotkeys but no longer draws the legacy bottom command layer.
+- PrototypeCavalryManager09F30 is the sole cavalry bottom-HUD owner.
+- Cavalry selection now clears Brigade/Division HQ selection as well as Regiment/Major/company selection, preventing parallel bottom HUDs.
+- OOB panel width increased from 452 px to 535 px; fixed MÆND/STATUS/AI/TILK columns and scrollbar remain.
+- F30E 1:1 expansion now snaps the completed 120/140 cavalry figures into the correct initial four-rank formation after all figures exist, rather than visually reforming from the old 12/14 proxy origin.
+- The old small circular/cylinder cavalry selection marker is retired.
+- New yellow formation-sized selection rectangle follows the actual cavalry footprint and smoothly changes size through Line/Column/bridge formation changes.
+- Selected cavalry with a destination gets a persistent pale order path plus a yellow destination ghost box sized to the planned final formation.
+- During bridge routes the path can show the active steering point plus final destination; the ghost box represents the final formation after crossing.
+- Dragon SID AF and STIG OP now use a procedural ~2.25 s visual transition instead of instant rider/foot visibility toggles.
+- Mounted cavalry receives a lightweight procedural riding gait while moving; charge uses a faster/larger gait than normal movement.
+- F30H four-rank Line/Charge, four-abreast Column and two-abreast bridge rules remain unchanged.
 
-Primary F30H QA
-1. Overlay reads PROJECT 1864 | v00.00.09f30h TEST and Unity compiles with no red errors.
-2. OOB shows all hierarchy row names/values; cavalry click, double-click and drag/drop still work.
-3. Normal Gardehusar/Dragon LINE visually has four ranks; normal COLUMN has four abreast.
-4. Switching LINE <-> COLUMN visibly takes time and HUD reports REFORMER progress rather than figures snapping.
-5. CHARGE remains four-rank LINE and does not accelerate to full charge speed while reforming.
-6. Crossing the river forces a two-abreast bridge column; unit progresses NearBank -> FarBank -> ExitBank, clears the full 1:1 column, then reforms.
-7. AI replan during bridge crossing does not reset/stall the bridge phase.
-8. At operational/strategic zoom Gardehusar/Dragon show I/CAV + names and Brigade/Division show X/XX HQ + names.
-9. At close/medium zoom cavalry and higher HQ retain physical entities and readable name labels.
-10. Box marquee with cavalry/Higher HQ but no infantry selects the nearest eligible entity.
-11. Cavalry bottom HUD matches company HUD styling/layout and shows current AI phase, target, command parent, bridge/reform state.
-12. F30E 120/140 1:1 counts, F30C flank/rear Officer AI and F30D/F30G attachment logic remain functional.
+Primary F30I QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30i TEST and Unity compiles with no red errors.
+2. At spawn Gardehusar and Dragon remain HOLD in four-rank Line; AI reads OFF / MANUEL.
+3. AI button can turn AI ON and OFF repeatedly without immediately toggling itself back.
+4. Selecting cavalry shows only one bottom HUD.
+5. Selecting Brigade/Division/company/Major/Regiment clears cavalry HUD; selecting cavalry clears those other command selections.
+6. OOB is 535 px wide and cavalry names do not collide with MÆND/STATUS/AI/TILK.
+7. Selected cavalry has a yellow rectangle matching its 4-rank Line footprint.
+8. Switching Line/Column changes the rectangle smoothly with the formation.
+9. Right-click move shows order line + destination ghost footprint until arrival/STOP.
+10. Dragon SID AF/STIG OP visibly transitions rather than popping instantly.
+11. Mounted MOVE has visible procedural gait; CHARGE gait is faster/more pronounced.
+12. 120/140 1:1 counts, bridge transaction, OOB drag/drop attachment and semantic NATO counters remain functional.

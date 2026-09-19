@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30h TEST  
+**Prototypebaseline:** v00.00.09f30i TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -646,6 +646,19 @@ Regler:
 
 ---
 
+## 35E. Cavalry manual authority og ordrevisualisering
+
+- Cavalry Officer AI starter OFF/MANUEL.
+- AI må kun aktiveres eksplicit af spilleren eller en senere autoritativ higher-command delegation.
+- Direkte world-order samt manuelle cavalry HUD-kommandoer tager manual authority.
+- AI ON/OFF-knappen skal være stabil og må ikke selv blive fortolket som en separat manual command.
+- Kun ét cavalry bottom-HUD må tegnes.
+- Selected cavalry skal vise formation-sized selection footprint.
+- Aktiv destination skal vise order path og destination ghost footprint.
+- Dragon SID AF/STIG OP og mounted movement skal være visuelt animeret; instant model-pop/ren glidning er ikke godkendt slutadfærd.
+
+---
+
 # DEL I — TESTUND-TAGELSER OG FREMTIDIGE REGLER
 
 ## 36. Midlertidige QA-regler
@@ -696,6 +709,13 @@ Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgen
 ---
 
 ## 39. Versionslog for dette regelsæt
+
+### v00.00.09f30i
+
+- Cavalry Officer AI default OFF/MANUEL.
+- Single cavalry HUD owner fastlagt.
+- Formation-sized selection, order line og destination ghost gjort kanonisk.
+- Dragon mount/dismount og mounted movement skal have visuel transition/animation.
 
 ### v00.00.09f30h
 

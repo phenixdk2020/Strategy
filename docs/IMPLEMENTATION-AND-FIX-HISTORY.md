@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30h TEST**  
-**Gameplay-baseline: v00.00.09f30h**  
+**Konsolideret ved v00.00.09f30i TEST**  
+**Gameplay-baseline: v00.00.09f30i**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30H. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderer cavalry formation, bridge, HUD, semantic zoom og selection.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30I. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderer cavalry formation, bridge, HUD, semantic zoom og selection.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -381,6 +381,18 @@ Fejlrettelser/hardening:
 - Cavalry bridge route kunne nulstilles af AI replan/new OrderMove under crossing; aktiv bridge phase bevares.
 - 1:1 column reformer ikke længere ved den fjerne brokant mens halen stadig er på broen.
 
+### v00.00.09f30i — Cavalry Authority + Single HUD + Order Visuals + Animation
+- Cavalry AI default OFF/MANUEL.
+- AI toggle Update/OnGUI race rettet.
+- F30C/F2 parallelle bottom HUD-lag visuelt pensioneret; F30H/F30I cavalry HUD er ene-ejer.
+- Higher HQ selection og cavalry selection gøres gensidigt eksklusive.
+- OOB bredde 535 px.
+- 120/140 figures snapper korrekt til fire-rank initial formation efter 1:1 expansion.
+- Gul formation-sized selection footprint.
+- Persistent order path og destination ghost footprint.
+- Dragon SID AF/STIG OP procedural transition.
+- Mounted move/charge procedural gait.
+
 ## 7. Samlet fejlrettelsesregister
 
 De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30H:
@@ -433,10 +445,19 @@ De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/harden
 46. F30E collider maintenance kunne overskrive F30H formation footprint.
 47. Cavalry Line/Column transition var for hurtig og læstes som magisk snap.
 48. Cavalry HUD brugte et separat layout og obsolete tekst om at AI ikke var implementeret.
+49. Cavalry Officer AI startede ON og flyttede enhederne autonomt direkte efter spawn.
+50. AI-toggle blev behandlet som manual HUD command før knappen og togglet tilbage til ON.
+51. F30C control strip og F2 legacy bottom bar kunne stadig tegne ekstra HUD-lag.
+52. F30E 1:1-added figures startede i origin og skulle reformere visuelt fra gammel proxy.
+53. Cavalry selection marker viste en lille cylinder i stedet for formationens footprint.
+54. Cavalry manglede persistent order line og destination ghost footprint.
+55. Dragon SID AF/STIG OP skiftede visuals instant uden overgang.
+56. Mounted cavalry gled uden nogen riding/gait animation.
+57. OOB 452 px var for smal til cavalry-navne og voksende support hierarchy.
 
-## 8. Status ved F30H
+## 8. Status ved F30I
 
-F30H er aktiv TEST-baseline. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
+F30I er aktiv TEST-baseline. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
 
 Aktuel implementeret tactical scope:
 - 1:1 infantry og cavalry tactical visuals.
