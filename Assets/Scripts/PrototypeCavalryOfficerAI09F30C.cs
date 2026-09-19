@@ -14,6 +14,7 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         public Regiment Target;
         public Vector3 ManeuverPoint;
         public Vector3 TargetAnchor;
+        public bool ManeuverIsDetour;
         public string Phase = "SEEK";
         public float NextThink;
         public float ManeuverStarted;
@@ -465,6 +466,12 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             return;
         }
 
+        if (reachedManeuverPoint && state.ManeuverIsDetour)
+        {
+            PlanManeuver(state, false);
+            return;
+        }
+
         // F30N: geometry alone is no longer enough to trigger a charge. Cavalry
         // waits until friendly infantry has fixed the target in local fire contact,
         // or the target has become materially disorganised.
@@ -551,12 +558,9 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         state.ManeuverPoint = routed;
         state.TargetAnchor = target.transform.position;
         state.PreferredSide = naturalSide;
-        state.ManeuverStarted =
-            newTarget || state.ManeuverStarted <= 0f
-                ? Time.time
-                : state.ManeuverStarted;
-
         bool detour = PlanarDistance(routed, desired) > 8f;
+        state.ManeuverIsDetour = detour;
+        state.ManeuverStarted = Time.time;
         state.Phase = detour
             ? "MANØVRER / OMGÅR FJENDE"
             : "SCREEN / " + PlannedAspectLabel(desired, target);
@@ -600,6 +604,10 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
 
         state.ManeuverPoint = desired;
         state.TargetAnchor = target.transform.position;
+        state.ManeuverIsDetour =
+            PlanarDistance(
+                desired,
+                target.transform.position) < StandOffMinDistance;
         state.ManeuverStarted = Time.time;
         state.Phase = "SCREEN / BRYDER AFSTAND";
 
