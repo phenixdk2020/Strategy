@@ -1,4 +1,3 @@
-using System.Reflection;
 using UnityEngine;
 
 // v00.00.09f30, threat behaviour hardened in F30N.
@@ -10,11 +9,8 @@ using UnityEngine;
 [DefaultExecutionOrder(35950)]
 public sealed class PrototypeCavalrySquareThreat09F30 : MonoBehaviour
 {
-    private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
     private const float MaxThreatDistance = 220f;
     private const float AutoSquareThreshold = 62f;
-
-    private MethodInfo enterSquareMethod;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -26,12 +22,9 @@ public sealed class PrototypeCavalrySquareThreat09F30 : MonoBehaviour
 
     private void Awake()
     {
-        enterSquareMethod = typeof(PrototypeInfantrySquare09F29)
-            .GetMethod("EnterSquare", PrivateInstance);
-
         Debug.Log(
-            "CAVALRY-SQUARE-09F30|Installed=True|ThreatDistance=220|" +
-            "AutoThreshold=62|SymmetricTestBridge=True");
+            "CAVALRY-SQUARE-09F30N|Installed=True|ThreatDistance=220|" +
+            "AutoThreshold=62|SymmetricThreatAPI=True|PersistentThreatRefresh=True");
     }
 
     private void Update()
@@ -72,58 +65,16 @@ public sealed class PrototypeCavalrySquareThreat09F30 : MonoBehaviour
                         ? 7f
                         : 0f;
 
-            if (target.Team == BattleTeam.Denmark)
-            {
-                PrototypeInfantrySquare09F29.ReportMountedThreat(
-                    target,
-                    unit.transform.position,
-                    distance,
-                    closingSpeed,
-                    relativeStrength,
-                    charging);
-                continue;
-            }
-
-            OfficerAIController controller =
-                target.GetComponent<OfficerAIController>();
-            if (controller == null ||
-                !controller.AIEnabled ||
-                PrototypeInfantrySquare09F29.IsInSquare(target))
-                continue;
-
-            float proximity =
-                1f - Mathf.Clamp01(distance / MaxThreatDistance);
-
-            float score =
-                (charging ? 38f : 10f) +
-                proximity * 34f +
-                Mathf.Clamp(closingSpeed, 0f, 12f) * 2.1f +
-                Mathf.Clamp(relativeStrength, 0.25f, 2f) * 9f;
-
-            if (score < AutoSquareThreshold ||
-                enterSquareMethod == null ||
-                PrototypeInfantrySquare09F29.Instance == null)
-                continue;
-
-            enterSquareMethod.Invoke(
-                PrototypeInfantrySquare09F29.Instance,
-                new object[]
-                {
-                    target,
-                    true,
-                    unit.transform.position
-                });
-
-            Debug.Log(
-                "CAVALRY-SQUARE-09F30N|Target=" +
-                target.RegimentName +
-                "|Team=Prussia|Score=" +
-                score.ToString("0") +
-                "|Distance=" +
-                distance.ToString("0") +
-                "|Charging=" +
-                charging +
-                "|Action=FORM_SQUARE");
+            // F30N: the F29 mounted-threat API is now team-neutral, so the same
+            // square state machine handles both sides and also refreshes LastThreatAt
+            // while cavalry remains nearby.
+            PrototypeInfantrySquare09F29.ReportMountedThreat(
+                target,
+                unit.transform.position,
+                distance,
+                closingSpeed,
+                relativeStrength,
+                charging);
         }
     }
 
