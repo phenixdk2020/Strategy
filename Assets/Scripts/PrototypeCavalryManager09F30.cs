@@ -274,6 +274,10 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
 
     private bool HasOtherCommandSelection()
     {
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null && higher.SelectedLevel != PrototypeHigherCommandLevel09F30B.None)
+            return true;
+
         PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
         if (regimental != null && regimental.Selected)
             return true;
@@ -299,6 +303,10 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
 
     private void ClearInfantryAndHqSelection()
     {
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null)
+            higher.ClearSelectionOnly();
+
         PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
         if (regimental != null && regimental.Selected && setRegimentalSelectedMethod != null)
             setRegimentalSelectedMethod.Invoke(regimental, new object[] { false });
@@ -436,10 +444,10 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
 
         GUI.Label(new Rect(aiX, y, aiWidth, 10f), "AI / DOKTRIN", sectionStyle);
         if (GUI.Button(new Rect(aiX, y + 11f, aiWidth * 0.45f, 20f),
-                aiOn ? "AI ON" : "AI OFF", aiOn ? activeStyle : redStyle))
+                aiOn ? "AI ON" : "AI OFF / MANUEL", aiOn ? activeStyle : redStyle))
         {
             if (aiController != null)
-                aiController.ToggleAI(selected);
+                aiController.SetAIEnabled(selected, !aiOn, "HUD_TOGGLE_F30I");
         }
         GUI.Label(new Rect(aiX, y + 35f, aiWidth, 12f), "Plan: FLANK / REAR → CHARGE", valueStyle);
         GUI.Label(new Rect(aiX, y + 47f, aiWidth, 12f), "Status: " + phase, valueStyle);
@@ -466,11 +474,15 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
                 pendingCharge ? "VÆLG MÅL" : "CHARGE", pendingCharge ? activeStyle : redStyle))
         {
             if (selected.Mode == PrototypeCavalryMode09F30.Mounted)
+            {
+                SetSelectedManual("HUD_CHARGE");
                 pendingCharge = !pendingCharge;
+            }
         }
         if (GUI.Button(new Rect(commandX + actionW + gap, actionY, actionW, 20f),
                 "STOP / HOLD", selected.Action == PrototypeCavalryAction09F30.Hold ? activeStyle : redStyle))
         {
+            SetSelectedManual("HUD_STOP_HOLD");
             selected.OrderHold();
             pendingCharge = false;
         }
@@ -483,6 +495,7 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
         {
             if (selected.Kind == PrototypeCavalryKind09F30.Dragon)
             {
+                SetSelectedManual("HUD_MOUNT_MODE");
                 pendingCharge = false;
                 if (selected.Mode == PrototypeCavalryMode09F30.Mounted) selected.Dismount();
                 else selected.Remount();
@@ -494,16 +507,29 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
         float formationW = (commandWidth - gap) / 2f;
         if (GUI.Button(new Rect(commandX, formationY, formationW, 20f), "4-GELED LINJE",
                 selected.Formation == PrototypeCavalryFormation09F30.Line && !selected.IsBridgeRouteActive ? activeStyle : redStyle))
+        {
+            SetSelectedManual("HUD_FORMATION_LINE");
             selected.SetFormation(PrototypeCavalryFormation09F30.Line);
+        }
         if (GUI.Button(new Rect(commandX + formationW + gap, formationY, formationW, 20f), "MARCHKOLONNE",
                 selected.Formation == PrototypeCavalryFormation09F30.Column && !selected.IsBridgeRouteActive ? activeStyle : redStyle))
+        {
+            SetSelectedManual("HUD_FORMATION_COLUMN");
             selected.SetFormation(PrototypeCavalryFormation09F30.Column);
+        }
 
         Event current = Event.current;
         if (current != null && panel.Contains(current.mousePosition) &&
             (current.type == EventType.MouseDown || current.type == EventType.MouseUp ||
              current.type == EventType.MouseDrag || current.type == EventType.ScrollWheel))
             current.Use();
+    }
+
+    private void SetSelectedManual(string reason)
+    {
+        PrototypeCavalryOfficerAI09F30C ai = PrototypeCavalryOfficerAI09F30C.Instance;
+        if (selected != null && ai != null && ai.IsAIEnabled(selected))
+            ai.SetAIEnabled(selected, false, reason);
     }
 
     private void EnsureStyles()

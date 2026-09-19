@@ -31,7 +31,7 @@ public sealed class PrototypeBottomCommandBar09F2 : MonoBehaviour
         SuppressLegacyOfficerManagerWhenReady();
         ApplyInitialEnemyHold();
         HandleHotkeys();
-        UpdatePointerIsolation();
+        RestorePointerComponents();
     }
 
     private void OnDisable()
@@ -210,89 +210,8 @@ public sealed class PrototypeBottomCommandBar09F2 : MonoBehaviour
 
     private void OnGUI()
     {
-        EnsureStyles();
-
-        Rect panel = GetPanelRect();
-        GUI.Box(panel, string.Empty, panelStyle);
-
-        const float gap = 3f;
-        const float buttonH = 27f;
-        float x = 5f;
-        float y = panel.y + 3f;
-
-        Regiment firstRegiment = GetFirstSelectedRegiment();
-        OfficerAIController firstController = GetFirstSelectedController();
-        int selectedCount = GetSelectedDanishCount();
-
-        string unitText = selectedCount == 0
-            ? "VÆLG DANSK REGIMENT"
-            : selectedCount > 1
-                ? selectedCount + " VALGTE"
-                : firstRegiment.RegimentName;
-
-        GUI.Label(new Rect(x, y, 155f, buttonH), unitText, boldStyle);
-        x += 158f;
-
-        string enemyLabel = enemyStarted ? "FJENDE: STOP [F5]" : "START FJENDE [F5]";
-        if (GUI.Button(new Rect(x, y, 125f, buttonH), enemyLabel))
-            SetEnemyActive(!enemyStarted);
-        x += 128f;
-
-        if (firstController != null && firstRegiment != null)
-        {
-            if (GUI.Button(new Rect(x, y, 62f, buttonH), firstController.AIEnabled ? "AI ON" : "AI OFF"))
-                ForEachSelectedDanish((r, c) => c.SetAIEnabled(!firstController.AIEnabled));
-            x += 65f;
-
-            if (GUI.Button(new Rect(x, y, 48f, buttonH), firstController.Doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF"))
-                ForEachSelectedDanish((r, c) => c.SetDoctrine(OfficerAIDoctrine.Defensive));
-            x += 51f;
-
-            if (GUI.Button(new Rect(x, y, 48f, buttonH), firstController.Doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL"))
-                ForEachSelectedDanish((r, c) => c.SetDoctrine(OfficerAIDoctrine.Balanced));
-            x += 51f;
-
-            if (GUI.Button(new Rect(x, y, 48f, buttonH), firstController.Doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF"))
-                ForEachSelectedDanish((r, c) => c.SetDoctrine(OfficerAIDoctrine.Offensive));
-            x += 51f;
-
-            if (GUI.Button(new Rect(x, y, 52f, buttonH), "<15 Z") && PlayerCommander.Instance != null)
-                PlayerCommander.Instance.RotateSelectedFacing(-15f);
-            x += 55f;
-
-            if (GUI.Button(new Rect(x, y, 52f, buttonH), "15> X") && PlayerCommander.Instance != null)
-                PlayerCommander.Instance.RotateSelectedFacing(15f);
-            x += 55f;
-
-            if (GUI.Button(new Rect(x, y, 72f, buttonH), "KAMP F9") && PrototypeCombatTuningManager.Instance != null)
-                PrototypeCombatTuningManager.Instance.TogglePanel();
-        }
-
-        // Second row: aggression and fire policy. It starts at the physical bottom edge.
-        x = 5f;
-        y = panel.y + 33f;
-
-        if (firstController != null && firstRegiment != null)
-        {
-            GUI.Label(new Rect(x, y, 54f, buttonH), "Agg " + firstController.OrderAggressiveness.ToString("0"), boldStyle);
-            float newAgg = GUI.HorizontalSlider(
-                new Rect(x + 54f, y + 8f, 150f, 16f),
-                firstController.OrderAggressiveness,
-                0f,
-                100f);
-            if (Mathf.Abs(newAgg - firstController.OrderAggressiveness) >= 0.5f)
-                ForEachSelectedDanish((r, c) => c.SetOrderAggressiveness(newAgg));
-            x += 210f;
-
-            DrawFireButton(ref x, y, "HOLD", RegimentFirePolicy.HoldFire, firstRegiment);
-            DrawFireButton(ref x, y, "CLOSE", RegimentFirePolicy.CloseRange, firstRegiment);
-            DrawFireButton(ref x, y, "MED", RegimentFirePolicy.MediumRange, firstRegiment);
-            DrawFireButton(ref x, y, "LONG", RegimentFirePolicy.LongRange, firstRegiment);
-        }
-        else
-        {
-            GUI.Label(new Rect(x, y, 420f, buttonH), "Fjenden holder position. Vælg det danske regiment og test bevægelse først.", labelStyle);
-        }
+        // F30I: retired legacy bottom bar. F5 enemy gate/hotkeys remain active.
+        return;
     }
 
     private void DrawFireButton(ref float x, float y, string label, RegimentFirePolicy policy, Regiment reference)

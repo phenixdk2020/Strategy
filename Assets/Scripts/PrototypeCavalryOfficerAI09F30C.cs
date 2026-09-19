@@ -10,7 +10,7 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
     private sealed class State
     {
         public PrototypeCavalryUnit09F30 Unit;
-        public bool Enabled = true;
+        public bool Enabled = false;
         public Regiment Target;
         public Vector3 ManeuverPoint;
         public Vector3 TargetAnchor;
@@ -103,7 +103,7 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         Register(cavalry.Gardehusar, 1);
         Register(cavalry.Dragon, -1);
         installed = true;
-        Debug.Log("CAV-AI-09F30C|Installed=True|DefaultAI=ON|Plan=SEEK_FLANK_OR_REAR_THEN_CHARGE|ManualOverride=True");
+        Debug.Log("CAV-AI-09F30I|Installed=True|DefaultAI=OFF|Plan=SEEK_FLANK_OR_REAR_THEN_CHARGE|ManualOverride=True");
     }
 
     private void Register(PrototypeCavalryUnit09F30 unit, int preferredSide)
@@ -113,7 +113,8 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         states[unit] = new State
         {
             Unit = unit,
-            Enabled = true,
+            Enabled = false,
+            Phase = "MANUEL",
             PreferredSide = preferredSide,
             NextThink = Time.time + Random.Range(0.4f, 1.2f)
         };
@@ -175,11 +176,10 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         if (!IsAIEnabled(selected))
             return;
 
-        bool directWorldOrder = Input.GetMouseButtonDown(1);
-        bool bottomHudClick = Input.GetMouseButtonDown(0) && Input.mousePosition.y <= BottomHudHeight &&
-                              !PrototypeCavalryCommandControl09F30C.IsPointerOverControlStrip(Input.mousePosition);
-        if (directWorldOrder || bottomHudClick)
-            SetAIEnabled(selected, false, directWorldOrder ? "PLAYER_RIGHT_CLICK" : "PLAYER_HUD_COMMAND");
+        // F30I: only direct world orders auto-take manual authority here.
+        // HUD buttons explicitly decide whether their command disables AI.
+        if (Input.GetMouseButtonDown(1))
+            SetAIEnabled(selected, false, "PLAYER_RIGHT_CLICK");
     }
 
     private bool ParentAllowsDelegatedAI(PrototypeCavalryUnit09F30 unit)

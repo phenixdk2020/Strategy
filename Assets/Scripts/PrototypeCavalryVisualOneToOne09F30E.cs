@@ -145,6 +145,7 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
         }
 
         ResizeOneToOneCollider(unit, unitCollider, mountedFigures.Count);
+        unit.SnapVisualFormationForInitialization();
 
         if (unit.transform.Find("F30E_OneToOneMarker") == null)
         {

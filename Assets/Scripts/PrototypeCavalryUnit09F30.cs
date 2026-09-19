@@ -59,6 +59,10 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     public bool IsReforming { get; private set; }
     public float FormationReadyFraction { get; private set; } = 1f;
     public string BridgePhaseLabel => bridgePhase == BridgePhase.Direct ? "DIRECT" : bridgePhase.ToString().ToUpperInvariant();
+    public bool HasDestination => hasDestination;
+    public Vector3 FinalDestination => finalDestination;
+    public PrototypeCavalryFormation09F30 PlannedDestinationFormation =>
+        bridgePhase != BridgePhase.Direct ? formationBeforeBridge : Formation;
 
     private readonly List<Transform> mountedFigures = new List<Transform>();
     private readonly List<GameObject> mountedRiders = new List<GameObject>();
@@ -162,7 +166,15 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     {
         IsSelected = value;
         if (selectionMarker != null)
-            selectionMarker.SetActive(value);
+            selectionMarker.SetActive(false);
+    }
+
+    public void SnapVisualFormationForInitialization()
+    {
+        RefreshFormationInstant();
+        FormationReadyFraction = 1f;
+        IsReforming = false;
+        ResizeCollider();
     }
 
     public void SetFormation(PrototypeCavalryFormation09F30 formation)

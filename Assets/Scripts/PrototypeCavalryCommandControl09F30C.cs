@@ -80,52 +80,13 @@ public sealed class PrototypeCavalryCommandControl09F30C : MonoBehaviour
 
     public static bool IsPointerOverControlStrip(Vector3 mousePosition)
     {
-        float y = Screen.height - HudHeight + 61f;
-        float x = Mathf.Max(660f, Screen.width - 455f);
-        float available = Screen.width - x - 8f;
-        if (available < 330f)
-            x = Mathf.Max(8f, Screen.width - 338f);
-        Vector2 gui = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
-        return new Rect(x, y, Screen.width - x - 8f, 22f).Contains(gui);
+        return false;
     }
 
     private void OnGUI()
     {
-        PrototypeCavalryManager09F30 cavalry = PrototypeCavalryManager09F30.Instance;
-        PrototypeCavalryUnit09F30 selected = cavalry != null ? cavalry.SelectedUnit : null;
-        if (selected == null)
-            return;
-
-        EnsureStyles();
-        GUI.depth = -7900;
-
-        float y = Screen.height - HudHeight + 61f;
-        float x = Mathf.Max(660f, Screen.width - 455f);
-        float available = Screen.width - x - 8f;
-        if (available < 330f)
-        {
-            x = Mathf.Max(8f, Screen.width - 338f);
-            available = Screen.width - x - 8f;
-        }
-
-        PrototypeCavalryOfficerAI09F30C ai = PrototypeCavalryOfficerAI09F30C.Instance;
-        bool aiOn = ai != null && ai.IsAIEnabled(selected);
-        string aiLabel = aiOn ? "AI ON" : "AI OFF / MANUEL";
-        Rect aiRect = new Rect(x, y, Mathf.Min(112f, available * 0.31f), 22f);
-        if (GUI.Button(aiRect, aiLabel, aiOn ? activeStyle : buttonStyle) && ai != null)
-            ai.ToggleAI(selected);
-
-        float parentX = aiRect.xMax + 5f;
-        Rect parentRect = new Rect(parentX, y, Mathf.Min(155f, available * 0.42f), 22f);
-        if (GUI.Button(parentRect, "TILKNYT: " + GetParentShort(selected), buttonStyle))
-            CycleParent(selected);
-
-        float statusX = parentRect.xMax + 6f;
-        float statusW = Mathf.Max(40f, Screen.width - statusX - 8f);
-        string status = ai != null
-            ? ai.GetPhase(selected) + " | mål: " + ai.GetTargetName(selected)
-            : "AI initialiseres";
-        GUI.Label(new Rect(statusX, y, statusW, 22f), status, labelStyle);
+        // F30I: visual ownership moved to PrototypeCavalryManager09F30.
+        return;
     }
 
     private void EnsureStyles()

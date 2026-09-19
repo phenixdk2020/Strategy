@@ -11,7 +11,7 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
     private const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
     private const float PanelX = 8f;
     private const float PanelY = 39f;
-    private const float PanelWidth = 452f;
+    private const float PanelWidth = 535f;
     private const float HeaderHeight = 27f;
     private const float ColumnHeaderHeight = 16f;
     private const float RowHeight = 22f;
@@ -112,7 +112,7 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
         if (oldCavalry != null) oldCavalry.enabled = false;
 
         legacyDisabled = true;
-        Debug.Log("OOB-09F30G|Installed=True|LegacyPanels=False|LegacyStatusOverlay=False|FixedColumns=True|ScrollView=True|DragDropAttachment=True");
+        Debug.Log("OOB-09F30I|Installed=True|LegacyPanels=False|LegacyStatusOverlay=False|FixedColumns=True|ScrollView=True|DragDropAttachment=True");
     }
 
     public static bool IsPointerOverPanel(Vector3 mousePosition)
