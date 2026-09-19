@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.28**  
+**Aktuel designbaseline: v00.02.29**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10n7b WAY 1 / CITY ART POLISH**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n7c WAY 1 / EMBEDDED CITY ASSET RESET**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -35,6 +35,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 15: 50 — Campaign3 v00.00.10n3: skarpere zonegrænser + kompakt zoneinfo](parts/part-15-50-CAMPAIGN-V10N3-ZONE-POLISH-INFO.md)
 - [Del 16: 51 — Campaign3 v00.00.10n4: HUD-default, korrekt zonevalg og delte interne grænser](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md)
 - [Del 27: 62 — Campaign3 v00.00.10n7b: Vej 1 / City Art Polish](parts/part-27-62-CAMPAIGN-V10N7B-CITY-ART-POLISH.md)
+- [Del 28: 63 — Campaign3 v00.00.10n7c: Embedded City Asset Reset](parts/part-28-63-CAMPAIGN-V10N7C-EMBEDDED-CITY-ASSET-RESET.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -152,6 +153,18 @@ Zone-line renderer registrerer samtidig hvilke forskellige ZoneIds der ejer hver
 Historisk guardrail er uændret: zoneidentiteterne er kanoniske, men den nuværende center-derived polygongeometri er stadig prototype og ikke historisk 1851-facit.
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 16 / Campaign3 v00.00.10n4](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md).
+
+## Campaign3 v00.00.10n7c — Embedded City Asset Reset
+
+Designbaseline v00.02.29 fastholder **Vej 1** og retter den konkrete n7b-fejl, hvor Unity rapporterede `Proposal3TextureMissing|A=False|B=False|C=True`.
+
+n7c fjerner runtime-afhængigheden til `Resources.Load<Texture2D>` for city-art. Tre validerede Proposal-3 PNG-assets for A/B/C er i stedet indlejret som runtime-data og decodes med `ImageConversion.LoadImage`. De tidligere Resources-PNG'er fjernes fra den aktive build, og `CampaignMapOnlyCityArtV010N7C` rydder alle ældre `CITY_ART_`, `CITY_ICON_` og `TownGround` children **før** ny art installeres. En texture-fejl kan dermed ikke efterlade den gamle forkerte city-grafik på kortet.
+
+Byerne reduceres yderligere til A=0.95, B=0.72 og C=0.52 med ground lift 0.12. Canonical city marker er fortsat eneste X/Z-anchor, og klikcollideren er større end selve artworket.
+
+Amt/county boundaries, click ownership, highlight og info forbliver OFF. De må først genindføres efter accepteret city-art QA og skal da bruge én authoritative historisk polygonkilde til både line, click og highlight.
+
+Den fulde implementation/QA-specifikation ligger i [Del 28 / Campaign3 v00.00.10n7c](parts/part-28-63-CAMPAIGN-V10N7C-EMBEDDED-CITY-ASSET-RESET.md).
 
 ## Campaign3 v00.00.10n7b — Vej 1 / City Art Polish
 
