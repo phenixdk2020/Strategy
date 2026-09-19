@@ -219,7 +219,7 @@ F30B hardener samtidig de runtime-fejl der blev set efter F30A: charge-targeting
 
 ## v00.00.09f30m Higher command delegation, mission-visual parity og midlertidig cavalry task-attachment — aktuel gameplay baseline
 
-F30M gør Brigade/Division til reelle delegation-lag i den aktive prototype. Division AI ON cascader gennem Brigade, Regiment, begge Majorer/Battalions, company Officer AI og cavalry Officer AI. Brigade AI cascader tilsvarende fra Brigade og ned. Direkte player-order har fortsat højere authority.
+F30M gør Brigade/Division til reelle delegation-lag i den aktive prototype. Division AI ON cascader gennem Brigade, Regiment, begge Majorer/Battalions, company Officer AI og cavalry Officer AI. Brigade AI cascader tilsvarende fra Brigade og ned. Direkte player-order har fortsat højere authority. RMB på en valgt cavalry-enhed skal derfor altid bryde en inherited higher mission, også når cavalry Officer AI allerede står OFF.
 
 Higher-HQ selection viser nu den eksisterende subordinate plan: company routes, destination footprints, regimental objective circle/cross samt cavalry route/destination ghost. Det er visualisering af samme authoritative mission-state, ikke et nyt movement-system.
 
