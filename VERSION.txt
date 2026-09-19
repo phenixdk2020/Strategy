@@ -1,14 +1,45 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30n
+Prototype version: v00.00.09f30o
 Build status: TEST
-Build name: REGIMENT HUD PARITY + CAV SCREEN/OPPORTUNITY AI + ANTI-CAV INFANTRY REACTION
-Visible build marker: PROJECT 1864 | v00.00.09f30n TEST
+Build name: HIGHER AI ARMING + SHARED TARGET CIRCLE + TRUE F29G HUD PARITY
+Visible build marker: PROJECT 1864 | v00.00.09f30o TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30n
+Gameplay/build baseline: v00.00.09f30o
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30o - Higher AI Arming + Shared Target Circle + True F29G HUD Parity
+- Backup before F30O: backup/channel-test-v00.00.09f30n-pre-09f30o-command-authority-target-preview at F30N HEAD d65a38b4ecc4f2a2d50abb2cbb516f6dfd000755.
+- FIX: Division/Brigade AI ON is now an ARMED/WAITING state, not an implicit movement/order trigger.
+- Regiment AI cascaded from higher HQ waits for a committed higher mission and does not auto-create default Attack/Defend intent.
+- Major/Battalion AI cascaded from higher HQ waits for a fresh parent mission; stale mission records are frozen while waiting.
+- Company Officer AI is placed in HOLD while the battalion is armed and waiting.
+- Cavalry AI cascaded from higher HQ enters VENTER PÅ HQ-ORDRE and does not SEEK/move toward enemies before an explicit mission.
+- Re-arming higher AI does not resume a stale inherited cavalry mission.
+- Division/Brigade orders now use the same PrototypeOfficerFacingOrder09F29G target flow as Regiment/Major.
+- ANGRIB HER/FORSVAR HER/RYK FREM/TILBAGETRÆK/SAML show the same live hover objective circle before placement.
+- Higher-HQ objective circle sizes: Brigade 64 m, Division 84 m in the current QA prototype.
+- Click places objective; drag still supplies explicit facing through the shared facing-order system.
+- Higher HQ is now drawn by the authoritative PrototypeUnifiedCommandHud09F29G renderer rather than its legacy separate HUD.
+- Division/Brigade therefore reuse the exact same F29G panel geometry, section layout, two-row order grid, colors and controls as Regiment.
+- Added explicit black 2 px top edge and removed inherited header slicing border to eliminate the green line above the HUD.
+- Higher legacy HUD remains only as fallback if the unified HUD component is unavailable.
+
+Primary F30O QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30o TEST and Unity compiles with no red errors.
+2. Fresh start: select Division and press AI ON only. Regiment, Majors, companies and both CAV units remain physically stationary.
+3. CAV status may show AI ON, but phase must be VENTER PÅ HQ-ORDRE and it must not SEEK an enemy.
+4. Wait at least 10 seconds after AI ON: no auto-generated FORSVAR/ANGRIB mission may appear.
+5. Press ANGRIB HER: a colored circular objective preview must immediately follow the ground cursor.
+6. Click ground: the circle commits/disappears and only then may the higher mission start moving subordinates.
+7. Hold and drag while placing the objective: facing arrow must appear and propagate through the shared facing-order flow.
+8. Regiment, Brigade and Division HUDs use the same F29G geometry and two-row order grid.
+9. The thin top edge above the authoritative HUD is black, not green.
+10. F30N CAV screen/opportunity/anti-cavalry behaviour remains functional after the higher mission is actually committed.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30n - Regiment HUD Parity + Cavalry Screen/Opportunity AI + Anti-Cavalry Infantry Reaction
 - Backup before F30N: backup/channel-test-v00.00.09f30m-pre-09f30n-hud-cav-contact at F30M HEAD c27aa704cfe7c1316206871f075034163fb54f1c.
