@@ -578,6 +578,10 @@ public sealed class PrototypeCavalryVisualOneToOne09F30E : MonoBehaviour
             int rows = Mathf.CeilToInt(visibleCount / 4f);
             collider.size = new Vector3(8.2f, 3.2f, Mathf.Max(24f, rows * 2.15f + 3f));
         }
+
+        Vector3 worldCenter = unit.GetCurrentFootprintCenterWorld();
+        Vector3 localCenter = unit.transform.InverseTransformPoint(worldCenter);
+        collider.center = new Vector3(0f, 1.2f, localCenter.z);
     }
 
     private static GameObject CreatePart(

@@ -875,6 +875,11 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             int rows = Mathf.CeilToInt(men / 4f);
             unitCollider.size = new Vector3(8.2f, 3.1f, Mathf.Max(24f, rows * 2.15f + 3f));
         }
+
+        Vector2 mountedSize = new Vector2(unitCollider.size.x, unitCollider.size.z);
+        float centerZ = CalculateFootprintCenterOffsetZ(
+            Mode, Formation, bridgePhase != BridgePhase.Direct, mountedSize);
+        unitCollider.center = new Vector3(0f, 1.2f, centerZ);
     }
 
     private float BridgeExitClearance()
