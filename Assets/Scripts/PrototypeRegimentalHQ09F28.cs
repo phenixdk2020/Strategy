@@ -29,6 +29,7 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
     private PendingRegimentalOrder currentMission;
     private string lastOrderText = "Ingen regimentsordre";
     private string lastDecisionText = "Bataljonsroller: ikke vurderet";
+    private bool awaitHigherMission;
     private float nextThink;
     private bool hasHqGoal;
     private Vector3 hqGoal;
@@ -130,9 +131,31 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
     public void SetAIEnabled(bool enabled, string reason = "HIGHER_COMMAND")
     {
         AIEnabled = enabled;
+
+        bool higherCascade =
+            !string.IsNullOrEmpty(reason) &&
+            reason.EndsWith("_CASCADE", System.StringComparison.Ordinal);
+
+        // F30O authority rule:
+        // Higher-HQ AI ON arms the regiment for delegated execution. It is NOT an
+        // implicit mission and must not create a default attack/defence by itself.
+        awaitHigherMission = enabled && higherCascade;
+
+        if (awaitHigherMission)
+        {
+            hasHqGoal = false;
+            lastOrderText = "AI klar | afventer ordre fra højere HQ";
+            lastDecisionText = "Ingen bevægelse uden committed mission";
+        }
+
+        if (!enabled)
+            awaitHigherMission = false;
+
         nextThink = Time.time + 0.25f;
-        Debug.Log("REG-AI-09F30M|AI=" + (AIEnabled ? "ON" : "OFF") +
-                  "|Doctrine=" + Doctrine + "|Reason=" + reason);
+        Debug.Log("REG-AI-09F30O|AI=" + (AIEnabled ? "ON" : "OFF") +
+                  "|Doctrine=" + Doctrine +
+                  "|AwaitHigherMission=" + awaitHigherMission +
+                  "|Reason=" + reason);
     }
 
     public MajorOrder09F18 CurrentMissionOrder
@@ -155,6 +178,8 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
     {
         if (!Installed || hierarchy == null || hierarchy.BattalionCount < 2)
             return;
+
+        awaitHigherMission = false;
 
         if (order == MajorOrder09F18.HoldPosition)
         {
@@ -272,6 +297,11 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
 
         nextThink = Time.time + 8f;
 
+        // Higher-HQ cascade only arms delegated AI. Do nothing until an explicit
+        // Division/Brigade mission reaches the regiment.
+        if (awaitHigherMission)
+            return;
+
         if (currentMission != null)
             return; // explicit player/regimental mission remains intent; AI does not churn it every think cycle.
 
@@ -295,7 +325,8 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
             return;
         }
 
-        if (!AIEnabled || currentMission == null || currentMission.Order == MajorOrder09F18.HoldPosition)
+        if (!AIEnabled || awaitHigherMission || currentMission == null ||
+            currentMission.Order == MajorOrder09F18.HoldPosition)
             return;
 
         GameObject major0 = hierarchy.GetMajorHq(0);
