@@ -20,6 +20,7 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         public float ManeuverStarted;
         public int PreferredSide = 1;
         public bool HasHigherMission;
+        public bool AwaitHigherMission;
         public MajorOrder09F18 HigherMissionOrder = MajorOrder09F18.None;
         public Vector3 HigherMissionGoal;
         public Vector3 HigherMissionFacing;
@@ -108,6 +109,14 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
 
             if (!state.Enabled)
                 continue;
+
+            if (state.AwaitHigherMission)
+            {
+                state.Phase = "VENTER PÅ HQ-ORDRE";
+                if (state.Unit.Action == PrototypeCavalryAction09F30.Move)
+                    state.Unit.OrderHold();
+                continue;
+            }
             if (!ParentAllowsDelegatedAI(state.Unit))
             {
                 state.Phase = "WAIT PARENT AI";
@@ -166,15 +175,35 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             state = states[unit];
         }
 
+        bool higherCascade =
+            !string.IsNullOrEmpty(reason) &&
+            reason.EndsWith("_CASCADE", System.StringComparison.Ordinal);
+
         state.Enabled = enabled;
+        state.AwaitHigherMission =
+            enabled && higherCascade && !state.HasHigherMission;
+
         if (enabled)
             unit.ClearManualFormationOverride();
+
         state.Target = null;
-        state.Phase = enabled ? "SEEK" : "MANUEL";
+        state.Phase = state.AwaitHigherMission
+            ? "VENTER PÅ HQ-ORDRE"
+            : enabled ? "SEEK" : "MANUEL";
         state.NextThink = Time.time + 0.25f;
         state.ManeuverStarted = 0f;
 
-        Debug.Log("CAV-AI-09F30C|Unit=" + unit.UnitName + "|AI=" + (enabled ? "ON" : "OFF") + "|Reason=" + reason);
+        if (state.AwaitHigherMission &&
+            unit.Action != PrototypeCavalryAction09F30.Charge)
+            unit.OrderHold();
+
+        if (!enabled)
+            state.AwaitHigherMission = false;
+
+        Debug.Log("CAV-AI-09F30O|Unit=" + unit.UnitName +
+                  "|AI=" + (enabled ? "ON" : "OFF") +
+                  "|AwaitHigherMission=" + state.AwaitHigherMission +
+                  "|Reason=" + reason);
     }
 
     public void ToggleAI(PrototypeCavalryUnit09F30 unit)
@@ -200,6 +229,7 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         }
 
         state.HasHigherMission = true;
+        state.AwaitHigherMission = false;
         state.HigherMissionOrder = order;
         state.HigherMissionGoal = goal;
         state.HigherMissionFacing = facing.sqrMagnitude > 0.01f ? facing.normalized : unit.transform.forward;
