@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30n TEST**  
-**Gameplay-baseline: v00.00.09f30n**  
+**Konsolideret ved v00.00.09f30o TEST**  
+**Gameplay-baseline: v00.00.09f30o**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30N. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30O. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -429,6 +429,16 @@ Fejlrettelser/hardening:
 - Mounted gait articulates horse legs/hooves, head, tail and rider instead of only whole-root rocking.
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
+
+### v00.00.09f30o — Higher AI Arming + Shared Target Circle + True F29G HUD Parity
+- Higher-HQ AI ON changed from implicit autonomous action to ARMED/WAITING authority.
+- Regimental AI no longer generates a default Attack/Defend mission when enabled by Division/Brigade cascade.
+- Battalion AI no longer creates default DefendHere while waiting for higher intent, and stale company mission records are frozen until a fresh mission arrives.
+- Company Officer AI is held while its Battalion awaits a higher mission.
+- Cavalry cascade no longer enters SEEK; it waits on HQ order and stale inherited missions are discarded when higher AI is re-armed.
+- Division/Brigade order placement now uses PrototypeOfficerFacingOrder09F29G with the same live objective circle and drag-facing flow as Regiment/Major.
+- Higher-HQ HUD moved into PrototypeUnifiedCommandHud09F29G, eliminating the separate approximation and giving true runtime layout parity.
+- Added black top edge to the authoritative shared HUD and removed inherited header border slicing that produced the green line.
 
 ### v00.00.09f30n — Regiment HUD Parity + Cavalry Screen/Opportunity AI + Anti-Cavalry Infantry Reaction
 - Brigade/Division bottom HUD now copies Regimental HQ panel/theme/header/AI-doctrine/info/button geometry and palette 1:1.
