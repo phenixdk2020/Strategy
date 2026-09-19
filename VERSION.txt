@@ -1,42 +1,49 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30l
+Prototype version: v00.00.09f30m
 Build status: TEST
-Build name: CAVALRY VISUAL FIDELITY + GAIT POLISH
-Visible build marker: PROJECT 1864 | v00.00.09f30l TEST
+Build name: HIGHER COMMAND DELEGATION + TEMP CAV ATTACHMENT + MISSION VISUAL PARITY
+Visible build marker: PROJECT 1864 | v00.00.09f30m TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay baseline: v00.00.09f30k
-Visual baseline: v00.00.09f30l
+Gameplay/build baseline: v00.00.09f30m
+Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
 
-v00.00.09f30l - Cavalry Visual Fidelity + Gait Polish
-- Backup before F30L: backup/channel-test-v00.00.09f30k-pre-09f30l-cavalry-visual-fidelity at F30K HEAD 703ff48aad1f6fa8f221d24d04eff44aeac88bd8.
-- Gameplay/AI/bridge/formation/OOB authority remains F30K; F30L is a visual/animation pass.
-- Existing 120 Gardehusar + 140 Dragon 1:1 mounted figures are reused; tactical figure count is unchanged.
-- Horse silhouette reshaped: fuller body/chest, slimmer/longer neck, more proportionate head/muzzle, slimmer legs, smaller/darker hooves, longer tail and cleaner mane silhouette.
-- Horse palette expanded to six deterministic coat tones per cavalry kind for less cloned appearance.
-- Rider silhouette tightened with slimmer torso proportions and clearer seating position.
-- Gardehusar close detail: sabretache + trim in addition to existing braid/pelisse/busby identity.
-- Dragon close detail: cartridge box + badge in addition to existing dark-blue/red/helmet/carbine identity.
-- Shared horse tack detail adds breast collar, girth and stirrups.
-- Sparse deterministic facial blaze/sock markings add limited horse variation without random runtime drift.
-- Close detail layer is LOD-hidden above ~210m camera height; 1:1 simulation/figure count remains unchanged.
-- Riding animation now articulates horse Leg0-3 + Hoof0-3 in a diagonal gait instead of relying mainly on whole-model rocking.
-- Horse head nod and tail swing are animated during movement.
-- Rider has speed-dependent lean/bounce; CHARGE uses stronger lean, faster cadence and larger leg swing than normal MOVE.
-- HOLD restores horse legs/hooves/head/tail/rider smoothly toward their base pose.
-- F30L visual reshape executes before the gait cache so the animation uses the upgraded base rotations.
-- F30K RMB facing, auto march Column, higher-HQ AI HUD, Dragon dismounted fire and remount timing remain unchanged.
+v00.00.09f30m - Higher Command Delegation + Temporary Cavalry Attachment + Mission Visual Parity
+- Backup before F30M: backup/channel-test-v00.00.09f30l-pre-09f30m-higher-command-visual-authority at F30L HEAD 989cd5baabda01da78b6f0ff76f9418bd115b2d4.
+- FIX: Division/Brigade selection exposes subordinate company mission routes and destination footprints.
+- FIX: regimental objective circle/cross remains visible from Brigade/Division selection; label reflects selected command level.
+- FIX: cavalry order path/destination ghost is visible while its higher HQ is selected.
+- Division AI ON/OFF cascades through Brigade, Regiment, Major A/B, company Officer AI and cavalry Officer AI.
+- Brigade AI ON/OFF cascades from Brigade downward without changing Division.
+- Brigade/Division HUD follows Regiment's three-zone layout: ENHEDSINFO/AI | ORDRER/MISSION | UNDERLAGTE/STATUS/ATTACHMENT.
+- Higher HUD shows Regiment, Major A/B, Gardehusar and Dragon AI state.
+- Higher order buttons remain blue while pending or while subordinate executors are still actively executing that order.
+- Arrived company missions no longer count as active execution.
+- FORSVAR HER gives attached cavalry explicit reserve/support positions behind the defense objective.
+- ANGRIB HER temporarily task-attaches cavalry to attacking Battalions/Majors through CurrentCommandParent.
+- If both cavalry units are available, assignment to Major A/B uses the lower total travel-cost permutation to reduce crossing.
+- OrganicParent remains unchanged during temporary tasking.
+- After attack execution ends, a committed cavalry charge may finish; cavalry then returns to its previous command parent as RESERVE and moves to a reserve/assemble position behind that HQ.
+- A new non-attack higher mission releases any temporary attack attachment immediately.
+- Direct player RMB on cavalry clears inherited higher mission and preserves manual override authority.
+- Higher doctrine propagates into Regiment and Battalions when a mission is committed.
+- F30L cavalry visuals/gait remain unchanged.
 
-Primary F30L QA
-1. Overlay reads PROJECT 1864 | v00.00.09f30l TEST and Unity compiles with no red errors.
-2. Gardehusar and Dragon remain exactly 120/140 mounted figures.
-3. At close zoom horses read less box-like: body/chest/neck/head/legs/hooves/tail are visually distinguishable.
-4. Horse coat variation is visible across a squadron without looking random every frame.
-5. Gardehusar and Dragon remain immediately distinguishable by uniform/equipment silhouette.
-6. MOVE visibly articulates individual horse legs/head/tail and rider movement.
-7. CHARGE has faster gait and stronger rider lean than normal MOVE.
-8. HOLD settles back to a neutral pose.
-9. At high camera altitude the F30L close-detail roots are disabled while the 1:1 cavalry figures remain visible according to normal semantic/mesh rules.
-10. No regression in F30K Line/Column/bridge/RMB-facing, OOB, higher-HQ AI or Dragon dismounted fire.
+Primary F30M QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30m TEST and Unity compiles with no red errors.
+2. Division AI ON -> Brigade, Regiment, Major A, Major B, Gardehusar and Dragon display AI ON.
+3. Division AI OFF -> delegated chain displays OFF.
+4. Brigade AI ON -> Brigade downward goes ON while Division remains unchanged.
+5. Division/Brigade selection shows subordinate routes, destination footprints and objective circle/cross.
+6. Higher order button is blue while subordinate units are still executing the order and clears after arrival/completion.
+7. FORSVAR HER moves attached cavalry to reserve/support positions instead of leaving it stationary.
+8. ANGRIB HER temporarily changes cavalry CurrentCommandParent to Major A/B while attack tasking is active.
+9. With both cavalry units available, each can be allocated to a different attacking Battalion/Major without unnecessary crossing.
+10. After attack completion and any committed charge ends, cavalry returns to its previous higher parent with RESERVE attachment and moves to a reserve position near that HQ.
+11. OOB reflects ATT Major A/B during attack and RES/parent after release.
+12. Direct player RMB on cavalry breaks inherited higher mission and returns player authority.
+13. F30K auto march/RMB-facing and F30L cavalry visual fidelity remain functional.
+
+Not runtime-verified by Unity yet.

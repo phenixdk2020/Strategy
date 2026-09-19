@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30l TEST**  
-**Gameplay-baseline: v00.00.09f30k**  
+**Konsolideret ved v00.00.09f30m TEST**  
+**Gameplay-baseline: v00.00.09f30m**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30L. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30M. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -430,9 +430,24 @@ Fejlrettelser/hardening:
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
 
+### v00.00.09f30m — Higher Command Delegation + Temporary Cavalry Attachment + Mission Visual Parity
+- Division AI cascades to Brigade/Regiment/Majors/company AI/cavalry AI.
+- Brigade AI cascades downward without changing Division.
+- Higher selection exposes subordinate routes, destination footprints and objective circle/cross.
+- Cavalry routes/destination ghosts remain visible under selected higher HQ.
+- Higher HUD aligned to Regiment three-zone command layout and subordinate AI status.
+- Higher order buttons remain blue only while pending or actually executing.
+- Arrived company missions no longer count as active executors.
+- FORSVAR HER gives attached cavalry explicit reserve/support goals.
+- ANGRIB HER temporarily task-attaches cavalry to Major A/B using CurrentCommandParent while preserving OrganicParent.
+- Two-cavalry/two-battalion assignment chooses the lower total travel-cost pairing to reduce crossing.
+- Attack-task cavalry returns to its prior parent as RESERVE after infantry execution completes and any committed charge finishes.
+- New non-attack higher mission releases temporary attack attachment.
+- Direct cavalry RMB clears inherited higher mission and restores manual authority.
+
 ## 7. Samlet fejlrettelsesregister
 
-De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30K:
+De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30M:
 
 1. Unity compile CS0136 local-variable collision.
 2. Deprecated/obsolete object lookup cleanup.
@@ -503,10 +518,19 @@ De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/harden
 67. Remount-transition var for hurtig til at læse tydeligt.
 68. Brigade/Division HUD manglede AI ON/OFF og doctrine controls.
 69. Attached cavalry kunne ignorere AI-OFF på Brigade/Division/Regiment parent.
+70. Division AI ON ændrede kun Division state; Brigade/Regiment/Majors/CAV kunne forblive OFF.
+71. Brigade/Division selection skjulte eksisterende subordinate routes og destination footprints.
+72. Higher objective circle/cross var bundet til regimental.Selected.
+73. FORSVAR HER fra higher HQ gav ikke cavalry konkrete reserve/support goals.
+74. Higher cavalry mission manglede persistent delegated state og player-override release.
+75. Brigade/Division HUD brugte et andet layout og viste ikke hele subordinate AI-kæden.
+76. Higher order blue state kunne blive stående på en committed order uden aktive executors.
+77. ANGRIB HER brugte cavalry som generisk higher-HQ support i stedet for midlertidig Battalion/Major task attachment.
+78. Cavalry havde ingen automatisk release/return-to-reserve efter afsluttet higher attack.
 
-## 8. Status ved F30L
+## 8. Status ved F30M
 
-F30L er aktiv TEST visual/build-baseline oven på F30K gameplay authority. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
+F30M er aktiv TEST gameplay/build-baseline. F30L er den underliggende cavalry visual-fidelity baseline. F30M udvider higher-command delegation, subordinate mission visibility og dynamisk cavalry task-attachment/release.
 
 Aktuel implementeret tactical scope:
 - 1:1 infantry og cavalry tactical visuals; F30L cavalry close-detail/gait LOD uden ændring af simuleret styrke.

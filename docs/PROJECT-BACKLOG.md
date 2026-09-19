@@ -261,3 +261,25 @@ Før artilleri udbygges til fuld gameplay-test skal tactical battlefield udvides
 1. Battlefield Expansion / Hills.
 2. Terrain + LOS baseline.
 3. First Artillery Core.
+
+
+## B-300 — Infantry Visual Fidelity + Soldier Silhouette Polish
+
+**Status:** BESLUTTET / NÆSTE VISUAL-SPOR  
+**Prioritet:** Mellem/høj efter F30M command-chain QA
+
+### Beslutning
+1:1 infantry skal have et målrettet visual-polish pass tilsvarende cavalry F30L. De nuværende soldater læses stadig for meget som primitive blokfigurer ved tactical zoom.
+
+### Retning
+- bedre torso-/skulder-/benproportioner;
+- tydeligere hoved/shako/hovedbeklædning;
+- mere naturlig arm- og geværpose;
+- tydeligere krydsremme, krave/manchetter og uniformslag;
+- små deterministic variationer uden at bryde formation-readability;
+- marching/firing/hold silhouettes skal kunne skelnes på afstand;
+- visual LOD må aldrig ændre 1:1 simulated strength eller formation slots;
+- performance skal måles med fulde 190-mands kompagnier.
+
+### Exit-kriterium
+Ved normal tactical zoom skal en enkelt figur tydeligt læses som en bevæbnet infanterist og ikke som en abstrakt søjle/blok, mens 190-mands 1:1 formationer fortsat kører acceptabelt.

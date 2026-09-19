@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30l TEST  
+**Prototypebaseline:** v00.00.09f30m TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -729,6 +729,41 @@ Når Dragon får SID AF:
 
 ---
 
+## 35L. Higher-command delegation og cavalry task attachment
+
+- Division AI ON propagates delegated authority til Brigade, Regiment, Major A/B, company Officer AI og attached cavalry.
+- Brigade AI ON propagates fra Brigade og ned uden at ændre Division.
+- Direkte spillerordre har højere authority end inherited higher mission.
+- Higher-HQ selection skal vise subordinate routes, destination footprints og mission objective.
+- Higher order-knappen er blå mens missionen er pending eller mindst én subordinate stadig udfører den.
+- En arrived company mission tæller ikke som aktiv execution.
+
+### Cavalry under ANGREB
+
+Når et higher HQ med cavalry under sig giver ANGRIB HER:
+
+- OrganicParent bevares;
+- CurrentCommandParent kan midlertidigt ændres til Major A eller Major B;
+- cavalry bliver dermed et taktisk attached asset for den angribende Battalion;
+- med to cavalry units og to Battalions skal assignment minimere unødigt crossing/travel;
+- cavalry kan derefter bruge sin flank/rear Officer AI under den midlertidige parent authority.
+
+Når attack execution er færdig:
+
+- en allerede committed cavalry charge må afsluttes;
+- cavalry frigives fra Major/Battalion;
+- CurrentCommandParent returnerer til den tidligere higher parent;
+- attachment type bliver RESERVE;
+- cavalry samles i en reserveposition tæt ved det parent HQ.
+
+En ny ikke-angrebsordre fra higher HQ frigiver midlertidig attack attachment med det samme.
+
+### Cavalry under FORSVAR
+
+FORSVAR HER skal kunne placere attached cavalry i reserve/support-positioner bag hovedforsvaret. Cavalry må ikke blive stående passivt ved sin gamle position, hvis higher HQ har givet en ny forsvarsmission.
+
+---
+
 # DEL I — TESTUND-TAGELSER OG FREMTIDIGE REGLER
 
 ## 36. Midlertidige QA-regler
@@ -779,6 +814,17 @@ Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgen
 ---
 
 ## 39. Versionslog for dette regelsæt
+
+### v00.00.09f30m
+
+- Division/Brigade AI cascade gennem subordinate command tree.
+- Higher mission routes/destinationer/objective forbliver synlige fra selected Brigade/Division.
+- Higher order active state er baseret på reelle executors.
+- FORSVAR HER giver cavalry reserve/support mission.
+- ANGRIB HER task-attacher cavalry midlertidigt til Major A/B via CurrentCommandParent mens OrganicParent bevares.
+- Cavalry returnerer til tidligere parent som RESERVE efter attack completion og eventuel committed charge.
+- Direct player cavalry order bryder inherited mission.
+
 
 ### v00.00.09f30l
 
