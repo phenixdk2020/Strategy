@@ -450,7 +450,7 @@ public sealed class PrototypeRegimentalCommandHardening09F29E : MonoBehaviour
             return;
 
         RefreshRegimentalObjective();
-        if (!regimental.Selected)
+        if (!IsRegimentalOrHigherSelected())
             return;
 
         ShowCompleteCommandChain();
@@ -460,7 +460,7 @@ public sealed class PrototypeRegimentalCommandHardening09F29E : MonoBehaviour
     private void OnGUI()
     {
         if (cam == null || visibleObjectiveOrder == MajorOrder09F18.None ||
-            regimental == null || !regimental.Selected)
+            regimental == null || !IsRegimentalOrHigherSelected())
         {
             return;
         }
@@ -483,8 +483,31 @@ public sealed class PrototypeRegimentalCommandHardening09F29E : MonoBehaviour
         if (rect.yMax < Screen.height - 94f)
         {
             GUI.depth = -4400;
-            GUI.Box(rect, Label(visibleObjectiveOrder) + " | REGIMENT", objectiveLabelStyle);
+            GUI.Box(rect, Label(visibleObjectiveOrder) + " | " + SelectedCommandLevelLabel(), objectiveLabelStyle);
         }
+    }
+
+    private bool IsRegimentalOrHigherSelected()
+    {
+        if (regimental != null && regimental.Selected)
+            return true;
+
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        return higher != null && higher.Installed &&
+               higher.SelectedLevel != PrototypeHigherCommandLevel09F30B.None;
+    }
+
+    private string SelectedCommandLevelLabel()
+    {
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null && higher.Installed)
+        {
+            if (higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Division)
+                return "DIVISION";
+            if (higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Brigade)
+                return "BRIGADE";
+        }
+        return "REGIMENT";
     }
 
     private void Resolve()
@@ -773,7 +796,8 @@ public sealed class PrototypeRegimentalCommandHardening09F29E : MonoBehaviour
     {
         EnsureObjectiveVisuals();
         object mission = currentMissionField != null ? currentMissionField.GetValue(regimental) : null;
-        if (!regimental.Selected || !TryReadMission(mission, out MajorOrder09F18 order, out Vector3 objective) ||
+        if (!IsRegimentalOrHigherSelected() ||
+            !TryReadMission(mission, out MajorOrder09F18 order, out Vector3 objective) ||
             order == MajorOrder09F18.HoldPosition || order == MajorOrder09F18.None)
         {
             SetObjectiveVisible(false);

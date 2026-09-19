@@ -18,6 +18,10 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         public float NextThink;
         public float ManeuverStarted;
         public int PreferredSide = 1;
+        public bool HasHigherMission;
+        public MajorOrder09F18 HigherMissionOrder = MajorOrder09F18.None;
+        public Vector3 HigherMissionGoal;
+        public Vector3 HigherMissionFacing;
     }
 
     public static PrototypeCavalryOfficerAI09F30C Instance { get; private set; }
@@ -77,7 +81,16 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         foreach (KeyValuePair<PrototypeCavalryUnit09F30, State> pair in states)
         {
             State state = pair.Value;
-            if (state == null || state.Unit == null || !state.Enabled)
+            if (state == null || state.Unit == null)
+                continue;
+
+            if (state.HasHigherMission)
+            {
+                ExecuteHigherMission(state);
+                continue;
+            }
+
+            if (!state.Enabled)
                 continue;
             if (!ParentAllowsDelegatedAI(state.Unit))
             {
@@ -153,6 +166,63 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         SetAIEnabled(unit, !IsAIEnabled(unit), "HUD_TOGGLE");
     }
 
+    public void SetHigherMission(
+        PrototypeCavalryUnit09F30 unit,
+        MajorOrder09F18 order,
+        Vector3 goal,
+        Vector3 facing,
+        bool autonomous)
+    {
+        if (unit == null)
+            return;
+
+        State state;
+        if (!states.TryGetValue(unit, out state))
+        {
+            Register(unit, unit.Kind == PrototypeCavalryKind09F30.Gardehusar ? 1 : -1);
+            state = states[unit];
+        }
+
+        state.HasHigherMission = true;
+        state.HigherMissionOrder = order;
+        state.HigherMissionGoal = goal;
+        state.HigherMissionFacing = facing.sqrMagnitude > 0.01f ? facing.normalized : unit.transform.forward;
+        state.Target = null;
+        state.ManeuverStarted = 0f;
+        state.Enabled = autonomous || state.Enabled;
+        state.Phase = "HQ " + HigherMissionLabel(order);
+        state.NextThink = Time.time + 0.15f;
+
+        if (order == MajorOrder09F18.HoldPosition)
+            unit.OrderHold();
+        else
+            unit.OrderMove(goal, state.HigherMissionFacing, true);
+
+        Debug.Log("CAV-HQ-09F30M|Unit=" + unit.UnitName +
+                  "|Order=" + order +
+                  "|Autonomous=" + autonomous +
+                  "|Goal=" + goal.x.ToString("0") + "," + goal.z.ToString("0"));
+    }
+
+    public void ClearHigherMission(PrototypeCavalryUnit09F30 unit, string reason = "CLEAR")
+    {
+        State state;
+        if (unit == null || !states.TryGetValue(unit, out state))
+            return;
+
+        state.HasHigherMission = false;
+        state.HigherMissionOrder = MajorOrder09F18.None;
+        state.Phase = state.Enabled ? "SEEK" : "MANUEL";
+        Debug.Log("CAV-HQ-09F30M|Unit=" + unit.UnitName + "|HigherMission=False|Reason=" + reason);
+    }
+
+    public bool HasHigherMission(PrototypeCavalryUnit09F30 unit, MajorOrder09F18 order)
+    {
+        State state;
+        return unit != null && states.TryGetValue(unit, out state) &&
+               state.HasHigherMission && state.HigherMissionOrder == order;
+    }
+
     public string GetPhase(PrototypeCavalryUnit09F30 unit)
     {
         State state;
@@ -178,10 +248,12 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         if (!IsAIEnabled(selected))
             return;
 
-        // F30I: only direct world orders auto-take manual authority here.
-        // HUD buttons explicitly decide whether their command disables AI.
+        // Direct player world order breaks both delegated AI and any inherited higher mission.
         if (Input.GetMouseButtonDown(1))
+        {
+            ClearHigherMission(selected, "PLAYER_RIGHT_CLICK");
             SetAIEnabled(selected, false, "PLAYER_RIGHT_CLICK");
+        }
     }
 
     private bool ParentAllowsDelegatedAI(PrototypeCavalryUnit09F30 unit)
@@ -217,6 +289,61 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         }
 
         return true;
+    }
+
+    private void ExecuteHigherMission(State state)
+    {
+        PrototypeCavalryUnit09F30 unit = state.Unit;
+        if (unit == null)
+            return;
+
+        float distance = PlanarDistance(unit.transform.position, state.HigherMissionGoal);
+        if (state.HigherMissionOrder == MajorOrder09F18.HoldPosition)
+        {
+            if (unit.Action != PrototypeCavalryAction09F30.Hold)
+                unit.OrderHold();
+            state.Phase = "HQ HOLD";
+            return;
+        }
+
+        if (distance > 14f)
+        {
+            if (!unit.HasDestination ||
+                PlanarDistance(unit.FinalDestination, state.HigherMissionGoal) > 5f)
+                unit.OrderMove(state.HigherMissionGoal, state.HigherMissionFacing, true);
+
+            state.Phase = "HQ " + HigherMissionLabel(state.HigherMissionOrder) +
+                          " " + distance.ToString("0") + "m";
+            return;
+        }
+
+        unit.SetFormation(PrototypeCavalryFormation09F30.Line);
+        unit.OrderHold();
+
+        if (state.HigherMissionOrder == MajorOrder09F18.AttackHere && state.Enabled)
+        {
+            state.HasHigherMission = false;
+            state.HigherMissionOrder = MajorOrder09F18.None;
+            state.Phase = "SEEK";
+            state.NextThink = Time.time + 0.2f;
+            return;
+        }
+
+        state.Phase = "HQ " + HigherMissionLabel(state.HigherMissionOrder) + " / HOLD";
+    }
+
+    private static string HigherMissionLabel(MajorOrder09F18 order)
+    {
+        switch (order)
+        {
+            case MajorOrder09F18.AttackHere: return "ANGRIB";
+            case MajorOrder09F18.DefendHere: return "FORSVAR";
+            case MajorOrder09F18.AdvanceHere: return "RYK FREM";
+            case MajorOrder09F18.WithdrawHere: return "TILBAGETRÆK";
+            case MajorOrder09F18.AssembleHere: return "SAML";
+            case MajorOrder09F18.HoldPosition: return "HOLD";
+            default: return order.ToString().ToUpperInvariant();
+        }
     }
 
     private void Think(State state)

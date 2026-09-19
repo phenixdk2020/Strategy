@@ -84,6 +84,8 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
             return;
 
         bool selected = unit.IsSelected;
+        bool higherOrderVisible = IsVisibleFromHigherSelection(unit);
+        bool showOrders = selected || higherOrderVisible;
         bool splitDismounted = selected &&
                                unit.Kind == PrototypeCavalryKind09F30.Dragon &&
                                unit.Mode == PrototypeCavalryMode09F30.Dismounted;
@@ -91,25 +93,28 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
         s.Selection.enabled = selected;
         s.HorseSelection.enabled = splitDismounted;
         s.DismountLink.enabled = splitDismounted;
-        s.Path.enabled = selected && unit.HasDestination;
-        s.Destination.enabled = selected && unit.HasDestination;
-        if (!selected)
+        s.Path.enabled = showOrders && unit.HasDestination;
+        s.Destination.enabled = showOrders && unit.HasDestination;
+        if (!selected && !showOrders)
             return;
 
-        if (splitDismounted)
+        if (selected)
         {
-            DrawBox(s.Selection, unit.GetDismountedCombatCenterWorld(), unit.transform.forward,
-                unit.GetDismountedCombatFootprintSize(), 0.34f);
-            DrawBox(s.HorseSelection, unit.GetDismountedHorseHolderCenterWorld(), unit.transform.forward,
-                unit.GetDismountedHorseHolderFootprintSize(), 0.34f);
-            DrawLink(s.DismountLink, unit.GetDismountedHorseHolderCenterWorld(),
-                unit.GetDismountedCombatCenterWorld(), 0.39f);
-        }
-        else
-        {
-            Vector2 targetSize = unit.GetCurrentFootprintSize();
-            s.SmoothedSize = Vector2.Lerp(s.SmoothedSize, targetSize, 6f * Time.deltaTime);
-            DrawBox(s.Selection, unit.GetCurrentFootprintCenterWorld(), unit.transform.forward, s.SmoothedSize, 0.34f);
+            if (splitDismounted)
+            {
+                DrawBox(s.Selection, unit.GetDismountedCombatCenterWorld(), unit.transform.forward,
+                    unit.GetDismountedCombatFootprintSize(), 0.34f);
+                DrawBox(s.HorseSelection, unit.GetDismountedHorseHolderCenterWorld(), unit.transform.forward,
+                    unit.GetDismountedHorseHolderFootprintSize(), 0.34f);
+                DrawLink(s.DismountLink, unit.GetDismountedHorseHolderCenterWorld(),
+                    unit.GetDismountedCombatCenterWorld(), 0.39f);
+            }
+            else
+            {
+                Vector2 targetSize = unit.GetCurrentFootprintSize();
+                s.SmoothedSize = Vector2.Lerp(s.SmoothedSize, targetSize, 6f * Time.deltaTime);
+                DrawBox(s.Selection, unit.GetCurrentFootprintCenterWorld(), unit.transform.forward, s.SmoothedSize, 0.34f);
+            }
         }
 
         if (!unit.HasDestination)
@@ -142,6 +147,28 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
         {
             line.SetPosition(1, Ground(final, 0.52f));
         }
+    }
+
+    private static bool IsVisibleFromHigherSelection(PrototypeCavalryUnit09F30 unit)
+    {
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (unit == null || higher == null || !higher.Installed ||
+            higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.None)
+            return false;
+
+        PrototypeCommandAttachment09F30B attachment =
+            unit.GetComponent<PrototypeCommandAttachment09F30B>();
+        if (attachment == null)
+            return false;
+
+        string parent = attachment.CurrentCommandParent;
+        if (higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Division)
+            return true;
+
+        return parent == PrototypeHigherCommandHQ09F30B.BrigadeId ||
+               parent == PrototypeHigherCommandHQ09F30B.RegimentId ||
+               parent == PrototypeCavalryCommandControl09F30C.MajorAId ||
+               parent == PrototypeCavalryCommandControl09F30C.MajorBId;
     }
 
     private static void DrawLink(LineRenderer line, Vector3 a, Vector3 b, float y)

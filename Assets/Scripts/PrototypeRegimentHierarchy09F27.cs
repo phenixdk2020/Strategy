@@ -718,12 +718,66 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
     {
         if (!ValidBattalion(battalionIndex))
             return;
+        SetBattalionAIEnabled(battalionIndex, !battalions[battalionIndex].AIEnabled, "HUD_TOGGLE");
+    }
+
+    public void SetBattalionAIEnabled(int battalionIndex, bool enabled, string reason = "HIGHER_COMMAND")
+    {
+        if (!ValidBattalion(battalionIndex))
+            return;
 
         Battalion battalion = battalions[battalionIndex];
-        battalion.AIEnabled = !battalion.AIEnabled;
+        battalion.AIEnabled = enabled;
         battalion.NextThink = Time.time + 0.2f;
-        Debug.Log("AI-AUTHORITY-09F27|Unit=" + battalion.MajorLabel +
-                  "|Battalion=" + (battalionIndex + 1) + "|AI=" + (battalion.AIEnabled ? "ON" : "OFF"));
+
+        foreach (Regiment regiment in battalion.Companies)
+        {
+            if (regiment == null)
+                continue;
+            OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
+            if (controller != null)
+                controller.SetAIEnabled(enabled);
+        }
+
+        Debug.Log("AI-AUTHORITY-09F30M|Unit=" + battalion.MajorLabel +
+                  "|Battalion=" + (battalionIndex + 1) +
+                  "|AI=" + (enabled ? "ON" : "OFF") +
+                  "|Reason=" + reason);
+    }
+
+    public bool HasActiveMissionExecutors(MajorOrder09F18 order)
+    {
+        for (int b = 0; b < battalions.Count; b++)
+        {
+            Battalion battalion = battalions[b];
+            if (battalion == null)
+                continue;
+
+            if (order == MajorOrder09F18.HoldPosition)
+            {
+                if (battalion.HasLastOrder && battalion.LastOrder == MajorOrder09F18.HoldPosition)
+                {
+                    for (int i = 0; i < battalion.Companies.Count; i++)
+                    {
+                        Regiment unit = battalion.Companies[i];
+                        if (unit != null && !unit.IsRouted && unit.CurrentStrength > 0)
+                            return true;
+                    }
+                }
+                continue;
+            }
+
+            foreach (KeyValuePair<Regiment, CompanyMission> pair in battalion.Missions)
+            {
+                Regiment unit = pair.Key;
+                CompanyMission mission = pair.Value;
+                if (unit == null || mission == null || unit.IsRouted || unit.CurrentStrength <= 0)
+                    continue;
+                if (mission.Order == order)
+                    return true;
+            }
+        }
+        return false;
     }
 
     public void SetBattalionDoctrine(int battalionIndex, OfficerAIDoctrine doctrine)

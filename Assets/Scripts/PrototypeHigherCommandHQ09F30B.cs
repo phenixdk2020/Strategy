@@ -218,14 +218,53 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
     public void ToggleAI(PrototypeHigherCommandLevel09F30B level)
     {
+        bool enabled;
         if (level == PrototypeHigherCommandLevel09F30B.Division)
-            DivisionAIEnabled = !DivisionAIEnabled;
-        else if (level == PrototypeHigherCommandLevel09F30B.Brigade)
-            BrigadeAIEnabled = !BrigadeAIEnabled;
+        {
+            enabled = !DivisionAIEnabled;
+            DivisionAIEnabled = enabled;
 
-        Debug.Log("HQ-AI-09F30K|Level=" + level +
+            // Division delegation owns the single Brigade in this prototype.
+            BrigadeAIEnabled = enabled;
+            CascadeSubordinateAI(enabled, "DIVISION_CASCADE");
+        }
+        else if (level == PrototypeHigherCommandLevel09F30B.Brigade)
+        {
+            enabled = !BrigadeAIEnabled;
+            BrigadeAIEnabled = enabled;
+            CascadeSubordinateAI(enabled, "BRIGADE_CASCADE");
+        }
+        else
+        {
+            return;
+        }
+
+        Debug.Log("HQ-AI-09F30M|Level=" + level +
                   "|AI=" + (GetAIEnabled(level) ? "ON" : "OFF") +
-                  "|Doctrine=" + GetDoctrine(level));
+                  "|BrigadeAI=" + (BrigadeAIEnabled ? "ON" : "OFF") +
+                  "|Doctrine=" + GetDoctrine(level) +
+                  "|Cascade=True");
+    }
+
+    private void CascadeSubordinateAI(bool enabled, string reason)
+    {
+        if (regimental != null)
+            regimental.SetAIEnabled(enabled, reason);
+
+        if (hierarchy != null)
+        {
+            for (int i = 0; i < hierarchy.BattalionCount; i++)
+                hierarchy.SetBattalionAIEnabled(i, enabled, reason);
+        }
+
+        PrototypeCavalryOfficerAI09F30C cavAi = PrototypeCavalryOfficerAI09F30C.Instance;
+        if (cavAi != null && cavalry != null)
+        {
+            if (cavalry.Gardehusar != null)
+                cavAi.SetAIEnabled(cavalry.Gardehusar, enabled, reason);
+            if (cavalry.Dragon != null)
+                cavAi.SetAIEnabled(cavalry.Dragon, enabled, reason);
+        }
     }
 
     public void SetDoctrine(PrototypeHigherCommandLevel09F30B level, OfficerAIDoctrine doctrine)
@@ -363,9 +402,133 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
         OfficerAIDoctrine doctrine = GetDoctrine(level);
         regimental.SetDoctrine(doctrine);
-        regimental.IssueRegimentalOrder(order, point, GetAIEnabled(level));
-        Debug.Log("HQ-09F30K|MissionCommitted=True|Level=" + level + "|Order=" + order +
-                  "|DelegatedTo=1.REGIMENT|Objective=" + point.x.ToString("0.0") + "," + point.z.ToString("0.0"));
+        for (int i = 0; hierarchy != null && i < hierarchy.BattalionCount; i++)
+            hierarchy.SetBattalionDoctrine(i, doctrine);
+
+        bool autonomous = GetAIEnabled(level);
+        regimental.IssueRegimentalOrder(order, point, autonomous);
+        IssueAttachedCavalryMission(level, order, point, autonomous);
+
+        Debug.Log("HQ-09F30M|MissionCommitted=True|Level=" + level + "|Order=" + order +
+                  "|DelegatedTo=REGIMENT+CAVALRY|Objective=" +
+                  point.x.ToString("0.0") + "," + point.z.ToString("0.0"));
+    }
+
+    private void IssueAttachedCavalryMission(
+        PrototypeHigherCommandLevel09F30B level,
+        MajorOrder09F18 order,
+        Vector3 objective,
+        bool autonomous)
+    {
+        if (cavalry == null)
+            return;
+
+        Vector3 origin = level == PrototypeHigherCommandLevel09F30B.Division && DivisionHqRoot != null
+            ? DivisionHqRoot.transform.position
+            : BrigadeHqRoot != null ? BrigadeHqRoot.transform.position : objective - Vector3.forward;
+
+        Vector3 forward = Flat(objective - origin);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
+        forward.Normalize();
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+
+        IssueCavalrySupportToUnit(cavalry.Gardehusar, level, order, objective, forward, right, -1, autonomous);
+        IssueCavalrySupportToUnit(cavalry.Dragon, level, order, objective, forward, right, 1, autonomous);
+    }
+
+    private void IssueCavalrySupportToUnit(
+        PrototypeCavalryUnit09F30 unit,
+        PrototypeHigherCommandLevel09F30B level,
+        MajorOrder09F18 order,
+        Vector3 objective,
+        Vector3 forward,
+        Vector3 right,
+        int side,
+        bool autonomous)
+    {
+        if (unit == null || !IsCavalrySubordinateToLevel(unit, level))
+            return;
+
+        Vector3 goal;
+        switch (order)
+        {
+            case MajorOrder09F18.DefendHere:
+                goal = objective - forward * 115f + right * (side * 95f);
+                break;
+            case MajorOrder09F18.AttackHere:
+                goal = objective - forward * 85f + right * (side * 145f);
+                break;
+            case MajorOrder09F18.WithdrawHere:
+                goal = objective - forward * 75f + right * (side * 70f);
+                break;
+            case MajorOrder09F18.AssembleHere:
+                goal = objective - forward * 70f + right * (side * 55f);
+                break;
+            case MajorOrder09F18.HoldPosition:
+                goal = unit.transform.position;
+                break;
+            default:
+                goal = objective - forward * 95f + right * (side * 85f);
+                break;
+        }
+
+        goal = Ground(goal);
+        PrototypeCavalryOfficerAI09F30C cavAi = PrototypeCavalryOfficerAI09F30C.Instance;
+        if (cavAi != null)
+            cavAi.SetHigherMission(unit, order, goal, forward, autonomous);
+        else if (order == MajorOrder09F18.HoldPosition)
+            unit.OrderHold();
+        else
+            unit.OrderMove(goal, forward, true);
+    }
+
+    private bool IsCavalrySubordinateToLevel(
+        PrototypeCavalryUnit09F30 unit,
+        PrototypeHigherCommandLevel09F30B level)
+    {
+        PrototypeCommandAttachment09F30B attachment = unit != null
+            ? unit.GetComponent<PrototypeCommandAttachment09F30B>()
+            : null;
+        if (attachment == null)
+            return false;
+
+        string parent = attachment.CurrentCommandParent;
+        if (level == PrototypeHigherCommandLevel09F30B.Division)
+            return parent == DivisionId || parent == BrigadeId || parent == RegimentId ||
+                   parent == PrototypeCavalryCommandControl09F30C.MajorAId ||
+                   parent == PrototypeCavalryCommandControl09F30C.MajorBId;
+
+        return parent == BrigadeId || parent == RegimentId ||
+               parent == PrototypeCavalryCommandControl09F30C.MajorAId ||
+               parent == PrototypeCavalryCommandControl09F30C.MajorBId;
+    }
+
+    private bool HasHigherOrderActive(
+        PrototypeHigherCommandLevel09F30B level,
+        MajorOrder09F18 order)
+    {
+        MajorOrder09F18 committed = level == PrototypeHigherCommandLevel09F30B.Division
+            ? divisionMission : brigadeMission;
+        if (committed != order)
+            return false;
+
+        if (regimental != null && regimental.CurrentMissionOrder == order &&
+            regimental.HasActiveMissionExecutors(order))
+            return true;
+
+        PrototypeCavalryOfficerAI09F30C cavAi = PrototypeCavalryOfficerAI09F30C.Instance;
+        if (cavAi != null && cavalry != null)
+        {
+            if (cavalry.Gardehusar != null && IsCavalrySubordinateToLevel(cavalry.Gardehusar, level) &&
+                cavAi.HasHigherMission(cavalry.Gardehusar, order))
+                return true;
+            if (cavalry.Dragon != null && IsCavalrySubordinateToLevel(cavalry.Dragon, level) &&
+                cavAi.HasHigherMission(cavalry.Dragon, order))
+                return true;
+        }
+
+        return order == MajorOrder09F18.HoldPosition && committed == order;
     }
 
     private void HandleWorldSelection()
@@ -766,8 +929,7 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     private void DrawOrderButton(Rect rect, string label, MajorOrder09F18 order)
     {
         bool active = pendingOrder == order && pendingLevel == SelectedLevel;
-        MajorOrder09F18 committed = SelectedLevel == PrototypeHigherCommandLevel09F30B.Division ? divisionMission : brigadeMission;
-        active = active || committed == order;
+        active = active || HasHigherOrderActive(SelectedLevel, order);
         if (GUI.Button(rect, label, active ? activeBlueStyle : buttonStyle))
         {
             pendingOrder = order;

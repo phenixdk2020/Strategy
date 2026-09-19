@@ -124,9 +124,25 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
 
     public void ToggleAI()
     {
-        AIEnabled = !AIEnabled;
+        SetAIEnabled(!AIEnabled, "HUD_TOGGLE");
+    }
+
+    public void SetAIEnabled(bool enabled, string reason = "HIGHER_COMMAND")
+    {
+        AIEnabled = enabled;
         nextThink = Time.time + 0.25f;
-        Debug.Log("REG-AI-09F28|AI=" + (AIEnabled ? "ON" : "OFF") + "|Doctrine=" + Doctrine);
+        Debug.Log("REG-AI-09F30M|AI=" + (AIEnabled ? "ON" : "OFF") +
+                  "|Doctrine=" + Doctrine + "|Reason=" + reason);
+    }
+
+    public MajorOrder09F18 CurrentMissionOrder
+    {
+        get { return currentMission != null ? currentMission.Order : MajorOrder09F18.None; }
+    }
+
+    public bool HasActiveMissionExecutors(MajorOrder09F18 order)
+    {
+        return hierarchy != null && hierarchy.HasActiveMissionExecutors(order);
     }
 
     public void SetDoctrine(OfficerAIDoctrine doctrine)

@@ -179,6 +179,10 @@ public sealed class PrototypeMajorOrderVisuals09F18 : MonoBehaviour
 
     private void UpdateMissionVisuals(bool majorSelected)
     {
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        bool higherSelected = higher != null && higher.Installed &&
+                              higher.SelectedLevel != PrototypeHigherCommandLevel09F30B.None;
+
         foreach (KeyValuePair<Regiment, Visual> pair in missions)
         {
             Regiment regiment = pair.Key;
@@ -188,7 +192,7 @@ public sealed class PrototypeMajorOrderVisuals09F18 : MonoBehaviour
 
             // f24: a selected subordinate must be able to inspect its own current
             // destination even after selection authority has moved away from the Major.
-            bool show = majorSelected || regiment.IsSelected;
+            bool show = majorSelected || regiment.IsSelected || higherSelected;
 
             if (visual.Footprint != null)
                 visual.Footprint.enabled = show;
