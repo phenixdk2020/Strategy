@@ -2,8 +2,8 @@ public static class CampaignBuildInfo
 {
     // Single source of truth for the overall Campaign3 build shown in UI/log headers.
     // Subsystem class names may retain the version in which that subsystem was introduced.
-    public const string CurrentVersion = "v00.00.10n7d";
-    public const string CurrentBuildName = "CAMPAIGN3 CITY INFO + LEGACY STARTUP HOTFIX 10N7D";
+    public const string CurrentVersion = "v00.00.10n7e";
+    public const string CurrentBuildName = "CAMPAIGN3 COASTAL CITY VISUAL OFFSETS 10N7E";
     public const string BranchTarget = "channel-campaign3";
-    public const string LogTag = "CAMPAIGN-10N7D";
+    public const string LogTag = "CAMPAIGN-10N7E";
 }
