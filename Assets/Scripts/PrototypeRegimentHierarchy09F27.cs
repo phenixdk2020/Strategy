@@ -366,6 +366,13 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
     private void UpdateMissions(int battalionIndex)
     {
         Battalion battalion = battalions[battalionIndex];
+
+        // F30O: a higher-HQ AI cascade is an armed/waiting state. Even stale
+        // mission records from an earlier order must not move companies until a
+        // fresh parent mission is committed.
+        if (battalion.AwaitHigherMission)
+            return;
+
         if (battalion.Missions.Count == 0)
             return;
 
