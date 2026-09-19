@@ -288,7 +288,9 @@ public sealed class PrototypeInfantrySquare09F29 : MonoBehaviour
         float relativeStrength,
         bool charging)
     {
-        if (infantry.Team != BattleTeam.Denmark || distance > MaxThreatDistance)
+        // F30N: mounted-threat assessment is team-neutral. The original
+        // Denmark-only guard existed before real opposing cavalry interaction.
+        if (distance > MaxThreatDistance)
             return;
 
         float proximity = 1f - Mathf.Clamp01(distance / MaxThreatDistance);
