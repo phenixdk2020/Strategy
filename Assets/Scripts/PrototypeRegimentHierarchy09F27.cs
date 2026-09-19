@@ -43,6 +43,7 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
         public GameObject HqRoot;
         public bool Selected;
         public bool AIEnabled;
+        public bool AwaitHigherMission;
         public OfficerAIDoctrine Doctrine = OfficerAIDoctrine.Balanced;
         public MajorOrder09F18 LastOrder = MajorOrder09F18.None;
         public Vector3 LastOrderPoint;
@@ -465,7 +466,8 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
             return;
         }
 
-        if (!battalion.AIEnabled || !battalion.HasLastOrder || battalion.LastOrder == MajorOrder09F18.HoldPosition)
+        if (!battalion.AIEnabled || battalion.AwaitHigherMission ||
+            !battalion.HasLastOrder || battalion.LastOrder == MajorOrder09F18.HoldPosition)
             return;
 
         Vector3 center = GetBattalionCenter(battalionIndex);
@@ -520,6 +522,12 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
             return;
 
         battalion.NextThink = Time.time + 6f;
+
+        // Higher-HQ cascade only arms this Major/Battalion. No automatic default
+        // mission may be created before a parent order is actually committed.
+        if (battalion.AwaitHigherMission)
+            return;
+
         if (!battalion.HasLastOrder)
             IssueBattalionOrder(battalionIndex, MajorOrder09F18.DefendHere, GetBattalionCenter(battalionIndex), true);
     }
@@ -531,6 +539,7 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
 
         Battalion battalion = battalions[battalionIndex];
         battalion.AIEnabled = true;
+        battalion.AwaitHigherMission = false;
         battalion.Doctrine = doctrine;
         IssueBattalionOrder(battalionIndex, order, point, true);
     }
@@ -728,6 +737,15 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
 
         Battalion battalion = battalions[battalionIndex];
         battalion.AIEnabled = enabled;
+
+        bool higherCascade =
+            !string.IsNullOrEmpty(reason) &&
+            reason.EndsWith("_CASCADE", System.StringComparison.Ordinal);
+
+        battalion.AwaitHigherMission = enabled && higherCascade;
+        if (!enabled)
+            battalion.AwaitHigherMission = false;
+
         battalion.NextThink = Time.time + 0.2f;
 
         foreach (Regiment regiment in battalion.Companies)
@@ -736,12 +754,17 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
                 continue;
             OfficerAIController controller = regiment.GetComponent<OfficerAIController>();
             if (controller != null)
+            {
                 controller.SetAIEnabled(enabled);
+                if (enabled && battalion.AwaitHigherMission)
+                    controller.SetHoldMission();
+            }
         }
 
-        Debug.Log("AI-AUTHORITY-09F30M|Unit=" + battalion.MajorLabel +
+        Debug.Log("AI-AUTHORITY-09F30O|Unit=" + battalion.MajorLabel +
                   "|Battalion=" + (battalionIndex + 1) +
                   "|AI=" + (enabled ? "ON" : "OFF") +
+                  "|AwaitHigherMission=" + battalion.AwaitHigherMission +
                   "|Reason=" + reason);
     }
 
