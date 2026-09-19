@@ -1,12 +1,12 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n7c
-Build status: WAY 1 / EMBEDDED CITY ASSET RESET
-Build name: CAMPAIGN3 EMBEDDED CITY ASSET RESET 10N7C
+Prototype version: v00.00.10n7d
+Build status: WAY 1 / CITY INFO + LEGACY STARTUP HOTFIX
+Build name: CAMPAIGN3 CITY INFO + LEGACY STARTUP HOTFIX 10N7D
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n7c-embedded-city-art
+Work branch: work/channel-campaign3-v10n7d-city-info-hotfix
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.29
+Design baseline: v00.02.30
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
@@ -110,4 +110,14 @@ NEXT PHASE:
 - Later County Rebuild must use one authoritative historical geometry source for line, click ownership and selected-area highlight.
 - County geometry must not be approximated by competing visual/click systems.
 
-QA state: V10N7C IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+V10N7D HOTFIX:
+- n7a and n7b city renderers now self-guard against running when CampaignBuildInfo.CurrentVersion is not their own version.
+- This removes the stale n7b Proposal3TextureMissing startup log in n7d.
+- Direct left-click on a city now explicitly opens the INFO/selection panel.
+- City selection logs CityId, name, tier, population 1850 and ZoneId.
+- n7c embedded Proposal-3 city art, scale and anchoring remain unchanged.
+- County/Amt remains OFF.
+- Natural Earth 1:50m land-mask audit places only 53/68 canonical city coordinates inside its coarse polygons and falsely flags 15 coastal/island cities.
+- Therefore Natural Earth 1:50m is NOT authoritative for automatic city-anchor correction. WGS84 CITY-REG-01 coordinates remain authoritative.
+
+QA state: V10N7D IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
