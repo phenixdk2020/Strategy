@@ -463,7 +463,12 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
                 ? "4-GELED LINJE"
                 : (selected.IsBridgeRouteActive ? "BROKOLONNE 2" : "MARCHKOLONNE 4"), valueStyle);
         GUI.Label(new Rect(weaponX, y + 50f, weaponWidth, 13f),
-            "Mounted fire: ikke implementeret endnu", valueStyle);
+            selected.Mode == PrototypeCavalryMode09F30.Dismounted &&
+            selected.Kind == PrototypeCavalryKind09F30.Dragon
+                ? "Karabin AUTO | Ammo " +
+                  PrototypeDismountedDragonFire09F30J.GetAmmoRoundsPerMan(selected).ToString("0") +
+                  " | Mål " + PrototypeDismountedDragonFire09F30J.GetTargetName(selected)
+                : "Mounted fire: ikke implementeret endnu", valueStyle);
 
         GUI.Label(new Rect(commandX, y, commandWidth, 10f), "ORDRER / BEVÆGELSE", sectionStyle);
         const float gap = 3f;

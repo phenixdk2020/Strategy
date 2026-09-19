@@ -88,7 +88,7 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
 
         Vector2 targetSize = unit.GetCurrentFootprintSize();
         s.SmoothedSize = Vector2.Lerp(s.SmoothedSize, targetSize, 6f * Time.deltaTime);
-        DrawBox(s.Selection, unit.transform.position, unit.transform.forward, s.SmoothedSize, 0.34f);
+        DrawBox(s.Selection, unit.GetCurrentFootprintCenterWorld(), unit.transform.forward, s.SmoothedSize, 0.34f);
 
         if (!unit.HasDestination)
             return;
@@ -101,7 +101,9 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
         facing.y = 0f;
         if (facing.sqrMagnitude < 0.01f)
             facing = unit.transform.forward;
-        DrawBox(s.Destination, final, facing.normalized, unit.GetDestinationFootprintSize(), 0.42f);
+        facing.Normalize();
+        DrawBox(s.Destination, unit.GetDestinationFootprintCenterWorld(facing),
+            facing, unit.GetDestinationFootprintSize(), 0.42f);
     }
 
     private static void DrawPath(LineRenderer line, Vector3 start, Vector3 steering, Vector3 final)

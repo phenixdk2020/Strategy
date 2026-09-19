@@ -75,6 +75,39 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         return CalculateFootprint(Mode, PlannedDestinationFormation, false);
     }
 
+    public Vector3 GetCurrentFootprintCenterWorld()
+    {
+        Vector2 size = GetCurrentFootprintSize();
+        float localZ = CalculateFootprintCenterOffsetZ(Mode, Formation, bridgePhase != BridgePhase.Direct, size);
+        return transform.TransformPoint(new Vector3(0f, 0f, localZ));
+    }
+
+    public Vector3 GetDestinationFootprintCenterWorld(Vector3 forward)
+    {
+        Vector2 size = GetDestinationFootprintSize();
+        float localZ = CalculateFootprintCenterOffsetZ(Mode, PlannedDestinationFormation, false, size);
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.01f)
+            forward = transform.forward;
+        forward.Normalize();
+        return finalDestination + forward * localZ;
+    }
+
+    public Vector3 GetDismountedCombatCenterWorld()
+    {
+        return transform.TransformPoint(new Vector3(0f, 0f, 18f));
+    }
+
+    public int GetDismountedCombatStrength()
+    {
+        return Mathf.Max(1, CurrentStrength - Mathf.CeilToInt(CurrentStrength * 0.25f));
+    }
+
+    public int GetHorseHolderStrength()
+    {
+        return Mathf.Max(1, CurrentStrength - GetDismountedCombatStrength());
+    }
+
     private readonly List<Transform> mountedFigures = new List<Transform>();
     private readonly List<GameObject> mountedRiders = new List<GameObject>();
     private readonly List<Transform> footFigures = new List<Transform>();
@@ -714,6 +747,37 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     private Vector3 FootPosition(int index, int total)
     {
+        // F30J Dragon dismount doctrine:
+        // every fourth man remains with the horses as a prototype horse-holder;
+        // the remaining ~75% move forward and form a two-rank firing line.
+        if (Kind == PrototypeCavalryKind09F30.Dragon && Mode == PrototypeCavalryMode09F30.Dismounted)
+        {
+            bool horseHolder = (index % 4) == 0;
+            if (horseHolder)
+            {
+                int holderIndex = index / 4;
+                int holderColumns = 8;
+                int holderRank = holderIndex / holderColumns;
+                int holderCol = holderIndex % holderColumns;
+                return new Vector3(
+                    (holderCol - (holderColumns - 1) * 0.5f) * 0.82f,
+                    0f,
+                    -5.0f - holderRank * 0.92f);
+            }
+
+            int combatIndex = index - (index / 4) - 1;
+            if (combatIndex < 0) combatIndex = 0;
+            int combatCount = Mathf.Max(1, total - Mathf.CeilToInt(total / 4f));
+            int combatRanks = 2;
+            int combatColumns = Mathf.CeilToInt(combatCount / (float)combatRanks);
+            int lineRank = combatIndex / combatColumns;
+            int lineCol = combatIndex % combatColumns;
+            return new Vector3(
+                (lineCol - (combatColumns - 1) * 0.5f) * 0.78f,
+                0f,
+                18f - lineRank * 0.92f);
+        }
+
         if (Formation == PrototypeCavalryFormation09F30.Column)
         {
             int columns = 4;
@@ -724,9 +788,9 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
         int ranks = 2;
         int columnsLine = Mathf.CeilToInt(total / (float)ranks);
-        int lineRank = index / columnsLine;
-        int lineCol = index % columnsLine;
-        return new Vector3((lineCol - (columnsLine - 1) * 0.5f) * 0.78f, 0f, -lineRank * 0.90f);
+        int normalRank = index / columnsLine;
+        int normalCol = index % columnsLine;
+        return new Vector3((normalCol - (columnsLine - 1) * 0.5f) * 0.78f, 0f, -normalRank * 0.90f);
     }
 
     private Vector2 CalculateFootprint(
@@ -737,9 +801,13 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         int men = Mathf.Max(1, CurrentStrength);
 
         if (mode == PrototypeCavalryMode09F30.Dismounted)
-            return formation == PrototypeCavalryFormation09F30.Line
-                ? new Vector2(18f, 5f)
-                : new Vector2(6f, 16f);
+        {
+            int combat = Mathf.Max(1, men - Mathf.CeilToInt(men * 0.25f));
+            int combatColumns = Mathf.CeilToInt(combat / 2f);
+            float width = Mathf.Max(18f, combatColumns * 0.78f + 3f);
+            // Includes horse-holder line around z=-5 and combat line around z=18.
+            return new Vector2(width, 28f);
+        }
 
         if (bridge)
         {
@@ -757,6 +825,25 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         return new Vector2(8.2f, Mathf.Max(24f, columnRows * 2.15f + 3f));
     }
 
+    private float CalculateFootprintCenterOffsetZ(
+        PrototypeCavalryMode09F30 mode,
+        PrototypeCavalryFormation09F30 formation,
+        bool bridge,
+        Vector2 size)
+    {
+        if (mode == PrototypeCavalryMode09F30.Dismounted)
+            return 6.5f;
+
+        // Four-rank Line is centered around the cavalry root.
+        if (!bridge && formation == PrototypeCavalryFormation09F30.Line)
+            return 0f;
+
+        // Column/bridge slots start at the root/front and extend backwards (negative local Z).
+        // The old box used the root as its mathematical center, which put only half of
+        // the actual column inside the selection/ghost footprint.
+        return -Mathf.Max(0f, size.y - 3f) * 0.5f;
+    }
+
     private void ResizeCollider()
     {
         if (unitCollider == null)
@@ -764,11 +851,13 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
         if (Mode == PrototypeCavalryMode09F30.Dismounted)
         {
-            unitCollider.size = Formation == PrototypeCavalryFormation09F30.Line
-                ? new Vector3(18f, 2.4f, 5f)
-                : new Vector3(6f, 2.4f, 16f);
+            Vector2 fp = CalculateFootprint(Mode, Formation, false);
+            unitCollider.size = new Vector3(fp.x, 2.4f, fp.y);
+            unitCollider.center = new Vector3(0f, 1.2f, 6.5f);
             return;
         }
+
+        unitCollider.center = new Vector3(0f, 1.2f, 0f);
 
         int men = Mathf.Max(1, CurrentStrength);
         if (bridgePhase != BridgePhase.Direct)

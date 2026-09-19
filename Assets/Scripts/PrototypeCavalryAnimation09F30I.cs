@@ -20,6 +20,8 @@ public sealed class PrototypeCavalryAnimation09F30I : MonoBehaviour
         public List<Vector3> RiderScales = new List<Vector3>();
         public List<Transform> Feet = new List<Transform>();
         public List<Vector3> FootScales = new List<Vector3>();
+        public List<Vector3> FootStartPositions = new List<Vector3>();
+        public List<Vector3> FootRemountPositions = new List<Vector3>();
         public Transform FootRoot;
     }
 
@@ -126,6 +128,16 @@ public sealed class PrototypeCavalryAnimation09F30I : MonoBehaviour
             if (foot == null) continue;
             state.Feet.Add(foot);
             state.FootScales.Add(foot.localScale);
+            state.FootStartPositions.Add(foot.localPosition);
+
+            int slot = state.Feet.Count - 1;
+            int columns = 8;
+            int row = slot / columns;
+            int col = slot % columns;
+            state.FootRemountPositions.Add(new Vector3(
+                (col - (columns - 1) * 0.5f) * 0.74f,
+                0f,
+                -2.0f - row * 0.78f));
         }
 
         return state;
@@ -170,9 +182,10 @@ public sealed class PrototypeCavalryAnimation09F30I : MonoBehaviour
                 if (s.Feet[i] == null) continue;
                 float scale = s.Dismount ? Mathf.Lerp(0.08f, 1f, smooth) : Mathf.Lerp(1f, 0.08f, smooth);
                 s.Feet[i].localScale = s.FootScales[i] * scale;
-                Vector3 lp = s.Feet[i].localPosition;
-                lp.y += (1f - smooth) * (s.Dismount ? -0.015f : 0.015f);
-                s.Feet[i].localPosition = lp;
+
+                if (!s.Dismount)
+                    s.Feet[i].localPosition = Vector3.Lerp(
+                        s.FootStartPositions[i], s.FootRemountPositions[i], smooth);
             }
 
             if (p < 1f)
