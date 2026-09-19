@@ -138,6 +138,8 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
         }
 
         state.Enabled = enabled;
+        if (enabled)
+            unit.ClearManualFormationOverride();
         state.Target = null;
         state.Phase = enabled ? "SEEK" : "MANUEL";
         state.NextThink = Time.time + 0.25f;

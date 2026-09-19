@@ -61,6 +61,8 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     public string BridgePhaseLabel => bridgePhase == BridgePhase.Direct ? "DIRECT" : bridgePhase.ToString().ToUpperInvariant();
     public bool HasDestination => hasDestination;
     public Vector3 FinalDestination => finalDestination;
+    public bool AutoMarchColumnActive => autoMarchColumnActive;
+    public bool ManualFormationOverride => manualFormationOverride;
     public PrototypeCavalryFormation09F30 PlannedDestinationFormation =>
         bridgePhase != BridgePhase.Direct ? formationBeforeBridge : Formation;
     public Vector3 CurrentSteeringTarget => hasDestination ? ResolveSteeringTarget() : transform.position;
@@ -136,6 +138,11 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     private const float FootReformSpeed = 5.0f;
     private const float FormationReadyTolerance = 0.55f;
     private const float RemountDistance = 18f;
+    private const float AutoMarchColumnEnterDistance = 140f;
+    private const float AutoMarchLineDistance = 90f;
+
+    private bool autoMarchColumnActive;
+    private bool manualFormationOverride;
 
     public void Initialize(
         string unitName,
@@ -196,6 +203,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             }
         }
 
+        UpdateMountedMoveFormationPolicy();
         UpdateMovement();
         UpdateVisualFormation();
 
@@ -219,6 +227,21 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         FormationReadyFraction = 1f;
         IsReforming = false;
         ResizeCollider();
+    }
+
+    public void SetFormationManual(PrototypeCavalryFormation09F30 formation)
+    {
+        manualFormationOverride = true;
+        autoMarchColumnActive = false;
+        SetFormation(formation);
+
+        Debug.Log("CAVALRY-09F30K|Unit=" + UnitName +
+                  "|ManualFormationOverride=True|Formation=" + formation);
+    }
+
+    public void ClearManualFormationOverride()
+    {
+        manualFormationOverride = false;
     }
 
     public void SetFormation(PrototypeCavalryFormation09F30 formation)
@@ -246,13 +269,22 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         chargeTarget = null;
         chargeResolved = false;
         Action = PrototypeCavalryAction09F30.Move;
-        BeginRoute(worldPoint);
+
+        Vector3 groundedGoal = Ground(worldPoint);
+        if (!manualFormationOverride)
+            ApplyMountedMoveFormationPolicy(groundedGoal, true);
+
+        BeginRoute(groundedGoal);
     }
 
     public void OrderCharge(Regiment target)
     {
         if (Mode != PrototypeCavalryMode09F30.Mounted || target == null || target.Team != BattleTeam.Prussia)
             return;
+
+        manualFormationOverride = false;
+        autoMarchColumnActive = false;
+        SetFormation(PrototypeCavalryFormation09F30.Line);
 
         chargeTarget = target;
         chargeResolved = false;
@@ -270,6 +302,8 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         chargeTarget = null;
         chargeResolved = false;
         bridgePhase = BridgePhase.Direct;
+        autoMarchColumnActive = false;
+        manualFormationOverride = false;
         Action = PrototypeCavalryAction09F30.Hold;
     }
 
@@ -361,6 +395,77 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         {
             bridgePhase = BridgePhase.Direct;
         }
+    }
+
+    private void UpdateMountedMoveFormationPolicy()
+    {
+        if (Mode != PrototypeCavalryMode09F30.Mounted ||
+            Action != PrototypeCavalryAction09F30.Move ||
+            !hasDestination ||
+            bridgePhase != BridgePhase.Direct ||
+            manualFormationOverride)
+        {
+            return;
+        }
+
+        ApplyMountedMoveFormationPolicy(finalDestination, false);
+    }
+
+    private void ApplyMountedMoveFormationPolicy(Vector3 goal, bool newOrder)
+    {
+        if (Mode != PrototypeCavalryMode09F30.Mounted || manualFormationOverride)
+            return;
+
+        float remaining = PlanarDistance(transform.position, goal);
+        bool enemyInsideLong = HasEnemyInsideLongRange();
+
+        if (enemyInsideLong || remaining <= AutoMarchLineDistance)
+        {
+            if (autoMarchColumnActive || (newOrder && Formation == PrototypeCavalryFormation09F30.Column))
+            {
+                autoMarchColumnActive = false;
+                SetFormation(PrototypeCavalryFormation09F30.Line);
+                Debug.Log("CAVALRY-09F30K|Unit=" + UnitName +
+                          "|AutoFormation=LINE|Reason=" +
+                          (enemyInsideLong ? "ENEMY_INSIDE_LONG" : "NEAR_DESTINATION") +
+                          "|Remaining=" + remaining.ToString("0"));
+            }
+            return;
+        }
+
+        if (!autoMarchColumnActive && remaining >= AutoMarchColumnEnterDistance)
+        {
+            autoMarchColumnActive = true;
+            SetFormation(PrototypeCavalryFormation09F30.Column);
+            Debug.Log("CAVALRY-09F30K|Unit=" + UnitName +
+                      "|AutoFormation=COLUMN|Reason=LONG_MARCH|Remaining=" +
+                      remaining.ToString("0"));
+        }
+    }
+
+    private bool HasEnemyInsideLongRange()
+    {
+        BattleManager battle = BattleManager.Instance;
+        if (battle == null || battle.Regiments == null)
+            return false;
+
+        float longRange = PrototypeRangeTuning09F8.MaximumRangeMetres;
+        for (int i = 0; i < battle.Regiments.Count; i++)
+        {
+            Regiment enemy = battle.Regiments[i];
+            if (enemy == null ||
+                enemy.Team != BattleTeam.Prussia ||
+                enemy.IsRouted ||
+                enemy.CurrentStrength <= 0)
+            {
+                continue;
+            }
+
+            if (PlanarDistance(transform.position, enemy.transform.position) <= longRange)
+                return true;
+        }
+
+        return false;
     }
 
     private void UpdateMovement()

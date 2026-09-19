@@ -432,7 +432,9 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
                 ? "BRO " + selected.BridgePhaseLabel + " | 2-ABREAST"
                 : (selected.IsReforming
                     ? "REFORMER " + Mathf.RoundToInt(selected.FormationReadyFraction * 100f) + "%"
-                    : "FORMATION KLAR"), valueStyle);
+                    : (selected.AutoMarchColumnActive
+                        ? "AUTO MARCH | KOLONNE"
+                        : (selected.ManualFormationOverride ? "FORMATION MANUEL" : "FORMATION KLAR"))), valueStyle);
         GUI.Label(new Rect(infoX + 3f, y + 49f, infoWidth - 6f, 13f),
             "Højreklik jord = flyt | fjende = charge", valueStyle);
 
@@ -514,13 +516,13 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
                 selected.Formation == PrototypeCavalryFormation09F30.Line && !selected.IsBridgeRouteActive ? activeStyle : redStyle))
         {
             SetSelectedManual("HUD_FORMATION_LINE");
-            selected.SetFormation(PrototypeCavalryFormation09F30.Line);
+            selected.SetFormationManual(PrototypeCavalryFormation09F30.Line);
         }
         if (GUI.Button(new Rect(commandX + formationW + gap, formationY, formationW, 20f), "MARCHKOLONNE",
                 selected.Formation == PrototypeCavalryFormation09F30.Column && !selected.IsBridgeRouteActive ? activeStyle : redStyle))
         {
             SetSelectedManual("HUD_FORMATION_COLUMN");
-            selected.SetFormation(PrototypeCavalryFormation09F30.Column);
+            selected.SetFormationManual(PrototypeCavalryFormation09F30.Column);
         }
 
         Event current = Event.current;
