@@ -332,15 +332,31 @@ public sealed class Regiment : MonoBehaviour
 
         if (!hasDestination && Time.time >= nextFireTime && FirePolicy != RegimentFirePolicy.HoldFire)
         {
-            Regiment target = null;
+            // F30N: Prussian infantry may react to Danish cavalry inside the current
+            // fire-policy range. A valid cavalry threat is checked before normal
+            // infantry target acquisition, then the shared reload timer prevents
+            // double-firing in the same cycle.
+            PrototypeCavalryUnit09F30 cavalryTarget =
+                Team == BattleTeam.Prussia
+                    ? FindNearestEnemyCavalryInFireArc(GetFireTriggerRange())
+                    : null;
 
-            if (forcedTarget != null && !forcedTarget.IsRouted && CanFireAt(forcedTarget))
-                target = forcedTarget;
+            if (cavalryTarget != null)
+            {
+                FireVolley(cavalryTarget);
+            }
             else
-                target = FindNearestEnemyInFireArc(GetFireTriggerRange());
+            {
+                Regiment target = null;
 
-            if (target != null)
-                FireVolley(target);
+                if (forcedTarget != null && !forcedTarget.IsRouted && CanFireAt(forcedTarget))
+                    target = forcedTarget;
+                else
+                    target = FindNearestEnemyInFireArc(GetFireTriggerRange());
+
+                if (target != null)
+                    FireVolley(target);
+            }
         }
     }
 
@@ -546,6 +562,78 @@ public sealed class Regiment : MonoBehaviour
         return distance <= GetFireTriggerRange() && IsTargetInFireArc(target);
     }
 
+    public bool IsTargetInFireArc(PrototypeCavalryUnit09F30 target)
+    {
+        if (target == null || target.CurrentStrength <= 0)
+            return false;
+
+        Vector3 toTarget = target.transform.position - transform.position;
+        toTarget.y = 0f;
+        if (toTarget.sqrMagnitude < 0.01f)
+            return true;
+
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.01f)
+            return true;
+
+        return Vector3.Angle(
+            forward.normalized,
+            toTarget.normalized) <= FireArcHalfAngle;
+    }
+
+    public bool CanFireAt(PrototypeCavalryUnit09F30 target)
+    {
+        if (target == null ||
+            target.CurrentStrength <= 0 ||
+            Team != BattleTeam.Prussia ||
+            FirePolicy == RegimentFirePolicy.HoldFire)
+            return false;
+
+        float distance = Vector3.Distance(
+            transform.position,
+            target.transform.position);
+
+        return distance <= GetFireTriggerRange() &&
+               IsTargetInFireArc(target);
+    }
+
+    private PrototypeCavalryUnit09F30 FindNearestEnemyCavalryInFireArc(
+        float maxDistance)
+    {
+        PrototypeCavalryManager09F30 manager =
+            PrototypeCavalryManager09F30.Instance;
+        if (manager == null || !manager.Installed || maxDistance <= 0f)
+            return null;
+
+        PrototypeCavalryUnit09F30 best = null;
+        float bestDistance = maxDistance;
+
+        PrototypeCavalryUnit09F30[] candidates =
+        {
+            manager.Gardehusar,
+            manager.Dragon
+        };
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            PrototypeCavalryUnit09F30 candidate = candidates[i];
+            if (!CanFireAt(candidate))
+                continue;
+
+            float distance = Vector3.Distance(
+                transform.position,
+                candidate.transform.position);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = candidate;
+            }
+        }
+
+        return best;
+    }
+
     public void SetFirePolicy(RegimentFirePolicy policy)
     {
         FirePolicy = policy;
@@ -589,6 +677,80 @@ public sealed class Regiment : MonoBehaviour
         smoke.Emit(Random.Range(18, 34));
         nextFireTime = Time.time + CurrentReloadSeconds * Random.Range(0.90f, 1.12f);
         Cohesion = Mathf.Max(30f, Cohesion - Random.Range(0.4f, 1.2f));
+    }
+
+    private void FireVolley(PrototypeCavalryUnit09F30 target)
+    {
+        if (!CanFireAt(target))
+            return;
+
+        float distance = Vector3.Distance(
+            transform.position,
+            target.transform.position);
+
+        Vector3 toTarget = target.transform.position - transform.position;
+        toTarget.y = 0f;
+        if (toTarget.sqrMagnitude > 0.01f)
+        {
+            Quaternion desired =
+                Quaternion.LookRotation(toTarget.normalized, Vector3.up);
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                desired,
+                0.90f * Time.deltaTime);
+        }
+
+        float rangeAccuracy = GetRangeAccuracyMultiplier(distance);
+        float quality = (Morale / 100f) * (Cohesion / 100f);
+
+        // Moving cavalry is harder to hit, but a charging formation is also a large,
+        // rapidly closing target. Keep the modifier moderate for prototype balance.
+        float cavalryModifier =
+            target.Action == PrototypeCavalryAction09F30.Charge
+                ? 0.88f
+                : target.Action == PrototypeCavalryAction09F30.Move
+                    ? 0.78f
+                    : 0.96f;
+
+        int firingMen = Mathf.RoundToInt(CurrentStrength * 0.58f);
+        float expected =
+            firingMen *
+            baseAccuracy *
+            rangeAccuracy *
+            quality *
+            cavalryModifier;
+
+        int hits = Mathf.Clamp(
+            Mathf.RoundToInt(
+                expected * Random.Range(0.72f, 1.28f)),
+            0,
+            14);
+
+        float shock = Mathf.Lerp(
+            5.6f,
+            1.8f,
+            Mathf.Clamp01(distance / MaximumRange));
+
+        target.ReceiveInfantryVolley(hits, shock, this);
+        if (smoke != null)
+            smoke.Emit(Random.Range(18, 34));
+
+        nextFireTime =
+            Time.time +
+            CurrentReloadSeconds *
+            Random.Range(0.90f, 1.12f);
+
+        Cohesion =
+            Mathf.Max(
+                30f,
+                Cohesion - Random.Range(0.4f, 1.2f));
+
+        Debug.Log(
+            "INF-ANTI-CAV-09F30N|Unit=" + RegimentName +
+            "|Target=" + target.UnitName +
+            "|Distance=" + distance.ToString("0") +
+            "|Hits=" + hits +
+            "|Policy=" + GetFirePolicyLabel());
     }
 
     private void FaceTarget(Regiment target, float turnRate)
