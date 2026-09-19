@@ -245,14 +245,15 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             return;
 
         PrototypeCavalryUnit09F30 selected = cavalry.SelectedUnit;
-        if (!IsAIEnabled(selected))
-            return;
 
-        // Direct player world order breaks both delegated AI and any inherited higher mission.
+        // Direct player world order always breaks an inherited higher mission.
+        // This must also work when cavalry Officer AI is already OFF, because
+        // higher-HQ missions execute independently of the autonomous AI toggle.
         if (Input.GetMouseButtonDown(1))
         {
             ClearHigherMission(selected, "PLAYER_RIGHT_CLICK");
-            SetAIEnabled(selected, false, "PLAYER_RIGHT_CLICK");
+            if (IsAIEnabled(selected))
+                SetAIEnabled(selected, false, "PLAYER_RIGHT_CLICK");
         }
     }
 
