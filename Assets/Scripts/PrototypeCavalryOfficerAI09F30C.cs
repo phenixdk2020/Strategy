@@ -597,28 +597,29 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             away * StandOffDistance +
             tangent * 28f;
         desired = SafeMountedPoint(desired, target.transform.position);
-        desired = AvoidEnemyBubbleOnRoute(
+
+        Vector3 routed = AvoidEnemyBubbleOnRoute(
             unit.transform.position,
             desired,
             state.PreferredSide);
 
-        state.ManeuverPoint = desired;
+        state.ManeuverPoint = routed;
         state.TargetAnchor = target.transform.position;
         state.ManeuverIsDetour =
-            PlanarDistance(
-                desired,
-                target.transform.position) < StandOffMinDistance;
+            PlanarDistance(routed, desired) > 8f;
         state.ManeuverStarted = Time.time;
-        state.Phase = "SCREEN / BRYDER AFSTAND";
+        state.Phase = state.ManeuverIsDetour
+            ? "SCREEN / OMGÅR FJENDE"
+            : "SCREEN / BRYDER AFSTAND";
 
         unit.SetFormation(PrototypeCavalryFormation09F30.Column);
-        unit.OrderMove(desired);
+        unit.OrderMove(routed);
 
         Debug.Log("CAV-AI-09F30N|Unit=" + unit.UnitName +
                   "|Decision=STAND_OFF|Target=" + target.RegimentName +
                   "|Distance=" +
                   PlanarDistance(unit.transform.position, target.transform.position).ToString("0") +
-                  "|Goal=" + desired.x.ToString("0") + "," + desired.z.ToString("0"));
+                  "|Goal=" + routed.x.ToString("0") + "," + routed.z.ToString("0"));
     }
 
     private static bool IsTargetEngagedByFriendlyInfantry(Regiment target)
