@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.30**  
+**Aktuel designbaseline: v00.02.31**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10n7d CITY INFO + LEGACY STARTUP HOTFIX**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n7e COASTAL CITY VISUAL OFFSETS**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -37,6 +37,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 27: 62 — Campaign3 v00.00.10n7b: Vej 1 / City Art Polish](parts/part-27-62-CAMPAIGN-V10N7B-CITY-ART-POLISH.md)
 - [Del 28: 63 — Campaign3 v00.00.10n7c: Embedded City Asset Reset](parts/part-28-63-CAMPAIGN-V10N7C-EMBEDDED-CITY-ASSET-RESET.md)
 - [Del 29: 64 — Campaign3 v00.00.10n7d: City Info + Legacy Startup Hotfix](parts/part-29-64-CAMPAIGN-V10N7D-CITY-INFO-HOTFIX.md)
+- [Del 30: 65 — Campaign3 v00.00.10n7e: Coastal City Visual Offsets](parts/part-30-65-CAMPAIGN-V10N7E-COASTAL-CITY-OFFSETS.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -154,6 +155,14 @@ Zone-line renderer registrerer samtidig hvilke forskellige ZoneIds der ejer hver
 Historisk guardrail er uændret: zoneidentiteterne er kanoniske, men den nuværende center-derived polygongeometri er stadig prototype og ikke historisk 1851-facit.
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 16 / Campaign3 v00.00.10n4](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md).
+
+## Campaign3 v00.00.10n7e — Coastal City Visual Offsets
+
+Designbaseline v00.02.31 bevarer n7c/n7d's Proposal-3 city art, scale og city-info, men tilføjer et visuelt offset-lag for tre kystnære byer: **Sæby, Helsingør og Nykøbing Sjælland**.
+
+Offsets flytter kun artwork og label. CITY-REG-01 WGS84, CityId, ZoneId, click collider, save identity og simulation geography forbliver uændret. Dette er et bevidst render/UI-lag, fordi den coarse Natural Earth 1:50m landmaske ikke er præcis nok til at bruges som automatisk geografi-facit for kystbyer.
+
+[Del 30 / v00.00.10n7e](parts/part-30-65-CAMPAIGN-V10N7E-COASTAL-CITY-OFFSETS.md)
 
 ## Campaign3 v00.00.10n7d — City Info + Legacy Startup Hotfix
 
