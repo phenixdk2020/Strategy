@@ -76,7 +76,9 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     private GUIStyle headerStyle;
     private GUIStyle sectionStyle;
     private GUIStyle labelStyle;
+    private GUIStyle mutedStyle;
     private GUIStyle buttonStyle;
+    private GUIStyle accentStyle;
     private GUIStyle activeBlueStyle;
     private GUIStyle activeGreenStyle;
     private GUIStyle dangerStyle;
@@ -1053,70 +1055,90 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             return;
 
         EnsureStyles();
+
+        // F30N: Higher HQ uses the Regimental HQ HUD as the literal visual template:
+        // same panel, header, AI/doctrine placement, two-line info area and one-row
+        // six-button mission geometry. Only the text/data source changes.
         GUI.depth = -7600;
         Rect panel = new Rect(0f, Screen.height - HudHeight, Screen.width, HudHeight);
-        GUI.Box(panel, GUIContent.none, panelStyle);
+        GUI.Box(panel, string.Empty, panelStyle);
 
         bool division = SelectedLevel == PrototypeHigherCommandLevel09F30B.Division;
         string title = division
             ? "1. DIVISION | DIVISIONSCHEF | HØJERE KOMMANDO"
             : "1. BRIGADE | BRIGADECHEF | HØJERE KOMMANDO";
-        GUI.Box(new Rect(5f, panel.y + 3f, panel.width - 10f, 17f), title, headerStyle);
 
-        // F30M: same three-zone geometry as the Regimental HUD.
-        float infoWidth = Mathf.Clamp(panel.width * 0.24f, 280f, 350f);
-        float subordinateWidth = Mathf.Clamp(panel.width * 0.31f, 370f, 500f);
-        float commandX = infoWidth + 8f;
-        float subordinateX = panel.width - subordinateWidth - 6f;
-        float commandWidth = Mathf.Max(400f, subordinateX - commandX - 7f);
-        float y = panel.y + 21f;
+        float pad = 7f;
+        float headerY = panel.y + 3f;
+        GUI.Box(new Rect(pad, headerY, panel.width - pad * 2f, 19f), title, headerStyle);
 
-        GUI.Label(new Rect(7f, y, infoWidth - 12f, 10f), "ENHEDSINFO / AI", sectionStyle);
-        string mission = division ? divisionMission.ToString().ToUpperInvariant() : brigadeMission.ToString().ToUpperInvariant();
-        if (mission == MajorOrder09F18.None.ToString().ToUpperInvariant()) mission = "INGEN AKTIV ORDRE";
         bool aiOn = GetAIEnabled(SelectedLevel);
         OfficerAIDoctrine doctrine = GetDoctrine(SelectedLevel);
-        int strength = AggregateHigherStrength(SelectedLevel);
 
-        GUI.Label(new Rect(9f, y + 10f, infoWidth - 14f, 13f),
-            "Mænd " + strength + " | Mission " + mission, labelStyle);
-        GUI.Label(new Rect(9f, y + 23f, infoWidth - 14f, 13f),
-            division ? "Under: 1. Brigade" : "Under: 1. Regiment + støtte", labelStyle);
-
-        float aiY = y + 41f;
-        float aiGap = 3f;
-        float aiW = (infoWidth - 18f - aiGap * 3f) / 4f;
-        if (GUI.Button(new Rect(9f, aiY, aiW, 20f), aiOn ? "AI ON" : "AI OFF",
-                aiOn ? activeGreenStyle : dangerStyle))
+        // Exact copy of Regimental HUD top-right AI/doctrine placement.
+        float aiX = panel.xMax - 274f;
+        if (GUI.Button(new Rect(aiX, headerY + 1f, 70f, 17f), aiOn ? "AI ON" : "AI OFF",
+                aiOn ? accentStyle : buttonStyle))
             ToggleAI(SelectedLevel);
-        if (GUI.Button(new Rect(9f + (aiW + aiGap), aiY, aiW, 20f),
-                doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF",
-                doctrine == OfficerAIDoctrine.Defensive ? activeBlueStyle : buttonStyle))
+        aiX += 73f;
+        if (GUI.Button(new Rect(aiX, headerY + 1f, 62f, 17f),
+                doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF", buttonStyle))
             SetDoctrine(SelectedLevel, OfficerAIDoctrine.Defensive);
-        if (GUI.Button(new Rect(9f + (aiW + aiGap) * 2f, aiY, aiW, 20f),
-                doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL",
-                doctrine == OfficerAIDoctrine.Balanced ? activeBlueStyle : buttonStyle))
+        aiX += 65f;
+        if (GUI.Button(new Rect(aiX, headerY + 1f, 62f, 17f),
+                doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL", buttonStyle))
             SetDoctrine(SelectedLevel, OfficerAIDoctrine.Balanced);
-        if (GUI.Button(new Rect(9f + (aiW + aiGap) * 3f, aiY, aiW, 20f),
-                doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF",
-                doctrine == OfficerAIDoctrine.Offensive ? activeBlueStyle : buttonStyle))
+        aiX += 65f;
+        if (GUI.Button(new Rect(aiX, headerY + 1f, 62f, 17f),
+                doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF", buttonStyle))
             SetDoctrine(SelectedLevel, OfficerAIDoctrine.Offensive);
 
-        GUI.Label(new Rect(commandX, y, commandWidth, 10f), "ORDRER / MISSION", sectionStyle);
-        float gap = 4f;
-        float orderW = (commandWidth - gap * 2f) / 3f;
-        float row1 = y + 11f;
-        float row2 = y + 36f;
+        // Exact copy of Regimental HUD lower-row geometry.
+        float infoWidth = Mathf.Clamp(panel.width * 0.33f, 390f, 560f);
+        float rowY = panel.y + 27f;
 
-        DrawOrderButton(new Rect(commandX, row1, orderW, 21f), "ANGRIB HER", MajorOrder09F18.AttackHere);
-        DrawOrderButton(new Rect(commandX + orderW + gap, row1, orderW, 21f), "FORSVAR HER", MajorOrder09F18.DefendHere);
-        DrawOrderButton(new Rect(commandX + (orderW + gap) * 2f, row1, orderW, 21f), "RYK FREM", MajorOrder09F18.AdvanceHere);
-        DrawOrderButton(new Rect(commandX, row2, orderW, 21f), "TILBAGETRÆK", MajorOrder09F18.WithdrawHere);
-        DrawOrderButton(new Rect(commandX + orderW + gap, row2, orderW, 21f), "SAML", MajorOrder09F18.AssembleHere);
+        MajorOrder09F18 missionOrder = division ? divisionMission : brigadeMission;
+        string mission = missionOrder == MajorOrder09F18.None
+            ? "Ingen aktiv ordre"
+            : Label(missionOrder);
+        int strength = AggregateHigherStrength(SelectedLevel);
+
+        string regAi = regimental != null && regimental.AIEnabled ? "ON" : "OFF";
+        string batA = hierarchy != null && hierarchy.GetBattalionAIEnabled(0) ? "ON" : "OFF";
+        string batB = hierarchy != null && hierarchy.GetBattalionAIEnabled(1) ? "ON" : "OFF";
+        PrototypeCavalryOfficerAI09F30C cavAi = PrototypeCavalryOfficerAI09F30C.Instance;
+        string gardeAi = cavAi != null && cavalry != null && cavalry.Gardehusar != null &&
+                         cavAi.IsAIEnabled(cavalry.Gardehusar) ? "ON" : "OFF";
+        string dragonAi = cavAi != null && cavalry != null && cavalry.Dragon != null &&
+                          cavAi.IsAIEnabled(cavalry.Dragon) ? "ON" : "OFF";
+
+        GUI.Label(new Rect(pad + 3f, rowY, infoWidth - 8f, 15f),
+            mission + " | Mænd " + strength, labelStyle);
+        GUI.Label(new Rect(pad + 3f, rowY + 16f, infoWidth - 8f, 15f),
+            "REG " + regAi + " | MAJ A " + batA + " | MAJ B " + batB +
+            " | GARDE " + gardeAi + " | DRAGON " + dragonAi, mutedStyle);
+
+        float commandX = infoWidth + 8f;
+        float commandWidth = panel.width - commandX - 8f;
+        const float gap = 4f;
+        float buttonWidth = (commandWidth - gap * 5f) / 6f;
+        const float commandHeight = 27f;
+
+        DrawOrderButton(new Rect(commandX, rowY, buttonWidth, commandHeight),
+            "ANGRIB HER", MajorOrder09F18.AttackHere);
+        DrawOrderButton(new Rect(commandX + (buttonWidth + gap), rowY, buttonWidth, commandHeight),
+            "FORSVAR HER", MajorOrder09F18.DefendHere);
+        DrawOrderButton(new Rect(commandX + (buttonWidth + gap) * 2f, rowY, buttonWidth, commandHeight),
+            "RYK FREM", MajorOrder09F18.AdvanceHere);
+        DrawOrderButton(new Rect(commandX + (buttonWidth + gap) * 3f, rowY, buttonWidth, commandHeight),
+            "TILBAGETRÆK", MajorOrder09F18.WithdrawHere);
+        DrawOrderButton(new Rect(commandX + (buttonWidth + gap) * 4f, rowY, buttonWidth, commandHeight),
+            "SAML", MajorOrder09F18.AssembleHere);
 
         bool holdActive = HasHigherOrderActive(SelectedLevel, MajorOrder09F18.HoldPosition);
-        if (GUI.Button(new Rect(commandX + (orderW + gap) * 2f, row2, orderW, 21f),
-                "STOP / HOLD", holdActive ? activeBlueStyle : buttonStyle))
+        string holdLabel = holdActive ? "[HOLD]" : "HOLD";
+        if (GUI.Button(new Rect(commandX + (buttonWidth + gap) * 5f, rowY, buttonWidth, commandHeight),
+                holdLabel, buttonStyle))
         {
             Vector3 center = regimental != null && regimental.HqRoot != null
                 ? regimental.HqRoot.transform.position
@@ -1126,39 +1148,9 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             pendingLevel = PrototypeHigherCommandLevel09F30B.None;
         }
 
-        GUI.Label(new Rect(subordinateX, y, subordinateWidth - 4f, 10f),
-            "UNDERLAGTE / STATUS / ATTACHMENT", sectionStyle);
-
-        string regAi = regimental != null && regimental.AIEnabled ? "ON" : "OFF";
-        string batA = hierarchy != null && hierarchy.GetBattalionAIEnabled(0) ? "ON" : "OFF";
-        string batB = hierarchy != null && hierarchy.GetBattalionAIEnabled(1) ? "ON" : "OFF";
-        GUI.Label(new Rect(subordinateX + 2f, y + 11f, subordinateWidth - 7f, 13f),
-            "1. REGIMENT AI " + regAi + " | MAJOR A " + batA + " | MAJOR B " + batB, labelStyle);
-
-        if (cavalry != null)
-        {
-            PrototypeCavalryOfficerAI09F30C cavAi = PrototypeCavalryOfficerAI09F30C.Instance;
-            string gardeAi = cavAi != null && cavalry.Gardehusar != null && cavAi.IsAIEnabled(cavalry.Gardehusar) ? "ON" : "OFF";
-            string dragonAi = cavAi != null && cavalry.Dragon != null && cavAi.IsAIEnabled(cavalry.Dragon) ? "ON" : "OFF";
-            GUI.Label(new Rect(subordinateX + 2f, y + 24f, subordinateWidth - 7f, 13f),
-                "GARDEHUSAR AI " + gardeAi + " | DRAGON AI " + dragonAi, labelStyle);
-
-            if (!division)
-            {
-                float attachGap = 3f;
-                float attachW = (subordinateWidth - 7f - attachGap) / 2f;
-                DrawAttachmentButton(cavalry.Gardehusar,
-                    new Rect(subordinateX + 2f, y + 42f, attachW, 20f));
-                DrawAttachmentButton(cavalry.Dragon,
-                    new Rect(subordinateX + 2f + attachW + attachGap, y + 42f, attachW, 20f));
-            }
-            else
-            {
-                GUI.Label(new Rect(subordinateX + 2f, y + 42f, subordinateWidth - 7f, 13f),
-                    "Brigade AI " + (BrigadeAIEnabled ? "ON" : "OFF") +
-                    " | CAV via command-parent", labelStyle);
-            }
-        }
+        if (pendingOrder != MajorOrder09F18.None && pendingLevel == SelectedLevel)
+            GUI.Label(new Rect(commandX, rowY + 31f, commandWidth, 15f),
+                "Klik på slagmarken: " + Label(pendingOrder), mutedStyle);
 
         Event current = Event.current;
         if (current != null && panel.Contains(current.mousePosition) &&
@@ -1197,11 +1189,15 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     {
         bool active = pendingOrder == order && pendingLevel == SelectedLevel;
         active = active || HasHigherOrderActive(SelectedLevel, order);
-        if (GUI.Button(rect, label, active ? activeBlueStyle : buttonStyle))
+
+        // Keep the exact Regimental button palette. Active state is indicated in
+        // the caption instead of introducing a different higher-HQ button colour.
+        string caption = active ? "[" + label + "]" : label;
+        if (GUI.Button(rect, caption, buttonStyle))
         {
             pendingOrder = order;
             pendingLevel = SelectedLevel;
-            Debug.Log("HQ-09F30B|OrderPending=True|Level=" + SelectedLevel + "|Order=" + order);
+            Debug.Log("HQ-09F30N|OrderPending=True|Level=" + SelectedLevel + "|Order=" + order);
         }
     }
 
@@ -1219,32 +1215,21 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     {
         if (panelStyle != null)
             return;
+
+        // F30N: literal Regimental HQ palette/typography.
         panelStyle = PrototypeUiTheme09F15.Panel(9);
-        headerStyle = PrototypeUiTheme09F15.Header(10);
+        headerStyle = PrototypeUiTheme09F15.Header(11);
         sectionStyle = PrototypeUiTheme09F15.Section(8);
         labelStyle = PrototypeUiTheme09F15.Label(8);
-        buttonStyle = PrototypeUiTheme09F15.Button(8);
+        mutedStyle = PrototypeUiTheme09F15.MutedLabel(8);
+        buttonStyle = PrototypeUiTheme09F15.Button(9);
+        accentStyle = PrototypeUiTheme09F15.AccentBox(9);
 
-        activeBlueTexture = MakeTexture(new Color(0.18f, 0.42f, 0.72f, 1f));
+        // Retained for binary/source compatibility with older F30M paths, but the
+        // higher-HQ HUD no longer uses a separate colour language.
         activeBlueStyle = new GUIStyle(buttonStyle);
-        activeBlueStyle.normal.background = activeBlueTexture;
-        activeBlueStyle.hover.background = activeBlueTexture;
-        activeBlueStyle.active.background = activeBlueTexture;
-        activeBlueStyle.normal.textColor = Color.white;
-
-        activeGreenTexture = MakeTexture(new Color(0.16f, 0.43f, 0.19f, 1f));
-        activeGreenStyle = new GUIStyle(buttonStyle);
-        activeGreenStyle.normal.background = activeGreenTexture;
-        activeGreenStyle.hover.background = activeGreenTexture;
-        activeGreenStyle.active.background = activeGreenTexture;
-        activeGreenStyle.normal.textColor = Color.white;
-
-        dangerTexture = MakeTexture(new Color(0.43f, 0.14f, 0.12f, 1f));
+        activeGreenStyle = new GUIStyle(accentStyle);
         dangerStyle = new GUIStyle(buttonStyle);
-        dangerStyle.normal.background = dangerTexture;
-        dangerStyle.hover.background = dangerTexture;
-        dangerStyle.active.background = dangerTexture;
-        dangerStyle.normal.textColor = Color.white;
     }
 
     private static Texture2D MakeTexture(Color color)
