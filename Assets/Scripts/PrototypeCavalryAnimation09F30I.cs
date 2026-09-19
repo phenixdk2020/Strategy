@@ -29,8 +29,25 @@ public sealed class PrototypeCavalryAnimation09F30I : MonoBehaviour
     private static PrototypeCavalryAnimation09F30I instance;
     private readonly Dictionary<PrototypeCavalryUnit09F30, TransitionState> transitions =
         new Dictionary<PrototypeCavalryUnit09F30, TransitionState>();
+    private sealed class MountedRig
+    {
+        public Transform Root;
+        public Transform[] Legs = new Transform[4];
+        public Quaternion[] LegBase = new Quaternion[4];
+        public Transform[] Hooves = new Transform[4];
+        public Quaternion[] HoofBase = new Quaternion[4];
+        public Transform Head;
+        public Quaternion HeadBase;
+        public Transform Tail;
+        public Quaternion TailBase;
+        public Transform Rider;
+        public Quaternion RiderBase;
+    }
+
     private readonly Dictionary<PrototypeCavalryUnit09F30, List<Transform>> mountedCache =
         new Dictionary<PrototypeCavalryUnit09F30, List<Transform>>();
+    private readonly Dictionary<PrototypeCavalryUnit09F30, List<MountedRig>> rigCache =
+        new Dictionary<PrototypeCavalryUnit09F30, List<MountedRig>>();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -232,8 +249,75 @@ public sealed class PrototypeCavalryAnimation09F30I : MonoBehaviour
 
     private void ApplyGait(PrototypeCavalryUnit09F30 unit)
     {
-        if (unit == null || unit.Mode != PrototypeCavalryMode09F30.Mounted)
+        if (unit == null || unit.Mode != PrototypeCavalryMode09F30.Mounted ||
+            IsTransitioning(unit))
             return;
+
+        List<MountedRig> rigs = GetRigs(unit);
+        if (rigs == null)
+            return;
+
+        bool moving = unit.Action != PrototypeCavalryAction09F30.Hold || unit.HasDestination;
+        bool charge = unit.Action == PrototypeCavalryAction09F30.Charge;
+        float frequency = charge ? 11.2f : (unit.Formation == PrototypeCavalryFormation09F30.Column ? 7.8f : 6.6f);
+        float legSwing = charge ? 38f : 24f;
+        float hoofSwing = charge ? 20f : 12f;
+        float bodyPitch = charge ? -7.0f : -1.5f;
+        float bodyRoll = charge ? 2.2f : 1.2f;
+        float headNod = charge ? 8.0f : 4.0f;
+        float tailSwing = charge ? 12f : 7f;
+
+        for (int i = 0; i < rigs.Count; i++)
+        {
+            MountedRig rig = rigs[i];
+            if (rig == null || rig.Root == null)
+                continue;
+
+            if (!moving)
+            {
+                rig.Root.localRotation = Quaternion.RotateTowards(
+                    rig.Root.localRotation, Quaternion.identity, 150f * Time.deltaTime);
+                RestoreRig(rig, 160f * Time.deltaTime);
+                continue;
+            }
+
+            float phase = Time.time * frequency + i * 0.47f;
+            float diagonalA = Mathf.Sin(phase);
+            float diagonalB = Mathf.Sin(phase + Mathf.PI);
+            float halfBeat = Mathf.Sin(phase * 0.5f);
+
+            // Horse diagonal gait: FL + RR together, FR + RL opposite.
+            SetAnimatedRotation(rig.Legs[0], rig.LegBase[0], new Vector3(diagonalA * legSwing, 0f, 0f));
+            SetAnimatedRotation(rig.Legs[1], rig.LegBase[1], new Vector3(diagonalB * legSwing, 0f, 0f));
+            SetAnimatedRotation(rig.Legs[2], rig.LegBase[2], new Vector3(diagonalB * legSwing, 0f, 0f));
+            SetAnimatedRotation(rig.Legs[3], rig.LegBase[3], new Vector3(diagonalA * legSwing, 0f, 0f));
+
+            SetAnimatedRotation(rig.Hooves[0], rig.HoofBase[0], new Vector3(-diagonalA * hoofSwing, 0f, 0f));
+            SetAnimatedRotation(rig.Hooves[1], rig.HoofBase[1], new Vector3(-diagonalB * hoofSwing, 0f, 0f));
+            SetAnimatedRotation(rig.Hooves[2], rig.HoofBase[2], new Vector3(-diagonalB * hoofSwing, 0f, 0f));
+            SetAnimatedRotation(rig.Hooves[3], rig.HoofBase[3], new Vector3(-diagonalA * hoofSwing, 0f, 0f));
+
+            if (rig.Head != null)
+                rig.Head.localRotation = rig.HeadBase * Quaternion.Euler(halfBeat * headNod, 0f, 0f);
+            if (rig.Tail != null)
+                rig.Tail.localRotation = rig.TailBase * Quaternion.Euler(0f, halfBeat * tailSwing, 0f);
+
+            if (rig.Rider != null)
+            {
+                float riderBounce = Mathf.Sin(phase * 2f) * (charge ? 2.5f : 1.3f);
+                rig.Rider.localRotation = rig.RiderBase *
+                    Quaternion.Euler(bodyPitch + riderBounce, 0f, halfBeat * bodyRoll);
+            }
+
+            float rootPitch = bodyPitch * 0.35f + halfBeat * (charge ? 1.5f : 0.7f);
+            rig.Root.localRotation = Quaternion.Euler(rootPitch, 0f, halfBeat * bodyRoll * 0.45f);
+        }
+    }
+
+    private List<MountedRig> GetRigs(PrototypeCavalryUnit09F30 unit)
+    {
+        if (rigCache.TryGetValue(unit, out List<MountedRig> cached) && cached != null)
+            return cached;
 
         List<Transform> figures;
         if (!mountedCache.TryGetValue(unit, out figures) || figures == null)
@@ -243,26 +327,81 @@ public sealed class PrototypeCavalryAnimation09F30I : MonoBehaviour
             mountedCache[unit] = figures;
         }
         if (figures == null)
-            return;
+            return null;
 
-        bool moving = unit.Action != PrototypeCavalryAction09F30.Hold || unit.HasDestination;
-        float amp = unit.Action == PrototypeCavalryAction09F30.Charge ? 5.0f : 2.6f;
-        float freq = unit.Action == PrototypeCavalryAction09F30.Charge ? 10.5f : 6.5f;
-
+        List<MountedRig> rigs = new List<MountedRig>(figures.Count);
         for (int i = 0; i < figures.Count; i++)
         {
-            Transform f = figures[i];
-            if (f == null) continue;
-            if (!moving)
+            Transform root = figures[i];
+            if (root == null)
             {
-                f.localRotation = Quaternion.RotateTowards(f.localRotation, Quaternion.identity, 120f * Time.deltaTime);
+                rigs.Add(null);
                 continue;
             }
 
-            float phase = Time.time * freq + i * 0.73f;
-            float pitch = Mathf.Sin(phase) * amp;
-            float roll = Mathf.Sin(phase * 0.5f) * amp * 0.32f;
-            f.localRotation = Quaternion.Euler(pitch, 0f, roll);
+            MountedRig rig = new MountedRig { Root = root };
+            for (int leg = 0; leg < 4; leg++)
+            {
+                rig.Legs[leg] = FindDescendant(root, "Leg" + leg);
+                rig.LegBase[leg] = rig.Legs[leg] != null ? rig.Legs[leg].localRotation : Quaternion.identity;
+                rig.Hooves[leg] = FindDescendant(root, "Hoof" + leg);
+                rig.HoofBase[leg] = rig.Hooves[leg] != null ? rig.Hooves[leg].localRotation : Quaternion.identity;
+            }
+
+            rig.Head = FindDescendant(root, "HorseHead");
+            rig.HeadBase = rig.Head != null ? rig.Head.localRotation : Quaternion.identity;
+            rig.Tail = FindDescendant(root, "Tail");
+            rig.TailBase = rig.Tail != null ? rig.Tail.localRotation : Quaternion.identity;
+
+            rig.Rider = FindDescendant(root, "F30E_IdentityDetails");
+            if (rig.Rider == null)
+                rig.Rider = FindDescendant(root, "Rider");
+            rig.RiderBase = rig.Rider != null ? rig.Rider.localRotation : Quaternion.identity;
+
+            rigs.Add(rig);
         }
+
+        rigCache[unit] = rigs;
+        return rigs;
     }
+
+    private static Transform FindDescendant(Transform root, string name)
+    {
+        if (root == null)
+            return null;
+
+        Transform[] all = root.GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < all.Length; i++)
+            if (all[i] != null && all[i].name == name)
+                return all[i];
+        return null;
+    }
+
+    private static void SetAnimatedRotation(Transform target, Quaternion baseRotation, Vector3 euler)
+    {
+        if (target != null)
+            target.localRotation = baseRotation * Quaternion.Euler(euler);
+    }
+
+    private static void RestoreRig(MountedRig rig, float maxDegrees)
+    {
+        if (rig == null)
+            return;
+
+        for (int i = 0; i < 4; i++)
+        {
+            if (rig.Legs[i] != null)
+                rig.Legs[i].localRotation = Quaternion.RotateTowards(rig.Legs[i].localRotation, rig.LegBase[i], maxDegrees);
+            if (rig.Hooves[i] != null)
+                rig.Hooves[i].localRotation = Quaternion.RotateTowards(rig.Hooves[i].localRotation, rig.HoofBase[i], maxDegrees);
+        }
+
+        if (rig.Head != null)
+            rig.Head.localRotation = Quaternion.RotateTowards(rig.Head.localRotation, rig.HeadBase, maxDegrees);
+        if (rig.Tail != null)
+            rig.Tail.localRotation = Quaternion.RotateTowards(rig.Tail.localRotation, rig.TailBase, maxDegrees);
+        if (rig.Rider != null)
+            rig.Rider.localRotation = Quaternion.RotateTowards(rig.Rider.localRotation, rig.RiderBase, maxDegrees);
+    }
+
 }
