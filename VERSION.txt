@@ -1,39 +1,45 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30j
+Prototype version: v00.00.09f30k
 Build status: TEST
-Build name: DISMOUNTED DRAGON FIRE + HORSE HOLDERS + FORMATION ANCHOR FIX
-Visible build marker: PROJECT 1864 | v00.00.09f30j TEST
+Build name: AUTO MARCH COLUMN + RMB FACING + SPLIT DRAGON SELECTION + HIGHER HQ AI HUD
+Visible build marker: PROJECT 1864 | v00.00.09f30k TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay baseline: v00.00.09f30j
+Gameplay baseline: v00.00.09f30k
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
 
-v00.00.09f30j - Dismounted Dragon Fire + Horse Holders + Formation Anchor Fix
-- Backup before F30J: backup/channel-test-v00.00.09f30i-pre-09f30j-dismounted-dragon-fire-anchor at F30I HEAD 90aff947a147a94480deeb589e160e1a281e2d70.
-- FIX: cavalry selection/destination footprint now uses the same formation anchor convention as the rider slots.
-- Four-rank Line remains centered on the unit root.
-- Four-abreast Column and two-abreast bridge column are front-anchored and extend behind the root; selection/ghost box center is shifted backwards accordingly instead of placing half the formation outside the box.
-- Physical BoxCollider center follows the same anchor, including the F30E 1:1 collider maintenance pass.
-- Dragon SID AF creates a prototype horse-holder split: ~25% remain with the horses; ~75% form a two-rank combat line about 18m forward.
-- 25% horse-holder ratio is a QA/prototype value, not final historical balance.
-- Dismounted combat group must finish mount/dismount transition and formation movement before firing.
-- Selected dismounted Dragon receives Close/Medium/Long 35/70/100m fire cones with +/-35deg sector, matching the existing infantry visual language.
-- Dismounted Dragon automatically engages the nearest valid Prussian Regiment inside the cone while HOLD.
-- Prototype carbine reload = 7.0s and ammunition = 20 rounds/man for TEST; both are temporary balance values.
-- Firing produces directional black-powder smoke and applies casualties/shock through Regiment.ReceiveVolley.
-- Cavalry HUD shows dismounted carbine AUTO status, ammo per man and current target.
-- STIG OP animation now also moves dismounted figures back toward horse-side remount positions instead of only scaling them out.
-- F30I mounted gait, 4-rank Line/Charge, 4-abreast Column, 2-abreast bridge, AI default OFF/MANUEL, order path and destination ghost remain.
+v00.00.09f30k - Auto March Column + RMB Facing + Split Dragon Selection + Higher HQ AI HUD
+- Backup before F30K: backup/channel-test-v00.00.09f30j-pre-09f30k-auto-march-column at F30J HEAD 6fe686f6650a9be10de4bd568868fe60602f8e17.
+- FIX: manual cavalry movement again has automatic march formation policy even when Officer AI is OFF.
+- Long mounted MOVE enters 4-abreast Column at >=140m remaining when no valid enemy is inside Long range.
+- Automatic march deploys back to 4-rank Line at <=90m remaining or immediately when a valid enemy comes inside current 100m Long range.
+- 140/90m hysteresis prevents Line/Column oscillation around one threshold.
+- Bridge routing remains higher priority and still forces 2-abreast bridge/defile column.
+- Manual formation buttons now create an explicit formation override; automatic march policy does not silently replace a formation the player deliberately selected.
+- HOLD clears the manual formation override; enabling Officer AI also returns formation policy to delegated control.
+- RMB input now matches infantry semantics: right mouse down sets destination, hold+drag sets explicit final facing, release commits MOVE + facing.
+- Cavalry turns to the explicit final facing at the destination before completing the move order.
+- Destination ghost uses the explicit dragged facing, not only travel direction.
+- A dismounted Dragon no longer uses one giant selection rectangle covering the empty space between horses and combat line.
+- Dismounted selection is split into combat-line box + smaller horse-holder box + thin connecting line.
+- SID AF remains ~2.25s; STIG OP/remount is doubled to ~4.5s.
+- Brigade and Division HUD now expose AI ON/OFF plus DEF/BAL/OFF doctrine controls in the same command language as Regiment/Battalion.
+- Brigade/Division AI defaults OFF. The toggle is a real command-authority state: attached cavalry Officer AI waits when its current parent HQ AI is OFF.
+- Cavalry attached to Regiment likewise requires Regimental AI ON; cavalry attached to Major A/B continues to obey the corresponding Battalion AI.
+- Higher-HQ orders pass the selected Brigade/Division doctrine into the Regimental execution pipeline and mark delegation autonomous when higher AI is ON.
+- OOB AI column now shows ON/OFF for Brigade and Division.
 
-Primary F30J QA
-1. Overlay reads PROJECT 1864 | v00.00.09f30j TEST and Unity compiles with no red errors.
-2. In mounted Column/bridge state, yellow selection box begins at the formation front anchor and contains the whole column rather than centering half ahead of it.
-3. Destination ghost box uses the same anchor convention as the planned final formation.
-4. Collider click/contact area aligns with the yellow footprint after Line/Column/bridge changes.
-5. Dragon SID AF: horse holders stay near the horses while the combat group visibly moves ~18m forward into a two-rank firing line.
-6. Fire cones remain hidden until Dragon is fully dismounted/reformed; selected dismounted Dragon then shows 35/70/100m cones.
-7. Dragon only fires while HOLD, with a valid Prussian target inside +/-35deg and <=100m.
-8. Fire creates smoke, consumes ammunition and damages/shocks the Regiment target.
-9. STIG OP visibly recalls foot figures toward the horses before they disappear/remount.
-10. Gardehusar mounted behavior and all F30I OOB/HUD/AI/bridge features remain functional.
+Primary F30K QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30k TEST and Unity compiles with no red errors.
+2. With cavalry AI OFF, right-click MOVE >140m away automatically changes mounted cavalry from 4-rank Line to 4-abreast Column.
+3. At <=90m from destination it reforms to 4-rank Line; entering enemy Long range also forces Line.
+4. Bridge route still uses 2-abreast regardless of long-march policy.
+5. Hold RMB on destination and drag: destination ghost rotates to the dragged facing; cavalry ends facing that direction.
+6. Simple RMB click without drag behaves as normal move/charge.
+7. Dismounted Dragon selection shows two useful boxes (combat group + horse-holder group), not one large empty rectangle.
+8. SID AF duration remains ~2.25s; STIG OP takes ~4.5s.
+9. Brigade and Division HUD show AI ON/OFF and DEF/BAL/OFF controls.
+10. Higher-HQ AI toggles remain stable and OOB AI column reflects their state.
+11. Cavalry attached to an AI-OFF Brigade/Division/Regiment/Major waits rather than autonomously executing Officer AI.
+12. F30J dismounted Dragon cone/fire, F30I order visuals and F30H 4-rank doctrine remain functional.

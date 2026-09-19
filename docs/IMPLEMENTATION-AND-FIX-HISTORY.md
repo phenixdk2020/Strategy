@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30j TEST**  
-**Gameplay-baseline: v00.00.09f30j**  
+**Konsolideret ved v00.00.09f30k TEST**  
+**Gameplay-baseline: v00.00.09f30k**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30J. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30K. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -407,9 +407,21 @@ Fejlrettelser/hardening:
 - BoxCollider og F30E collider maintenance følger samme anchor.
 - F30I remount animation fik faktisk positional recall i stedet for kun scale-out.
 
+### v00.00.09f30k — Auto March Column + RMB Facing + Split Dragon Selection + Higher HQ AI HUD
+- Manual cavalry MOVE får shared long-march formation policy: >=140m Column, <=90m Line, enemy inside Long -> Line.
+- Manual formation override beskytter bevidst spillerformation mod auto-policy.
+- RMB hold+drag sætter destination + explicit final facing ligesom infantry.
+- Destination ghost og arrival-facing bruger explicit facing.
+- Dismounted Dragon selection split i combat box + horse-holder box + link.
+- STIG OP/remount forlænget fra 2.25s til 4.5s.
+- Brigade/Division HUD får AI ON/OFF og DEF/BAL/OFF.
+- Higher AI state bruges til real delegated-authority gating for attached cavalry.
+- Higher doctrine føres ind i Regimental execution pipeline.
+- OOB viser Brigade/Division AI ON/OFF.
+
 ## 7. Samlet fejlrettelsesregister
 
-De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30J:
+De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30K:
 
 1. Unity compile CS0136 local-variable collision.
 2. Deprecated/obsolete object lookup cleanup.
@@ -474,10 +486,16 @@ De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/harden
 61. Dragon SID AF manglede horse-holder/combat-group separation og reel firing line foran hestene.
 62. Dismounted Dragon havde ingen fire cone, ammunition, reload, target fire eller smoke.
 63. F30I STIG OP skalerede foot figures ud, men kaldte dem ikke fysisk tilbage mod hestene.
+64. Manual cavalry MOVE gik ikke automatisk i Column, fordi formation policy kun fandtes i Officer AI.
+65. Cavalry manglede infantry-lignende RMB hold+drag final-facing control.
+66. Dismounted Dragon selection brugte én stor box med meget tom plads mellem horses og combat line.
+67. Remount-transition var for hurtig til at læse tydeligt.
+68. Brigade/Division HUD manglede AI ON/OFF og doctrine controls.
+69. Attached cavalry kunne ignorere AI-OFF på Brigade/Division/Regiment parent.
 
-## 8. Status ved F30J
+## 8. Status ved F30K
 
-F30J er aktiv TEST-baseline. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
+F30K er aktiv TEST-baseline. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
 
 Aktuel implementeret tactical scope:
 - 1:1 infantry og cavalry tactical visuals.

@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30j TEST  
+**Prototypebaseline:** v00.00.09f30k TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -687,6 +687,37 @@ Når Dragon får SID AF:
 
 ---
 
+## 35H. Cavalry automatic march policy og facing
+
+- Mounted cavalry MOVE må bruge automatic march formation uanset Officer AI ON/OFF.
+- Lang march med mindst ca. 140m remaining og ingen fjende inside Long -> 4-abreast Column.
+- Ved ca. 90m remaining -> 4-rank Line.
+- Enemy inside Long -> Line.
+- Bridge route -> 2-abreast og har højere prioritet.
+- 140/90 hysterese skal forhindre formation-flip omkring én tærskel.
+- En eksplicit manual formation selection må ikke straks overskrives af auto-policy.
+- Cavalry RMB hold+drag bruger samme destination/facing-semantik som infantry.
+- Explicit destination-facing skal også styre destination ghost og endelig facing.
+
+## 35I. Higher-HQ AI authority
+
+- Brigade og Division har selvstændig AI ON/OFF state og DEF/BAL/OFF doctrine.
+- AI starter OFF.
+- Higher-HQ AI-toggle må ikke kun være kosmetisk.
+- Attached cavalry Officer AI kræver AI ON hos dens aktuelle command parent.
+- Regiment-attachment kræver Regimental AI ON.
+- Major A/B attachment kræver tilsvarende Battalion AI ON.
+- Higher-HQ doctrine føres ind i subordinate mission decomposition, når higher HQ udsteder mission.
+
+## 35J. Dismounted Dragon selection/remount presentation
+
+- Dismounted Dragon må ikke markeres med én stor tom rectangle mellem horse group og firing line.
+- Selection vises som separate combat-group og horse-holder footprints med relation/link mellem dem.
+- SID AF prototype transition er ca. 2.25s.
+- STIG OP/remount prototype transition er ca. 4.5s.
+
+---
+
 # DEL I — TESTUND-TAGELSER OG FREMTIDIGE REGLER
 
 ## 36. Midlertidige QA-regler
@@ -737,6 +768,14 @@ Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgen
 ---
 
 ## 39. Versionslog for dette regelsæt
+
+### v00.00.09f30k
+
+- Shared cavalry auto-march policy: 140m Column / 90m Line hysterese + enemy-inside-Long Line.
+- RMB hold+drag final-facing gjort fælles med infantry control language.
+- Dismounted Dragon selection split i combat/horse footprints.
+- Remount forlænget til ca. 4.5s.
+- Brigade/Division AI ON/OFF + doctrine gjort kanonisk og parent-AI gating indført.
 
 ### v00.00.09f30j
 
