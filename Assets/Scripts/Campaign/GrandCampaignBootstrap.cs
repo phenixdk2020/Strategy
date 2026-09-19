@@ -326,6 +326,14 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
                 {
                     selectedCity = city;
                     selectedZone = zones[city.ZoneId];
+                    CampaignHudStateV010N2.ShowSelectionPanel("CITY_CLICK");
+                    Debug.Log(
+                        CampaignBuildInfo.LogTag +
+                        "|CitySelected=True|City=" + city.Id +
+                        "|Name=" + city.Name +
+                        "|Tier=" + city.Def.Tier +
+                        "|Population1850=" + city.Def.Population1850 +
+                        "|Zone=" + city.ZoneId);
                     return;
                 }
 
