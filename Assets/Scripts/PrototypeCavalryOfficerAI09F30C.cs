@@ -93,6 +93,12 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             if (state == null || state.Unit == null)
                 continue;
 
+            if (state.Unit.CurrentStrength <= 0)
+            {
+                state.Phase = "KAMPUDE";
+                continue;
+            }
+
             if (state.HasHigherMission)
             {
                 ExecuteHigherMission(state);
