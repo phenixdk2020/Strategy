@@ -44,6 +44,10 @@ public sealed class CampaignMapOnlyCityArtV010N7C : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
+        if (CampaignBuildInfo.CurrentVersion != "v00.00.10n7c" &&
+            CampaignBuildInfo.CurrentVersion != "v00.00.10n7d")
+            return;
+
         if (Object.FindAnyObjectByType<CampaignMapOnlyCityArtV010N7C>() != null)
             return;
 
