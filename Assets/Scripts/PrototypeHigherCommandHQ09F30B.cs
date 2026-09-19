@@ -59,6 +59,10 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     private Vector3 brigadeObjective;
     private Vector3 divisionObjective;
 
+    private bool temporaryAttackAttachmentsActive;
+    private string gardeReturnParent = string.Empty;
+    private string dragonReturnParent = string.Empty;
+
     private LineRenderer divisionBrigadeLink;
     private LineRenderer brigadeRegimentLink;
     private LineRenderer cavalryLinkA;
@@ -120,6 +124,7 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
         UpdateHqFollow();
         UpdateCommandLinks();
+        UpdateTemporaryAttackAttachments();
         HandlePendingOrderInput();
         HandleWorldSelection();
     }
@@ -385,6 +390,9 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         if (regimental == null || !regimental.Installed)
             return;
 
+        if (temporaryAttackAttachmentsActive && order != MajorOrder09F18.AttackHere)
+            ReleaseTemporaryAttackAttachments("MISSION_CHANGED");
+
         if (level == PrototypeHigherCommandLevel09F30B.Division)
         {
             divisionMission = order;
@@ -407,11 +415,180 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
         bool autonomous = GetAIEnabled(level);
         regimental.IssueRegimentalOrder(order, point, autonomous);
+
+        if (order == MajorOrder09F18.AttackHere)
+            BeginTemporaryAttackAttachments(level);
+
         IssueAttachedCavalryMission(level, order, point, autonomous);
 
         Debug.Log("HQ-09F30M|MissionCommitted=True|Level=" + level + "|Order=" + order +
                   "|DelegatedTo=REGIMENT+CAVALRY|Objective=" +
                   point.x.ToString("0.0") + "," + point.z.ToString("0.0"));
+    }
+
+    private void BeginTemporaryAttackAttachments(PrototypeHigherCommandLevel09F30B level)
+    {
+        if (cavalry == null || hierarchy == null || hierarchy.BattalionCount < 2)
+            return;
+
+        PrototypeCavalryUnit09F30 garde = cavalry.Gardehusar;
+        PrototypeCavalryUnit09F30 dragon = cavalry.Dragon;
+        if (garde == null && dragon == null)
+            return;
+
+        if (!temporaryAttackAttachmentsActive)
+        {
+            gardeReturnParent = garde != null ? GetCavalryCommandParent(garde) : string.Empty;
+            dragonReturnParent = dragon != null ? GetCavalryCommandParent(dragon) : string.Empty;
+        }
+
+        Vector3 a = hierarchy.GetBattalionCenter(0);
+        Vector3 b = hierarchy.GetBattalionCenter(1);
+
+        if (garde != null && dragon != null &&
+            IsCavalrySubordinateToLevel(garde, level) &&
+            IsCavalrySubordinateToLevel(dragon, level))
+        {
+            float normal = PlanarDistance(garde.transform.position, a) +
+                           PlanarDistance(dragon.transform.position, b);
+            float swapped = PlanarDistance(garde.transform.position, b) +
+                            PlanarDistance(dragon.transform.position, a);
+
+            if (normal <= swapped)
+            {
+                SetTemporaryCavalryParent(garde, PrototypeCavalryCommandControl09F30C.MajorAId);
+                SetTemporaryCavalryParent(dragon, PrototypeCavalryCommandControl09F30C.MajorBId);
+            }
+            else
+            {
+                SetTemporaryCavalryParent(garde, PrototypeCavalryCommandControl09F30C.MajorBId);
+                SetTemporaryCavalryParent(dragon, PrototypeCavalryCommandControl09F30C.MajorAId);
+            }
+        }
+        else
+        {
+            if (garde != null && IsCavalrySubordinateToLevel(garde, level))
+                SetTemporaryCavalryParent(garde,
+                    PlanarDistance(garde.transform.position, a) <= PlanarDistance(garde.transform.position, b)
+                        ? PrototypeCavalryCommandControl09F30C.MajorAId
+                        : PrototypeCavalryCommandControl09F30C.MajorBId);
+
+            if (dragon != null && IsCavalrySubordinateToLevel(dragon, level))
+                SetTemporaryCavalryParent(dragon,
+                    PlanarDistance(dragon.transform.position, a) <= PlanarDistance(dragon.transform.position, b)
+                        ? PrototypeCavalryCommandControl09F30C.MajorAId
+                        : PrototypeCavalryCommandControl09F30C.MajorBId);
+        }
+
+        temporaryAttackAttachmentsActive = true;
+        Debug.Log("HQ-CAV-ATTACH-09F30M|AttackTask=True|GardeParent=" +
+                  (garde != null ? GetCavalryCommandParent(garde) : "—") +
+                  "|DragonParent=" + (dragon != null ? GetCavalryCommandParent(dragon) : "—") +
+                  "|ReturnGarde=" + gardeReturnParent + "|ReturnDragon=" + dragonReturnParent);
+    }
+
+    private static void SetTemporaryCavalryParent(PrototypeCavalryUnit09F30 unit, string parent)
+    {
+        if (unit == null)
+            return;
+
+        PrototypeCommandAttachment09F30B attachment =
+            unit.GetComponent<PrototypeCommandAttachment09F30B>();
+        if (attachment != null)
+            attachment.SetCurrentCommandParent(parent, PrototypeAttachmentType09F30B.Attached);
+    }
+
+    private void UpdateTemporaryAttackAttachments()
+    {
+        if (!temporaryAttackAttachmentsActive || regimental == null)
+            return;
+
+        if (regimental.HasActiveMissionExecutors(MajorOrder09F18.AttackHere))
+            return;
+
+        if (IsCavalryInCommittedCharge(cavalry != null ? cavalry.Gardehusar : null) ||
+            IsCavalryInCommittedCharge(cavalry != null ? cavalry.Dragon : null))
+            return;
+
+        ReleaseTemporaryAttackAttachments("ATTACK_COMPLETE");
+    }
+
+    private static bool IsCavalryInCommittedCharge(PrototypeCavalryUnit09F30 unit)
+    {
+        return unit != null && unit.Action == PrototypeCavalryAction09F30.Charge;
+    }
+
+    private void ReleaseTemporaryAttackAttachments(string reason)
+    {
+        if (!temporaryAttackAttachmentsActive || cavalry == null)
+            return;
+
+        ReleaseCavalryToReserve(cavalry.Gardehusar, gardeReturnParent, -1);
+        ReleaseCavalryToReserve(cavalry.Dragon, dragonReturnParent, 1);
+
+        temporaryAttackAttachmentsActive = false;
+        gardeReturnParent = string.Empty;
+        dragonReturnParent = string.Empty;
+
+        Debug.Log("HQ-CAV-ATTACH-09F30M|AttackTask=False|Reason=" + reason +
+                  "|Result=RETURN_TO_PARENT_RESERVE");
+    }
+
+    private void ReleaseCavalryToReserve(
+        PrototypeCavalryUnit09F30 unit,
+        string returnParent,
+        int side)
+    {
+        if (unit == null)
+            return;
+
+        if (string.IsNullOrEmpty(returnParent))
+            returnParent = BrigadeId;
+
+        PrototypeCommandAttachment09F30B attachment =
+            unit.GetComponent<PrototypeCommandAttachment09F30B>();
+        if (attachment != null)
+            attachment.SetCurrentCommandParent(returnParent, PrototypeAttachmentType09F30B.Reserve);
+
+        Transform parentHq = ResolveCommandParentTransform(returnParent);
+        Vector3 center = parentHq != null
+            ? parentHq.position
+            : (BrigadeHqRoot != null ? BrigadeHqRoot.transform.position : unit.transform.position);
+
+        Vector3 forward = parentHq != null ? Flat(parentHq.forward) : Vector3.forward;
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
+        forward.Normalize();
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+
+        Vector3 reserveGoal = Ground(center - forward * 55f + right * (side * 45f));
+        PrototypeCavalryOfficerAI09F30C cavAi = PrototypeCavalryOfficerAI09F30C.Instance;
+        if (cavAi != null)
+            cavAi.SetHigherMission(
+                unit,
+                MajorOrder09F18.AssembleHere,
+                reserveGoal,
+                forward,
+                false);
+        else
+            unit.OrderMove(reserveGoal, forward, true);
+    }
+
+    private Transform ResolveCommandParentTransform(string parent)
+    {
+        if (parent == DivisionId && DivisionHqRoot != null)
+            return DivisionHqRoot.transform;
+        if (parent == BrigadeId && BrigadeHqRoot != null)
+            return BrigadeHqRoot.transform;
+        if (parent == RegimentId && regimental != null && regimental.HqRoot != null)
+            return regimental.HqRoot.transform;
+        if (parent == PrototypeCavalryCommandControl09F30C.MajorAId &&
+            hierarchy != null && hierarchy.GetMajorHq(0) != null)
+            return hierarchy.GetMajorHq(0).transform;
+        if (parent == PrototypeCavalryCommandControl09F30C.MajorBId &&
+            hierarchy != null && hierarchy.GetMajorHq(1) != null)
+            return hierarchy.GetMajorHq(1).transform;
+        return BrigadeHqRoot != null ? BrigadeHqRoot.transform : null;
     }
 
     private void IssueAttachedCavalryMission(
@@ -1046,6 +1223,13 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         texture.SetPixel(0, 0, color);
         texture.Apply(false, true);
         return texture;
+    }
+
+    private static float PlanarDistance(Vector3 a, Vector3 b)
+    {
+        a.y = 0f;
+        b.y = 0f;
+        return Vector3.Distance(a, b);
     }
 
     private static Vector3 Flat(Vector3 v)

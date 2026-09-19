@@ -773,7 +773,7 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
                 CompanyMission mission = pair.Value;
                 if (unit == null || mission == null || unit.IsRouted || unit.CurrentStrength <= 0)
                     continue;
-                if (mission.Order == order)
+                if (mission.Order == order && !mission.Arrived)
                     return true;
             }
         }
