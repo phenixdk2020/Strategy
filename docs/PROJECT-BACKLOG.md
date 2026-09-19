@@ -12,19 +12,19 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 - **IDÉ** — relevant mulighed, som skal undersøges eller besluttes før den bliver bindende design.
 - **RESEARCH** — historiske detaljer skal verificeres før endelige værdier/organisation låses.
 
-## Aktiv Campaign gate — v00.00.10n7b
+## Aktiv Campaign gate — v00.00.10n7c
 
-**Vej 1 er valgt som aktiv campaign-retning.** City-art stabiliseres før Amt/county-systemet genindføres.
+**Vej 1 fortsætter.** n7b viste en konkret Unity-importfejl (`A=False/B=False/C=True`). n7c erstatter derfor Resources-importen med indlejrede, validerede Proposal-3 assets og rydder gammel city-art før installation. Amt/county forbliver OFF.
 
 | ID | Status | Emne | Exit-kriterium |
 | --- | --- | --- | --- |
-| C-701 | AKTIV | Proposal-3 city art som eneste stil | Alle 68 byer viser samme Proposal-3 visual language; ingen beige/generated fallback. |
-| C-702 | AKTIV | City scale polish | A=1.55, B=1.12, C=0.78 giver læsbare men ikke dominerende icons. |
-| C-703 | AKTIV | City sharpness | Bilinear + Clamp + mip bias -0.75 giver tydeligere art uden uacceptabel shimmer. |
-| C-704 | AKTIV | Coastal city anchoring | Canonical marker + bottom-center billboard; ingen X/Z-offset og ingen oplevet city-placement ude i åbent vand. |
-| C-705 | AKTIV | Legacy city cleanup | n7a/n6/n6g/n6h renderers, round markers og TownGround forbliver skjult. |
-| C-706 | BESLUTTET | County/Amt pause | Amt boundaries, selection, highlight og info forbliver OFF indtil city-art QA er accepteret. |
-| C-707 | PLANLAGT | County Rebuild | Én authoritative historical polygon source skal senere drive line, click ownership og selected-area highlight. |
+| C-711 | AKTIV | Embedded Proposal-3 A/B/C | Alle tre tiers decodes fra indlejrede, validerede PNG-data; ingen Resources dependency. |
+| C-712 | AKTIV | 68/68 city art | `CityArtN7C=True|Cities=68` og A/B/C rapporterer 128x128. |
+| C-713 | AKTIV | City scale reset | A=0.95, B=0.72, C=0.52 giver tydelige, men geografisk underordnede city symbols. |
+| C-714 | AKTIV | Legacy visual purge | Alle ældre `CITY_ART_`, `CITY_ICON_`, `TownGround` og round markers er væk før n7c installeres. |
+| C-715 | AKTIV | Coastal anchoring | Canonical marker + bottom-center billboard + ground lift 0.12; ingen X/Z art offset. |
+| C-716 | BESLUTTET | County/Amt pause | Amt boundaries, click, highlight og info forbliver OFF til city-art QA er accepteret. |
+| C-717 | PLANLAGT | County Rebuild | Én authoritative historical polygon source skal drive visible line, click ownership og selection highlight. |
 
 ## Aktiv gate — P0A v00.00.08
 
