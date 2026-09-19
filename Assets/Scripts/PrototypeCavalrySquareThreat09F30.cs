@@ -3,14 +3,12 @@ using UnityEngine;
 // v00.00.09f30, threat behaviour hardened in F30N.
 // Bridges the existing F29 mounted-threat Square logic to the new F30 cavalry units.
 // F30N also lets AI infantry assess nearby screening/maneuvering cavalry before contact;
-// F29's public API was originally Denmark-only because no real enemy cavalry existed yet.
-// This layer keeps that API for Danish infantry and mirrors the same score for Prussian
-// TEST infantry so Danish cavalry can exercise automatic Square response too.
+// F29's mounted-threat API is team-neutral from F30N, so this bridge only identifies
+// the relevant threatened infantry unit and feeds the shared Square state machine.
 [DefaultExecutionOrder(35950)]
 public sealed class PrototypeCavalrySquareThreat09F30 : MonoBehaviour
 {
     private const float MaxThreatDistance = 220f;
-    private const float AutoSquareThreshold = 62f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
