@@ -37,7 +37,7 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     public const string RegimentId = "1. REGIMENT";
 
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
-    private const float HudHeight = 90f;
+    private const float HudHeight = 96f;
     private const float BrigadeFollowDistance = 125f;
     private const float DivisionFollowDistance = 190f;
     private const float BrigadeMoveSpeed = 6.0f;
