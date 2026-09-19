@@ -733,7 +733,8 @@ Når Dragon får SID AF:
 
 - Division AI ON propagates delegated authority til Brigade, Regiment, Major A/B, company Officer AI og attached cavalry.
 - Brigade AI ON propagates fra Brigade og ned uden at ændre Division.
-- Direkte spillerordre har højere authority end inherited higher mission.
+- Direkte spillerordre har højere authority end inherited higher mission; RMB skal bryde inherited cavalry-mission også når cavalry Officer AI allerede står OFF.
+- Kun cavalry-enheder der faktisk er midlertidigt task-attached må blive auto-released/returneret af attack-completion-logikken.
 - Higher-HQ selection skal vise subordinate routes, destination footprints og mission objective.
 - Higher order-knappen er blå mens missionen er pending eller mindst én subordinate stadig udfører den.
 - En arrived company mission tæller ikke som aktiv execution.
