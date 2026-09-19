@@ -21,7 +21,7 @@ v00.00.09f30n - Regiment HUD Parity + Cavalry Screen/Opportunity AI + Anti-Caval
 - Detour waypoints are intermediate only; CAV resumes toward its intended screen/flank point after clearing the obstacle.
 - Higher-HQ attack staging also uses enemy-bubble avoidance.
 - Prussian infantry can now acquire Danish cavalry inside its active fire-policy range and fire normal musket volleys using the existing reload, range, accuracy, smoke and cohesion pipeline.
-- Infantry volleys now apply casualties, morale/cohesion shock and possible FALTER response to cavalry.
+- Infantry volleys now apply casualties, morale/cohesion shock and possible FALTER response to cavalry; 1:1 mounted/dismounted CAV visuals hide casualties with CurrentStrength.
 - Infantry mounted-threat / Square assessment is now team-neutral.
 - Screening/maneuvering cavalry is assessed as a lower threat; a committed charge receives the higher Square threat score.
 - Existing automatic Square state refreshes while the mounted threat remains nearby instead of expiring after the old timeout while cavalry is still present.
