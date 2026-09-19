@@ -12,18 +12,18 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 - **IDÉ** — relevant mulighed, som skal undersøges eller besluttes før den bliver bindende design.
 - **RESEARCH** — historiske detaljer skal verificeres før endelige værdier/organisation låses.
 
-## Aktiv Campaign gate — v00.00.10n7d
+## Aktiv Campaign gate — v00.00.10n7e
 
-**Vej 1 fortsætter.** n7d er et stabiliseringshotfix oven på n7c og ændrer ikke city-art scale/style eller county scope.
+**Vej 1 fortsætter.** n7e ændrer kun det visuelle footprint for tre kystnære city-icons. Canonical WGS84 og click anchors forbliver uændret.
 
 | ID | Status | Emne | Exit-kriterium |
 | --- | --- | --- | --- |
-| C-721 | AKTIV | Legacy city startup cleanup | n7a/n7b auto-create kun i egen buildversion; ingen stale n7b Proposal3TextureMissing-log i n7d. |
-| C-722 | AKTIV | City click → INFO | Direkte venstreklik på en by åbner INFO-panelet automatisk. |
-| C-723 | AKTIV | City info content | Panelet viser korrekt navn, tier, population 1850, ZoneId og heavy-military build rule. |
-| C-724 | BESLUTTET | Canonical city anchors | CITY-REG-01 WGS84 forbliver authoritative; grov Natural Earth 1:50m må ikke flytte city anchors. |
-| C-725 | PLANLAGT | High-resolution land/coast QA | Senere landmask/shoreline kan bruges til automatisk visual footprint QA for kystbyer. |
-| C-726 | BESLUTTET | County/Amt pause | County boundaries/click/highlight/info forbliver OFF til city-art QA er accepteret. |
+| C-731 | AKTIV | Sæby visual offset | Artwork + label flyttes (-0.18, 0, -0.02) og opleves tydeligt på land. |
+| C-732 | AKTIV | Helsingør visual offset | Artwork + label flyttes (-0.22, 0, -0.08) ind mod Sjælland. |
+| C-733 | AKTIV | Nykøbing Sj. visual offset | Artwork + label flyttes (0, 0, -0.13) lidt syd for kysten. |
+| C-734 | AKTIV | Click preservation | Collider/selection for de tre byer forbliver på canonical city marker og åbner korrekt INFO. |
+| C-735 | BESLUTTET | Canonical geography unchanged | CITY-REG-01 WGS84/ZoneId/save identity må ikke ændres af visual offsets. |
+| C-736 | BESLUTTET | County/Amt pause | Amt boundaries, click, highlight og info forbliver OFF til city-art QA er accepteret. |
 
 ## Aktiv gate — P0A v00.00.08
 
