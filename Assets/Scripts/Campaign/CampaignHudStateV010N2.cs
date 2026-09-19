@@ -101,6 +101,16 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
         LogState("F2/INFO");
     }
 
+
+    public static void ShowSelectionPanel(string source = "CITY_CLICK")
+    {
+        EnsureLoaded();
+        hudVisible = true;
+        selectionPanel = true;
+        Save();
+        LogState(source);
+    }
+
     public static void ToggleDebugPanels()
     {
         EnsureLoaded();
