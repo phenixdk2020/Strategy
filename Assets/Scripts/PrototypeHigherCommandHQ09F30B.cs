@@ -1100,7 +1100,7 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         MajorOrder09F18 missionOrder = division ? divisionMission : brigadeMission;
         string mission = missionOrder == MajorOrder09F18.None
             ? "Ingen aktiv ordre"
-            : Label(missionOrder);
+            : HigherOrderLabel(missionOrder);
         int strength = AggregateHigherStrength(SelectedLevel);
 
         string regAi = regimental != null && regimental.AIEnabled ? "ON" : "OFF";
@@ -1150,13 +1150,27 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
         if (pendingOrder != MajorOrder09F18.None && pendingLevel == SelectedLevel)
             GUI.Label(new Rect(commandX, rowY + 31f, commandWidth, 15f),
-                "Klik på slagmarken: " + Label(pendingOrder), mutedStyle);
+                "Klik på slagmarken: " + HigherOrderLabel(pendingOrder), mutedStyle);
 
         Event current = Event.current;
         if (current != null && panel.Contains(current.mousePosition) &&
             (current.type == EventType.MouseDown || current.type == EventType.MouseUp ||
              current.type == EventType.MouseDrag || current.type == EventType.ScrollWheel))
             current.Use();
+    }
+
+    private static string HigherOrderLabel(MajorOrder09F18 order)
+    {
+        switch (order)
+        {
+            case MajorOrder09F18.AttackHere: return "ANGRIB HER";
+            case MajorOrder09F18.DefendHere: return "FORSVAR HER";
+            case MajorOrder09F18.AdvanceHere: return "RYK FREM";
+            case MajorOrder09F18.WithdrawHere: return "TILBAGETRÆK";
+            case MajorOrder09F18.AssembleHere: return "SAML";
+            case MajorOrder09F18.HoldPosition: return "HOLD";
+            default: return order.ToString().ToUpperInvariant();
+        }
     }
 
     private int AggregateHigherStrength(PrototypeHigherCommandLevel09F30B level)
