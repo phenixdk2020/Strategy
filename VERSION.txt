@@ -1,51 +1,61 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n7b
-Build status: WAY 1 / CITY ART POLISH
-Build name: CAMPAIGN3 WAY 1 CITY ART POLISH 10N7B
+Prototype version: v00.00.10n7c
+Build status: WAY 1 / EMBEDDED CITY ASSET RESET
+Build name: CAMPAIGN3 EMBEDDED CITY ASSET RESET 10N7C
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n7b-city-art-polish
+Work branch: work/channel-campaign3-v10n7c-embedded-city-art
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.28
+Design baseline: v00.02.29
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
 - v00.00.10n6h = city-art visibility + source-polygon Amt continuity experiment
 - v00.00.10n7a = deliberate scope reset: map only + one Proposal-3 city renderer
-- v00.00.10n7b = WAY 1 city-art polish: counties stay OFF; only city art is changed
+- v00.00.10n7b = WAY 1 city-art polish, but Unity reported Resources import failure A=False / B=False / C=True
+- v00.00.10n7c = embedded validated Proposal-3 assets; no Resources dependency
 
 ROLLBACK:
+- before v10n7c: backup/channel-campaign3-before-v10n7c-embedded-city-art-20260919
 - before v10n7b: backup/channel-campaign3-before-v10n7b-city-art-polish-20260918
 - before v10n7a: backup/channel-campaign3-before-v10n7a-map-only-city-cleanup-20260917
 
-V10N7B WAY 1:
-- Amt/county boundaries stay deliberately disabled.
-- Amt/county click selection and Amt info panels stay deliberately disabled.
-- No county geometry tuning is performed in this build.
+V10N7C WAY 1:
+- Amt/county boundaries remain deliberately disabled.
+- Amt/county click selection and Amt info panels remain deliberately disabled.
+- No county geometry work is performed in this build.
 - World Imagery, streamed terrain, city registry, city labels and retained campaign systems remain active.
 - City art must be accepted before county borders are rebuilt.
 
-V10N7B CITY ART:
-- CampaignMapOnlyCityArtV010N7B supersedes n7a at runtime.
-- n7a plus all n6/n6g/n6h city renderers are disabled continuously.
-- Proposal 3 - Isometric Miniature Town remains the only permitted visual language.
-- No beige/generated fallback settlement is rendered.
-- Missing Proposal-3 textures log an explicit blocking city-art error.
-- Bottom-center anchored billboard mesh; no X/Z offset from the canonical city marker.
-- Ground lift reduced to 0.16 world units.
-- Base scale reduced to A=1.55, B=1.12, C=0.78.
-- Texture sampling uses Bilinear + Clamp + mipMapBias=-0.75 for a crisper result at campaign zoom.
-- Click collider remains larger than the visible art for usability.
-- Old round city marker renderers remain hidden and TownGround is not generated.
+V10N7C ROOT CAUSE / ASSET RESET:
+- n7b runtime log proved Resources import was not reliable: Proposal3TextureMissing|A=False|B=False|C=True.
+- n7c no longer loads city art with Resources.Load<Texture2D>.
+- Three validated Proposal-3 PNGs are embedded directly as runtime data and decoded with ImageConversion.LoadImage.
+- Embedded source art is 128x128 per tier and is generated from the approved Proposal-3 visual direction.
+- The obsolete Resources PNGs are removed from this build branch.
+- The runtime proactively purges every older CITY_ART_, CITY_ICON_ and TownGround child before installing n7c art.
+- Missing embedded data is a blocking error; no alternative visual style is used.
 
-V10N7B RUNTIME OWNERSHIP:
+V10N7C CITY ART:
+- CampaignMapOnlyCityArtV010N7C supersedes n7b/n7a and all older city renderers.
+- Proposal 3 - Isometric Miniature Town is the only permitted visual language.
+- No beige/generated fallback settlement is rendered.
+- Bottom-center anchored billboard mesh; no X/Z offset from canonical city marker.
+- Ground lift: 0.12 world units.
+- Base scale: A=0.95, B=0.72, C=0.52.
+- Texture sampling: Bilinear + Clamp, no mip chain in runtime-decoded textures.
+- Click collider remains larger than visible art for usability.
+- Old round marker renderers stay hidden.
+
+V10N7C RUNTIME OWNERSHIP:
+- Disabled: CampaignMapOnlyCityArtV010N7B.
 - Disabled: CampaignMapOnlyCityArtV010N7A.
 - Disabled: CampaignHistoricalAmtPolygonsV010N6G.
 - Disabled: CampaignHistoricalAmtOverlayV010N6F.
 - Disabled: CampaignAmtBoundaryContinuityV010N6H.
 - Disabled: n6g/n6f/n3 Amt info panels.
 - Disabled: CampaignCityArtV010N6H / V010N6G / CampaignCityIconV010N6.
-- Removed visual roots include n6g/n6h/n6f/n5 Amt-line roots.
+- Removed Amt visual roots include n6g/n6h/n6f/n5 experiments.
 
 RETAINED SYSTEMS:
 - 20 ZONE-REG-01 zone IDs / 68 CITY-REG-01 cities / 290565 urban population checksum.
@@ -55,34 +65,49 @@ RETAINED SYSTEMS:
 - Tactical withdrawal systems.
 - QA army at Vejle remains removed.
 
-FILES ADDED/CHANGED IN V10N7B:
-- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7B.cs
-- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7B.cs.meta
+FILES ADDED/CHANGED IN V10N7C:
+- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7C.cs
+- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7C.cs.meta
+- Assets/Scripts/Campaign/CampaignCityArtEmbeddedDataA_V010N7C.cs
+- Assets/Scripts/Campaign/CampaignCityArtEmbeddedDataA_V010N7C.cs.meta
+- Assets/Scripts/Campaign/CampaignCityArtEmbeddedDataB_V010N7C.cs
+- Assets/Scripts/Campaign/CampaignCityArtEmbeddedDataB_V010N7C.cs.meta
+- Assets/Scripts/Campaign/CampaignCityArtEmbeddedDataC_V010N7C.cs
+- Assets/Scripts/Campaign/CampaignCityArtEmbeddedDataC_V010N7C.cs.meta
 - Assets/Scripts/Campaign/CampaignBuildInfo.cs
+- Assets/Resources/Campaign/CityIcons/City_A_Proposal3.png REMOVED
+- Assets/Resources/Campaign/CityIcons/City_B_Proposal3.png REMOVED
+- Assets/Resources/Campaign/CityIcons/City_C_Proposal3.png REMOVED
 - VERSION.txt
-- docs/parts/part-27-62-CAMPAIGN-V10N7B-CITY-ART-POLISH.md
+- docs/PROJECT-1864-Designmanual.md
+- docs/PROJECT-BACKLOG.md
+- docs/parts/part-28-63-CAMPAIGN-V10N7C-EMBEDDED-CITY-ASSET-RESET.md
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without errors.
-2. Topbar/badge show v00.00.10n7b.
+2. Topbar/badge show v00.00.10n7c.
 3. No yellow Amt/county boundary lines are visible.
 4. Clicking ordinary land does not open an Amt/county panel.
 5. Log reports Way1=True, MapOnly=True and CountyBorders=False.
-6. Log reports CityArtN7B=True|Cities=68.
-7. All 68 city art markers are present.
-8. Only Proposal-3 visual language is visible; no beige fallback/debug settlement style.
-9. No round city cylinders or green TownGround are visible.
-10. A/B/C city sizes are clearly smaller than n7a/n6h.
-11. Small C towns remain readable at normal close/operational campaign zoom.
-12. City labels remain readable and are not dominated by the icons.
-13. Coastal cities anchor at the canonical city marker; the smaller visual footprint must not appear as a city placed in open water.
-14. World Imagery and streamed terrain remain functional.
-15. QA army at Vejle remains absent.
-16. Registry remains 20 zones / 68 cities / population 290565.
+6. Log reports CityArtN7C=True|Cities=68.
+7. Log reports AssetSource=EMBEDDED_VALIDATED_PROPOSAL3.
+8. Log reports ResourcesDependency=False.
+9. TextureA/TextureB/TextureC each report 128x128.
+10. No Proposal3TextureMissing error occurs.
+11. LegacyCityVisualPurge=True is logged.
+12. All 68 cities display only the Proposal-3 visual language.
+13. No beige/generated fallback or old mixed city art remains.
+14. No round city cylinders or TownGround remain.
+15. A/B/C city sizes are A=0.95 / B=0.72 / C=0.52.
+16. City labels remain readable and geography remains dominant.
+17. Coastal cities anchor at their canonical marker; the smaller footprint must not read as a city placed in open water.
+18. World Imagery and streamed terrain remain functional.
+19. QA army at Vejle remains absent.
+20. Registry remains 20 zones / 68 cities / population 290565.
 
 NEXT PHASE:
 - Do not reintroduce Amt/county borders until city-art QA is accepted.
-- Later county rebuild must use one authoritative historical geometry source for line, click and highlight.
-- County geometry must never be approximated by competing line/selection systems again.
+- Later County Rebuild must use one authoritative historical geometry source for line, click ownership and selected-area highlight.
+- County geometry must not be approximated by competing visual/click systems.
 
-QA state: V10N7B IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N7C IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
