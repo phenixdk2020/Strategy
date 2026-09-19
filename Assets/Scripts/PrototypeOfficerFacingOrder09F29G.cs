@@ -15,7 +15,8 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
     {
         None,
         Battalion,
-        Regiment
+        Regiment,
+        Higher
     }
 
     public static PrototypeOfficerFacingOrder09F29G Instance { get; private set; }
@@ -27,6 +28,7 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
 
     private CommandLevel level;
     private int battalionIndex = -1;
+    private PrototypeHigherCommandLevel09F30B higherLevel = PrototypeHigherCommandLevel09F30B.None;
     private MajorOrder09F18 order = MajorOrder09F18.None;
     private bool anchorPlaced;
     private Vector3 anchor;
@@ -106,6 +108,42 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
         Debug.Log("OFFICER-FACING-09F29G|Pending=True|Level=BATTALION|Battalion=" + (index + 1) + "|Order=" + requestedOrder);
     }
 
+    public void BeginHigherOrder(
+        PrototypeHigherCommandLevel09F30B requestedLevel,
+        MajorOrder09F18 requestedOrder)
+    {
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher == null || !higher.Installed ||
+            requestedLevel == PrototypeHigherCommandLevel09F30B.None)
+            return;
+
+        if (requestedOrder == MajorOrder09F18.HoldPosition)
+        {
+            CancelWithdrawalsForBattalion(0);
+            CancelWithdrawalsForBattalion(1);
+
+            GameObject hq = requestedLevel == PrototypeHigherCommandLevel09F30B.Division
+                ? higher.DivisionHqRoot
+                : higher.BrigadeHqRoot;
+            Vector3 p = hq != null ? hq.transform.position : Vector3.zero;
+
+            higher.IssueHigherOrder(requestedLevel, requestedOrder, p);
+            CancelPending();
+            return;
+        }
+
+        level = CommandLevel.Higher;
+        higherLevel = requestedLevel;
+        battalionIndex = -1;
+        order = requestedOrder;
+        anchorPlaced = false;
+        ClearLegacyPending();
+        SetVisualColor(requestedOrder);
+
+        Debug.Log("OFFICER-FACING-09F30O|Pending=True|Level=" +
+                  requestedLevel + "|Order=" + requestedOrder);
+    }
+
     public void BeginRegimentalOrder(MajorOrder09F18 requestedOrder)
     {
         PrototypeRegimentalHQ09F28 regimental = PrototypeRegimentalHQ09F28.Instance;
@@ -135,6 +173,7 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
     {
         level = CommandLevel.None;
         battalionIndex = -1;
+        higherLevel = PrototypeHigherCommandLevel09F30B.None;
         order = MajorOrder09F18.None;
         anchorPlaced = false;
         SetVisuals(false);
@@ -171,7 +210,7 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
             if (TryGetGround(Input.mousePosition, out Vector3 hover))
             {
                 anchor = hover;
-                DrawCircle(anchor, level == CommandLevel.Regiment ? 46f : 30f);
+                DrawCircle(anchor, GetPendingCircleRadius());
                 circle.enabled = true;
             }
             else
@@ -184,7 +223,7 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
                 anchor = start;
                 dragPoint = start;
                 anchorPlaced = true;
-                DrawCircle(anchor, level == CommandLevel.Regiment ? 46f : 30f);
+                DrawCircle(anchor, GetPendingCircleRadius());
                 circle.enabled = true;
             }
 
@@ -242,8 +281,25 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
                 ApplyFacingToBattalion(1, explicitFacing.Value);
             }
         }
+        else if (level == CommandLevel.Higher)
+        {
+            PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+            if (higher == null || !higher.Installed ||
+                higherLevel == PrototypeHigherCommandLevel09F30B.None)
+                return;
 
-        Debug.Log("OFFICER-FACING-09F29G|Committed=True|Level=" + level +
+            CancelWithdrawalsForBattalion(0);
+            CancelWithdrawalsForBattalion(1);
+            higher.IssueHigherOrder(higherLevel, order, objective);
+
+            if (explicitFacing.HasValue)
+            {
+                ApplyFacingToBattalion(0, explicitFacing.Value);
+                ApplyFacingToBattalion(1, explicitFacing.Value);
+            }
+        }
+
+        Debug.Log("OFFICER-FACING-09F30O|Committed=True|Level=" + level +
                   "|Order=" + order +
                   "|Objective=" + objective.x.ToString("0.0") + "," + objective.z.ToString("0.0") +
                   "|ExplicitFacing=" + (explicitFacing.HasValue ? "YES" : "AUTO") +
@@ -378,6 +434,15 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
         line.sharedMaterial = visualMaterial;
         line.enabled = false;
         return line;
+    }
+
+    private float GetPendingCircleRadius()
+    {
+        if (level == CommandLevel.Higher)
+            return higherLevel == PrototypeHigherCommandLevel09F30B.Division ? 84f : 64f;
+        if (level == CommandLevel.Regiment)
+            return 46f;
+        return 30f;
     }
 
     private void DrawCircle(Vector3 center, float radius)
