@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30n TEST  
+**Prototypebaseline:** v00.00.09f30o TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -726,6 +726,22 @@ Når Dragon får SID AF:
 - Horse leg/hoof, head/tail og rider motion må være procedural indtil rigged assets erstatter prototypen.
 - HOLD skal returnere til en stabil neutral pose.
 - Gardehusar og Dragon skal have tydeligt forskellig uniform/equipment silhouette.
+
+---
+
+## 35N. Higher-HQ AI arming og shared objective placement
+
+- **AI ON er ikke en ordre.** Division/Brigade AI ON må kun gøre command chain klar til delegated execution.
+- Ingen Regiment-, Major/Battalion-, Company- eller CAV-bevægelse må starte alene som følge af higher AI ON.
+- Regiment og Battalion skal kunne stå i `AwaitHigherMission` indtil en eksplicit higher mission commits.
+- Company Officer AI skal HOLD under denne ventetilstand.
+- CAV skal vise en waiting/armed state og må ikke SEEK fjenden før mission commitment.
+- Re-arming higher AI må ikke genstarte en stale inherited CAV mission.
+- Division/Brigade position-orders skal bruge samme objective-placement system som Regiment/Major.
+- Ved pending position-order skal en synlig circle følge ground cursor.
+- Click placerer objective; drag fra objective definerer facing.
+- Higher-HQ HUD skal tegnes af samme authoritative runtime renderer som Regiment HUD, ikke af en separat visuel approximation.
+- HUD'ens øverste kant skal være sort.
 
 ---
 
