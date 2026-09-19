@@ -10,6 +10,8 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
     {
         public PrototypeCavalryUnit09F30 Unit;
         public LineRenderer Selection;
+        public LineRenderer HorseSelection;
+        public LineRenderer DismountLink;
         public LineRenderer Path;
         public LineRenderer Destination;
         public Vector2 SmoothedSize;
@@ -48,6 +50,8 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
         {
             Unit = unit,
             Selection = CreateLine("Selection_" + unit.UnitName, 0.24f, new Color(1f, 0.82f, 0.10f)),
+            HorseSelection = CreateLine("HorseSelection_" + unit.UnitName, 0.18f, new Color(1f, 0.82f, 0.10f)),
+            DismountLink = CreateLine("DismountLink_" + unit.UnitName, 0.10f, new Color(1f, 0.82f, 0.10f)),
             Path = CreateLine("OrderPath_" + unit.UnitName, 0.13f, new Color(0.76f, 0.90f, 1f)),
             Destination = CreateLine("Destination_" + unit.UnitName, 0.22f, new Color(1f, 0.82f, 0.10f)),
             SmoothedSize = unit.GetCurrentFootprintSize()
@@ -80,15 +84,33 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
             return;
 
         bool selected = unit.IsSelected;
+        bool splitDismounted = selected &&
+                               unit.Kind == PrototypeCavalryKind09F30.Dragon &&
+                               unit.Mode == PrototypeCavalryMode09F30.Dismounted;
+
         s.Selection.enabled = selected;
+        s.HorseSelection.enabled = splitDismounted;
+        s.DismountLink.enabled = splitDismounted;
         s.Path.enabled = selected && unit.HasDestination;
         s.Destination.enabled = selected && unit.HasDestination;
         if (!selected)
             return;
 
-        Vector2 targetSize = unit.GetCurrentFootprintSize();
-        s.SmoothedSize = Vector2.Lerp(s.SmoothedSize, targetSize, 6f * Time.deltaTime);
-        DrawBox(s.Selection, unit.GetCurrentFootprintCenterWorld(), unit.transform.forward, s.SmoothedSize, 0.34f);
+        if (splitDismounted)
+        {
+            DrawBox(s.Selection, unit.GetDismountedCombatCenterWorld(), unit.transform.forward,
+                unit.GetDismountedCombatFootprintSize(), 0.34f);
+            DrawBox(s.HorseSelection, unit.GetDismountedHorseHolderCenterWorld(), unit.transform.forward,
+                unit.GetDismountedHorseHolderFootprintSize(), 0.34f);
+            DrawLink(s.DismountLink, unit.GetDismountedHorseHolderCenterWorld(),
+                unit.GetDismountedCombatCenterWorld(), 0.39f);
+        }
+        else
+        {
+            Vector2 targetSize = unit.GetCurrentFootprintSize();
+            s.SmoothedSize = Vector2.Lerp(s.SmoothedSize, targetSize, 6f * Time.deltaTime);
+            DrawBox(s.Selection, unit.GetCurrentFootprintCenterWorld(), unit.transform.forward, s.SmoothedSize, 0.34f);
+        }
 
         if (!unit.HasDestination)
             return;
@@ -97,7 +119,7 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
         Vector3 final = unit.FinalDestination;
         DrawPath(s.Path, unit.transform.position, steering, final);
 
-        Vector3 facing = final - unit.transform.position;
+        Vector3 facing = unit.PlannedDestinationFacing;
         facing.y = 0f;
         if (facing.sqrMagnitude < 0.01f)
             facing = unit.transform.forward;
@@ -120,6 +142,13 @@ public sealed class PrototypeCavalryOrderVisuals09F30I : MonoBehaviour
         {
             line.SetPosition(1, Ground(final, 0.52f));
         }
+    }
+
+    private static void DrawLink(LineRenderer line, Vector3 a, Vector3 b, float y)
+    {
+        line.positionCount = 2;
+        line.SetPosition(0, Ground(a, y));
+        line.SetPosition(1, Ground(b, y));
     }
 
     private static void DrawBox(LineRenderer line, Vector3 center, Vector3 forward, Vector2 size, float y)

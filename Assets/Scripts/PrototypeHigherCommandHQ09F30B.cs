@@ -27,6 +27,10 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     public GameObject DivisionHqRoot { get; private set; }
     public GameObject BrigadeHqRoot { get; private set; }
     public PrototypeHigherCommandLevel09F30B SelectedLevel { get; private set; }
+    public bool BrigadeAIEnabled { get; private set; }
+    public bool DivisionAIEnabled { get; private set; }
+    public OfficerAIDoctrine BrigadeDoctrine { get; private set; } = OfficerAIDoctrine.Balanced;
+    public OfficerAIDoctrine DivisionDoctrine { get; private set; } = OfficerAIDoctrine.Balanced;
 
     public const string DivisionId = "1. DIVISION";
     public const string BrigadeId = "1. BRIGADE";
@@ -68,7 +72,11 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     private GUIStyle labelStyle;
     private GUIStyle buttonStyle;
     private GUIStyle activeBlueStyle;
+    private GUIStyle activeGreenStyle;
+    private GUIStyle dangerStyle;
     private Texture2D activeBlueTexture;
+    private Texture2D activeGreenTexture;
+    private Texture2D dangerTexture;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -194,6 +202,42 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         Debug.Log("HQ-09F30B|Select=" + level + "|CameraMoved=" + focusBehind);
     }
 
+    public bool GetAIEnabled(PrototypeHigherCommandLevel09F30B level)
+    {
+        return level == PrototypeHigherCommandLevel09F30B.Division
+            ? DivisionAIEnabled
+            : level == PrototypeHigherCommandLevel09F30B.Brigade && BrigadeAIEnabled;
+    }
+
+    public OfficerAIDoctrine GetDoctrine(PrototypeHigherCommandLevel09F30B level)
+    {
+        return level == PrototypeHigherCommandLevel09F30B.Division
+            ? DivisionDoctrine
+            : BrigadeDoctrine;
+    }
+
+    public void ToggleAI(PrototypeHigherCommandLevel09F30B level)
+    {
+        if (level == PrototypeHigherCommandLevel09F30B.Division)
+            DivisionAIEnabled = !DivisionAIEnabled;
+        else if (level == PrototypeHigherCommandLevel09F30B.Brigade)
+            BrigadeAIEnabled = !BrigadeAIEnabled;
+
+        Debug.Log("HQ-AI-09F30K|Level=" + level +
+                  "|AI=" + (GetAIEnabled(level) ? "ON" : "OFF") +
+                  "|Doctrine=" + GetDoctrine(level));
+    }
+
+    public void SetDoctrine(PrototypeHigherCommandLevel09F30B level, OfficerAIDoctrine doctrine)
+    {
+        if (level == PrototypeHigherCommandLevel09F30B.Division)
+            DivisionDoctrine = doctrine;
+        else if (level == PrototypeHigherCommandLevel09F30B.Brigade)
+            BrigadeDoctrine = doctrine;
+
+        Debug.Log("HQ-AI-09F30K|Level=" + level + "|Doctrine=" + doctrine);
+    }
+
     public void ClearSelectionOnly()
     {
         SelectedLevel = PrototypeHigherCommandLevel09F30B.None;
@@ -317,8 +361,10 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             brigadeObjective = point;
         }
 
-        regimental.IssueRegimentalOrder(order, point, false);
-        Debug.Log("HQ-09F30B|MissionCommitted=True|Level=" + level + "|Order=" + order +
+        OfficerAIDoctrine doctrine = GetDoctrine(level);
+        regimental.SetDoctrine(doctrine);
+        regimental.IssueRegimentalOrder(order, point, GetAIEnabled(level));
+        Debug.Log("HQ-09F30K|MissionCommitted=True|Level=" + level + "|Order=" + order +
                   "|DelegatedTo=1.REGIMENT|Objective=" + point.x.ToString("0.0") + "," + point.z.ToString("0.0"));
     }
 
@@ -651,15 +697,35 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         float commandWidth = Mathf.Max(620f, panel.width - commandX - 8f);
         float y = panel.y + 22f;
 
-        GUI.Label(new Rect(8f, y, infoWidth - 14f, 11f), "KOMMANDO / UNDERENHEDER", sectionStyle);
+        GUI.Label(new Rect(8f, y, infoWidth - 14f, 11f), "ENHEDSINFO / AI", sectionStyle);
         string mission = division ? divisionMission.ToString().ToUpperInvariant() : brigadeMission.ToString().ToUpperInvariant();
         if (mission == MajorOrder09F18.None.ToString().ToUpperInvariant()) mission = "INGEN AKTIV ORDRE";
-        GUI.Label(new Rect(10f, y + 13f, infoWidth - 18f, 14f), "Mission: " + mission, labelStyle);
-        GUI.Label(new Rect(10f, y + 28f, infoWidth - 18f, 14f),
-            division ? "Under: 1. Brigade | Assets fordeles via Brigade" : "Under: 1. Regiment | Gardehusar | Dragoner",
+        bool aiOn = GetAIEnabled(SelectedLevel);
+        OfficerAIDoctrine doctrine = GetDoctrine(SelectedLevel);
+
+        GUI.Label(new Rect(10f, y + 13f, infoWidth - 18f, 13f), "Mission: " + mission, labelStyle);
+        GUI.Label(new Rect(10f, y + 26f, infoWidth - 18f, 13f),
+            division ? "Under: 1. Brigade | Assets via Brigade" : "Under: 1. Regiment | Gardehusar | Dragoner",
             labelStyle);
-        GUI.Label(new Rect(10f, y + 43f, infoWidth - 18f, 14f),
-            "Higher Officer AI: ikke aktiv endnu | Ordre delegeres ned gennem HQ-kæden", labelStyle);
+
+        float aiY = y + 41f;
+        float aiGap = 3f;
+        float aiW = (infoWidth - 20f - aiGap * 3f) / 4f;
+        if (GUI.Button(new Rect(10f, aiY, aiW, 20f), aiOn ? "AI ON" : "AI OFF",
+                aiOn ? activeGreenStyle : dangerStyle))
+            ToggleAI(SelectedLevel);
+        if (GUI.Button(new Rect(10f + (aiW + aiGap), aiY, aiW, 20f),
+                doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF",
+                doctrine == OfficerAIDoctrine.Defensive ? activeBlueStyle : buttonStyle))
+            SetDoctrine(SelectedLevel, OfficerAIDoctrine.Defensive);
+        if (GUI.Button(new Rect(10f + (aiW + aiGap) * 2f, aiY, aiW, 20f),
+                doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL",
+                doctrine == OfficerAIDoctrine.Balanced ? activeBlueStyle : buttonStyle))
+            SetDoctrine(SelectedLevel, OfficerAIDoctrine.Balanced);
+        if (GUI.Button(new Rect(10f + (aiW + aiGap) * 3f, aiY, aiW, 20f),
+                doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF",
+                doctrine == OfficerAIDoctrine.Offensive ? activeBlueStyle : buttonStyle))
+            SetDoctrine(SelectedLevel, OfficerAIDoctrine.Offensive);
 
         GUI.Label(new Rect(commandX, y, commandWidth, 11f), "MISSIONSORDRER", sectionStyle);
         float gap = 4f;
@@ -736,6 +802,20 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         activeBlueStyle.hover.background = activeBlueTexture;
         activeBlueStyle.active.background = activeBlueTexture;
         activeBlueStyle.normal.textColor = Color.white;
+
+        activeGreenTexture = MakeTexture(new Color(0.16f, 0.43f, 0.19f, 1f));
+        activeGreenStyle = new GUIStyle(buttonStyle);
+        activeGreenStyle.normal.background = activeGreenTexture;
+        activeGreenStyle.hover.background = activeGreenTexture;
+        activeGreenStyle.active.background = activeGreenTexture;
+        activeGreenStyle.normal.textColor = Color.white;
+
+        dangerTexture = MakeTexture(new Color(0.43f, 0.14f, 0.12f, 1f));
+        dangerStyle = new GUIStyle(buttonStyle);
+        dangerStyle.normal.background = dangerTexture;
+        dangerStyle.hover.background = dangerTexture;
+        dangerStyle.active.background = dangerTexture;
+        dangerStyle.normal.textColor = Color.white;
     }
 
     private static Texture2D MakeTexture(Color color)

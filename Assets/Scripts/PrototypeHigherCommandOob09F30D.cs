@@ -176,13 +176,15 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
         DrawColumnHeaders(content.width);
         float y = ColumnHeaderHeight;
 
-        y = DrawHigherRow(y, content.width, 0f, "XX", "1. DIVISION", AggregateStrength(hierarchy).ToString(), "", "", "",
+        y = DrawHigherRow(y, content.width, 0f, "XX", "1. DIVISION", AggregateStrength(hierarchy).ToString(), "",
+            higher.DivisionAIEnabled ? "ON" : "OFF", "",
             higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Division, "DIVISION", "Divisionschef",
             PrototypeCavalryCommandControl09F30C.DivisionId,
             delegate(bool dbl) { higher.SelectLevel(PrototypeHigherCommandLevel09F30B.Division, dbl); });
         y = DrawAttachedForParent(y, content.width, 18f, cavalry, PrototypeCavalryCommandControl09F30C.DivisionId, higher);
 
-        y = DrawHigherRow(y, content.width, 14f, "X", "1. BRIGADE", AggregateStrength(hierarchy).ToString(), "", "", "",
+        y = DrawHigherRow(y, content.width, 14f, "X", "1. BRIGADE", AggregateStrength(hierarchy).ToString(), "",
+            higher.BrigadeAIEnabled ? "ON" : "OFF", "",
             higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Brigade, "BRIGADE", "Brigadechef",
             PrototypeCavalryCommandControl09F30C.BrigadeId,
             delegate(bool dbl) { higher.SelectLevel(PrototypeHigherCommandLevel09F30B.Brigade, dbl); });

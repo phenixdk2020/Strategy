@@ -9,7 +9,8 @@ using UnityEngine;
 public sealed class PrototypeCavalryAnimation09F30I : MonoBehaviour
 {
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
-    private const float TransitionDuration = 2.25f;
+    private const float DismountDuration = 2.25f;
+    private const float RemountDuration = 4.50f;
 
     private sealed class TransitionState
     {
@@ -165,7 +166,8 @@ public sealed class PrototypeCavalryAnimation09F30I : MonoBehaviour
                 continue;
             }
 
-            float p = Mathf.Clamp01((Time.time - s.Started) / TransitionDuration);
+            float duration = s.Dismount ? DismountDuration : RemountDuration;
+            float p = Mathf.Clamp01((Time.time - s.Started) / duration);
             float smooth = p * p * (3f - 2f * p);
 
             for (int i = 0; i < s.Riders.Count; i++)

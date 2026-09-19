@@ -22,7 +22,14 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
     private bool installed;
     private bool pendingCharge;
     private bool orderConsumedThisFrame;
+    private bool rightDragActive;
+    private bool rightDragHasGround;
+    private Vector3 rightDragStart;
+    private Vector3 rightDragEnd;
+    private Regiment rightDragEnemyTarget;
     private float installRetry;
+
+    private const float FacingDragThreshold = 4f;
 
     private FieldInfo playerSelectedField;
     private FieldInfo selectedBattalionField;
@@ -115,7 +122,7 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
 
         HandlePendingChargePick();
         HandleWorldSelection();
-        HandleRightClickOrder();
+        HandleRightMouseOrder();
     }
 
     private void TryInstall()
@@ -240,36 +247,77 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
         }
     }
 
-    private void HandleRightClickOrder()
+    private void HandleRightMouseOrder()
     {
         if (selected == null || cam == null || pendingCharge)
+        {
+            rightDragActive = false;
             return;
-        if (!Input.GetMouseButtonDown(1) || IsPointerOverUi(Input.mousePosition))
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (IsPointerOverUi(Input.mousePosition))
+                return;
+
+            rightDragActive = true;
+            rightDragEnemyTarget = RaycastRegiment(Input.mousePosition);
+            rightDragHasGround = TryGetGround(Input.mousePosition, out rightDragStart);
+            if (!rightDragHasGround && rightDragEnemyTarget != null)
+            {
+                rightDragStart = rightDragEnemyTarget.transform.position;
+                rightDragHasGround = true;
+            }
+            rightDragEnd = rightDragStart;
+            return;
+        }
+
+        if (rightDragActive && Input.GetMouseButton(1))
+        {
+            if (TryGetGround(Input.mousePosition, out Vector3 point))
+                rightDragEnd = point;
+            return;
+        }
+
+        if (!rightDragActive || !Input.GetMouseButtonUp(1))
             return;
 
-        Regiment target = RaycastRegiment(Input.mousePosition);
-        if (target != null && target.Team == BattleTeam.Prussia)
+        rightDragActive = false;
+        Vector3 drag = rightDragEnd - rightDragStart;
+        drag.y = 0f;
+        bool explicitFacing = rightDragHasGround && drag.magnitude >= FacingDragThreshold;
+
+        if (rightDragEnemyTarget != null && rightDragEnemyTarget.Team == BattleTeam.Prussia && !explicitFacing)
         {
             if (selected.Mode == PrototypeCavalryMode09F30.Mounted)
             {
-                selected.OrderCharge(target);
-                Debug.Log("CAVALRY-09F30A|RightClick=ENEMY|Order=CHARGE|Unit=" + selected.UnitName +
-                          "|Target=" + target.RegimentName);
+                selected.OrderCharge(rightDragEnemyTarget);
+                Debug.Log("CAVALRY-09F30K|RMB=ENEMY|Order=CHARGE|Unit=" + selected.UnitName +
+                          "|Target=" + rightDragEnemyTarget.RegimentName);
             }
-            else
-            {
-                Debug.Log("CAVALRY-09F30A|RightClick=ENEMY|Order=None|Reason=DismountedFireNotImplemented|Unit=" +
-                          selected.UnitName);
-            }
+            rightDragEnemyTarget = null;
             return;
         }
 
-        if (TryGetGround(Input.mousePosition, out Vector3 point))
+        if (!rightDragHasGround)
         {
-            selected.OrderMove(point);
-            Debug.Log("CAVALRY-09F30A|RightClick=GROUND|Order=MOVE|Unit=" + selected.UnitName +
-                      "|Goal=" + point.x.ToString("0.0") + "," + point.z.ToString("0.0"));
+            rightDragEnemyTarget = null;
+            return;
         }
+
+        Vector3 facing = explicitFacing ? drag.normalized : (rightDragStart - selected.transform.position);
+        facing.y = 0f;
+        if (facing.sqrMagnitude < 0.01f)
+            facing = selected.transform.forward;
+
+        selected.OrderMove(rightDragStart, facing.normalized, explicitFacing);
+        Debug.Log("CAVALRY-09F30K|RMB=GROUND|Order=MOVE|Unit=" + selected.UnitName +
+                  "|Goal=" + rightDragStart.x.ToString("0.0") + "," + rightDragStart.z.ToString("0.0") +
+                  "|ExplicitFacing=" + explicitFacing +
+                  "|Facing=" + facing.normalized.x.ToString("0.00") + "," + facing.normalized.z.ToString("0.00"));
+
+        rightDragEnemyTarget = null;
+        rightDragHasGround = false;
     }
 
     private bool HasOtherCommandSelection()

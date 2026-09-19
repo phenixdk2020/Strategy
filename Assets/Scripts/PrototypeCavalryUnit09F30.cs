@@ -61,6 +61,21 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     public string BridgePhaseLabel => bridgePhase == BridgePhase.Direct ? "DIRECT" : bridgePhase.ToString().ToUpperInvariant();
     public bool HasDestination => hasDestination;
     public Vector3 FinalDestination => finalDestination;
+    public Vector3 PlannedDestinationFacing
+    {
+        get
+        {
+            if (hasExplicitFinalFacing && finalFacing.sqrMagnitude > 0.01f)
+                return finalFacing.normalized;
+
+            Vector3 travel = finalDestination - transform.position;
+            travel.y = 0f;
+            if (travel.sqrMagnitude < 0.01f)
+                return transform.forward;
+            return travel.normalized;
+        }
+    }
+    public bool HasExplicitFinalFacing => hasExplicitFinalFacing;
     public bool AutoMarchColumnActive => autoMarchColumnActive;
     public bool ManualFormationOverride => manualFormationOverride;
     public PrototypeCavalryFormation09F30 PlannedDestinationFormation =>
@@ -97,7 +112,32 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     public Vector3 GetDismountedCombatCenterWorld()
     {
-        return transform.TransformPoint(new Vector3(0f, 0f, 18f));
+        return transform.TransformPoint(new Vector3(0f, 0f, 17.54f));
+    }
+
+    public Vector2 GetDismountedCombatFootprintSize()
+    {
+        int combat = GetDismountedCombatStrength();
+        int columns = Mathf.CeilToInt(combat / 2f);
+        return new Vector2(Mathf.Max(8f, columns * 0.78f + 2f), 3.2f);
+    }
+
+    public Vector3 GetDismountedHorseHolderCenterWorld()
+    {
+        int holders = GetHorseHolderStrength();
+        int rows = Mathf.CeilToInt(holders / 8f);
+        float centerZ = -5.0f - Mathf.Max(0, rows - 1) * 0.92f * 0.5f;
+        return transform.TransformPoint(new Vector3(0f, 0f, centerZ));
+    }
+
+    public Vector2 GetDismountedHorseHolderFootprintSize()
+    {
+        int holders = GetHorseHolderStrength();
+        int columns = Mathf.Min(8, holders);
+        int rows = Mathf.CeilToInt(holders / 8f);
+        return new Vector2(
+            Mathf.Max(5f, columns * 0.82f + 2f),
+            Mathf.Max(3f, rows * 0.92f + 2f));
     }
 
     public int GetDismountedCombatStrength()
@@ -123,7 +163,9 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     private Material equipmentMaterial;
 
     private Vector3 finalDestination;
+    private Vector3 finalFacing;
     private bool hasDestination;
+    private bool hasExplicitFinalFacing;
     private Regiment chargeTarget;
     private bool chargeResolved;
 
@@ -266,11 +308,30 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     public void OrderMove(Vector3 worldPoint)
     {
+        Vector3 travelFacing = worldPoint - transform.position;
+        travelFacing.y = 0f;
+        if (travelFacing.sqrMagnitude < 0.01f)
+            travelFacing = transform.forward;
+
+        OrderMove(worldPoint, travelFacing.normalized, false);
+    }
+
+    public void OrderMove(Vector3 worldPoint, Vector3 requestedFinalFacing, bool explicitFacing)
+    {
         chargeTarget = null;
         chargeResolved = false;
         Action = PrototypeCavalryAction09F30.Move;
 
         Vector3 groundedGoal = Ground(worldPoint);
+        requestedFinalFacing.y = 0f;
+        if (requestedFinalFacing.sqrMagnitude < 0.01f)
+            requestedFinalFacing = groundedGoal - transform.position;
+        if (requestedFinalFacing.sqrMagnitude < 0.01f)
+            requestedFinalFacing = transform.forward;
+
+        finalFacing = requestedFinalFacing.normalized;
+        hasExplicitFinalFacing = explicitFacing;
+
         if (!manualFormationOverride)
             ApplyMountedMoveFormationPolicy(groundedGoal, true);
 
@@ -284,6 +345,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
         manualFormationOverride = false;
         autoMarchColumnActive = false;
+        hasExplicitFinalFacing = false;
         SetFormation(PrototypeCavalryFormation09F30.Line);
 
         chargeTarget = target;
@@ -304,6 +366,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         bridgePhase = BridgePhase.Direct;
         autoMarchColumnActive = false;
         manualFormationOverride = false;
+        hasExplicitFinalFacing = false;
         Action = PrototypeCavalryAction09F30.Hold;
     }
 
@@ -483,7 +546,25 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             if (AdvanceBridgePhase())
                 return;
 
+            if (hasExplicitFinalFacing && bridgePhase == BridgePhase.Direct)
+            {
+                Vector3 facing = finalFacing;
+                facing.y = 0f;
+                if (facing.sqrMagnitude > 0.01f)
+                {
+                    Quaternion targetRotation = Quaternion.LookRotation(facing.normalized, Vector3.up);
+                    float remainingAngle = Quaternion.Angle(transform.rotation, targetRotation);
+                    if (remainingAngle > 1.5f)
+                    {
+                        transform.rotation = Quaternion.RotateTowards(
+                            transform.rotation, targetRotation, 72f * Time.deltaTime);
+                        return;
+                    }
+                }
+            }
+
             hasDestination = false;
+            hasExplicitFinalFacing = false;
             if (Action == PrototypeCavalryAction09F30.Move || Action == PrototypeCavalryAction09F30.Falter)
                 Action = PrototypeCavalryAction09F30.Hold;
             return;

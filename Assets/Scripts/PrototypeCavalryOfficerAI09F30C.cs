@@ -200,6 +200,22 @@ public sealed class PrototypeCavalryOfficerAI09F30C : MonoBehaviour
             return hierarchy.GetBattalionAIEnabled(0);
         if (attachment.CurrentCommandParent == PrototypeCavalryCommandControl09F30C.MajorBId)
             return hierarchy.GetBattalionAIEnabled(1);
+
+        if (attachment.CurrentCommandParent == PrototypeHigherCommandHQ09F30B.RegimentId)
+        {
+            PrototypeRegimentalHQ09F28 regiment = PrototypeRegimentalHQ09F28.Instance;
+            return regiment == null || regiment.AIEnabled;
+        }
+
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
+        if (higher != null)
+        {
+            if (attachment.CurrentCommandParent == PrototypeHigherCommandHQ09F30B.BrigadeId)
+                return higher.BrigadeAIEnabled;
+            if (attachment.CurrentCommandParent == PrototypeHigherCommandHQ09F30B.DivisionId)
+                return higher.DivisionAIEnabled;
+        }
+
         return true;
     }
 
