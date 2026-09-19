@@ -1,14 +1,49 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30m
+Prototype version: v00.00.09f30n
 Build status: TEST
-Build name: HIGHER COMMAND DELEGATION + TEMP CAV ATTACHMENT + MISSION VISUAL PARITY
-Visible build marker: PROJECT 1864 | v00.00.09f30m TEST
+Build name: REGIMENT HUD PARITY + CAV SCREEN/OPPORTUNITY AI + ANTI-CAV INFANTRY REACTION
+Visible build marker: PROJECT 1864 | v00.00.09f30n TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30m
+Gameplay/build baseline: v00.00.09f30n
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30n - Regiment HUD Parity + Cavalry Screen/Opportunity AI + Anti-Cavalry Infantry Reaction
+- Backup before F30N: backup/channel-test-v00.00.09f30m-pre-09f30n-hud-cav-contact at F30M HEAD c27aa704cfe7c1316206871f075034163fb54f1c.
+- FIX: Brigade/Division HUD now uses the Regimental HQ HUD as the literal visual template: identical panel/header theme, header height, AI/doctrine placement, info geometry, six-button single-row mission layout, spacing and button palette.
+- Higher-HQ active mission state is shown in captions instead of introducing a separate blue/green/red HUD colour language.
+- Cavalry attack AI now uses SCREEN -> OPPORTUNITY -> CHARGE rather than geometry-only charge commitment.
+- Cavalry waits at flank/rear stand-off distance when the target is not yet fixed or weakened.
+- A charge opportunity opens when friendly Danish infantry has the target in local fire contact, or when target morale/cohesion has materially degraded.
+- Cavalry route planning now treats hostile Prussian companies as avoidance bubbles and inserts detour waypoints instead of riding through enemy infantry to reach a flank point.
+- Detour waypoints are intermediate only; CAV resumes toward its intended screen/flank point after clearing the obstacle.
+- Higher-HQ attack staging also uses enemy-bubble avoidance.
+- Prussian infantry can now acquire Danish cavalry inside its active fire-policy range and fire normal musket volleys using the existing reload, range, accuracy, smoke and cohesion pipeline.
+- Infantry volleys now apply casualties, morale/cohesion shock and possible FALTER response to cavalry.
+- Infantry mounted-threat / Square assessment is now team-neutral.
+- Screening/maneuvering cavalry is assessed as a lower threat; a committed charge receives the higher Square threat score.
+- Existing automatic Square state refreshes while the mounted threat remains nearby instead of expiring after the old timeout while cavalry is still present.
+- Destroyed cavalry no longer continues autonomous cavalry AI execution.
+- F30M temporary Major A/B cavalry attachment and return-to-reserve behaviour remains in force.
+
+Primary F30N QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30n TEST and Unity compiles with no red errors.
+2. Select Regiment, Brigade and Division in turn: bottom HUD panel colours, header styling, AI/doctrine position, info-block position and six command-button positions are visually 1:1.
+3. Brigade/Division still shows its own mission/strength/subordinate AI data, but inside the same Regimental HUD geometry.
+4. Division/Brigade ANGRIB HER still task-attaches CAV to Major A/B as in F30M.
+5. During approach, CAV does not cross directly through a Prussian company to reach a flank/rear point; it visibly detours around hostile infantry.
+6. CAV reaching a valid flank/rear screen point waits if the target is not yet fixed/weakened.
+7. When one or more Danish companies establishes local fire contact with that target, CAV may commit a flank/rear charge if geometry/range is valid.
+8. A target with sufficiently reduced morale/cohesion may also create a charge opportunity without waiting forever for local-contact state.
+9. A ready enemy Square prevents CAV commitment and causes the existing hold/falter logic to remain authoritative.
+10. Prussian infantry inside its selected fire-policy range can fire on Danish CAV; smoke/reload cadence is shared with normal infantry volleys.
+11. Effective infantry volleys reduce CAV strength/morale/cohesion and can make uncommitted CAV FALTER away.
+12. Enemy AI can form Square against a credible CAV charge, and an existing automatic Square remains active while the mounted threat stays nearby.
+13. After higher attack completion, surviving temporarily attached CAV still returns to its previous command parent as RESERVE.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30m - Higher Command Delegation + Temporary Cavalry Attachment + Mission Visual Parity
 - Backup before F30M: backup/channel-test-v00.00.09f30l-pre-09f30m-higher-command-visual-authority at F30L HEAD 989cd5baabda01da78b6f0ff76f9418bd115b2d4.
