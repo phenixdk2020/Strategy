@@ -27,7 +27,8 @@ v00.00.09f30m - Higher Command Delegation + Temporary Cavalry Attachment + Missi
 - OrganicParent remains unchanged during temporary tasking.
 - After attack execution ends, a committed cavalry charge may finish; cavalry then returns to its previous command parent as RESERVE and moves to a reserve/assemble position behind that HQ.
 - A new non-attack higher mission releases any temporary attack attachment immediately.
-- Direct player RMB on cavalry clears inherited higher mission and preserves manual override authority.
+- Direct player RMB on cavalry clears inherited higher mission and preserves manual override authority, also when cavalry Officer AI is already OFF.
+- Temporary attack release only affects cavalry units that were actually task-attached; unrelated cavalry is not returned or delayed by another unit's charge.
 - Higher doctrine propagates into Regiment and Battalions when a mission is committed.
 - F30L cavalry visuals/gait remain unchanged.
 
