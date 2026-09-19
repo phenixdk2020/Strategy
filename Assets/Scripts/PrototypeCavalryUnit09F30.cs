@@ -1151,6 +1151,12 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         return point;
     }
 
+    private static Vector3 Flat(Vector3 value)
+    {
+        value.y = 0f;
+        return value;
+    }
+
     private static float PlanarDistance(Vector3 a, Vector3 b)
     {
         a.y = 0f;
