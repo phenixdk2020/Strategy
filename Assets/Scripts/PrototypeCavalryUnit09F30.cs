@@ -379,6 +379,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         CurrentStrength -= resolvedHits;
         Morale = Mathf.Max(0f, Morale - resolvedHits * 0.45f - shock);
         Cohesion = Mathf.Max(0f, Cohesion - resolvedHits * 0.55f - shock * 0.85f);
+        RefreshStrengthVisuals();
 
         if (CurrentStrength <= 0)
         {
@@ -430,6 +431,29 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
                   "|Morale=" + Morale.ToString("0") +
                   "|Cohesion=" + Cohesion.ToString("0") +
                   "|Action=" + Action);
+    }
+
+    private void RefreshStrengthVisuals()
+    {
+        int mountedVisible = Mathf.Clamp(
+            CurrentStrength,
+            0,
+            mountedFigures.Count);
+        for (int i = 0; i < mountedFigures.Count; i++)
+        {
+            if (mountedFigures[i] != null)
+                mountedFigures[i].gameObject.SetActive(i < mountedVisible);
+        }
+
+        int footVisible = Mathf.Clamp(
+            CurrentStrength,
+            0,
+            footFigures.Count);
+        for (int i = 0; i < footFigures.Count; i++)
+        {
+            if (footFigures[i] != null)
+                footFigures[i].gameObject.SetActive(i < footVisible);
+        }
     }
 
     public bool Dismount()
