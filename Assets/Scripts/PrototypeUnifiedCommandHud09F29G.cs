@@ -42,6 +42,7 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
     private Texture2D greenHoverTexture;
     private Texture2D redTexture;
     private Texture2D redHoverTexture;
+    private Texture2D topBorderTexture;
     private bool logged;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -86,7 +87,7 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         if (!logged)
         {
             logged = true;
-            Debug.Log("HUD-09F29G|Installed=True|Levels=REGIMENT,BATTALION,COMPANY|LegacyOverlaysDisabled=True|FacingDragOrders=True|GreenActiveRedInactive=True");
+            Debug.Log("HUD-09F30O|Installed=True|Levels=DIVISION,BRIGADE,REGIMENT,BATTALION,COMPANY|SingleRenderer=True|FacingDragOrders=True|BlackTopEdge=True");
         }
     }
 
@@ -107,12 +108,19 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
 
     private void OnGUI()
     {
+        PrototypeHigherCommandHQ09F30B higher = PrototypeHigherCommandHQ09F30B.Instance;
         PrototypeRegimentalHQ09F28 regiment = PrototypeRegimentalHQ09F28.Instance;
         int selectedMajor = GetSelectedBattalionIndex();
         List<Regiment> selectedCompanies = GetSelectedCompanies();
 
+        bool higherSelected =
+            higher != null &&
+            higher.Installed &&
+            higher.SelectedLevel != PrototypeHigherCommandLevel09F30B.None;
         bool regimentSelected = regiment != null && regiment.Installed && regiment.Selected;
-        if (!regimentSelected && selectedMajor < 0 && selectedCompanies.Count == 0)
+
+        if (!higherSelected && !regimentSelected &&
+            selectedMajor < 0 && selectedCompanies.Count == 0)
             return;
 
         BuildStyles();
@@ -120,7 +128,14 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         Rect panel = new Rect(0f, Screen.height - HudHeight, Screen.width, HudHeight);
         GUI.Box(panel, GUIContent.none, panelStyle);
 
-        if (regimentSelected)
+        // F30O: explicit black top edge. This removes the inherited olive/green
+        // line visible above the authoritative command HUD.
+        if (topBorderTexture != null)
+            GUI.DrawTexture(new Rect(panel.x, panel.y, panel.width, 2f), topBorderTexture);
+
+        if (higherSelected)
+            DrawHigherHud(panel, higher);
+        else if (regimentSelected)
             DrawRegimentalHud(panel, regiment);
         else if (selectedMajor >= 0)
             DrawMajorHud(panel, selectedMajor);
@@ -133,6 +148,123 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
              current.type == EventType.MouseDrag || current.type == EventType.ScrollWheel))
         {
             current.Use();
+        }
+    }
+
+    private void DrawHigherHud(
+        Rect panel,
+        PrototypeHigherCommandHQ09F30B higher)
+    {
+        PrototypeRegimentHierarchy09F27 hierarchy =
+            PrototypeRegimentHierarchy09F27.Instance;
+        PrototypeCavalryManager09F30 cavalry =
+            PrototypeCavalryManager09F30.Instance;
+
+        List<Regiment> companies = GetAllCompanies(hierarchy);
+        AggregateStats stats = CalculateStats(companies);
+
+        bool division =
+            higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Division;
+        string title = division
+            ? "1. DIVISION | DIVISIONSCHEF | HØJERE KOMMANDO | F30O"
+            : "1. BRIGADE | BRIGADECHEF | HØJERE KOMMANDO | F30O";
+
+        GUI.Box(
+            new Rect(5f, panel.y + 3f, panel.width - 10f, 17f),
+            title,
+            headerStyle);
+
+        // Literal F29G Regimental geometry.
+        float width = panel.width;
+        float infoW = Mathf.Clamp(width * 0.24f, 285f, 355f);
+        float subW = Mathf.Clamp(width * 0.31f, 380f, 510f);
+        float commandX = infoW + 8f;
+        float subX = width - subW - 6f;
+        float commandW = Mathf.Max(390f, subX - commandX - 7f);
+        float y = panel.y + 22f;
+
+        PrototypeHigherCommandLevel09F30B level = higher.SelectedLevel;
+        DrawInfoAiBlock(
+            new Rect(7f, y, infoW - 10f, 66f),
+            stats,
+            higher.GetAIEnabled(level),
+            higher.GetDoctrine(level),
+            () => higher.ToggleAI(level),
+            d => higher.SetDoctrine(level, d));
+
+        DrawSection(
+            new Rect(commandX, y, commandW, 10f),
+            division
+                ? "DIVISIONSORDRER — KLIK = POSITION, TRÆK = FACING"
+                : "BRIGADEORDRER — KLIK = POSITION, TRÆK = FACING");
+
+        DrawOfficerOrderGrid(
+            commandX,
+            y + 11f,
+            commandW,
+            o => BeginHigherOrder(level, o));
+
+        DrawSection(
+            new Rect(subX, y, subW - 4f, 10f),
+            "UNDERLAGTE — STATUS / AI / ATTACHMENT");
+
+        string regAi =
+            PrototypeRegimentalHQ09F28.Instance != null &&
+            PrototypeRegimentalHQ09F28.Instance.AIEnabled
+                ? "AI ON"
+                : "AI OFF";
+
+        string majorA =
+            hierarchy != null && hierarchy.Installed &&
+            hierarchy.GetBattalionAIEnabled(0)
+                ? "AI ON"
+                : "AI OFF";
+        string majorB =
+            hierarchy != null && hierarchy.Installed &&
+            hierarchy.GetBattalionAIEnabled(1)
+                ? "AI ON"
+                : "AI OFF";
+
+        GUI.Label(
+            new Rect(subX + 2f, y + 12f, subW - 7f, 14f),
+            (division
+                ? "1. BRIGADE " + (higher.BrigadeAIEnabled ? "AI ON" : "AI OFF") + " | "
+                : string.Empty) +
+            "1. REGIMENT " + regAi,
+            valueStyle);
+
+        GUI.Label(
+            new Rect(subX + 2f, y + 28f, subW - 7f, 14f),
+            "MAJOR A " + majorA + " | MAJOR B " + majorB,
+            valueStyle);
+
+        if (cavalry != null && cavalry.Installed)
+        {
+            PrototypeCavalryOfficerAI09F30C cavAi =
+                PrototypeCavalryOfficerAI09F30C.Instance;
+
+            string garde =
+                cavalry.Gardehusar != null
+                    ? cavalry.Gardehusar.UnitName + " " +
+                      (cavAi != null && cavAi.IsAIEnabled(cavalry.Gardehusar)
+                          ? "AI ON"
+                          : "AI OFF") +
+                      " | " + higher.GetCavalryCommandParent(cavalry.Gardehusar)
+                    : "GARDEHUSAR —";
+
+            string dragon =
+                cavalry.Dragon != null
+                    ? cavalry.Dragon.UnitName + " " +
+                      (cavAi != null && cavAi.IsAIEnabled(cavalry.Dragon)
+                          ? "AI ON"
+                          : "AI OFF") +
+                      " | " + higher.GetCavalryCommandParent(cavalry.Dragon)
+                    : "DRAGON —";
+
+            GUI.Label(
+                new Rect(subX + 2f, y + 44f, subW - 7f, 14f),
+                garde + " | " + dragon,
+                valueStyle);
         }
     }
 
@@ -334,6 +466,14 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         if (GUI.Button(new Rect(x, y + 27f, w, 22f), "TILBAGETRÆK", redButtonStyle)) command(MajorOrder09F18.WithdrawHere);
         if (GUI.Button(new Rect(x + w + gap, y + 27f, w, 22f), "SAML", redButtonStyle)) command(MajorOrder09F18.AssembleHere);
         if (GUI.Button(new Rect(x + (w + gap) * 2f, y + 27f, w, 22f), "STOP / HOLD", redButtonStyle)) command(MajorOrder09F18.HoldPosition);
+    }
+
+    private static void BeginHigherOrder(
+        PrototypeHigherCommandLevel09F30B level,
+        MajorOrder09F18 order)
+    {
+        if (PrototypeOfficerFacingOrder09F29G.Instance != null)
+            PrototypeOfficerFacingOrder09F29G.Instance.BeginHigherOrder(level, order);
     }
 
     private static void BeginRegimentalOrder(MajorOrder09F18 order)
@@ -603,6 +743,7 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         greenHoverTexture = MakeTexture(new Color(0.22f, 0.56f, 0.25f, 1f), "HUD29G_GREEN_HOVER");
         redTexture = MakeTexture(new Color(0.43f, 0.14f, 0.12f, 1f), "HUD29G_RED");
         redHoverTexture = MakeTexture(new Color(0.57f, 0.19f, 0.16f, 1f), "HUD29G_RED_HOVER");
+        topBorderTexture = MakeTexture(Color.black, "HUD30O_TOP_BLACK");
 
         panelStyle = new GUIStyle(GUI.skin.box) { normal = { background = panelTexture } };
         headerStyle = new GUIStyle(GUI.skin.box);
@@ -612,6 +753,7 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         headerStyle.fontStyle = FontStyle.Bold;
         headerStyle.alignment = TextAnchor.MiddleLeft;
         headerStyle.padding = new RectOffset(7, 5, 1, 1);
+        headerStyle.border = new RectOffset(0, 0, 0, 0);
 
         sectionStyle = new GUIStyle(GUI.skin.label);
         sectionStyle.normal.textColor = new Color(0.77f, 0.67f, 0.35f);
