@@ -389,6 +389,16 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         Input.ResetInputAxes();
     }
 
+    public void IssueHigherOrder(PrototypeHigherCommandLevel09F30B level, MajorOrder09F18 order, Vector3 point)
+    {
+        if (!Installed || level == PrototypeHigherCommandLevel09F30B.None)
+            return;
+
+        pendingOrder = MajorOrder09F18.None;
+        pendingLevel = PrototypeHigherCommandLevel09F30B.None;
+        CommitHigherOrder(level, order, point);
+    }
+
     private void CommitHigherOrder(PrototypeHigherCommandLevel09F30B level, MajorOrder09F18 order, Vector3 point)
     {
         if (regimental == null || !regimental.Installed)
@@ -425,7 +435,7 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
         IssueAttachedCavalryMission(level, order, point, autonomous);
 
-        Debug.Log("HQ-09F30M|MissionCommitted=True|Level=" + level + "|Order=" + order +
+        Debug.Log("HQ-09F30O|MissionCommitted=True|Level=" + level + "|Order=" + order +
                   "|DelegatedTo=REGIMENT+CAVALRY|Objective=" +
                   point.x.ToString("0.0") + "," + point.z.ToString("0.0"));
     }
@@ -1052,6 +1062,11 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     private void OnGUI()
     {
         if (!Installed || SelectedLevel == PrototypeHigherCommandLevel09F30B.None)
+            return;
+
+        // F30O: the authoritative F29G unified HUD now draws Regiment, Brigade and
+        // Division through one renderer. Keep this legacy panel only as fallback.
+        if (PrototypeUnifiedCommandHud09F29G.Instance != null)
             return;
 
         EnsureStyles();
