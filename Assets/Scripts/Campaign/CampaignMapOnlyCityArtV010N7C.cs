@@ -316,7 +316,7 @@ public sealed class CampaignMapOnlyCityArtV010N7C : MonoBehaviour
 
             if (!ImageConversion.LoadImage(texture, png, true))
             {
-                Destroy(texture);
+                Object.Destroy(texture);
                 return null;
             }
 
