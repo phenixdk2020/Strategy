@@ -439,7 +439,7 @@ Fejlrettelser/hardening:
 - Detour waypoints are intermediate and resume toward the original screen/flank objective.
 - Higher-HQ cavalry attack staging also respects hostile infantry avoidance.
 - Prussian infantry can acquire cavalry inside selected fire-policy range and fire using normal reload/range/accuracy/smoke cadence.
-- Cavalry receives infantry-volley casualties and morale/cohesion shock; effective fire can trigger FALTER.
+- Cavalry receives infantry-volley casualties and morale/cohesion shock; effective fire can trigger FALTER, and 1:1 cavalry figures now reflect CurrentStrength losses.
 - Mounted-threat/Square scoring made team-neutral and auto-Square threat timers refresh while cavalry remains nearby.
 - Destroyed cavalry is excluded from autonomous cavalry AI execution.
 
