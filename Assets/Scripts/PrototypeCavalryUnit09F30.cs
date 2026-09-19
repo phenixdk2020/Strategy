@@ -63,6 +63,17 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     public Vector3 FinalDestination => finalDestination;
     public PrototypeCavalryFormation09F30 PlannedDestinationFormation =>
         bridgePhase != BridgePhase.Direct ? formationBeforeBridge : Formation;
+    public Vector3 CurrentSteeringTarget => hasDestination ? ResolveSteeringTarget() : transform.position;
+
+    public Vector2 GetCurrentFootprintSize()
+    {
+        return CalculateFootprint(Mode, Formation, bridgePhase != BridgePhase.Direct);
+    }
+
+    public Vector2 GetDestinationFootprintSize()
+    {
+        return CalculateFootprint(Mode, PlannedDestinationFormation, false);
+    }
 
     private readonly List<Transform> mountedFigures = new List<Transform>();
     private readonly List<GameObject> mountedRiders = new List<GameObject>();
@@ -231,31 +242,29 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     public bool Dismount()
     {
-        if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Mounted)
+        if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Mounted ||
+            PrototypeCavalryAnimation09F30I.IsTransitioning(this))
             return false;
 
         OrderHold();
         Mode = PrototypeCavalryMode09F30.Dismounted;
 
         if (mountedRoot != null)
-        {
             mountedRoot.SetParent(null, true);
-            for (int i = 0; i < mountedRiders.Count; i++)
-                if (mountedRiders[i] != null)
-                    mountedRiders[i].SetActive(false);
-        }
 
         if (footRoot != null)
             footRoot.gameObject.SetActive(true);
 
+        PrototypeCavalryAnimation09F30I.BeginDismount(this);
         ResizeCollider();
-        Debug.Log("CAVALRY-09F30|Unit=" + UnitName + "|Action=DISMOUNT|HorseHolders=True");
+        Debug.Log("CAVALRY-09F30I|Unit=" + UnitName + "|Action=DISMOUNT|Animated=True|HorseHolders=True");
         return true;
     }
 
     public bool Remount()
     {
-        if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Dismounted || mountedRoot == null)
+        if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Dismounted ||
+            mountedRoot == null || PrototypeCavalryAnimation09F30I.IsTransitioning(this))
             return false;
 
         if (PlanarDistance(transform.position, mountedRoot.position) > RemountDistance)
@@ -274,17 +283,10 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         mountedRoot.localPosition = Vector3.zero;
         mountedRoot.localRotation = Quaternion.identity;
 
-        for (int i = 0; i < mountedRiders.Count; i++)
-            if (mountedRiders[i] != null)
-                mountedRiders[i].SetActive(true);
-
-        if (footRoot != null)
-            footRoot.gameObject.SetActive(false);
-
         Mode = PrototypeCavalryMode09F30.Mounted;
-        RefreshFormationInstant();
+        PrototypeCavalryAnimation09F30I.BeginRemount(this);
         ResizeCollider();
-        Debug.Log("CAVALRY-09F30|Unit=" + UnitName + "|Action=REMOUNT|Success=True");
+        Debug.Log("CAVALRY-09F30I|Unit=" + UnitName + "|Action=REMOUNT|Success=True|Animated=True");
         return true;
     }
 
@@ -725,6 +727,34 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         int lineRank = index / columnsLine;
         int lineCol = index % columnsLine;
         return new Vector3((lineCol - (columnsLine - 1) * 0.5f) * 0.78f, 0f, -lineRank * 0.90f);
+    }
+
+    private Vector2 CalculateFootprint(
+        PrototypeCavalryMode09F30 mode,
+        PrototypeCavalryFormation09F30 formation,
+        bool bridge)
+    {
+        int men = Mathf.Max(1, CurrentStrength);
+
+        if (mode == PrototypeCavalryMode09F30.Dismounted)
+            return formation == PrototypeCavalryFormation09F30.Line
+                ? new Vector2(18f, 5f)
+                : new Vector2(6f, 16f);
+
+        if (bridge)
+        {
+            int rows = Mathf.CeilToInt(men / 2f);
+            return new Vector2(5.2f, Mathf.Max(24f, rows * 2.15f + 3f));
+        }
+
+        if (formation == PrototypeCavalryFormation09F30.Line)
+        {
+            int columns = Mathf.CeilToInt(men / 4f);
+            return new Vector2(Mathf.Max(22f, columns * 1.70f + 3f), 10f);
+        }
+
+        int columnRows = Mathf.CeilToInt(men / 4f);
+        return new Vector2(8.2f, Mathf.Max(24f, columnRows * 2.15f + 3f));
     }
 
     private void ResizeCollider()
