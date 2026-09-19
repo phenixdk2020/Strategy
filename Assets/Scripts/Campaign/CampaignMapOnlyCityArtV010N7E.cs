@@ -96,7 +96,7 @@ public sealed class CampaignMapOnlyCityArtV010N7E : MonoBehaviour
         {
             Debug.LogWarning(
                 CampaignBuildInfo.LogTag +
-                "|CityArtN7C=Partial|Installed=" + count +
+                "|CityArtN7E=Partial|Installed=" + count +
                 "|Expected=" + CampaignDenmark1851Registry.Cities.Length);
             return;
         }
@@ -106,7 +106,7 @@ public sealed class CampaignMapOnlyCityArtV010N7E : MonoBehaviour
         Debug.Log(
             CampaignBuildInfo.LogTag +
             "|Way1=True|MapOnly=True|CountyBorders=False|CountySelection=False" +
-            "|CityArtN7C=True|Cities=" + count +
+            "|CityArtN7E=True|Cities=" + count +
             "|AssetSource=EMBEDDED_VALIDATED_PROPOSAL3" +
             "|TextureA=" + Describe(textureA) +
             "|TextureB=" + Describe(textureB) +
@@ -276,7 +276,7 @@ public sealed class CampaignMapOnlyCityArtV010N7E : MonoBehaviour
                 assetErrorLogged = true;
                 Debug.LogError(
                     CampaignBuildInfo.LogTag +
-                    "|CityArtN7C=False|Reason=EmbeddedProposal3DecodeFailed" +
+                    "|CityArtN7E=False|Reason=EmbeddedProposal3DecodeFailed" +
                     "|A=" + (textureA != null) +
                     "|B=" + (textureB != null) +
                     "|C=" + (textureC != null) +
@@ -435,7 +435,7 @@ public sealed class CampaignMapOnlyCityArtV010N7E : MonoBehaviour
         {
             Debug.LogError(
                 CampaignBuildInfo.LogTag +
-                "|CityArtN7C=False|Reason=NoTransparentShader");
+                "|CityArtN7E=False|Reason=NoTransparentShader");
             return null;
         }
 
