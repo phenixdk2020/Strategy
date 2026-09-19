@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30m TEST**  
-**Gameplay-baseline: v00.00.09f30m**  
+**Konsolideret ved v00.00.09f30n TEST**  
+**Gameplay-baseline: v00.00.09f30n**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30M. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30N. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -429,6 +429,19 @@ Fejlrettelser/hardening:
 - Mounted gait articulates horse legs/hooves, head, tail and rider instead of only whole-root rocking.
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
+
+### v00.00.09f30n — Regiment HUD Parity + Cavalry Screen/Opportunity AI + Anti-Cavalry Infantry Reaction
+- Brigade/Division bottom HUD now copies Regimental HQ panel/theme/header/AI-doctrine/info/button geometry and palette 1:1.
+- Higher active-order state uses caption marking rather than a separate blue/green/red HUD palette.
+- Cavalry autonomous attack flow changed from geometry-only flank charge to SCREEN → OPPORTUNITY → CHARGE.
+- Charge opportunity requires friendly local fire-contact on target or degraded target morale/cohesion.
+- Hostile infantry companies are cavalry route-avoidance bubbles; detour waypoints prevent pathing through enemy formations.
+- Detour waypoints are intermediate and resume toward the original screen/flank objective.
+- Higher-HQ cavalry attack staging also respects hostile infantry avoidance.
+- Prussian infantry can acquire cavalry inside selected fire-policy range and fire using normal reload/range/accuracy/smoke cadence.
+- Cavalry receives infantry-volley casualties and morale/cohesion shock; effective fire can trigger FALTER.
+- Mounted-threat/Square scoring made team-neutral and auto-Square threat timers refresh while cavalry remains nearby.
+- Destroyed cavalry is excluded from autonomous cavalry AI execution.
 
 ### v00.00.09f30m — Higher Command Delegation + Temporary Cavalry Attachment + Mission Visual Parity
 - Division AI cascades to Brigade/Regiment/Majors/company AI/cavalry AI.
