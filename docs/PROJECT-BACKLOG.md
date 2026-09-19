@@ -12,19 +12,18 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 - **IDÉ** — relevant mulighed, som skal undersøges eller besluttes før den bliver bindende design.
 - **RESEARCH** — historiske detaljer skal verificeres før endelige værdier/organisation låses.
 
-## Aktiv Campaign gate — v00.00.10n7c
+## Aktiv Campaign gate — v00.00.10n7d
 
-**Vej 1 fortsætter.** n7b viste en konkret Unity-importfejl (`A=False/B=False/C=True`). n7c erstatter derfor Resources-importen med indlejrede, validerede Proposal-3 assets og rydder gammel city-art før installation. Amt/county forbliver OFF.
+**Vej 1 fortsætter.** n7d er et stabiliseringshotfix oven på n7c og ændrer ikke city-art scale/style eller county scope.
 
 | ID | Status | Emne | Exit-kriterium |
 | --- | --- | --- | --- |
-| C-711 | AKTIV | Embedded Proposal-3 A/B/C | Alle tre tiers decodes fra indlejrede, validerede PNG-data; ingen Resources dependency. |
-| C-712 | AKTIV | 68/68 city art | `CityArtN7C=True|Cities=68` og A/B/C rapporterer 128x128. |
-| C-713 | AKTIV | City scale reset | A=0.95, B=0.72, C=0.52 giver tydelige, men geografisk underordnede city symbols. |
-| C-714 | AKTIV | Legacy visual purge | Alle ældre `CITY_ART_`, `CITY_ICON_`, `TownGround` og round markers er væk før n7c installeres. |
-| C-715 | AKTIV | Coastal anchoring | Canonical marker + bottom-center billboard + ground lift 0.12; ingen X/Z art offset. |
-| C-716 | BESLUTTET | County/Amt pause | Amt boundaries, click, highlight og info forbliver OFF til city-art QA er accepteret. |
-| C-717 | PLANLAGT | County Rebuild | Én authoritative historical polygon source skal drive visible line, click ownership og selection highlight. |
+| C-721 | AKTIV | Legacy city startup cleanup | n7a/n7b auto-create kun i egen buildversion; ingen stale n7b Proposal3TextureMissing-log i n7d. |
+| C-722 | AKTIV | City click → INFO | Direkte venstreklik på en by åbner INFO-panelet automatisk. |
+| C-723 | AKTIV | City info content | Panelet viser korrekt navn, tier, population 1850, ZoneId og heavy-military build rule. |
+| C-724 | BESLUTTET | Canonical city anchors | CITY-REG-01 WGS84 forbliver authoritative; grov Natural Earth 1:50m må ikke flytte city anchors. |
+| C-725 | PLANLAGT | High-resolution land/coast QA | Senere landmask/shoreline kan bruges til automatisk visual footprint QA for kystbyer. |
+| C-726 | BESLUTTET | County/Amt pause | County boundaries/click/highlight/info forbliver OFF til city-art QA er accepteret. |
 
 ## Aktiv gate — P0A v00.00.08
 
