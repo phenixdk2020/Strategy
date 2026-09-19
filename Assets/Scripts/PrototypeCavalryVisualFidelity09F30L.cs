@@ -6,7 +6,7 @@ using UnityEngine;
 // Cavalry visual-fidelity pass. Reuses the existing 1:1 F30E figures, reshapes their
 // horse/rider silhouette and adds a deliberately small close-detail layer.
 // Added details are LOD-hidden at higher camera altitude; tactical figure count remains 1:1.
-[DefaultExecutionOrder(43600)]
+[DefaultExecutionOrder(43350)]
 public sealed class PrototypeCavalryVisualFidelity09F30L : MonoBehaviour
 {
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
