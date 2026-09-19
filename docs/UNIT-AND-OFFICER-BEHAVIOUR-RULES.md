@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30i TEST  
+**Prototypebaseline:** v00.00.09f30j TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -659,6 +659,34 @@ Regler:
 
 ---
 
+## 35F. Dragon dismounted combat
+
+Når Dragon får SID AF:
+
+- hestene bliver ved dismount-positionen;
+- ca. 25% af styrken fungerer i den aktuelle prototype som horse holders;
+- ca. 75% danner combat group;
+- combat group går ca. 18m frem foran hestene;
+- combat group opstiller i to geledder;
+- fire cone må først være combat-ready når dismount-transition og fysisk reform er afsluttet;
+- valgt dismounted Dragon viser Close/Medium/Long cone;
+- nuværende TEST-ranges er 35/70/100m og +/-35deg;
+- nuværende TEST reload/ammo er 7s og 20 rounds/man;
+- automatic carbine fire kræver HOLD og gyldigt mål i cone;
+- STIG OP skal kalde combat group tilbage mod hestene visuelt før foot group skjules.
+
+25% horse-holder ratio, 18m spacing, ranges, reload og ammo er prototype-/QA-værdier og skal senere kunne drives af doctrine/weapon/scenario data.
+
+## 35G. Cavalry footprint anchor
+
+- Four-rank Line bruger center-anchor.
+- Four-abreast Column bruger front-anchor og strækker sig bagud.
+- Two-abreast bridge/defile column bruger front-anchor og strækker sig bagud.
+- rider slots, selection footprint, destination ghost og physical collider skal bruge samme anchor.
+- Et formationsskift må ikke efterlade halv formation uden for selection/destination footprint.
+
+---
+
 # DEL I — TESTUND-TAGELSER OG FREMTIDIGE REGLER
 
 ## 36. Midlertidige QA-regler
@@ -709,6 +737,13 @@ Når en ny version ændrer enheds- eller AI-adfærd, skal den testes mod følgen
 ---
 
 ## 39. Versionslog for dette regelsæt
+
+### v00.00.09f30j
+
+- Dragon SID AF opdeles i horse holders og fremrykket combat group.
+- Dismounted Dragon carbine cone/fire/reload/ammo/smoke tilføjet som TEST-baseline.
+- STIG OP skal have positional recall mod hestene.
+- Cavalry selection/ghost/collider anchor skal være identisk med formationens rider-slot anchor.
 
 ### v00.00.09f30i
 

@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30i TEST**  
-**Gameplay-baseline: v00.00.09f30i**  
+**Konsolideret ved v00.00.09f30j TEST**  
+**Gameplay-baseline: v00.00.09f30j**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30I. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderer cavalry formation, bridge, HUD, semantic zoom og selection.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30J. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -393,9 +393,23 @@ Fejlrettelser/hardening:
 - Dragon SID AF/STIG OP procedural transition.
 - Mounted move/charge procedural gait.
 
+### v00.00.09f30j — Dismounted Dragon Fire + Horse Holders + Formation Anchor Fix
+Implementeret:
+- Dragon horse-holder/combat split (~25/75 prototypeværdi).
+- Combat group ca. 18m foran hestene i to geledder.
+- Dismounted 35/70/100m, +/-35deg fire cones.
+- HOLD-only automatic carbine target/fire.
+- TEST reload/ammo og directional smoke.
+- STIG OP foot recall mod hestene.
+
+Fejlrettelser/hardening:
+- Column/bridge selection box og destination ghost bruger nu front-anchor i stedet for matematisk center.
+- BoxCollider og F30E collider maintenance følger samme anchor.
+- F30I remount animation fik faktisk positional recall i stedet for kun scale-out.
+
 ## 7. Samlet fejlrettelsesregister
 
-De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30H:
+De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/hardening i lineage frem til F30J:
 
 1. Unity compile CS0136 local-variable collision.
 2. Deprecated/obsolete object lookup cleanup.
@@ -454,10 +468,16 @@ De vigtigste kendte fejl, som har fået en konkret implementeret rettelse/harden
 55. Dragon SID AF/STIG OP skiftede visuals instant uden overgang.
 56. Mounted cavalry gled uden nogen riding/gait animation.
 57. OOB 452 px var for smal til cavalry-navne og voksende support hierarchy.
+58. Mounted Column/bridge selection box var center-anchored selv om formation slots var front-anchored.
+59. Destination ghost brugte samme forkerte center-anchor og viste kun ca. halvdelen af column footprint korrekt.
+60. Cavalry BoxCollider center fulgte ikke det visuelle formation-anchor.
+61. Dragon SID AF manglede horse-holder/combat-group separation og reel firing line foran hestene.
+62. Dismounted Dragon havde ingen fire cone, ammunition, reload, target fire eller smoke.
+63. F30I STIG OP skalerede foot figures ud, men kaldte dem ikke fysisk tilbage mod hestene.
 
-## 8. Status ved F30I
+## 8. Status ved F30J
 
-F30I er aktiv TEST-baseline. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
+F30J er aktiv TEST-baseline. Runtime bygger videre på F30E 1:1 cavalry og F30C/F30G command/attachment, men ændrer cavalry formation/bridge presentation og hardener HUD/semantic/selection.
 
 Aktuel implementeret tactical scope:
 - 1:1 infantry og cavalry tactical visuals.
@@ -467,12 +487,12 @@ Aktuel implementeret tactical scope:
 - OOB scroll + drag/drop.
 - Manual override på alle implementerede control-lag.
 - Infantry Line/Column/Square, fire policy, charge/melee, under-fire, withdrawal infrastructure.
-- Cavalry 4-rank Line/Charge, 4-abreast march Column, 2-abreast bridge/defile, fysisk reform, mounted move/charge, Dragon dismount/remount og flank/rear Officer AI.
+- Cavalry 4-rank Line/Charge, 4-abreast march Column, 2-abreast bridge/defile, fysisk reform, mounted move/charge, Dragon dismount/remount, horse-holder/combat split, dismounted carbine fire og flank/rear Officer AI.
 - Semantic zoom/NATO inklusive cavalry I/CAV og Brigade/Division X/XX HQ counters, tactical map, crop concealment og terrain/navigation hardening.
 
 Ikke færdigt endnu:
 - Artillery/kanonbatteri.
-- Mounted/dismounted cavalry firearms combat.
+- Mounted cavalry firearms combat.
 - Defensive volley / charge momentum / cavalry casualties.
 - Persistent cavalry melee/horse casualties.
 - Echelon Left/Right.
