@@ -855,46 +855,50 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             : "1. BRIGADE | BRIGADECHEF | HØJERE KOMMANDO";
         GUI.Box(new Rect(5f, panel.y + 3f, panel.width - 10f, 17f), title, headerStyle);
 
-        float infoWidth = Mathf.Clamp(panel.width * 0.30f, 320f, 470f);
-        float commandX = infoWidth + 12f;
-        float commandWidth = Mathf.Max(620f, panel.width - commandX - 8f);
-        float y = panel.y + 22f;
+        // F30M: same three-zone geometry as the Regimental HUD.
+        float infoWidth = Mathf.Clamp(panel.width * 0.24f, 280f, 350f);
+        float subordinateWidth = Mathf.Clamp(panel.width * 0.31f, 370f, 500f);
+        float commandX = infoWidth + 8f;
+        float subordinateX = panel.width - subordinateWidth - 6f;
+        float commandWidth = Mathf.Max(400f, subordinateX - commandX - 7f);
+        float y = panel.y + 21f;
 
-        GUI.Label(new Rect(8f, y, infoWidth - 14f, 11f), "ENHEDSINFO / AI", sectionStyle);
+        GUI.Label(new Rect(7f, y, infoWidth - 12f, 10f), "ENHEDSINFO / AI", sectionStyle);
         string mission = division ? divisionMission.ToString().ToUpperInvariant() : brigadeMission.ToString().ToUpperInvariant();
         if (mission == MajorOrder09F18.None.ToString().ToUpperInvariant()) mission = "INGEN AKTIV ORDRE";
         bool aiOn = GetAIEnabled(SelectedLevel);
         OfficerAIDoctrine doctrine = GetDoctrine(SelectedLevel);
+        int strength = AggregateHigherStrength(SelectedLevel);
 
-        GUI.Label(new Rect(10f, y + 13f, infoWidth - 18f, 13f), "Mission: " + mission, labelStyle);
-        GUI.Label(new Rect(10f, y + 26f, infoWidth - 18f, 13f),
-            division ? "Under: 1. Brigade | Assets via Brigade" : "Under: 1. Regiment | Gardehusar | Dragoner",
-            labelStyle);
+        GUI.Label(new Rect(9f, y + 10f, infoWidth - 14f, 13f),
+            "Mænd " + strength + " | Mission " + mission, labelStyle);
+        GUI.Label(new Rect(9f, y + 23f, infoWidth - 14f, 13f),
+            division ? "Under: 1. Brigade" : "Under: 1. Regiment + støtte", labelStyle);
 
         float aiY = y + 41f;
         float aiGap = 3f;
-        float aiW = (infoWidth - 20f - aiGap * 3f) / 4f;
-        if (GUI.Button(new Rect(10f, aiY, aiW, 20f), aiOn ? "AI ON" : "AI OFF",
+        float aiW = (infoWidth - 18f - aiGap * 3f) / 4f;
+        if (GUI.Button(new Rect(9f, aiY, aiW, 20f), aiOn ? "AI ON" : "AI OFF",
                 aiOn ? activeGreenStyle : dangerStyle))
             ToggleAI(SelectedLevel);
-        if (GUI.Button(new Rect(10f + (aiW + aiGap), aiY, aiW, 20f),
+        if (GUI.Button(new Rect(9f + (aiW + aiGap), aiY, aiW, 20f),
                 doctrine == OfficerAIDoctrine.Defensive ? "[DEF]" : "DEF",
                 doctrine == OfficerAIDoctrine.Defensive ? activeBlueStyle : buttonStyle))
             SetDoctrine(SelectedLevel, OfficerAIDoctrine.Defensive);
-        if (GUI.Button(new Rect(10f + (aiW + aiGap) * 2f, aiY, aiW, 20f),
+        if (GUI.Button(new Rect(9f + (aiW + aiGap) * 2f, aiY, aiW, 20f),
                 doctrine == OfficerAIDoctrine.Balanced ? "[BAL]" : "BAL",
                 doctrine == OfficerAIDoctrine.Balanced ? activeBlueStyle : buttonStyle))
             SetDoctrine(SelectedLevel, OfficerAIDoctrine.Balanced);
-        if (GUI.Button(new Rect(10f + (aiW + aiGap) * 3f, aiY, aiW, 20f),
+        if (GUI.Button(new Rect(9f + (aiW + aiGap) * 3f, aiY, aiW, 20f),
                 doctrine == OfficerAIDoctrine.Offensive ? "[OFF]" : "OFF",
                 doctrine == OfficerAIDoctrine.Offensive ? activeBlueStyle : buttonStyle))
             SetDoctrine(SelectedLevel, OfficerAIDoctrine.Offensive);
 
-        GUI.Label(new Rect(commandX, y, commandWidth, 11f), "MISSIONSORDRER", sectionStyle);
+        GUI.Label(new Rect(commandX, y, commandWidth, 10f), "ORDRER / MISSION", sectionStyle);
         float gap = 4f;
-        float orderW = (commandWidth * 0.67f - gap * 2f) / 3f;
-        float row1 = y + 13f;
-        float row2 = y + 38f;
+        float orderW = (commandWidth - gap * 2f) / 3f;
+        float row1 = y + 11f;
+        float row2 = y + 36f;
 
         DrawOrderButton(new Rect(commandX, row1, orderW, 21f), "ANGRIB HER", MajorOrder09F18.AttackHere);
         DrawOrderButton(new Rect(commandX + orderW + gap, row1, orderW, 21f), "FORSVAR HER", MajorOrder09F18.DefendHere);
@@ -902,21 +906,50 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         DrawOrderButton(new Rect(commandX, row2, orderW, 21f), "TILBAGETRÆK", MajorOrder09F18.WithdrawHere);
         DrawOrderButton(new Rect(commandX + orderW + gap, row2, orderW, 21f), "SAML", MajorOrder09F18.AssembleHere);
 
-        if (GUI.Button(new Rect(commandX + (orderW + gap) * 2f, row2, orderW, 21f), "STOP / HOLD", buttonStyle))
+        bool holdActive = HasHigherOrderActive(SelectedLevel, MajorOrder09F18.HoldPosition);
+        if (GUI.Button(new Rect(commandX + (orderW + gap) * 2f, row2, orderW, 21f),
+                "STOP / HOLD", holdActive ? activeBlueStyle : buttonStyle))
         {
-            Vector3 center = regimental != null && regimental.HqRoot != null ? regimental.HqRoot.transform.position : Vector3.zero;
+            Vector3 center = regimental != null && regimental.HqRoot != null
+                ? regimental.HqRoot.transform.position
+                : Vector3.zero;
             CommitHigherOrder(SelectedLevel, MajorOrder09F18.HoldPosition, center);
             pendingOrder = MajorOrder09F18.None;
             pendingLevel = PrototypeHigherCommandLevel09F30B.None;
         }
 
-        if (!division && cavalry != null)
+        GUI.Label(new Rect(subordinateX, y, subordinateWidth - 4f, 10f),
+            "UNDERLAGTE / STATUS / ATTACHMENT", sectionStyle);
+
+        string regAi = regimental != null && regimental.AIEnabled ? "ON" : "OFF";
+        string batA = hierarchy != null && hierarchy.GetBattalionAIEnabled(0) ? "ON" : "OFF";
+        string batB = hierarchy != null && hierarchy.GetBattalionAIEnabled(1) ? "ON" : "OFF";
+        GUI.Label(new Rect(subordinateX + 2f, y + 11f, subordinateWidth - 7f, 13f),
+            "1. REGIMENT AI " + regAi + " | MAJOR A " + batA + " | MAJOR B " + batB, labelStyle);
+
+        if (cavalry != null)
         {
-            float attachX = commandX + commandWidth * 0.69f;
-            float attachW = commandWidth * 0.31f - 5f;
-            GUI.Label(new Rect(attachX, y, attachW, 11f), "ATTACHMENT", sectionStyle);
-            DrawAttachmentButton(cavalry.Gardehusar, new Rect(attachX, row1, attachW, 21f));
-            DrawAttachmentButton(cavalry.Dragon, new Rect(attachX, row2, attachW, 21f));
+            PrototypeCavalryOfficerAI09F30C cavAi = PrototypeCavalryOfficerAI09F30C.Instance;
+            string gardeAi = cavAi != null && cavalry.Gardehusar != null && cavAi.IsAIEnabled(cavalry.Gardehusar) ? "ON" : "OFF";
+            string dragonAi = cavAi != null && cavalry.Dragon != null && cavAi.IsAIEnabled(cavalry.Dragon) ? "ON" : "OFF";
+            GUI.Label(new Rect(subordinateX + 2f, y + 24f, subordinateWidth - 7f, 13f),
+                "GARDEHUSAR AI " + gardeAi + " | DRAGON AI " + dragonAi, labelStyle);
+
+            if (!division)
+            {
+                float attachGap = 3f;
+                float attachW = (subordinateWidth - 7f - attachGap) / 2f;
+                DrawAttachmentButton(cavalry.Gardehusar,
+                    new Rect(subordinateX + 2f, y + 42f, attachW, 20f));
+                DrawAttachmentButton(cavalry.Dragon,
+                    new Rect(subordinateX + 2f + attachW + attachGap, y + 42f, attachW, 20f));
+            }
+            else
+            {
+                GUI.Label(new Rect(subordinateX + 2f, y + 42f, subordinateWidth - 7f, 13f),
+                    "Brigade AI " + (BrigadeAIEnabled ? "ON" : "OFF") +
+                    " | CAV via command-parent", labelStyle);
+            }
         }
 
         Event current = Event.current;
@@ -924,6 +957,32 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             (current.type == EventType.MouseDown || current.type == EventType.MouseUp ||
              current.type == EventType.MouseDrag || current.type == EventType.ScrollWheel))
             current.Use();
+    }
+
+    private int AggregateHigherStrength(PrototypeHigherCommandLevel09F30B level)
+    {
+        int total = 0;
+        if (hierarchy != null && hierarchy.Installed)
+        {
+            for (int b = 0; b < hierarchy.BattalionCount; b++)
+            {
+                IReadOnlyList<Regiment> companies = hierarchy.GetCompanies(b);
+                if (companies == null)
+                    continue;
+                for (int i = 0; i < companies.Count; i++)
+                    if (companies[i] != null)
+                        total += companies[i].CurrentStrength;
+            }
+        }
+
+        if (cavalry != null)
+        {
+            if (cavalry.Gardehusar != null && IsCavalrySubordinateToLevel(cavalry.Gardehusar, level))
+                total += cavalry.Gardehusar.CurrentStrength;
+            if (cavalry.Dragon != null && IsCavalrySubordinateToLevel(cavalry.Dragon, level))
+                total += cavalry.Dragon.CurrentStrength;
+        }
+        return total;
     }
 
     private void DrawOrderButton(Rect rect, string label, MajorOrder09F18 order)
