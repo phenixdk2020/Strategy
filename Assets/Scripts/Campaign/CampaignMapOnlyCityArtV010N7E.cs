@@ -118,6 +118,7 @@ public sealed class CampaignMapOnlyCityArtV010N7E : MonoBehaviour
             "|ScaleC=" + ScaleC.ToString("0.00") +
             "|FallbackStyle=False|ResourcesDependency=False" +
             "|LegacyCityPurged=True|RoundCityRenderer=False|GreenTownGround=False" +
+            "|CoastalOffsetPass=2" +
             "|VisualOffsetCities=8|OffsetIds=SAEBY,HELSINGOR,NYKOBING_SJ,BOGENSE,ASSENS,STEGE,PRAESTO,NYKOBING_MORS");
     }
 
