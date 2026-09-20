@@ -871,6 +871,14 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
     private void HandleWorldSelection()
     {
+        PrototypeOfficerFacingOrder09F29G facingOrder =
+            PrototypeOfficerFacingOrder09F29G.Instance;
+
+        // F30S: placing/dragging an order objective must not be interpreted as
+        // clicking empty ground and clearing the currently selected HQ.
+        if (facingOrder != null && facingOrder.HasPendingOrder)
+            return;
+
         if (cam == null || pendingOrder != MajorOrder09F18.None || !Input.GetMouseButtonDown(0))
             return;
         if (IsPointerOverUi(Input.mousePosition))
