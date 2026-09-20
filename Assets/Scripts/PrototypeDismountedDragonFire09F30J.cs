@@ -42,7 +42,7 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
     private void Awake()
     {
         instance = this;
-        Debug.Log("DRAGON-FIRE-09F30R|Installed=True|HorseHolders=25pct|CombatGroup=75pct|" +
+        Debug.Log("DRAGON-FIRE-09F30S|Installed=True|HorseHolders=25pct|CombatGroup=75pct|" +
                   "Forward=18m|Ranges=35/70/100|FirePolicies=HOLD/CLOSE/MED/LONG|" +
                   "Default=MED|Cone=70deg|Reload=7s");
     }
@@ -87,7 +87,7 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         if (policy == RegimentFirePolicy.HoldFire)
             state.Target = null;
 
-        Debug.Log("DRAGON-FIRE-09F30R|Unit=" + unit.UnitName +
+        Debug.Log("DRAGON-FIRE-09F30S|Unit=" + unit.UnitName +
                   "|FirePolicy=" + FirePolicyLabel(policy) +
                   "|Range=" + GetPolicyRange(policy).ToString("0"));
     }
@@ -265,16 +265,22 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         // engagement band materially stronger. HOLD leaves all as reference only.
         SetConeEmphasis(
             state.Close,
-            state.FirePolicy == RegimentFirePolicy.CloseRange);
+            state.FirePolicy == RegimentFirePolicy.CloseRange,
+            0.15f);
         SetConeEmphasis(
             state.Medium,
-            state.FirePolicy == RegimentFirePolicy.MediumRange);
+            state.FirePolicy == RegimentFirePolicy.MediumRange,
+            0.18f);
         SetConeEmphasis(
             state.Long,
-            state.FirePolicy == RegimentFirePolicy.LongRange);
+            state.FirePolicy == RegimentFirePolicy.LongRange,
+            0.22f);
     }
 
-    private static void SetConeEmphasis(LineRenderer line, bool active)
+    private static void SetConeEmphasis(
+        LineRenderer line,
+        bool active,
+        float baseWidth)
     {
         if (line == null)
             return;
@@ -282,36 +288,78 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         Color baseColor = line.sharedMaterial != null
             ? line.sharedMaterial.color
             : line.startColor;
-        baseColor.a = active ? 0.96f : 0.24f;
+
+        baseColor.a = active ? 1.00f : 0.22f;
         line.startColor = baseColor;
         line.endColor = baseColor;
+        line.widthMultiplier = active
+            ? baseWidth * 1.55f
+            : baseWidth * 0.58f;
     }
 
-    private static void BuildFan(PrototypeCavalryUnit09F30 dragon, LineRenderer line, float range)
+    private static void BuildFan(
+        PrototypeCavalryUnit09F30 dragon,
+        LineRenderer line,
+        float range)
     {
         Vector3 forward = dragon.transform.forward;
         forward.y = 0f;
-        if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
         forward.Normalize();
+
         Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+        if (right.sqrMagnitude < 0.01f)
+            right = Vector3.right;
 
         Vector3 center = dragon.GetDismountedCombatCenterWorld();
         int combatMen = dragon.GetDismountedCombatStrength();
         int columns = Mathf.CeilToInt(combatMen / 2f);
         float width = Mathf.Max(6f, (columns - 1) * 0.78f);
-        Vector3 leftFront = center - right * width * 0.5f + forward * 0.65f;
-        Vector3 rightFront = center + right * width * 0.5f + forward * 0.65f;
+        float halfWidth = width * 0.5f;
 
-        List<Vector3> points = new List<Vector3>(ArcSegments + 4);
+        // F30S: build the two side rays explicitly from mirrored endpoints.
+        // The old fan interpolated muzzle position and ray angle together, which
+        // could make one side look kinked/skewed on sloped terrain.
+        Vector3 baseCenter = center + forward * 0.65f;
+        Vector3 leftFront = baseCenter - right * halfWidth;
+        Vector3 rightFront = baseCenter + right * halfWidth;
+
+        float halfArcRad = HalfArcDegrees * Mathf.Deg2Rad;
+        Vector3 leftDir =
+            (forward * Mathf.Cos(halfArcRad) -
+             right * Mathf.Sin(halfArcRad)).normalized;
+        Vector3 rightDir =
+            (forward * Mathf.Cos(halfArcRad) +
+             right * Mathf.Sin(halfArcRad)).normalized;
+
+        Vector3 leftFar = leftFront + leftDir * range;
+        Vector3 rightFar = rightFront + rightDir * range;
+
+        List<Vector3> points = new List<Vector3>(ArcSegments + 5);
         points.Add(Terrain(leftFront));
-        for (int i = 0; i <= ArcSegments; i++)
+        points.Add(Terrain(leftFar));
+
+        // Far edge is generated symmetrically between the two explicit side rays.
+        for (int i = 1; i < ArcSegments; i++)
         {
             float p = i / (float)ArcSegments;
-            Vector3 muzzle = Vector3.Lerp(leftFront, rightFront, p);
-            float angle = Mathf.Lerp(-HalfArcDegrees, HalfArcDegrees, p) * Mathf.Deg2Rad;
-            Vector3 dir = forward * Mathf.Cos(angle) + right * Mathf.Sin(angle);
-            points.Add(Terrain(muzzle + dir * range));
+            float angle =
+                Mathf.Lerp(-HalfArcDegrees, HalfArcDegrees, p) *
+                Mathf.Deg2Rad;
+            Vector3 dir =
+                forward * Mathf.Cos(angle) +
+                right * Mathf.Sin(angle);
+
+            float lateralBase =
+                Mathf.Lerp(-halfWidth, halfWidth, p);
+            Vector3 muzzle =
+                baseCenter + right * lateralBase;
+
+            points.Add(Terrain(muzzle + dir.normalized * range));
         }
+
+        points.Add(Terrain(rightFar));
         points.Add(Terrain(rightFront));
         points.Add(Terrain(leftFront));
 
