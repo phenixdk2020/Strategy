@@ -78,6 +78,9 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     public bool HasExplicitFinalFacing => hasExplicitFinalFacing;
     public bool AutoMarchColumnActive => autoMarchColumnActive;
     public bool ManualFormationOverride => manualFormationOverride;
+    public bool IsReturningToHorses => remountRequested;
+    public Vector3 DismountAnchorPosition =>
+        hasDismountAnchor ? dismountAnchorPosition : transform.position;
     public PrototypeCavalryFormation09F30 PlannedDestinationFormation =>
         bridgePhase != BridgePhase.Direct ? formationBeforeBridge : Formation;
     public Vector3 CurrentSteeringTarget => hasDestination ? ResolveSteeringTarget() : transform.position;
@@ -127,7 +130,15 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         int holders = GetHorseHolderStrength();
         int rows = Mathf.CeilToInt(holders / 8f);
         float centerZ = -5.0f - Mathf.Max(0, rows - 1) * 0.92f * 0.5f;
-        return transform.TransformPoint(new Vector3(0f, 0f, centerZ));
+        Vector3 local = new Vector3(0f, 0f, centerZ);
+
+        if (!hasDismountAnchor)
+            return transform.TransformPoint(local);
+
+        Vector3 world =
+            dismountAnchorPosition +
+            dismountAnchorRotation * local;
+        return Ground(world);
     }
 
     public Vector2 GetDismountedHorseHolderFootprintSize()
@@ -179,12 +190,20 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     private const float MountedReformSpeed = 8.0f;
     private const float FootReformSpeed = 5.0f;
     private const float FormationReadyTolerance = 0.55f;
-    private const float RemountDistance = 18f;
+    private const float RemountGatherDistance = 3.0f;
     private const float AutoMarchColumnEnterDistance = 140f;
     private const float AutoMarchLineDistance = 90f;
 
     private bool autoMarchColumnActive;
     private bool manualFormationOverride;
+
+    // F30S dismounted-Dragon split state.
+    // The unit root represents the mobile ~75% combat group after dismount.
+    // Horses and the ~25% horse-holder element remain anchored at the dismount point.
+    private bool hasDismountAnchor;
+    private Vector3 dismountAnchorPosition;
+    private Quaternion dismountAnchorRotation = Quaternion.identity;
+    private bool remountRequested;
 
     public void Initialize(
         string unitName,
@@ -247,6 +266,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
         UpdateMountedMoveFormationPolicy();
         UpdateMovement();
+        UpdateRemountRequest();
         UpdateVisualFormation();
 
         if (Action == PrototypeCavalryAction09F30.Hold)
@@ -318,6 +338,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     public void OrderMove(Vector3 worldPoint, Vector3 requestedFinalFacing, bool explicitFacing)
     {
+        remountRequested = false;
         chargeTarget = null;
         chargeResolved = false;
         Action = PrototypeCavalryAction09F30.Move;
@@ -360,6 +381,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     public void OrderHold()
     {
+        remountRequested = false;
         hasDestination = false;
         chargeTarget = null;
         chargeResolved = false;
@@ -458,11 +480,20 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     public bool Dismount()
     {
-        if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Mounted ||
+        if (Kind != PrototypeCavalryKind09F30.Dragon ||
+            Mode != PrototypeCavalryMode09F30.Mounted ||
             PrototypeCavalryAnimation09F30I.IsTransitioning(this))
             return false;
 
         OrderHold();
+
+        // Freeze the horse park and horse-holder element at the exact dismount
+        // location/orientation before the mobile combat group is allowed to move.
+        dismountAnchorPosition = Ground(transform.position);
+        dismountAnchorRotation = transform.rotation;
+        hasDismountAnchor = true;
+        remountRequested = false;
+
         Mode = PrototypeCavalryMode09F30.Dismounted;
 
         if (mountedRoot != null)
@@ -473,36 +504,106 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
         PrototypeCavalryAnimation09F30I.BeginDismount(this);
         ResizeCollider();
-        Debug.Log("CAVALRY-09F30I|Unit=" + UnitName + "|Action=DISMOUNT|Animated=True|HorseHolders=True");
+
+        Debug.Log(
+            "CAVALRY-09F30S|Unit=" + UnitName +
+            "|Action=DISMOUNT|Animated=True|HorseParkAnchored=True|" +
+            "CombatGroup=75pct|HorseHolders=25pct");
         return true;
     }
 
     public bool Remount()
     {
-        if (Kind != PrototypeCavalryKind09F30.Dragon || Mode != PrototypeCavalryMode09F30.Dismounted ||
-            mountedRoot == null || PrototypeCavalryAnimation09F30I.IsTransitioning(this))
+        if (Kind != PrototypeCavalryKind09F30.Dragon ||
+            Mode != PrototypeCavalryMode09F30.Dismounted ||
+            mountedRoot == null ||
+            PrototypeCavalryAnimation09F30I.IsTransitioning(this))
             return false;
 
-        if (PlanarDistance(transform.position, mountedRoot.position) > RemountDistance)
+        float distance =
+            PlanarDistance(transform.position, mountedRoot.position);
+
+        if (distance > RemountGatherDistance)
         {
-            Debug.LogWarning(
-                "CAVALRY-09F30|Unit=" + UnitName +
-                "|Action=REMOUNT|Success=False|Reason=TooFarFromHorses|Distance=" +
-                PlanarDistance(transform.position, mountedRoot.position).ToString("0.0"));
-            return false;
+            BeginReturnToHorses();
+            return true;
         }
 
-        OrderHold();
+        return CompleteRemount();
+    }
+
+    private void BeginReturnToHorses()
+    {
+        if (mountedRoot == null)
+            return;
+
+        remountRequested = true;
+        chargeTarget = null;
+        chargeResolved = false;
+        Action = PrototypeCavalryAction09F30.Move;
+        hasExplicitFinalFacing = false;
+        manualFormationOverride = false;
+        autoMarchColumnActive = false;
+
+        BeginRoute(Ground(mountedRoot.position));
+
+        Debug.Log(
+            "CAVALRY-09F30S|Unit=" + UnitName +
+            "|Action=RETURN_TO_HORSES|Distance=" +
+            PlanarDistance(transform.position, mountedRoot.position).ToString("0.0") +
+            "|AutoRemount=True");
+    }
+
+    private void UpdateRemountRequest()
+    {
+        if (!remountRequested ||
+            Mode != PrototypeCavalryMode09F30.Dismounted ||
+            mountedRoot == null ||
+            PrototypeCavalryAnimation09F30I.IsTransitioning(this))
+            return;
+
+        float distance =
+            PlanarDistance(transform.position, mountedRoot.position);
+
+        if (distance > RemountGatherDistance)
+            return;
+
+        CompleteRemount();
+    }
+
+    private bool CompleteRemount()
+    {
+        if (mountedRoot == null ||
+            Mode != PrototypeCavalryMode09F30.Dismounted)
+            return false;
+
+        remountRequested = false;
+        hasDestination = false;
+        chargeTarget = null;
+        chargeResolved = false;
+        bridgePhase = BridgePhase.Direct;
+        autoMarchColumnActive = false;
+        manualFormationOverride = false;
+        hasExplicitFinalFacing = false;
+        Action = PrototypeCavalryAction09F30.Hold;
+
         transform.position = Ground(mountedRoot.position);
         transform.rotation = mountedRoot.rotation;
+
         mountedRoot.SetParent(transform, true);
         mountedRoot.localPosition = Vector3.zero;
         mountedRoot.localRotation = Quaternion.identity;
 
         Mode = PrototypeCavalryMode09F30.Mounted;
+        hasDismountAnchor = false;
+
         PrototypeCavalryAnimation09F30I.BeginRemount(this);
         ResizeCollider();
-        Debug.Log("CAVALRY-09F30I|Unit=" + UnitName + "|Action=REMOUNT|Success=True|Animated=True");
+
+        Debug.Log(
+            "CAVALRY-09F30S|Unit=" + UnitName +
+            "|Action=REMOUNT|Success=True|Animated=True|" +
+            "CombatGroupReturned=True|HorseHoldersRejoined=True");
         return true;
     }
 
@@ -961,13 +1062,28 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
                 if (footFigures[i] == null)
                     continue;
 
-                Vector3 target = FootPosition(i, footFigures.Count);
-                footFigures[i].localPosition = Vector3.MoveTowards(
-                    footFigures[i].localPosition, target, FootReformSpeed * Time.deltaTime);
-                footFigures[i].localRotation = Quaternion.RotateTowards(
-                    footFigures[i].localRotation, Quaternion.identity, 120f * Time.deltaTime);
+                bool horseHolder = IsHorseHolderVisual(i);
+                Vector3 target = horseHolder
+                    ? HorseHolderAnchoredLocalPosition(i)
+                    : FootPosition(i, footFigures.Count);
 
-                if (Vector3.Distance(footFigures[i].localPosition, target) <= FormationReadyTolerance)
+                footFigures[i].localPosition = Vector3.MoveTowards(
+                    footFigures[i].localPosition,
+                    target,
+                    FootReformSpeed * Time.deltaTime);
+
+                Quaternion targetLocalRotation = horseHolder
+                    ? HorseHolderAnchoredLocalRotation()
+                    : Quaternion.identity;
+
+                footFigures[i].localRotation = Quaternion.RotateTowards(
+                    footFigures[i].localRotation,
+                    targetLocalRotation,
+                    120f * Time.deltaTime);
+
+                if (Vector3.Distance(
+                    footFigures[i].localPosition,
+                    target) <= FormationReadyTolerance)
                     ready++;
             }
         }
@@ -979,9 +1095,23 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     private void RefreshFormationInstant()
     {
         for (int i = 0; i < mountedFigures.Count; i++)
-            mountedFigures[i].localPosition = MountedPosition(i, mountedFigures.Count);
+            mountedFigures[i].localPosition =
+                MountedPosition(i, mountedFigures.Count);
+
         for (int i = 0; i < footFigures.Count; i++)
-            footFigures[i].localPosition = FootPosition(i, footFigures.Count);
+        {
+            if (footFigures[i] == null)
+                continue;
+
+            footFigures[i].localPosition =
+                IsHorseHolderVisual(i)
+                    ? HorseHolderAnchoredLocalPosition(i)
+                    : FootPosition(i, footFigures.Count);
+
+            if (IsHorseHolderVisual(i))
+                footFigures[i].localRotation =
+                    HorseHolderAnchoredLocalRotation();
+        }
     }
 
     private Vector3 MountedPosition(int index, int total)
@@ -1017,6 +1147,48 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             -(lineRank - (ranks - 1) * 0.5f) * 1.75f);
     }
 
+    private bool IsHorseHolderVisual(int index)
+    {
+        return Kind == PrototypeCavalryKind09F30.Dragon &&
+               Mode == PrototypeCavalryMode09F30.Dismounted &&
+               (index % 4) == 0;
+    }
+
+    private Vector3 HorseHolderAnchorSlot(int index)
+    {
+        int holderIndex = Mathf.Max(0, index / 4);
+        int holderColumns = 8;
+        int holderRank = holderIndex / holderColumns;
+        int holderCol = holderIndex % holderColumns;
+
+        return new Vector3(
+            (holderCol - (holderColumns - 1) * 0.5f) * 0.82f,
+            0f,
+            -5.0f - holderRank * 0.92f);
+    }
+
+    private Vector3 HorseHolderAnchoredLocalPosition(int index)
+    {
+        if (footRoot == null || !hasDismountAnchor)
+            return HorseHolderAnchorSlot(index);
+
+        Vector3 world =
+            dismountAnchorPosition +
+            dismountAnchorRotation * HorseHolderAnchorSlot(index);
+        world = Ground(world);
+
+        return footRoot.InverseTransformPoint(world);
+    }
+
+    private Quaternion HorseHolderAnchoredLocalRotation()
+    {
+        if (footRoot == null || !hasDismountAnchor)
+            return Quaternion.identity;
+
+        return Quaternion.Inverse(footRoot.rotation) *
+               dismountAnchorRotation;
+    }
+
     private Vector3 FootPosition(int index, int total)
     {
         // F30J Dragon dismount doctrine:
@@ -1026,16 +1198,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         {
             bool horseHolder = (index % 4) == 0;
             if (horseHolder)
-            {
-                int holderIndex = index / 4;
-                int holderColumns = 8;
-                int holderRank = holderIndex / holderColumns;
-                int holderCol = holderIndex % holderColumns;
-                return new Vector3(
-                    (holderCol - (holderColumns - 1) * 0.5f) * 0.82f,
-                    0f,
-                    -5.0f - holderRank * 0.92f);
-            }
+                return HorseHolderAnchorSlot(index);
 
             int combatIndex = index - (index / 4) - 1;
             if (combatIndex < 0) combatIndex = 0;
@@ -1123,9 +1286,10 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
         if (Mode == PrototypeCavalryMode09F30.Dismounted)
         {
-            Vector2 fp = CalculateFootprint(Mode, Formation, false);
-            unitCollider.size = new Vector3(fp.x, 2.4f, fp.y);
-            unitCollider.center = new Vector3(0f, 1.2f, 6.5f);
+            Vector2 combat = GetDismountedCombatFootprintSize();
+            unitCollider.size =
+                new Vector3(combat.x, 2.4f, Mathf.Max(4.5f, combat.y + 1.5f));
+            unitCollider.center = new Vector3(0f, 1.2f, 17.54f);
             return;
         }
 
