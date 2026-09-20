@@ -825,56 +825,26 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
         if (battalion == null || !battalion.HasLastOrder || battalion.LastOrder != order)
             return false;
 
-        // Standing missions remain active after arrival until explicitly replaced.
-        if (order == MajorOrder09F18.HoldPosition ||
-            order == MajorOrder09F18.DefendHere)
-        {
-            for (int i = 0; i < battalion.Companies.Count; i++)
-            {
-                Regiment unit = battalion.Companies[i];
-                if (unit != null && !unit.IsRouted && unit.CurrentStrength > 0)
-                    return true;
-            }
-            return false;
-        }
+        // F30S HUD semantic:
+        // Blue means the order is still being physically executed. It does NOT
+        // mean "this is the last standing intent". Once no subordinate is moving
+        // and the Major has reached its follow position, the button returns red.
+        if (battalion.HasHqGoal)
+            return true;
 
         foreach (KeyValuePair<Regiment, CompanyMission> pair in battalion.Missions)
         {
             Regiment unit = pair.Key;
             CompanyMission mission = pair.Value;
-            if (unit == null || mission == null || unit.IsRouted || unit.CurrentStrength <= 0)
+            if (unit == null || mission == null ||
+                unit.IsRouted || unit.CurrentStrength <= 0)
                 continue;
             if (mission.Order != order)
                 continue;
 
             if (!mission.Arrived)
                 return true;
-
-            // Attack stays active while companies are still in local combat even
-            // after they have reached their planned attack slots.
-            if (order == MajorOrder09F18.AttackHere && IsCompanyStillEngaged(unit))
-                return true;
         }
-
-        // Keep ANGRIB HER active while a live enemy still contests the objective
-        // area, even in the short gap between arrival and local-contact acquisition.
-        if (order == MajorOrder09F18.AttackHere &&
-            KnownEnemies(battalion.LastOrderPoint, 320f).Count > 0)
-            return true;
-
-        return false;
-    }
-
-    private static bool IsCompanyStillEngaged(Regiment unit)
-    {
-        if (unit == null || unit.IsRouted || unit.CurrentStrength <= 0)
-            return false;
-
-        if (PrototypeAttackContact09F29G.GetLocalContactTarget(unit) != null)
-            return true;
-
-        if (PrototypeUnderFireReaction09F26.IsReacting(unit) || unit.HasHitFeedback)
-            return true;
 
         return false;
     }
@@ -926,6 +896,17 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
     public GameObject GetMajorHq(int battalionIndex)
     {
         return ValidBattalion(battalionIndex) ? battalions[battalionIndex].HqRoot : null;
+    }
+
+    public Vector3 GetBattalionLastOrderPoint(int battalionIndex)
+    {
+        if (!ValidBattalion(battalionIndex))
+            return Vector3.zero;
+
+        Battalion battalion = battalions[battalionIndex];
+        return battalion.HasLastOrder
+            ? battalion.LastOrderPoint
+            : GetBattalionCenter(battalionIndex);
     }
 
     public IReadOnlyList<Regiment> GetCompanies(int battalionIndex)
