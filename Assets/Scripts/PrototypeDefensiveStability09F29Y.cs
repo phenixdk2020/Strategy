@@ -104,20 +104,53 @@ public sealed class PrototypeDefensiveStability09F29Y : MonoBehaviour
             return;
 
         Vector3 current = hqRoot.transform.position;
-        Vector3 target = PlanarDistance(current, desired) <= 4f ? current : desired;
-        object oldGoalValue = hqGoalField.GetValue(battalion);
-        Vector3 oldGoal = oldGoalValue is Vector3 ? (Vector3)oldGoalValue : current;
-        bool oldHasGoal = hasHqGoalField.GetValue(battalion) is bool && (bool)hasHqGoalField.GetValue(battalion);
+        float distanceToDesired = PlanarDistance(current, desired);
 
-        hqGoalField.SetValue(battalion, Ground(target));
+        object oldGoalValue = hqGoalField.GetValue(battalion);
+        Vector3 oldGoal = oldGoalValue is Vector3
+            ? (Vector3)oldGoalValue
+            : current;
+        bool oldHasGoal =
+            hasHqGoalField.GetValue(battalion) is bool &&
+            (bool)hasHqGoalField.GetValue(battalion);
+
+        // F30S: once the Major is already settled at the stabilized defensive
+        // position, do NOT continuously re-arm HasHqGoal. Re-arming the same
+        // zero-distance goal kept the higher order blue forever and produced
+        // HqGoalStabilized log spam every frame.
+        if (distanceToDesired <= 4f)
+        {
+            if (oldHasGoal &&
+                PlanarDistance(oldGoal, current) <= 4f)
+            {
+                hqGoalField.SetValue(battalion, Ground(current));
+                hasHqGoalField.SetValue(battalion, false);
+
+                Debug.Log(
+                    "DEF-STABILITY-09F30S|Level=MAJOR|Battalion=" +
+                    (battalionIndex + 1) +
+                    "|Settled=True|HqGoalCleared=True|Bank=" + defendBank +
+                    "|Position=" + current.x.ToString("0.0") + "," +
+                    current.z.ToString("0.0"));
+            }
+
+            return;
+        }
+
+        Vector3 target = Ground(desired);
+        hqGoalField.SetValue(battalion, target);
         hasHqGoalField.SetValue(battalion, true);
 
-        if (!oldHasGoal || PlanarDistance(oldGoal, target) > 20f)
+        if (!oldHasGoal ||
+            PlanarDistance(oldGoal, target) > 20f)
         {
             Debug.Log(
-                "DEF-STABILITY-09F29Y|Level=MAJOR|Battalion=" + (battalionIndex + 1) +
-                "|HqGoalStabilized=True|ReserveIgnored=True|Bank=" + defendBank +
-                "|Goal=" + target.x.ToString("0.0") + "," + target.z.ToString("0.0"));
+                "DEF-STABILITY-09F30S|Level=MAJOR|Battalion=" +
+                (battalionIndex + 1) +
+                "|HqGoalStabilized=True|ReserveIgnored=True|Bank=" +
+                defendBank +
+                "|Goal=" + target.x.ToString("0.0") + "," +
+                target.z.ToString("0.0"));
         }
     }
 
