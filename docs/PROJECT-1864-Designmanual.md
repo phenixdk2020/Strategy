@@ -230,6 +230,16 @@ Range-cone visual language er nu fælles for Dragon og infantry: den valgte `CLO
 **TEST/QA-regel:** preussiske infantry range-cones er synlige i test-buildet, også uden normal player selection, så facing, range bands og aktiv fire-policy kan verificeres. Dette er ikke et gameplay-design for fog-of-war: når LOS/FOG bliver autoritativt, skal fjendens cones skjules eller visibility-gates.
 
 Selection persistence er nu en hård command-UX-regel: når spilleren giver en ordre til Division, Brigade, Regiment eller Major, **forbliver det samme HQ selected efter objective/facing commit**. Ordreplacering må ikke fortolkes som et tomt world-click, der rydder selection.
+
+Anti-CAV reaktion er nu bundet til tre samtidige krav: **reel LOS + mål inden for valgt fire-policy range + mål inde i fire-cone**. TEST-synlige fjende-cones er kun QA-visualisering og giver ikke i sig selv target knowledge eller firing authority. Samme LOS-krav bruges til mounted-threat/Square-reaktion.
+
+Cavalry mouse-over bruger nu samme BattleManager-hover pipeline som infantry. Gardehusar/Dragon viser styrke/tab, morale/cohesion, mounted/afsiddet tilstand, formation, AI/order-phase, command parent og — for afsiddet Dragon — fire-policy/range/ammo.
+
+Afsiddet Dragon er i F30S eksplicit delt i **ca. 75 % mobile combat dragons** og **ca. 25 % horse holders**, hvor horse holders og horse park bliver ved dismount-positionen. En normal move-order flytter kun combat group. `STIG OP` væk fra hestene bliver en automatisk **return-to-horses** task; HUD viser `TIL HESTE...`, og remount starter automatisk når combat group reelt er samlet ved horse park. Gather-distance beregnes fra combat-group center, ikke unit-root.
+
+`ANGRIB HER` er fastlåst som en **finite positioning mission** på company-niveau. Når company når sit tildelte attack-slot, skal det holde position/facing og bekæmpe fjender gennem normal fire-policy/cone/range; det må ikke straks få en ny autonomous nearest-enemy chase mission. Parent-facing må heller ikke omskrives hver frame efter arrival; formation-motion ejer den afsluttende visuelle drejning.
+
+Defensive stability må ikke holde execution-state kunstigt aktiv. Når Major-HQ allerede står ved sit stabiliserede defensive mål, skal `HasHqGoal` cleares i stedet for at blive genaktiveret hver frame. Det stopper både falsk blå ordrestatus og gentaget `HqGoalStabilized` logspam.
 ## v00.00.09f30r Dragon fire-control — aktuel gameplay baseline
 
 F30R lukker den manglende fire-control parity for **afsiddet Dragon**. Når Dragon er dismounted, viser cavalry-HUD nu fire direkte ildpolitikker: **HOLD / CLOSE / MED / LONG**.
