@@ -21,7 +21,7 @@ public sealed class PrototypeCavalrySquareThreat09F30 : MonoBehaviour
     private void Awake()
     {
         Debug.Log(
-            "CAVALRY-SQUARE-09F30N|Installed=True|ThreatDistance=220|" +
+            "CAVALRY-SQUARE-09F30S|Installed=True|ThreatDistance=220|LOSRequired=True|" +
             "AutoThreshold=62|SymmetricThreatAPI=True|PersistentThreatRefresh=True");
     }
 
@@ -98,7 +98,8 @@ public sealed class PrototypeCavalrySquareThreat09F30 : MonoBehaviour
                 PlanarDistance(
                     cavalry.transform.position,
                     committed.transform.position);
-            if (committedDistance <= MaxThreatDistance)
+            if (committedDistance <= MaxThreatDistance &&
+                committed.CanSee(cavalry))
                 return committed;
         }
 
@@ -108,7 +109,8 @@ public sealed class PrototypeCavalrySquareThreat09F30 : MonoBehaviour
             if (candidate == null ||
                 candidate.IsRouted ||
                 candidate.CurrentStrength <= 0 ||
-                candidate.Team != BattleTeam.Prussia)
+                candidate.Team != BattleTeam.Prussia ||
+                !candidate.CanSee(cavalry))
                 continue;
 
             float distance =
