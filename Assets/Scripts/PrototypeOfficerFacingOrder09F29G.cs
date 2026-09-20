@@ -262,9 +262,12 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
                 return;
 
             CancelWithdrawalsForBattalion(battalionIndex);
-            hierarchy.IssueBattalionOrder(battalionIndex, order, objective, false);
-            if (explicitFacing.HasValue)
-                ApplyFacingToBattalion(battalionIndex, explicitFacing.Value);
+            hierarchy.IssueBattalionOrder(
+                battalionIndex,
+                order,
+                objective,
+                false,
+                explicitFacing);
         }
         else if (level == CommandLevel.Regiment)
         {
@@ -274,12 +277,11 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
 
             CancelWithdrawalsForBattalion(0);
             CancelWithdrawalsForBattalion(1);
-            regimental.IssueRegimentalOrder(order, objective, false);
-            if (explicitFacing.HasValue)
-            {
-                ApplyFacingToBattalion(0, explicitFacing.Value);
-                ApplyFacingToBattalion(1, explicitFacing.Value);
-            }
+            regimental.IssueRegimentalOrder(
+                order,
+                objective,
+                false,
+                explicitFacing);
         }
         else if (level == CommandLevel.Higher)
         {
@@ -290,13 +292,11 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
 
             CancelWithdrawalsForBattalion(0);
             CancelWithdrawalsForBattalion(1);
-            higher.IssueHigherOrder(higherLevel, order, objective);
-
-            if (explicitFacing.HasValue)
-            {
-                ApplyFacingToBattalion(0, explicitFacing.Value);
-                ApplyFacingToBattalion(1, explicitFacing.Value);
-            }
+            higher.IssueHigherOrder(
+                higherLevel,
+                order,
+                objective,
+                explicitFacing);
         }
 
         Debug.Log("OFFICER-FACING-09F30O|Committed=True|Level=" + level +
