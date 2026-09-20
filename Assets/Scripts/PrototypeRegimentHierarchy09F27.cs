@@ -905,6 +905,17 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
             : GetBattalionCenter(battalionIndex);
     }
 
+    public MajorOrder09F18 GetBattalionLastOrder(int battalionIndex)
+    {
+        if (!ValidBattalion(battalionIndex))
+            return MajorOrder09F18.None;
+
+        Battalion battalion = battalions[battalionIndex];
+        return battalion.HasLastOrder
+            ? battalion.LastOrder
+            : MajorOrder09F18.None;
+    }
+
     public IReadOnlyList<Regiment> GetCompanies(int battalionIndex)
     {
         return ValidBattalion(battalionIndex) ? battalions[battalionIndex].Companies : null;
