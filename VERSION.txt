@@ -16,7 +16,7 @@ v00.00.09f30q - Active Order Blue + Balanced Attack Front + Cavalry Scout Design
 - Pending and currently executing orders are blue in the shared F29G HUD.
 - Order buttons return to red after the mission no longer has active executors/engagement, or when another order replaces it.
 - FORSVAR HER and STOP/HOLD are standing missions and remain blue until replaced.
-- ANGRIB HER remains active while companies are still moving or in local combat/under-fire contact.
+- ANGRIB HER remains active while companies are still moving, in local combat/under-fire contact, or while a live enemy still contests the objective area.
 - Major, Regiment, Brigade and Division use the same active-order state rules.
 - FIX: BAL doctrine no longer keeps an entire battalion 285 m behind during ANGRIB HER.
 - BAL ANGRIB HER now commits both battalions side-by-side to the attack front; Major-level local company reserves remain available.
