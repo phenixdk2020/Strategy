@@ -54,6 +54,10 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     private const float DivisionCommandInner = 2100f;
     private const float DivisionCommandOuter = 2850f;
 
+    // F30S defensive cavalry reserve geometry.
+    private const float DefendCavalryRearDepth = 150f;
+    private const float DefendCavalryOutwardOffset = 45f;
+
     private const int LinkSamples = 28;
 
     private PrototypeRegimentalHQ09F28 regimental;
@@ -470,7 +474,7 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             ? Flat(explicitFacing.Value)
             : regimental.CurrentMissionFacing;
 
-        Debug.Log("HQ-09F30P|MissionCommitted=True|Level=" + level + "|Order=" + order +
+        Debug.Log("HQ-09F30S|MissionCommitted=True|Level=" + level + "|Order=" + order +
                   "|DelegatedTo=REGIMENT+CAVALRY|Objective=" +
                   point.x.ToString("0.0") + "," + point.z.ToString("0.0") +
                   "|ExplicitFacing=" + explicitFacing.HasValue +
@@ -719,8 +723,21 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         switch (order)
         {
             case MajorOrder09F18.DefendHere:
-                goal = objective - forward * 115f + right * (side * 95f);
+            {
+                // F30S: defend CAV is anchored behind the battalion it supports,
+                // not around the Division objective. This prevents one flank unit
+                // from ending up visually in front of the infantry line.
+                int battalionIndex = side < 0 ? 0 : 1;
+                Vector3 battalionAnchor =
+                    hierarchy != null && hierarchy.BattalionCount > battalionIndex
+                        ? hierarchy.GetBattalionLastOrderPoint(battalionIndex)
+                        : objective;
+
+                goal = battalionAnchor
+                    - forward * DefendCavalryRearDepth
+                    + right * (side * DefendCavalryOutwardOffset);
                 break;
+            }
             case MajorOrder09F18.AttackHere:
                 goal = objective - forward * 85f + right * (side * 145f);
                 break;
@@ -778,22 +795,36 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         if (committed != order)
             return false;
 
-        if (regimental != null && regimental.CurrentMissionOrder == order &&
+        if (regimental != null &&
+            regimental.CurrentMissionOrder == order &&
             regimental.HasActiveMissionExecutors(order))
             return true;
 
-        PrototypeCavalryOfficerAI09F30C cavAi = PrototypeCavalryOfficerAI09F30C.Instance;
-        if (cavAi != null && cavalry != null)
+        // F30S: higher-HQ button state is execution-based. A cavalry mission may
+        // remain logically assigned after arrival, but that must not keep the HUD
+        // blue. Only actual CAV movement/reform/charge counts as active execution.
+        if (cavalry != null)
         {
-            if (cavalry.Gardehusar != null && IsCavalrySubordinateToLevel(cavalry.Gardehusar, level) &&
-                cavAi.HasHigherMission(cavalry.Gardehusar, order))
+            if (IsCavalryExecuting(cavalry.Gardehusar, level))
                 return true;
-            if (cavalry.Dragon != null && IsCavalrySubordinateToLevel(cavalry.Dragon, level) &&
-                cavAi.HasHigherMission(cavalry.Dragon, order))
+            if (IsCavalryExecuting(cavalry.Dragon, level))
                 return true;
         }
 
-        return order == MajorOrder09F18.HoldPosition && committed == order;
+        return false;
+    }
+
+    private bool IsCavalryExecuting(
+        PrototypeCavalryUnit09F30 unit,
+        PrototypeHigherCommandLevel09F30B level)
+    {
+        if (unit == null || !IsCavalrySubordinateToLevel(unit, level))
+            return false;
+
+        return unit.HasDestination ||
+               unit.IsReforming ||
+               unit.Action == PrototypeCavalryAction09F30.Move ||
+               unit.Action == PrototypeCavalryAction09F30.Charge;
     }
 
     private void HandleWorldSelection()
