@@ -169,6 +169,28 @@ public sealed class PrototypeOfficerFacingOrder09F29G : MonoBehaviour
         Debug.Log("OFFICER-FACING-09F29G|Pending=True|Level=REGIMENT|Order=" + requestedOrder);
     }
 
+    public bool IsPendingHigher(
+        PrototypeHigherCommandLevel09F30B requestedLevel,
+        MajorOrder09F18 requestedOrder)
+    {
+        return level == CommandLevel.Higher &&
+               higherLevel == requestedLevel &&
+               order == requestedOrder;
+    }
+
+    public bool IsPendingRegimental(MajorOrder09F18 requestedOrder)
+    {
+        return level == CommandLevel.Regiment &&
+               order == requestedOrder;
+    }
+
+    public bool IsPendingBattalion(int index, MajorOrder09F18 requestedOrder)
+    {
+        return level == CommandLevel.Battalion &&
+               battalionIndex == index &&
+               order == requestedOrder;
+    }
+
     public void CancelPending()
     {
         level = CommandLevel.None;
