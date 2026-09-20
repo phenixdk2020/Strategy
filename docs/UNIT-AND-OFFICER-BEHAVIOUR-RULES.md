@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30p TEST  
+**Prototypebaseline:** v00.00.09f30q TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -729,6 +729,22 @@ Når Dragon får SID AF:
 
 ---
 
+## 35P. Active-order state, BAL attack commitment og fremtidig CAV reconnaissance
+
+- Officer-order buttons use **blue = pending/active mission** and **red = no current mission**.
+- A point-order becomes blue as soon as target placement starts and stays blue after commit while the mission still has active executors.
+- `ANGRIB HER` remains active while subordinate companies are moving or still in local combat/under-fire contact.
+- `FORSVAR HER` and `STOP/HOLD` are standing missions and remain active until explicitly replaced.
+- BAL doctrine must not reserve an entire battalion behind an `ANGRIB HER` front by default.
+- BAL `ANGRIB HER` commits both battalions forward side-by-side; Majors may still keep local company reserves.
+- DEF doctrine may retain a whole battalion as regimental reserve.
+- OFF doctrine may use flank disposition according to existing attack-planning rules.
+- Future `SPEJD HER` is a mounted CAV reconnaissance task available when true FOG/LOS owns enemy visibility.
+- `SPEJD HER` uses SEEK/RECON -> CONTACT -> SCREEN and does not itself grant charge authority.
+- Recon CAV must preserve safe stand-off distance, report sightings through current command parent and create time-stamped/quality-limited last-known contacts.
+- `SPEJD HER` must remain hidden/disabled before the real FOG/LOS visibility model is active.
+
+---
 ## 35O. Committed facing, HQ follow og command reach
 
 - En drag-facing fra en point-order er mission-data og skal bruges **før** formation slots genereres.
