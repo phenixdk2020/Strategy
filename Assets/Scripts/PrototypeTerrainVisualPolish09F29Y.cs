@@ -170,19 +170,28 @@ public sealed class PrototypeTerrainVisualPolish09F29Y : MonoBehaviour
         if (cropsBuilt)
             return;
 
-        if (GameObject.Find("CropFields09F29Y") != null)
+        if (GameObject.Find("CropFields09F30T") != null)
         {
             cropsBuilt = true;
             return;
         }
 
         GameObject oldRoot = GameObject.Find("CropFields09F29R");
-        PrototypeCropFieldTerrain09F29R terrain = PrototypeCropFieldTerrain09F29R.Instance;
+        PrototypeCropFieldTerrain09F29R terrain =
+            PrototypeCropFieldTerrain09F29R.Instance;
+
         if (oldRoot == null || terrain == null)
             return;
 
+        // Domain reload / hot-compile safety: explicitly retire the previous
+        // polished F29Y crop mesh so the new tuft geometry cannot coexist with
+        // or be short-circuited by the old long-beam visual root.
+        GameObject oldPolished = GameObject.Find("CropFields09F29Y");
+        if (oldPolished != null)
+            oldPolished.SetActive(false);
+
         oldRoot.SetActive(false);
-        GameObject root = new GameObject("CropFields09F29Y");
+        GameObject root = new GameObject("CropFields09F30T");
 
         IReadOnlyList<PrototypeCropFieldTerrain09F29R.FieldDescriptor> fields =
             PrototypeCropFieldTerrain09F29R.Fields;
