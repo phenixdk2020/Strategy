@@ -21,6 +21,7 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
     private const string KeySelection = "PROJECT1864.Campaign3.SelectionPanel";
     private const string KeyDebug = "PROJECT1864.Campaign3.DebugPanels";
     private const string KeyV10N4DefaultsApplied = "PROJECT1864.Campaign3.V10N4DefaultsApplied";
+    private const string KeyV10N7FDefaultsApplied = "PROJECT1864.Campaign3.V10N7FDefaultsApplied";
 
     private static bool loaded;
     private static bool hudVisible = true;
@@ -168,6 +169,18 @@ public sealed class CampaignHudStateV010N2 : MonoBehaviour
             PlayerPrefs.SetInt(KeyV10N4DefaultsApplied, 1);
             Save();
             LogState("V10N4_DEFAULT_MIGRATION");
+        }
+
+        // n7f deliberately starts with a clean map view even for users whose
+        // older PlayerPrefs left INFO or DBG enabled.
+        if (PlayerPrefs.GetInt(KeyV10N7FDefaultsApplied, 0) == 0)
+        {
+            hudVisible = true;
+            selectionPanel = false;
+            debugPanels = false;
+            PlayerPrefs.SetInt(KeyV10N7FDefaultsApplied, 1);
+            Save();
+            LogState("V10N7F_CLEAN_DEFAULT");
         }
     }
 
