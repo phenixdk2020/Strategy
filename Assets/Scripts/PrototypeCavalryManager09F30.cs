@@ -504,21 +504,71 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
         GUI.Label(new Rect(aiX, y + 59f, aiWidth, 12f), "Mål: " + target + " | " + parent, valueStyle);
 
         GUI.Label(new Rect(weaponX, y, weaponWidth, 10f), "VÅBEN / TILSTAND", sectionStyle);
-        GUI.Label(new Rect(weaponX, y + 11f, weaponWidth, 13f),
+        GUI.Label(new Rect(weaponX, y + 10f, weaponWidth, 12f),
             "Sabel | Karabin | Pistol", valueStyle);
-        GUI.Label(new Rect(weaponX, y + 24f, weaponWidth, 13f),
-            selected.Mode == PrototypeCavalryMode09F30.Mounted ? "MOUNTED" : "AFSIDDET", valueStyle);
-        GUI.Label(new Rect(weaponX, y + 37f, weaponWidth, 13f),
-            selected.Formation == PrototypeCavalryFormation09F30.Line
+        GUI.Label(new Rect(weaponX, y + 22f, weaponWidth, 12f),
+            (selected.Mode == PrototypeCavalryMode09F30.Mounted ? "MOUNTED" : "AFSIDDET") +
+            " | " +
+            (selected.Formation == PrototypeCavalryFormation09F30.Line
                 ? "4-GELED LINJE"
-                : (selected.IsBridgeRouteActive ? "BROKOLONNE 2" : "MARCHKOLONNE 4"), valueStyle);
-        GUI.Label(new Rect(weaponX, y + 50f, weaponWidth, 13f),
-            selected.Mode == PrototypeCavalryMode09F30.Dismounted &&
-            selected.Kind == PrototypeCavalryKind09F30.Dragon
-                ? "Karabin AUTO | Ammo " +
-                  PrototypeDismountedDragonFire09F30J.GetAmmoRoundsPerMan(selected).ToString("0") +
-                  " | Mål " + PrototypeDismountedDragonFire09F30J.GetTargetName(selected)
-                : "Mounted fire: ikke implementeret endnu", valueStyle);
+                : (selected.IsBridgeRouteActive ? "BROKOLONNE 2" : "MARCHKOLONNE 4")),
+            valueStyle);
+
+        bool dragonFireControl =
+            selected.Kind == PrototypeCavalryKind09F30.Dragon &&
+            selected.Mode == PrototypeCavalryMode09F30.Dismounted;
+
+        if (dragonFireControl)
+        {
+            RegimentFirePolicy firePolicy =
+                PrototypeDismountedDragonFire09F30J.GetFirePolicy(selected);
+
+            const float fireGap = 2f;
+            float fireButtonY = y + 35f;
+            float fireButtonW = (weaponWidth - fireGap * 3f) / 4f;
+
+            DrawDragonFireButton(
+                new Rect(weaponX, fireButtonY, fireButtonW, 18f),
+                "HOLD",
+                RegimentFirePolicy.HoldFire,
+                firePolicy);
+            DrawDragonFireButton(
+                new Rect(weaponX + fireButtonW + fireGap, fireButtonY, fireButtonW, 18f),
+                "CLOSE",
+                RegimentFirePolicy.CloseRange,
+                firePolicy);
+            DrawDragonFireButton(
+                new Rect(weaponX + (fireButtonW + fireGap) * 2f, fireButtonY, fireButtonW, 18f),
+                "MED",
+                RegimentFirePolicy.MediumRange,
+                firePolicy);
+            DrawDragonFireButton(
+                new Rect(weaponX + (fireButtonW + fireGap) * 3f, fireButtonY, fireButtonW, 18f),
+                "LONG",
+                RegimentFirePolicy.LongRange,
+                firePolicy);
+
+            string rangeText = firePolicy == RegimentFirePolicy.HoldFire
+                ? "HOLD FIRE"
+                : PrototypeDismountedDragonFire09F30J
+                    .GetSelectedRange(selected).ToString("0") + "m";
+
+            GUI.Label(new Rect(weaponX, y + 55f, weaponWidth, 12f),
+                rangeText +
+                " | Ammo " +
+                PrototypeDismountedDragonFire09F30J.GetAmmoRoundsPerMan(selected).ToString("0") +
+                " | Mål " +
+                PrototypeDismountedDragonFire09F30J.GetTargetName(selected),
+                valueStyle);
+        }
+        else
+        {
+            GUI.Label(new Rect(weaponX, y + 37f, weaponWidth, 13f),
+                selected.Kind == PrototypeCavalryKind09F30.Dragon
+                    ? "Karabin fire-control: SID AF"
+                    : "Mounted fire: ikke implementeret endnu",
+                valueStyle);
+        }
 
         GUI.Label(new Rect(commandX, y, commandWidth, 10f), "ORDRER / BEVÆGELSE", sectionStyle);
         const float gap = 3f;
@@ -578,6 +628,19 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
             (current.type == EventType.MouseDown || current.type == EventType.MouseUp ||
              current.type == EventType.MouseDrag || current.type == EventType.ScrollWheel))
             current.Use();
+    }
+
+    private void DrawDragonFireButton(
+        Rect rect,
+        string label,
+        RegimentFirePolicy policy,
+        RegimentFirePolicy current)
+    {
+        GUIStyle style = current == policy ? activeStyle : redStyle;
+        if (!GUI.Button(rect, label, style))
+            return;
+
+        PrototypeDismountedDragonFire09F30J.SetFirePolicy(selected, policy);
     }
 
     private void SetSelectedManual(string reason)
