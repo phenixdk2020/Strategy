@@ -39,7 +39,7 @@ public sealed class PrototypeHqDepthGuard09F29W : MonoBehaviour
         regimentalHasGoalField = typeof(PrototypeRegimentalHQ09F28).GetField("hasHqGoal", AnyInstance);
 
         Debug.Log(
-            "HQ-DEPTH-09F29W|Installed=True|PhysicalOwner=F27/F28|" +
+            "HQ-DEPTH-09F30U|Installed=True|PhysicalOwner=F27/F28|DefendAuthority=CommittedFacing|" +
             "MajorMinBehind=" + MajorMinBehind.ToString("0") +
             "|MajorPreferred=" + MajorPreferredBehind.ToString("0") +
             "|RegimentMinBehindMajors=" + RegimentMinBehindMajors.ToString("0") +
@@ -75,6 +75,13 @@ public sealed class PrototypeHqDepthGuard09F29W : MonoBehaviour
         {
             if (!hierarchy.GetBattalionAIEnabled(i))
                 continue; // manual Major movement/placement remains player-owned.
+
+            // F30U authority rule: a committed FORSVAR HER mission owns Major-HQ
+            // rear geometry through PrototypeDefensiveStability09F29Y. The generic
+            // nearest-enemy depth guard must not overwrite that explicit facing-
+            // based defensive goal.
+            if (hierarchy.GetBattalionLastOrder(i) == MajorOrder09F18.DefendHere)
+                continue;
 
             GameObject hq = hierarchy.GetMajorHq(i);
             IReadOnlyList<Regiment> companies = hierarchy.GetCompanies(i);
@@ -127,6 +134,13 @@ public sealed class PrototypeHqDepthGuard09F29W : MonoBehaviour
             return;
         if (!regimental.AIEnabled)
             return; // right-click/manual HQ placement stays authoritative.
+
+        // F30U: Regiment-HQ must also keep the committed defensive geometry.
+        // RegimentalHQ09F28 already follows the stored mission facing, so the
+        // generic enemy-relative depth guard yields during FORSVAR HER.
+        if (regimental.CurrentMissionOrder == MajorOrder09F18.DefendHere)
+            return;
+
         if (regimentalGoalField == null || regimentalHasGoalField == null)
             return;
 
