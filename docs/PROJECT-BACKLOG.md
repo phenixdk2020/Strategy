@@ -12,18 +12,19 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 - **IDÉ** — relevant mulighed, som skal undersøges eller besluttes før den bliver bindende design.
 - **RESEARCH** — historiske detaljer skal verificeres før endelige værdier/organisation låses.
 
-## Aktiv Campaign gate — v00.00.10n7e
+## Aktiv Campaign gate — v00.00.10n7f
 
-**Vej 1 fortsætter.** n7e ændrer kun det visuelle footprint for tre kystnære city-icons. Canonical WGS84 og click anchors forbliver uændret.
+**Stabiliseringsgate.** n7f rydder compiler-warnings og gør campaign HUD rent ved startup. City-art og coastal offsets ændres ikke.
 
 | ID | Status | Emne | Exit-kriterium |
 | --- | --- | --- | --- |
-| C-731 | AKTIV | Sæby visual offset | Artwork + label flyttes (-0.18, 0, -0.02) og opleves tydeligt på land. |
-| C-732 | AKTIV | Helsingør visual offset | Artwork + label flyttes (-0.22, 0, -0.08) ind mod Sjælland. |
-| C-733 | AKTIV | Nykøbing Sj. visual offset | Artwork + label flyttes (0, 0, -0.13) lidt syd for kysten. |
-| C-734 | AKTIV | Click preservation | Collider/selection for de tre byer forbliver på canonical city marker og åbner korrekt INFO. |
-| C-735 | BESLUTTET | Canonical geography unchanged | CITY-REG-01 WGS84/ZoneId/save identity må ikke ændres af visual offsets. |
-| C-736 | BESLUTTET | County/Amt pause | Amt boundaries, click, highlight og info forbliver OFF til city-art QA er accepteret. |
+| C-741 | AKTIV | CS0162 cleanup | Ingen unreachable-code warnings fra n7a/n7b/n7c/n7e city-art guards. |
+| C-742 | AKTIV | Clean INFO default | Selection/INFO starter OFF ved første n7f-run, også med gamle PlayerPrefs. |
+| C-743 | AKTIV | Clean DBG default | Technical/debug panels starter OFF ved første n7f-run. |
+| C-744 | AKTIV | Build badge debug-only | Separat top-left PROJECT 1864 badge vises kun når DBG er aktiv. |
+| C-745 | AKTIV | City click INFO | Direkte city-click må stadig åbne INFO-panelet automatisk. |
+| C-746 | PLANLAGT | Unity Input System migration | Migrer campaign + battle input samlet og regressionstest alle keyboard/mouse/hotkeys. |
+| C-747 | BESLUTTET | County/Amt pause | Amt boundaries/click/highlight/info forbliver OFF til city-art QA er accepteret. |
 
 ## Aktiv gate — P0A v00.00.08
 
