@@ -466,6 +466,15 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
         if (cam == null)
             return;
 
+        PrototypeOfficerFacingOrder09F29G facingOrder =
+            PrototypeOfficerFacingOrder09F29G.Instance;
+        if (facingOrder != null && facingOrder.HasPendingOrder)
+        {
+            mouseTracked = false;
+            dragging = false;
+            return;
+        }
+
         bool overPanel = IsPointerOverControls(Input.mousePosition);
 
         if (Selected && pendingTargetOrder != MajorOrder09F18.None && Input.GetMouseButtonDown(0) && !overPanel)
