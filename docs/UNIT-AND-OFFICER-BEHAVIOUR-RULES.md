@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30s TEST  
+**Prototypebaseline:** v00.00.09f30t TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -726,6 +726,19 @@ Når Dragon får SID AF:
 - Horse leg/hoof, head/tail og rider motion må være procedural indtil rigged assets erstatter prototypen.
 - HOLD skal returnere til en stabil neutral pose.
 - Gardehusar og Dragon skal have tydeligt forskellig uniform/equipment silhouette.
+
+---
+
+## 35S. Crop visual geometry og infantry fire-cone authority
+
+- Crop-field gameplay (concealment/movement) ændres ikke af den visuelle crop-geometri.
+- Crop visuals må ikke bestå af lange massive bjælker/strips ved tactical zoom; de skal læses som korte opretstående planter/tufts og følge terrænhøjden lokalt.
+- Infantry fire-cone appearance har én endelig runtime-authority: `PrototypeFireVisuals09F8`.
+- Aktiv `CLOSE / MED / LONG` skal være visuelt stærkere/tykkere end de øvrige fysiske range-bands.
+- Inaktive ranges forbliver svage reference-cones.
+- Ved `HOLD` er alle ranges reference-only.
+- I TEST/QA må preussiske infantry-cones være synlige uden selection og skal vise samme active/inactive hierarchy.
+- Synlig enemy cone er ikke LOS og giver ikke target knowledge eller firing authority.
 
 ---
 
