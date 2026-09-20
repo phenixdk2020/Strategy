@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30r TEST  
+**Prototypebaseline:** v00.00.09f30s TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -729,6 +729,20 @@ Når Dragon får SID AF:
 
 ---
 
+## 35R. Execution-state, defensiv CAV-reserve, cone-QA og selection persistence
+
+- **Blå ordreknap = fysisk execution i gang.** Seneste mission/intent alene må ikke holde en knap blå.
+- Når alle underlagte movement executors, relevante HQ follow-moves og CAV move/reform/charge states er afsluttet, går ordren tilbage til rød.
+- `FORSVAR HER` og `STOP/HOLD` kan fortsat være den gældende standing intent efter knappen er blevet rød.
+- Defensive CAV skal placeres bag den bataljon, den støtter, og ikke foran infantry-linjen.
+- Aktuel QA reservegeometri er ca. 150 m bag battalion anchor + 45 m udad lateralt.
+- Dragon og infantry bruger samme range-visual language: aktiv `CLOSE/MED/LONG` stærk; øvrige ranges svage referencer; `HOLD` gør alle ranges reference-only.
+- Dragon cone-sider skal være geometrisk spejlede; terræn-sampling må ikke give en tydelig ensidig kink.
+- I TEST/QA må preussiske infantry-cones vises uden normal player selection for at kontrollere range/facing/fire-policy.
+- Enemy cone visibility er midlertidig QA og skal senere styres af LOS/FOG.
+- En ordre til Division, Brigade, Regiment eller Major må ikke rydde det valgte HQ. Selection bevares gennem objective/facing placement og efter commit.
+
+---
 ## 35Q. Afsiddet Dragon fire-control
 
 - Dismounted Dragon bruger eksplicit fire policy: `HOLD / CLOSE / MED / LONG`.
