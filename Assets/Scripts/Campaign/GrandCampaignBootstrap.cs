@@ -602,7 +602,8 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
 
             Vector3 labelWorld = city.Visual.transform.position;
             if (CampaignBuildInfo.IsCurrentVersion("v00.00.10n7e") ||
-                CampaignBuildInfo.IsCurrentVersion("v00.00.10n7f"))
+                CampaignBuildInfo.IsCurrentVersion("v00.00.10n7f") ||
+                CampaignBuildInfo.IsCurrentVersion("v00.00.10n7g"))
             {
                 labelWorld += CampaignCityVisualOffsetsV010N7E.Get(city.Id);
             }
