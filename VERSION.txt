@@ -1,14 +1,41 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30v
+Prototype version: v00.00.09f30w
 Build status: TEST
-Build name: SINGLE FINAL-SLOT ARRIVAL AUTHORITY
-Visible build marker: PROJECT 1864 | v00.00.09f30v TEST
+Build name: ENEMY CONE QA + SAME-BANK RIVER ROUTING + OOB AI CONSISTENCY
+Visible build marker: PROJECT 1864 | v00.00.09f30w TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30v
+Gameplay/build baseline: v00.00.09f30w
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30w - Enemy Cone QA + Same-Bank River Routing + OOB AI Consistency
+- Backup before F30W: backup/channel-test-v00.00.09f30v-pre-09f30w-river-execution-state at F30V HEAD 8f3a1b352bd0e48bd82cb81e7086144ebaeb3146.
+- FIX: legacy PrototypeEnemyThreatCones09F29O no longer hides Prussian cones unless a Danish company is selected within 180 m.
+- TEST/QA: every living non-routed Prussian infantry unit now has its CLOSE/MED/LONG cone visible at all times.
+- Enemy QA cones run as late visual authority and cannot be hidden by the earlier F8 cone pass.
+- Enemy active fire-policy band is strong; non-active bands remain faint references.
+- Enemy cone visibility remains visual-only and does not grant LOS/target knowledge/fire authority.
+- FIX: same-bank movement across a curved river no longer triggers a full bridge crossing.
+- True bridge routing now requires an actual bank change; same-bank routes that geometrically cut across a river bend follow the bank instead.
+- FIX: Brigade/Division automatic follow movement and pure CAV reform no longer keep a tactical order button blue after assigned combat execution is complete.
+- OOB AI column now uses ON/OFF consistently for Division, Brigade, Regiment, Battalion, Company and CAV.
+- Existing F30V final-slot arrival, F30U defend-HQ authority, F30T crop/cone and F30S CAV/LOS fixes remain inherited.
+
+Primary F30W QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30w TEST and Unity compiles with no red errors.
+2. Without selecting any Danish unit, inspect Prussian infantry: all living enemy cones are visible.
+3. Change/observe enemy fire policy: active CLOSE/MED/LONG band is strongest, others faint.
+4. Enemy cones stay visible regardless of Danish selection or distance during TEST.
+5. Confirm visible enemy cones do not bypass LOS/range/cone checks for actual firing.
+6. Give a same-bank movement order whose straight chord crosses the curved river: unit follows the bank and does not cross the bridge and return.
+7. Give a true opposite-bank order: bridge-only crossing still activates.
+8. Let a higher-HQ order fully settle: Brigade/Division background follow and pure CAV reform do not keep the button blue.
+9. Open OOB: AI column shows only ON/OFF across all levels.
+10. Re-test F30V final-slot completion for regression.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30v - Single Final-Slot Arrival Authority
 - Backup before F30V: backup/channel-test-v00.00.09f30u-pre-09f30v-final-slot-authority at F30U HEAD ce5ee7387299fccc32c3ab68180eb4faa380efd2.
