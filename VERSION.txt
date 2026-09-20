@@ -1,15 +1,49 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30r
+Prototype version: v00.00.09f30s
 Build status: TEST
-Build name: DRAGON FIRE CONTROL + F30Q COMMAND STATE BASELINE
-Visible build marker: PROJECT 1864 | v00.00.09f30r TEST
+Build name: EXECUTION-STATE ORDERS + DEFEND CAV RESERVE + CONE QA + SELECTION PERSISTENCE
+Visible build marker: PROJECT 1864 | v00.00.09f30s TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30r
+Gameplay/build baseline: v00.00.09f30s
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
 
+v00.00.09f30s - Execution-State Orders + Defend CAV Reserve + Cone QA + Selection Persistence
+- Backup before F30S: backup/channel-test-v00.00.09f30r-pre-09f30s-order-execution-cav-reserve at F30R HEAD 7813176bdab37399e55e2029c2e427cb6007072a.
+- FIX: blue officer-order state now means active physical execution only, not merely the last standing intent.
+- An order button returns red when subordinate company movement is complete, Major HQ has reached its goal, Regiment HQ is settled, higher HQ follow is within tolerance and CAV is no longer moving/reforming/charging.
+- FORSVAR HER and HOLD therefore no longer remain blue forever after all movement has stopped.
+- Higher-HQ movement tolerance remains approximately 12 m for settled/active-state QA.
+- FIX: defensive CAV positions are now anchored behind the battalion each cavalry unit supports instead of around the Division objective.
+- Current defensive CAV QA geometry: about 150 m behind the battalion anchor plus 45 m outward lateral offset.
+- This prevents a flank CAV unit from ending up visually in front of the infantry defence line.
+- FIX: Dragon range-fan geometry now uses explicit mirrored side rays to remove the kink/skew seen on one side of the cone.
+- Dragon active fire band is stronger; inactive physical ranges remain faint references.
+- Infantry now uses the same cone language: active CLOSE/MED/LONG is emphasized and the other bands remain faint references; HOLD leaves all ranges reference-only.
+- TEST/QA: Prussian infantry range cones are visible even without normal player selection so enemy facing, ranges and active fire policy can be verified.
+- Enemy cone visibility is QA-only and must later be hidden or LOS/FOG-gated in normal gameplay.
+- FIX: issuing an order no longer clears Division/Brigade/Regiment/Major selection.
+- Shared point/facing placement is ignored by the legacy world-selection handlers, so the selected HQ remains selected after objective/facing commit.
+- F30R Dragon HOLD/CLOSE/MED/LONG fire-control remains active.
+
+Primary F30S QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30s TEST and Unity compiles with no red errors.
+2. Select Division, issue FORSVAR HER and drag facing; Division remains selected after commit.
+3. Repeat selection-persistence test for Brigade, Regiment and Major.
+4. While any subordinate/HQ/CAV is still physically moving, the selected order button stays blue.
+5. When all movement/reform/charge execution is finished, the order button returns red.
+6. FORSVAR HER must not remain blue indefinitely merely because it is still the last standing intent.
+7. Defensive CAV remains behind/outside the supported battalion line; neither cavalry unit should sit in front of the infantry defence.
+8. Select dismounted Dragon: cone sides are visually symmetric with no one-sided kink.
+9. Change Dragon HOLD/CLOSE/MED/LONG: active band is strong, other ranges are faint.
+10. Select Danish infantry and switch fire policy: same active-band emphasis is visible.
+11. Prussian infantry cones are visible in TEST and show their active band/facing for QA.
+12. Routed/dead enemy units do not keep QA range cones visible.
+13. Re-test F30Q/F30R command/facing/Dragon fire-control behaviour for regression.
+
+Not runtime-verified by Unity yet.
 v00.00.09f30r - Dragon Fire Control + F30Q Command State Baseline
 - Backup before F30R: backup/channel-test-v00.00.09f30q-pre-09f30r-dragon-fire-control at F30Q HEAD 4af7c497a2ecfb3917d5c60971fe23e5f7de1bc0.
 - F30Q active-order blue, balanced attack-front, committed facing, higher-HQ follow and command-zone behaviour remain the baseline.
