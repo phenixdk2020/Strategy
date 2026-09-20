@@ -1,86 +1,77 @@
 PROJECT 1864 - Grand Campaign Prototype
-Prototype version: v00.00.10n7f
-Build status: COMPILE CLEANUP / CLEAN HUD DEFAULT
-Build name: CAMPAIGN3 COMPILE CLEANUP + CLEAN HUD 10N7F
+Prototype version: v00.00.10n7g
+Build status: COASTAL CITY OFFSET PASS 2
+Build name: CAMPAIGN3 COASTAL CITY OFFSET PASS 2 10N7G
 Branch target: channel-campaign3
-Work branch: work/channel-campaign3-v10n7f-compile-cleanup
+Work branch: work/channel-campaign3-v10n7g-coastal-offset-pass2
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.32
+Design baseline: v00.02.33
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
-- v00.00.10n7c = embedded validated Proposal-3 city assets, no Resources dependency
-- v00.00.10n7d = city click opens INFO + stale n7a/n7b startup guards
-- v00.00.10n7e = visual-only coastal city offsets for Sæby, Helsingør and Nykøbing Sjælland
-- v00.00.10n7f = CS0162 compile cleanup + clean startup HUD
+- v00.00.10n7c = embedded Proposal-3 city assets
+- v00.00.10n7d = city click opens INFO + stale renderer cleanup
+- v00.00.10n7e = coastal visual offsets pass 1
+- v00.00.10n7f = compile cleanup + clean HUD default
+- v00.00.10n7g = coastal visual offsets pass 2
 
 ROLLBACK:
+- before v10n7g: backup/channel-campaign3-before-v10n7g-coastal-offset-pass2-20260920
 - before v10n7f: backup/channel-campaign3-before-v10n7f-compile-cleanup-20260920
-- before v10n7e: backup/channel-campaign3-before-v10n7e-coastal-city-offsets-20260919
 
-V10N7F COMPILE CLEANUP:
-- n7a/n7b/n7c/n7e used direct comparisons against CampaignBuildInfo.CurrentVersion.
-- CurrentVersion is a const string, so C# compile-time flow analysis emitted CS0162 unreachable-code warnings.
-- CampaignBuildInfo.IsCurrentVersion(string) now performs runtime version checks.
-- Legacy city renderers keep their self-guards without generating CS0162.
-- n7e remains the active city-art owner in n7f.
-- n7e coastal city label offsets remain active in n7f.
-
-V10N7F CLEAN HUD DEFAULT:
-- The top campaign bar remains always visible.
-- INFO/selection panel starts hidden.
-- DBG/technical panels start hidden.
-- The separate top-left PROJECT 1864 build badge is now debug-only.
-- WORLD IMAGERY + 3D TERRAIN panel is debug-only.
-- BASEMAP/WGS84 technical panel is debug-only.
-- A one-time n7f PlayerPrefs migration forces the clean default even if older sessions stored INFO/DBG as enabled.
-- Clicking a city still explicitly opens the INFO panel.
-- INFO and DBG top-bar buttons remain available.
-
-INPUT SYSTEM:
-- Unity's "Input Manager is marked for deprecation" message is acknowledged.
-- It is not a blocking compile/runtime error in n7f.
-- Existing keyboard/mouse controls remain on Input Manager for this build.
-- Migration to the Unity Input System is a separate planned technical task with full campaign + battle input regression QA.
-
-RETAINED CITY BEHAVIOR:
-- Embedded Proposal-3 A/B/C art.
-- Scale A=0.95 / B=0.72 / C=0.52.
-- Visual-only offsets for Sæby, Helsingør and Nykøbing Sjælland.
-- City click opens INFO.
-- Canonical CITY-REG-01 WGS84 and click anchors unchanged.
+V10N7G SCOPE:
+- Vej 1 continues.
 - Amt/county remains OFF.
+- Proposal-3 art, scale, city INFO and clean HUD remain unchanged.
+- Only visual artwork/label offsets are expanded/tuned.
+- Canonical WGS84, CityId, ZoneId, click anchors, save identity and simulation geography are unchanged.
 
-FILES CHANGED:
-- Assets/Scripts/Campaign/CampaignBuildInfo.cs
-- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7A.cs
-- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7B.cs
-- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7C.cs
-- Assets/Scripts/Campaign/CampaignMapOnlyCityArtV010N7E.cs
-- Assets/Scripts/Campaign/CampaignHudStateV010N2.cs
-- Assets/Scripts/Campaign/CampaignWorldImageryOverlayV010I.cs
-- Assets/Scripts/Campaign/GrandCampaignBootstrap.cs
-- VERSION.txt
-- docs/PROJECT-1864-Designmanual.md
-- docs/PROJECT-BACKLOG.md
-- docs/parts/part-31-66-CAMPAIGN-V10N7F-COMPILE-HUD-CLEANUP.md
+V10N7G VISUAL OFFSETS:
+- SAEBY: (-0.18, 0.00, -0.02)
+- HELSINGOR: (-0.34, 0.00, -0.12)
+- NYKOBING_SJ: (0.00, 0.00, -0.24)
+- BOGENSE: (0.14, 0.00, -0.12)
+- ASSENS: (0.18, 0.00, 0.00)
+- STEGE: (0.12, 0.00, 0.02)
+- PRAESTO: (-0.10, 0.00, 0.10)
+- NYKOBING_MORS: (-0.12, 0.00, 0.08)
+
+RUNTIME:
+- CampaignMapOnlyCityArtV010N7E remains the city-art owner in n7g.
+- It is explicitly allowed to auto-create in n7g via CampaignBuildInfo.IsCurrentVersion().
+- VisualOffsetCities=8 is logged with CoastalOffsetPass=2.
+- Labels use the same visual offsets as the city artwork.
+- Click collider remains at the canonical city marker.
+
+RETAINED:
+- Proposal-3 embedded A/B/C art.
+- Scale A=0.95 / B=0.72 / C=0.52.
+- Ground lift 0.12.
+- City click opens INFO.
+- INFO/DBG hidden by default; topbar remains visible.
+- No CS0162 warnings from the legacy city-art guards.
+- QA army at Vejle remains absent.
+- Registry remains 20 zones / 68 cities / 290565.
 
 QA GATES:
 1. Unity 6000.6.0f1 compiles without blocking errors.
-2. No CS0162 warnings from CampaignMapOnlyCityArtV010N7A/B/C/E.
-3. Topbar shows v00.00.10n7f.
-4. At first n7f start, INFO panel is hidden.
-5. At first n7f start, DBG panels are hidden.
-6. The separate PROJECT 1864 badge is hidden until DBG is enabled.
-7. WORLD IMAGERY + 3D TERRAIN and BASEMAP boxes are hidden until DBG is enabled.
-8. Clicking a city opens the INFO panel with correct city data.
-9. INFO top-bar button can manually show/hide selection info.
-10. DBG top-bar button can manually show/hide technical boxes.
-11. n7e city art remains 68/68 and unchanged.
-12. Sæby/Helsingør/Nykøbing Sjælland offsets remain active.
-13. Amt/county remains OFF.
-14. Registry remains 20 zones / 68 cities / 290565.
-15. Input Manager deprecation warning may still appear and is non-blocking.
+2. Topbar shows v00.00.10n7g.
+3. No CS0162 warnings reappear.
+4. INFO/DBG remain hidden by default.
+5. City art remains 68/68 and Proposal-3 only.
+6. Sæby remains visually inland.
+7. Helsingør is farther inland from Øresund.
+8. Nykøbing Sjælland is farther south from the north coast.
+9. Bogense is nudged east/south onto land.
+10. Assens is nudged east from the west coast.
+11. Stege is nudged east/inland.
+12. Præstø is nudged north-west/inland from the fjord.
+13. Nykøbing Mors is nudged north-west/inland.
+14. Labels follow the same visual offsets.
+15. Click INFO still resolves from canonical city markers.
+16. No CITY-REG-01 WGS84 data changed.
+17. Amt/county remains OFF.
+18. World Imagery and streamed terrain remain functional.
 
-QA state: V10N7F IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
+QA state: V10N7G IMPLEMENTED ON WORK BRANCH / REQUIRES UNITY 6.6 COMPILE + PLAY MODE QA
