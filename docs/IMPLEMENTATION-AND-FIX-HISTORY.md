@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30o TEST**  
-**Gameplay-baseline: v00.00.09f30o**  
+**Konsolideret ved v00.00.09f30p TEST**  
+**Gameplay-baseline: v00.00.09f30p**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30O. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30P. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -430,6 +430,15 @@ Fejlrettelser/hardening:
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
 
+### v00.00.09f30p — Committed Facing + Higher HQ Follow + Command Zones
+- Explicit drag-facing is now passed into formation planning before Regiment/Battalion/company slots are generated.
+- Removed post-hoc facing correction that could make order arrow and actual defensive line disagree.
+- Regimental mission stores committed facing and exposes it to higher-HQ follow.
+- Higher HQ follow uses committed facing and relative lateral offsets instead of fixed world-axis offsets.
+- Division follow distance reduced and move speed increased to reduce excessive rear lag.
+- Brigade/Division selected HQs now show inner/outer command-reach circles matching the existing Major/Regiment visual language.
+- Current QA reach bands: Major 320/450 m, Regiment 800/1100 m, Brigade 1350/1850 m, Division 2100/2850 m.
+- Higher command circles remain QA/visual bands until command-delay/report-quality simulation is wired to them.
 ### v00.00.09f30o — Higher AI Arming + Shared Target Circle + True F29G HUD Parity
 - Higher-HQ AI ON changed from implicit autonomous action to ARMED/WAITING authority.
 - Regimental AI no longer generates a default Attack/Defend mission when enabled by Division/Brigade cascade.
