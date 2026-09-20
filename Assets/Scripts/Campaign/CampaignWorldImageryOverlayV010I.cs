@@ -88,15 +88,16 @@ public sealed class CampaignWorldImageryOverlayV010I : MonoBehaviour
         GUI.depth = -2000;
         EnsureStyles();
 
-        // The compact build identity remains visible even in minimal-HUD mode.
+        // n7f clean-default: the top bar is the only always-visible campaign UI.
+        // Build identity and technical basemap/terrain boxes are debug information.
+        if (!CampaignHudStateV010N2.DebugVisible)
+            return;
+
         DrawOpaque(new Rect(0f, 0f, 228f, 42f), new Color(0.035f, 0.075f, 0.095f, 0.99f));
         GUI.Box(
             new Rect(8f, 8f, 212f, 31f),
             "PROJECT 1864 | " + CampaignBuildInfo.CurrentVersion,
             badgeStyle);
-
-        if (!CampaignHudStateV010N2.DebugVisible)
-            return;
 
         string status = worldRaster != null ? worldRaster.Status : "INITIALISING";
         string detail = worldRaster != null ? worldRaster.WorldDetailStatus : "Waiting for World Imagery provider";
