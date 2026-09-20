@@ -521,7 +521,9 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             return false;
 
         float distance =
-            PlanarDistance(transform.position, mountedRoot.position);
+            PlanarDistance(
+                GetDismountedCombatCenterWorld(),
+                mountedRoot.position);
 
         if (distance > RemountGatherDistance)
         {
@@ -545,12 +547,24 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         manualFormationOverride = false;
         autoMarchColumnActive = false;
 
-        BeginRoute(Ground(mountedRoot.position));
+        Vector3 combatOffset =
+            GetDismountedCombatCenterWorld() - transform.position;
+        combatOffset.y = 0f;
+
+        Vector3 gatherRoot =
+            Ground(mountedRoot.position - combatOffset);
+
+        BeginRoute(gatherRoot);
 
         Debug.Log(
             "CAVALRY-09F30S|Unit=" + UnitName +
-            "|Action=RETURN_TO_HORSES|Distance=" +
-            PlanarDistance(transform.position, mountedRoot.position).ToString("0.0") +
+            "|Action=RETURN_TO_HORSES|CombatDistance=" +
+            PlanarDistance(
+                GetDismountedCombatCenterWorld(),
+                mountedRoot.position).ToString("0.0") +
+            "|GatherRoot=" +
+            gatherRoot.x.ToString("0.0") + "," +
+            gatherRoot.z.ToString("0.0") +
             "|AutoRemount=True");
     }
 
@@ -563,7 +577,9 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             return;
 
         float distance =
-            PlanarDistance(transform.position, mountedRoot.position);
+            PlanarDistance(
+                GetDismountedCombatCenterWorld(),
+                mountedRoot.position);
 
         if (distance > RemountGatherDistance)
             return;
@@ -587,12 +603,39 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         hasExplicitFinalFacing = false;
         Action = PrototypeCavalryAction09F30.Hold;
 
+        // Preserve all dismounted figures in world-space while the unit root is
+        // recentered on the horse park. Without this, the 18 m combat-group offset
+        // causes a visible snap immediately before the remount animation.
+        List<Vector3> footWorldPositions =
+            new List<Vector3>(footFigures.Count);
+        List<Quaternion> footWorldRotations =
+            new List<Quaternion>(footFigures.Count);
+
+        for (int i = 0; i < footFigures.Count; i++)
+        {
+            Transform foot = footFigures[i];
+            footWorldPositions.Add(
+                foot != null ? foot.position : Vector3.zero);
+            footWorldRotations.Add(
+                foot != null ? foot.rotation : Quaternion.identity);
+        }
+
         transform.position = Ground(mountedRoot.position);
         transform.rotation = mountedRoot.rotation;
 
         mountedRoot.SetParent(transform, true);
         mountedRoot.localPosition = Vector3.zero;
         mountedRoot.localRotation = Quaternion.identity;
+
+        for (int i = 0; i < footFigures.Count; i++)
+        {
+            Transform foot = footFigures[i];
+            if (foot == null)
+                continue;
+
+            foot.position = footWorldPositions[i];
+            foot.rotation = footWorldRotations[i];
+        }
 
         Mode = PrototypeCavalryMode09F30.Mounted;
         hasDismountAnchor = false;
