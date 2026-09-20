@@ -443,6 +443,7 @@ Fejlrettelser/hardening:
 - Anti-cavalry infantry fire now requires LOS + selected fire-policy range + fire-cone alignment.
 - Mounted-threat/Square reaction also requires LOS; TEST-visible enemy cones do not grant target knowledge.
 - BattleManager hover now resolves cavalry as well as infantry and renders cavalry unit info in the same hover layer.
+- F30S compile hotfix: cavalry hover GUI block moved from Update() to OnGUI(); hoveredCavalry/mainCamera now remain inside their declared scope.
 - Dismounted Dragon split hardened: mobile combat group moves independently while horse holders and horses remain anchored at the dismount point.
 - STIG OP away from the horse park now creates an automatic return-to-horses task and auto-remounts after combat-group reunion.
 - AttackHere arrival no longer hands company OfficerAI a fresh autonomous nearest-enemy chase; the parent move is finite and terminates at its assigned slot.
