@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30r TEST**  
-**Gameplay-baseline: v00.00.09f30r**  
+**Konsolideret ved v00.00.09f30s TEST**  
+**Gameplay-baseline: v00.00.09f30s**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30R. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30S. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -430,6 +430,16 @@ Fejlrettelser/hardening:
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
 
+### v00.00.09f30s — Execution-State Orders + Defend CAV Reserve + Cone QA + Selection Persistence
+- Officer-order blue state now reflects physical execution only, not persistent standing intent.
+- Company mission arrival, Major HQ goal, Regiment HQ relocation, higher-HQ follow and CAV move/reform/charge state all contribute to execution status.
+- Defend/Hold buttons return red after all movement is settled even if the intent remains current.
+- Defensive CAV is anchored behind its supported battalion rather than around the Division objective.
+- Current defend CAV QA geometry is roughly 150 m rear + 45 m outward lateral.
+- Dragon range-fan construction uses explicit mirrored side rays to fix one-sided cone distortion.
+- Dragon and infantry both emphasize the active fire band while keeping non-selected ranges faint.
+- Prussian infantry range cones are forced visible in TEST/QA so enemy facing/range/policy can be inspected; this is explicitly temporary before LOS/FOG gating.
+- Division/Brigade/Regiment/Major selection is preserved while shared objective/facing input is active and after order commit.
 ### v00.00.09f30r — Dragon Fire Control + F30Q Command State Baseline
 - Dismounted Dragon receives explicit HOLD/CLOSE/MED/LONG fire policy in cavalry HUD.
 - Trigger ranges are 0/35/70/100 m with MED as default.
