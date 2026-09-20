@@ -539,7 +539,12 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
             IssueBattalionOrder(battalionIndex, MajorOrder09F18.DefendHere, GetBattalionCenter(battalionIndex), true);
     }
 
-    public void IssueBattalionOrderFromRegiment(int battalionIndex, MajorOrder09F18 order, Vector3 point, OfficerAIDoctrine doctrine)
+    public void IssueBattalionOrderFromRegiment(
+        int battalionIndex,
+        MajorOrder09F18 order,
+        Vector3 point,
+        OfficerAIDoctrine doctrine,
+        Vector3? explicitFacing = null)
     {
         if (!ValidBattalion(battalionIndex))
             return;
@@ -548,10 +553,15 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
         battalion.AIEnabled = true;
         battalion.AwaitHigherMission = false;
         battalion.Doctrine = doctrine;
-        IssueBattalionOrder(battalionIndex, order, point, true);
+        IssueBattalionOrder(battalionIndex, order, point, true, explicitFacing);
     }
 
-    public void IssueBattalionOrder(int battalionIndex, MajorOrder09F18 order, Vector3 point, bool fromHigherCommand = false)
+    public void IssueBattalionOrder(
+        int battalionIndex,
+        MajorOrder09F18 order,
+        Vector3 point,
+        bool fromHigherCommand = false,
+        Vector3? explicitFacing = null)
     {
         if (!ValidBattalion(battalionIndex))
             return;
@@ -604,9 +614,28 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
         List<Regiment> known = KnownEnemies(point, 700f);
         Regiment threat = NearestEnemyToPoint(point, known);
 
-        Vector3 forward = threat != null ? Flat(threat.transform.position - point) : Flat(point - battalion.HqRoot.transform.position);
-        if (order == MajorOrder09F18.WithdrawHere && threat != null)
+        Vector3 forward = Vector3.zero;
+
+        if (explicitFacing.HasValue)
+            forward = Flat(explicitFacing.Value);
+
+        if (forward.sqrMagnitude < 0.01f)
+            forward = threat != null
+                ? Flat(threat.transform.position - point)
+                : Flat(point - battalion.HqRoot.transform.position);
+
+        if (order == MajorOrder09F18.WithdrawHere &&
+            !explicitFacing.HasValue &&
+            threat != null)
+        {
             forward = Flat(threat.transform.position - point);
+        }
+
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Flat(battalion.HqRoot.transform.forward);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
+        forward.Normalize();
 
         Vector3 lateral = Vector3.Cross(Vector3.up, forward).normalized;
         Vector3 center = Ground(point);
@@ -671,9 +700,12 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
             ? "Reserve: ingen - hele bataljonen bruges"
             : "Reserve: " + reserve.RegimentName + (flank ? " | flanke" : " | bag front");
 
-        Debug.Log("HQ-ORDER-09F27|Battalion=" + (battalionIndex + 1) +
+        Debug.Log("HQ-ORDER-09F30P|Battalion=" + (battalionIndex + 1) +
                   "|Major=" + battalion.MajorLabel + "|Order=" + order +
-                  "|FromRegiment=" + fromHigherCommand + "|Front=" + front.Count +
+                  "|FromRegiment=" + fromHigherCommand +
+                  "|ExplicitFacing=" + explicitFacing.HasValue +
+                  "|Facing=" + forward.x.ToString("0.00") + "," + forward.z.ToString("0.00") +
+                  "|Front=" + front.Count +
                   "|Reserve=" + (reserve != null ? reserve.RegimentName : "NONE") +
                   "|Flank=" + flank + "|CompanyAI=ON|SharedController=True");
     }
