@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 // companies show their actual fire-ready Close/Medium/Long sectors even though the
 // enemy itself is not selected. This is visual-only and runs after the normal F8 cone
 // authority so it can temporarily expose enemy threat geometry without changing combat.
-[DefaultExecutionOrder(35100)]
+[DefaultExecutionOrder(49950)]
 public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
 {
     private struct FormationBounds
@@ -44,7 +44,7 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
             color = Color.white
         };
 
-        Debug.Log("ENEMY-CONE-09F29O|Installed=True|PreviewDistance=180m|SelectedDanishCompanyRequired=True|SimulationChanged=False");
+        Debug.Log("ENEMY-CONE-09F30W|Installed=True|TestAlwaysVisible=True|SelectionRequired=False|DistanceGate=False|FormationReadyGate=False|SimulationChanged=False");
     }
 
     private void LateUpdate()
@@ -53,19 +53,19 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
         if (battle == null || battle.Regiments == null)
             return;
 
-        List<Regiment> selected = GetSelectedDanishCompanies(battle);
-
         foreach (Regiment enemy in battle.Regiments)
         {
             if (enemy == null || enemy.Team != BattleTeam.Prussia)
                 continue;
 
+            // F30W TEST/QA authority:
+            // Every living Prussian infantry unit shows its complete fire geometry
+            // at all times. No Danish selection, preview-distance, formation-ready
+            // or LOS gate may hide the QA cone. This is visual-only and does not
+            // grant targeting/firing authority.
             bool shouldShow =
                 enemy.CurrentStrength > 0 &&
-                !enemy.IsRouted &&
-                IsNearAnySelected(enemy, selected) &&
-                PrototypeFireVisuals09F8.Instance != null &&
-                PrototypeFireVisuals09F8.Instance.IsFormationFireReady(enemy);
+                !enemy.IsRouted;
 
             ApplyEnemyFans(enemy, shouldShow);
         }
@@ -101,12 +101,35 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
 
         FormationBounds bounds = CalculateBounds(enemy.Formation, enemy.CurrentStrength);
 
-        BuildFan(enemy, enemy.transform.Find("CloseRangeFan"), enemy.CloseRange, bounds, visible,
-            0.11f, new Color(1.00f, 0.36f, 0.34f, 0.84f));
-        BuildFan(enemy, enemy.transform.Find("MediumRangeFan"), enemy.EffectiveRange, bounds, visible,
-            0.14f, new Color(1.00f, 0.18f, 0.10f, 0.88f));
-        BuildFan(enemy, enemy.transform.Find("LongRangeFan"), enemy.MaximumRange, bounds, visible,
-            0.17f, new Color(0.86f, 0.04f, 0.04f, 0.92f));
+        BuildFan(
+            enemy,
+            enemy.transform.Find("CloseRangeFan"),
+            enemy.CloseRange,
+            bounds,
+            visible,
+            enemy.FirePolicy == RegimentFirePolicy.CloseRange,
+            0.11f,
+            new Color(1.00f, 0.36f, 0.34f, 1.00f));
+
+        BuildFan(
+            enemy,
+            enemy.transform.Find("MediumRangeFan"),
+            enemy.EffectiveRange,
+            bounds,
+            visible,
+            enemy.FirePolicy == RegimentFirePolicy.MediumRange,
+            0.14f,
+            new Color(1.00f, 0.18f, 0.10f, 1.00f));
+
+        BuildFan(
+            enemy,
+            enemy.transform.Find("LongRangeFan"),
+            enemy.MaximumRange,
+            bounds,
+            visible,
+            enemy.FirePolicy == RegimentFirePolicy.LongRange,
+            0.17f,
+            new Color(0.86f, 0.04f, 0.04f, 1.00f));
     }
 
     private void BuildFan(
@@ -115,6 +138,7 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
         float range,
         FormationBounds bounds,
         bool visible,
+        bool activeRange,
         float width,
         Color color)
     {
@@ -127,9 +151,14 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
 
         line.useWorldSpace = true;
         line.loop = false;
-        line.widthMultiplier = width;
-        line.numCapVertices = 2;
-        line.numCornerVertices = 2;
+
+        // Match the Danish/Dragon QA language: selected fire-policy band is
+        // strong, the other physical ranges remain faint references.
+        color.a = activeRange ? 0.98f : 0.18f;
+        line.widthMultiplier =
+            width * (activeRange ? 1.55f : 0.55f);
+        line.numCapVertices = activeRange ? 3 : 1;
+        line.numCornerVertices = activeRange ? 3 : 1;
         line.shadowCastingMode = ShadowCastingMode.Off;
         line.receiveShadows = false;
         line.sharedMaterial = lineMaterial;
