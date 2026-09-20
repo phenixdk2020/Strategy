@@ -433,7 +433,7 @@ Fejlrettelser/hardening:
 ### v00.00.09f30q — Active Order Blue + Balanced Attack Front + Cavalry Scout Design
 - Shared officer order grid now has a dedicated blue state for pending and actively executing missions.
 - Major, Regiment, Brigade and Division query real mission state instead of drawing all six buttons red.
-- Attack mission activity includes movement and local combat/under-fire contact; Defend/Hold remain standing-active until replaced.
+- Attack mission activity includes movement, local combat/under-fire contact and a live enemy still contesting the objective area; Defend/Hold remain standing-active until replaced.
 - BAL regimental AttackHere no longer withholds an entire battalion at 285 m reserve depth.
 - BAL commits both battalions to the attack front; Major-level company reserve logic remains available.
 - DEF retains whole-battalion reserve authority and OFF retains flank-capable disposition.
