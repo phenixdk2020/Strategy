@@ -164,6 +164,28 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
         get { return currentMission != null ? currentMission.Order : MajorOrder09F18.None; }
     }
 
+    public Vector3 CurrentMissionFacing
+    {
+        get
+        {
+            if (currentMission != null)
+            {
+                Vector3 facing = Flat(currentMission.Facing);
+                if (facing.sqrMagnitude > 0.01f)
+                    return facing.normalized;
+            }
+
+            if (HqRoot != null)
+            {
+                Vector3 facing = Flat(HqRoot.transform.forward);
+                if (facing.sqrMagnitude > 0.01f)
+                    return facing.normalized;
+            }
+
+            return Vector3.forward;
+        }
+    }
+
     public bool HasActiveMissionExecutors(MajorOrder09F18 order)
     {
         return hierarchy != null && hierarchy.HasActiveMissionExecutors(order);
