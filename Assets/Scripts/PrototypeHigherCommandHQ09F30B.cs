@@ -412,17 +412,25 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         Input.ResetInputAxes();
     }
 
-    public void IssueHigherOrder(PrototypeHigherCommandLevel09F30B level, MajorOrder09F18 order, Vector3 point)
+    public void IssueHigherOrder(
+        PrototypeHigherCommandLevel09F30B level,
+        MajorOrder09F18 order,
+        Vector3 point,
+        Vector3? explicitFacing = null)
     {
         if (!Installed || level == PrototypeHigherCommandLevel09F30B.None)
             return;
 
         pendingOrder = MajorOrder09F18.None;
         pendingLevel = PrototypeHigherCommandLevel09F30B.None;
-        CommitHigherOrder(level, order, point);
+        CommitHigherOrder(level, order, point, explicitFacing);
     }
 
-    private void CommitHigherOrder(PrototypeHigherCommandLevel09F30B level, MajorOrder09F18 order, Vector3 point)
+    private void CommitHigherOrder(
+        PrototypeHigherCommandLevel09F30B level,
+        MajorOrder09F18 order,
+        Vector3 point,
+        Vector3? explicitFacing = null)
     {
         if (regimental == null || !regimental.Installed)
             return;
@@ -451,16 +459,23 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             hierarchy.SetBattalionDoctrine(i, doctrine);
 
         bool autonomous = GetAIEnabled(level);
-        regimental.IssueRegimentalOrder(order, point, autonomous);
+        regimental.IssueRegimentalOrder(order, point, autonomous, explicitFacing);
 
         if (order == MajorOrder09F18.AttackHere)
             BeginTemporaryAttackAttachments(level);
 
-        IssueAttachedCavalryMission(level, order, point, autonomous);
+        IssueAttachedCavalryMission(level, order, point, autonomous, explicitFacing);
 
-        Debug.Log("HQ-09F30O|MissionCommitted=True|Level=" + level + "|Order=" + order +
+        Vector3 committedFacing = explicitFacing.HasValue
+            ? Flat(explicitFacing.Value)
+            : regimental.CurrentMissionFacing;
+
+        Debug.Log("HQ-09F30P|MissionCommitted=True|Level=" + level + "|Order=" + order +
                   "|DelegatedTo=REGIMENT+CAVALRY|Objective=" +
-                  point.x.ToString("0.0") + "," + point.z.ToString("0.0"));
+                  point.x.ToString("0.0") + "," + point.z.ToString("0.0") +
+                  "|ExplicitFacing=" + explicitFacing.HasValue +
+                  "|Facing=" + committedFacing.x.ToString("0.00") + "," +
+                  committedFacing.z.ToString("0.00"));
     }
 
     private void BeginTemporaryAttackAttachments(PrototypeHigherCommandLevel09F30B level)
@@ -661,7 +676,8 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         PrototypeHigherCommandLevel09F30B level,
         MajorOrder09F18 order,
         Vector3 objective,
-        bool autonomous)
+        bool autonomous,
+        Vector3? explicitFacing = null)
     {
         if (cavalry == null)
             return;
@@ -670,7 +686,13 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             ? DivisionHqRoot.transform.position
             : BrigadeHqRoot != null ? BrigadeHqRoot.transform.position : objective - Vector3.forward;
 
-        Vector3 forward = Flat(objective - origin);
+        Vector3 forward = explicitFacing.HasValue
+            ? Flat(explicitFacing.Value)
+            : Flat(objective - origin);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Flat(regimental != null && regimental.HqRoot != null
+                ? regimental.HqRoot.transform.forward
+                : Vector3.forward);
         if (forward.sqrMagnitude < 0.01f)
             forward = Vector3.forward;
         forward.Normalize();
