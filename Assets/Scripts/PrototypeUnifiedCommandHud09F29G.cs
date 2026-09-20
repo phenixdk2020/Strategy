@@ -169,8 +169,8 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         bool division =
             higher.SelectedLevel == PrototypeHigherCommandLevel09F30B.Division;
         string title = division
-            ? "1. DIVISION | DIVISIONSCHEF | HØJERE KOMMANDO | F30S"
-            : "1. BRIGADE | BRIGADECHEF | HØJERE KOMMANDO | F30S";
+            ? "1. DIVISION | DIVISIONSCHEF | HØJERE KOMMANDO | F30T"
+            : "1. BRIGADE | BRIGADECHEF | HØJERE KOMMANDO | F30T";
 
         GUI.Box(
             new Rect(5f, panel.y + 3f, panel.width - 10f, 17f),
