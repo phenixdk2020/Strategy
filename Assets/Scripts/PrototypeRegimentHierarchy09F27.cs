@@ -97,7 +97,7 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
     private const float CompanySpacing = 60f;
     private const float ReserveDepth = 86f;
     private const float FlankOffset = 126f;
-    private const float ExactArrival = 4.5f;
+    private const float ExactArrival = 0.50f;
     private const float HqSpeed = 6.2f;
     private const float HqPreferredBehind = 155f;
     private const float HqRelocateThreshold = 230f;
@@ -435,9 +435,11 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
                     }
 
                     MarkMissionVisualArrived(regiment);
-                    Debug.Log("HQ-ARRIVAL-09F30S|Arrived=True|Battalion=" + (battalionIndex + 1) +
+                    Debug.Log("HQ-ARRIVAL-09F30V|Arrived=True|Battalion=" + (battalionIndex + 1) +
                               "|Unit=" + regiment.RegimentName +
                               "|Order=" + mission.Order +
+                              "|Distance=" + distance.ToString("0.00") +
+                              "|FinalTolerance=" + ExactArrival.ToString("0.00") +
                               "|ExecutionComplete=True|AutonomousChase=False");
                 }
                 // F30S: do not continuously rewrite transform.rotation after arrival.
@@ -838,8 +840,18 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
             if (mission.Order != order)
                 continue;
 
-            if (!mission.Arrived)
+            // F30V: HUD execution state is validated against physical slot arrival.
+            // A stale/incorrect Arrived flag is never allowed to turn the parent
+            // order red while the company is still away from its actual mission goal.
+            float distance =
+                PlanarDistance(unit.transform.position, mission.Goal);
+
+            if (distance > ExactArrival ||
+                HasDestination(unit) ||
+                !mission.Arrived)
+            {
                 return true;
+            }
         }
 
         return false;
