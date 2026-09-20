@@ -1,14 +1,44 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30p
+Prototype version: v00.00.09f30q
 Build status: TEST
-Build name: COMMITTED FACING + HIGHER HQ FOLLOW + COMMAND ZONES
-Visible build marker: PROJECT 1864 | v00.00.09f30p TEST
+Build name: ACTIVE ORDER BLUE + BALANCED ATTACK FRONT + CAV SCOUT DESIGN
+Visible build marker: PROJECT 1864 | v00.00.09f30q TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30p
+Gameplay/build baseline: v00.00.09f30q
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30q - Active Order Blue + Balanced Attack Front + Cavalry Scout Design
+- Backup before F30Q: backup/channel-test-v00.00.09f30p-pre-09f30q-active-orders-balanced-attack at F30P HEAD 9451efadff9bf369c874d23d2afc7cf46ff9d86c.
+- FIX: officer command buttons are no longer hard-coded red.
+- Pending and currently executing orders are blue in the shared F29G HUD.
+- Order buttons return to red after the mission no longer has active executors/engagement, or when another order replaces it.
+- FORSVAR HER and STOP/HOLD are standing missions and remain blue until replaced.
+- ANGRIB HER remains active while companies are still moving or in local combat/under-fire contact.
+- Major, Regiment, Brigade and Division use the same active-order state rules.
+- FIX: BAL doctrine no longer keeps an entire battalion 285 m behind during ANGRIB HER.
+- BAL ANGRIB HER now commits both battalions side-by-side to the attack front; Major-level local company reserves remain available.
+- DEF doctrine may still keep one battalion in regimental reserve.
+- OFF doctrine retains its flank-capable attack disposition.
+- Future FOG/LOS design: cavalry receives a dedicated SPEJD HER / RECON area task when true fog-of-war is active.
+- SPEJD HER will use SEEK/RECON -> CONTACT -> SCREEN behaviour, preserve safe stand-off distance, report sightings through command chain and create last-known contacts rather than omniscient battlefield knowledge.
+- SPEJD HER is deliberately not exposed as a live runtime button before FOG/LOS owns enemy visibility.
+
+Primary F30Q QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30q TEST and Unity compiles with no red errors.
+2. Select Division and click ANGRIB HER: button turns blue immediately while target placement is pending.
+3. Commit target/facing: ANGRIB HER remains blue while companies are moving/engaged.
+4. When attack movement/combat is no longer active, ANGRIB HER returns red.
+5. FORSVAR HER remains blue after arrival because it is a standing mission; it returns red when replaced.
+6. Repeat active-order color test at Regiment and Major levels.
+7. BAL + ANGRIB HER: both battalions should be generated around the attack front instead of one whole battalion sitting 285 m behind.
+8. Major-level company reserve behaviour remains available under BAL.
+9. DEF + ANGRIB HER may still create a regimental reserve battalion.
+10. Verify F30P committed-facing, higher-HQ follow and command-circle behaviour remains unchanged.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30p - Committed Facing + Higher HQ Follow + Command Zones
 - Backup before F30P: backup/channel-test-v00.00.09f30o-pre-09f30p-defend-facing-propagation at F30O/F30O+design HEAD 82073a7673b8e50f3d9d4006059783cd1dc2f790.
