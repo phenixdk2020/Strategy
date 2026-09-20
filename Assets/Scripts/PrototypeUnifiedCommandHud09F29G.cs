@@ -36,12 +36,15 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
     private GUIStyle valueStyle;
     private GUIStyle greenButtonStyle;
     private GUIStyle redButtonStyle;
+    private GUIStyle blueButtonStyle;
     private Texture2D panelTexture;
     private Texture2D headerTexture;
     private Texture2D greenTexture;
     private Texture2D greenHoverTexture;
     private Texture2D redTexture;
     private Texture2D redHoverTexture;
+    private Texture2D blueTexture;
+    private Texture2D blueHoverTexture;
     private Texture2D topBorderTexture;
     private bool logged;
 
@@ -87,7 +90,7 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         if (!logged)
         {
             logged = true;
-            Debug.Log("HUD-09F30O|Installed=True|Levels=DIVISION,BRIGADE,REGIMENT,BATTALION,COMPANY|SingleRenderer=True|FacingDragOrders=True|BlackTopEdge=True");
+            Debug.Log("HUD-09F30Q|Installed=True|Levels=DIVISION,BRIGADE,REGIMENT,BATTALION,COMPANY|SingleRenderer=True|FacingDragOrders=True|ActiveOrderBlue=True|BlackTopEdge=True");
         }
     }
 
@@ -198,11 +201,16 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
                 ? "DIVISIONSORDRER — KLIK = POSITION, TRÆK = FACING"
                 : "BRIGADEORDRER — KLIK = POSITION, TRÆK = FACING");
 
+        PrototypeOfficerFacingOrder09F29G facingInput =
+            PrototypeOfficerFacingOrder09F29G.Instance;
+
         DrawOfficerOrderGrid(
             commandX,
             y + 11f,
             commandW,
-            o => BeginHigherOrder(level, o));
+            o => BeginHigherOrder(level, o),
+            o => higher.HasHigherOrderActive(level, o),
+            o => facingInput != null && facingInput.IsPendingHigher(level, o));
 
         DrawSection(
             new Rect(subX, y, subW - 4f, 10f),
@@ -290,8 +298,13 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
             () => regiment.ToggleAI(), d => regiment.SetDoctrine(d));
 
         DrawSection(new Rect(commandX, y, commandW, 10f), "REGIMENTSORDRER — KLIK = POSITION, TRÆK = FACING");
+        PrototypeOfficerFacingOrder09F29G facingInput =
+            PrototypeOfficerFacingOrder09F29G.Instance;
+
         DrawOfficerOrderGrid(commandX, y + 11f, commandW,
-            o => BeginRegimentalOrder(o));
+            o => BeginRegimentalOrder(o),
+            o => regiment.IsMissionActive(o),
+            o => facingInput != null && facingInput.IsPendingRegimental(o));
 
         DrawSection(new Rect(subX, y, subW - 4f, 10f), "BATALJONER UNDER OBERSTLØJTNANT — MÆND / TAB / MORAL / AMMO");
         if (hierarchy != null && hierarchy.Installed)
@@ -336,8 +349,13 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
             d => hierarchy.SetBattalionDoctrine(battalionIndex, d));
 
         DrawSection(new Rect(commandX, y, commandW, 10f), "BATALJONSORDRER — KLIK = POSITION, TRÆK = FACING");
+        PrototypeOfficerFacingOrder09F29G facingInput =
+            PrototypeOfficerFacingOrder09F29G.Instance;
+
         DrawOfficerOrderGrid(commandX, y + 11f, commandW,
-            o => BeginBattalionOrder(battalionIndex, o));
+            o => BeginBattalionOrder(battalionIndex, o),
+            o => hierarchy.IsBattalionOrderActive(battalionIndex, o),
+            o => facingInput != null && facingInput.IsPendingBattalion(battalionIndex, o));
 
         DrawSection(new Rect(subX, y, subW - 4f, 10f), "KOMPAGNIER UNDER MAJOR — MÆND / TAB / MORAL / AMMO");
         if (companies != null)
@@ -456,16 +474,45 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         if (GUI.Button(new Rect(r.x + (bw + gap) * 3f, by, bw, 20f), "OFF", State(doctrine == OfficerAIDoctrine.Offensive))) setDoctrine(OfficerAIDoctrine.Offensive);
     }
 
-    private void DrawOfficerOrderGrid(float x, float y, float width, Action<MajorOrder09F18> command)
+    private void DrawOfficerOrderGrid(
+        float x,
+        float y,
+        float width,
+        Action<MajorOrder09F18> command,
+        Func<MajorOrder09F18, bool> isActive,
+        Func<MajorOrder09F18, bool> isPending)
     {
         const float gap = 4f;
         float w = (width - gap * 2f) / 3f;
-        if (GUI.Button(new Rect(x, y, w, 22f), "ANGRIB HER", redButtonStyle)) command(MajorOrder09F18.AttackHere);
-        if (GUI.Button(new Rect(x + w + gap, y, w, 22f), "FORSVAR HER", redButtonStyle)) command(MajorOrder09F18.DefendHere);
-        if (GUI.Button(new Rect(x + (w + gap) * 2f, y, w, 22f), "RYK FREM", redButtonStyle)) command(MajorOrder09F18.AdvanceHere);
-        if (GUI.Button(new Rect(x, y + 27f, w, 22f), "TILBAGETRÆK", redButtonStyle)) command(MajorOrder09F18.WithdrawHere);
-        if (GUI.Button(new Rect(x + w + gap, y + 27f, w, 22f), "SAML", redButtonStyle)) command(MajorOrder09F18.AssembleHere);
-        if (GUI.Button(new Rect(x + (w + gap) * 2f, y + 27f, w, 22f), "STOP / HOLD", redButtonStyle)) command(MajorOrder09F18.HoldPosition);
+
+        DrawOfficerOrderButton(new Rect(x, y, w, 22f),
+            "ANGRIB HER", MajorOrder09F18.AttackHere, command, isActive, isPending);
+        DrawOfficerOrderButton(new Rect(x + w + gap, y, w, 22f),
+            "FORSVAR HER", MajorOrder09F18.DefendHere, command, isActive, isPending);
+        DrawOfficerOrderButton(new Rect(x + (w + gap) * 2f, y, w, 22f),
+            "RYK FREM", MajorOrder09F18.AdvanceHere, command, isActive, isPending);
+        DrawOfficerOrderButton(new Rect(x, y + 27f, w, 22f),
+            "TILBAGETRÆK", MajorOrder09F18.WithdrawHere, command, isActive, isPending);
+        DrawOfficerOrderButton(new Rect(x + w + gap, y + 27f, w, 22f),
+            "SAML", MajorOrder09F18.AssembleHere, command, isActive, isPending);
+        DrawOfficerOrderButton(new Rect(x + (w + gap) * 2f, y + 27f, w, 22f),
+            "STOP / HOLD", MajorOrder09F18.HoldPosition, command, isActive, isPending);
+    }
+
+    private void DrawOfficerOrderButton(
+        Rect rect,
+        string label,
+        MajorOrder09F18 order,
+        Action<MajorOrder09F18> command,
+        Func<MajorOrder09F18, bool> isActive,
+        Func<MajorOrder09F18, bool> isPending)
+    {
+        bool active = isActive != null && isActive(order);
+        bool pending = isPending != null && isPending(order);
+        GUIStyle style = active || pending ? blueButtonStyle : redButtonStyle;
+
+        if (GUI.Button(rect, label, style))
+            command(order);
     }
 
     private static void BeginHigherOrder(
@@ -743,6 +790,8 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
         greenHoverTexture = MakeTexture(new Color(0.22f, 0.56f, 0.25f, 1f), "HUD29G_GREEN_HOVER");
         redTexture = MakeTexture(new Color(0.43f, 0.14f, 0.12f, 1f), "HUD29G_RED");
         redHoverTexture = MakeTexture(new Color(0.57f, 0.19f, 0.16f, 1f), "HUD29G_RED_HOVER");
+        blueTexture = MakeTexture(new Color(0.10f, 0.29f, 0.54f, 1f), "HUD30Q_ORDER_BLUE");
+        blueHoverTexture = MakeTexture(new Color(0.14f, 0.39f, 0.70f, 1f), "HUD30Q_ORDER_BLUE_HOVER");
         topBorderTexture = MakeTexture(Color.black, "HUD30O_TOP_BLACK");
 
         panelStyle = new GUIStyle(GUI.skin.box) { normal = { background = panelTexture } };
@@ -769,6 +818,7 @@ public sealed class PrototypeUnifiedCommandHud09F29G : MonoBehaviour
 
         greenButtonStyle = MakeButtonStyle(greenTexture, greenHoverTexture);
         redButtonStyle = MakeButtonStyle(redTexture, redHoverTexture);
+        blueButtonStyle = MakeButtonStyle(blueTexture, blueHoverTexture);
     }
 
     private static GUIStyle MakeButtonStyle(Texture2D normal, Texture2D hover)
