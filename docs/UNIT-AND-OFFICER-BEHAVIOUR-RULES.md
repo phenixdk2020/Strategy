@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30t TEST  
+**Prototypebaseline:** v00.00.09f30u TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -726,6 +726,18 @@ Når Dragon får SID AF:
 - Horse leg/hoof, head/tail og rider motion må være procedural indtil rigged assets erstatter prototypen.
 - HOLD skal returnere til en stabil neutral pose.
 - Gardehusar og Dragon skal have tydeligt forskellig uniform/equipment silhouette.
+
+---
+
+## 35T. Defend-command authority og HQ-goal ownership
+
+- Under en committed `FORSVAR HER` er missionens committed facing og defensive disposition autoritativ.
+- `PrototypeDefensiveStability09F29Y` ejer Major-HQ defensive rear-position under `DefendHere`.
+- `PrototypeHqDepthGuard09F29W` må ikke skrive Major-HQ goals, mens bataljonens current order er `DefendHere`.
+- `PrototypeHqDepthGuard09F29W` må heller ikke skrive Regiment-HQ goal, mens Regimentets current mission er `DefendHere`.
+- Hvis Major allerede står på sin committed defensive position, skal enhver konkurrerende `HqGoal` cleares, også hvis den er skrevet af et andet helper-system og peger et andet sted.
+- To helper-systemer må aldrig samtidig eje samme HQ-destination.
+- Defensive housekeeping må ikke holde en afsluttet ordre kunstigt blå.
 
 ---
 
