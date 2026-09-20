@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30q TEST**  
-**Gameplay-baseline: v00.00.09f30q**  
+**Konsolideret ved v00.00.09f30r TEST**  
+**Gameplay-baseline: v00.00.09f30r**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30Q. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30R. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -430,6 +430,14 @@ Fejlrettelser/hardening:
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
 
+### v00.00.09f30r — Dragon Fire Control + F30Q Command State Baseline
+- Dismounted Dragon receives explicit HOLD/CLOSE/MED/LONG fire policy in cavalry HUD.
+- Trigger ranges are 0/35/70/100 m with MED as default.
+- HOLD prevents automatic target acquisition/fire.
+- Existing ±35° arc, 7s TEST reload, ammunition, smoke and volley resolution remain authoritative.
+- Range cones remain visible for reference while selected; active policy band is emphasized.
+- Mounted Dragon does not expose active carbine fire controls; these appear only after SID AF.
+- F30Q command-state, balanced attack-front, facing, HQ-follow and command-zone behaviour remains the inherited baseline.
 ### v00.00.09f30q — Active Order Blue + Balanced Attack Front + Cavalry Scout Design
 - Shared officer order grid now has a dedicated blue state for pending and actively executing missions.
 - Major, Regiment, Brigade and Division query real mission state instead of drawing all six buttons red.
