@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30v TEST**  
-**Gameplay-baseline: v00.00.09f30v**  
+**Konsolideret ved v00.00.09f30w TEST**  
+**Gameplay-baseline: v00.00.09f30w**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30V. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30W. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -429,6 +429,15 @@ Fejlrettelser/hardening:
 - Mounted gait articulates horse legs/hooves, head, tail and rider instead of only whole-root rocking.
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
+
+### v00.00.09f30w — Enemy Cone QA + Same-Bank River Routing + OOB AI Consistency
+- Legacy enemy-cone overlay no longer requires selected Danish infantry within 180 m.
+- All living non-routed Prussian infantry cones are forced visible in TEST/QA as the final late visual pass.
+- Enemy active fire-policy band is emphasized; inactive ranges remain faint references.
+- Same-bank river routes no longer trigger bridge crossing merely because the straight chord intersects a curved river segment.
+- True bridge routing now requires actual bank change; same-bank water chords use dry bank-follow steering.
+- Higher-order active state ignores Brigade/Division background follow and pure cavalry reform after tactical execution is complete.
+- OOB AI column standardized to ON/OFF for all command and unit levels.
 
 ### v00.00.09f30v — Single Final-Slot Arrival Authority
 - Root cause of early-red/early-stop QA: three different company-arrival tolerances were layered across F27/F29E/F29L.
