@@ -13,8 +13,8 @@ using UnityEngine;
 public sealed class PrototypeDefenseArrivalGuard09F29L : MonoBehaviour
 {
     private const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-    private const float ArrivalLatchDistance = 1.35f;
-    private const float ArrivalReleaseDistance = 3.20f;
+    private const float ArrivalLatchDistance = 0.50f;
+    private const float ArrivalReleaseDistance = 1.25f;
 
     private readonly Dictionary<Regiment, Vector3> latchedGoals = new Dictionary<Regiment, Vector3>();
     private readonly HashSet<Regiment> present = new HashSet<Regiment>();
@@ -39,7 +39,7 @@ public sealed class PrototypeDefenseArrivalGuard09F29L : MonoBehaviour
             .GetField("preciseArrivalOwned", AnyInstance);
 
         Debug.Log(
-            "DEF-ARRIVAL-09F29L|Installed=True|Latch=" + ArrivalLatchDistance.ToString("0.00") +
+            "DEF-ARRIVAL-09F30V|Installed=True|SingleArrivalAuthority=True|Latch=" + ArrivalLatchDistance.ToString("0.00") +
             "m|Release=" + ArrivalReleaseDistance.ToString("0.00") +
             "m|PreciseArrivalPingPongSuppressed=True");
     }
@@ -102,7 +102,7 @@ public sealed class PrototypeDefenseArrivalGuard09F29L : MonoBehaviour
                 {
                     latchedGoals.Remove(unit);
                     arrivedField.SetValue(mission, false);
-                    Debug.Log("DEF-ARRIVAL-09F29L|Unit=" + unit.RegimentName +
+                    Debug.Log("DEF-ARRIVAL-09F30V|Unit=" + unit.RegimentName +
                               "|Latched=False|Reason=Drift|Distance=" + distance.ToString("0.00"));
                     continue;
                 }
