@@ -1,14 +1,44 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30u
+Prototype version: v00.00.09f30v
 Build status: TEST
-Build name: DEFEND COMMAND AUTHORITY + HQ GOAL CONFLICT FIX
-Visible build marker: PROJECT 1864 | v00.00.09f30u TEST
+Build name: SINGLE FINAL-SLOT ARRIVAL AUTHORITY
+Visible build marker: PROJECT 1864 | v00.00.09f30v TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30u
+Gameplay/build baseline: v00.00.09f30v
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30v - Single Final-Slot Arrival Authority
+- Backup before F30V: backup/channel-test-v00.00.09f30u-pre-09f30v-final-slot-authority at F30U HEAD ce5ee7387299fccc32c3ab68180eb4faa380efd2.
+- Root cause: company movement completion had three different arrival authorities/tolerances layered on top of each other.
+- F27 core mission arrival used 4.5 m.
+- F29E precise-arrival hardening used 0.85 m after the core had already marked arrival.
+- F29L DefendHere latch could stop/mark a company arrived at 1.35 m.
+- FIX: one shared final-slot authority is now used around the Regiment movement stop distance.
+- F27 ExactArrival is now 0.50 m.
+- F29E ExactSlotArrival is now 0.50 m; its legacy compatibility window is reduced to 0.75 m and is no longer allowed to define a looser arrival.
+- F29L DefendHere ArrivalLatchDistance is now 0.50 m and release hysteresis is 1.25 m.
+- Parent HUD execution state no longer trusts mission.Arrived alone.
+- A company keeps the parent order active if physical distance to mission.Goal is >0.50 m, if Regiment still has a movement destination, or if mission.Arrived is false.
+- Therefore Division/Brigade/Regiment/Major order buttons cannot turn red while a company is still physically short of its assigned destination footprint.
+- If another tactical system temporarily stops a company early, the parent mission remains active/blue and F27 can reassert movement when that tactical interruption releases.
+- Existing F30U defend-HQ ownership, F30T crop/cone fixes and F30S CAV/LOS/selection fixes remain inherited.
+
+Primary F30V QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30v TEST and Unity compiles with no red errors.
+2. Give Division FORSVAR HER to a clearly visible new point/facing.
+3. Watch each company against its blue destination footprint.
+4. No company may be marked complete while its transform/root is more than 0.50 m from mission.Goal.
+5. The FORSVAR HER button must remain blue while any company is physically outside 0.50 m or still has an active destination.
+6. The button turns red only after all companies, HQ follow and CAV execution have settled.
+7. Re-issue FORSVAR HER before the first order completes: old mission goals are replaced and the new goals remain authoritative.
+8. Temporarily stop a moving company through an allowed tactical reaction: parent order stays blue until it resumes/reaches final slot.
+9. Verify F30U produces no HqDepthGuard override during DefendHere.
+10. Re-test F30T crop/cone visuals and F30S Dragon/CAV behaviour for regression.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30u - Defend Command Authority + HQ Goal Conflict Fix
 - Backup before F30U: backup/channel-test-v00.00.09f30t-pre-09f30u-defend-authority at F30T HEAD 36305c7cb97850634f9c84db13f03d203a1b242a.
