@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30u TEST  
+**Prototypebaseline:** v00.00.09f30v TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -726,6 +726,18 @@ Når Dragon får SID AF:
 - Horse leg/hoof, head/tail og rider motion må være procedural indtil rigged assets erstatter prototypen.
 - HOLD skal returnere til en stabil neutral pose.
 - Gardehusar og Dragon skal have tydeligt forskellig uniform/equipment silhouette.
+
+---
+
+## 35U. Final-slot arrival authority
+
+- Company parent-mission completion har én fysisk final-slot tolerance: **0,50 m** fra `mission.Goal`.
+- F27, F29E og F29L må ikke bruge forskellige completion-tolerancer for samme company goal.
+- Destination-footprint og movement completion skal referere til samme `mission.Goal`.
+- Parent HUD må ikke markere ordren færdig/rød alene fordi `mission.Arrived=true`.
+- Parent order er fortsat aktiv, hvis company er >0,50 m fra goal, stadig har aktiv movement destination eller `Arrived=false`.
+- Midlertidig under-fire/tactical pause må ikke afslutte parent movement mission; når reaktionen slipper, fortsætter company mod samme final-slot.
+- Defensive arrival-hysteresis må kun forhindre ping-pong efter reel arrival, ikke stoppe company tidligt.
 
 ---
 
