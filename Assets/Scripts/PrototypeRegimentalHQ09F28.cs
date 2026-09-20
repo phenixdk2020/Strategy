@@ -196,10 +196,7 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
         if (currentMission == null || currentMission.Order != order)
             return false;
 
-        if (order == MajorOrder09F18.HoldPosition ||
-            order == MajorOrder09F18.DefendHere)
-            return true;
-
+        // F30S: active HUD state follows execution, not persistent intent.
         return hierarchy != null && hierarchy.HasActiveMissionExecutors(order);
     }
 
