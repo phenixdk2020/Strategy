@@ -811,9 +811,9 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
                 return true;
         }
 
-        if (IsHigherHqStillMoving(level))
-            return true;
-
+        // F30W: Brigade/Division follow is background command housekeeping and
+        // must not keep the tactical order button blue after the fighting
+        // formation, assigned HQ goals and cavalry movement are complete.
         return false;
     }
 
@@ -863,8 +863,9 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         if (unit == null || !IsCavalrySubordinateToLevel(unit, level))
             return false;
 
+        // Pure formation reform after arrival is visual housekeeping.
+        // Only real movement/charge execution keeps a parent order active.
         return unit.HasDestination ||
-               unit.IsReforming ||
                unit.Action == PrototypeCavalryAction09F30.Move ||
                unit.Action == PrototypeCavalryAction09F30.Charge;
     }
