@@ -39,6 +39,11 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
     private const float PointArrival = 2.0f;
     private const float ExitClearDistance = 2.5f;
 
+    // F30W same-bank river following. A direct line may cut across a curved river
+    // even when start and final goal are on the same bank; that is NOT a crossing.
+    private const float SameBankClearance = 7.0f;
+    private const float SameBankStep = 24.0f;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
     {
@@ -71,7 +76,7 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
         }
 
         Debug.Log(
-            "RIVER-09F15|Installed=True|River=Blocked|Width=5.5m|Crossing=BridgeOnly|" +
+            "RIVER-09F30W|Installed=True|River=Blocked|Width=5.5m|Crossing=BridgeOnly|SameBankCurves=BankFollow|" +
             "BridgeZ=22|Staging=" + BridgeStagingOffset.ToString("0") +
             "m|Entry=" + BridgeEntryOffset.ToString("0") +
             "m|AttackPreSteering=True|BridgeForcesColumn=True|StrictPhaseMachine=True");
@@ -249,22 +254,52 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
 
         if (!state.BridgeRouteActive)
         {
-            bool crossingRequired =
-                SegmentTouchesOpenWater(current, goal) ||
-                IsInOpenWater(goal);
+            int currentBank = GetBankSide(current);
+            if (currentBank == 0 && state.HasLastSafe)
+                currentBank = GetBankSide(state.LastSafePosition);
+            if (currentBank == 0)
+                currentBank =
+                    current.x < StreamCenterX(current.z) ? -1 : 1;
 
-            if (!crossingRequired)
+            int goalBank = GetBankSide(goal);
+            bool directTouchesWater =
+                SegmentTouchesOpenWater(current, goal);
+
+            bool trueBankChange =
+                currentBank != 0 &&
+                goalBank != 0 &&
+                currentBank != goalBank;
+
+            // F30W: if start and goal are on the same bank, a curved-river chord
+            // that touches water must NOT trigger a bridge crossing. Follow the
+            // current bank until a direct dry route to the final goal is available.
+            if (!trueBankChange)
             {
+                if (directTouchesWater &&
+                    goalBank == currentBank &&
+                    TryGetSameBankSteering(
+                        current,
+                        goal,
+                        currentBank,
+                        out Vector3 bankSteering))
+                {
+                    steeringTarget = WithGroundHeight(bankSteering);
+                    state.LastSteeringTarget = steeringTarget;
+                    SetPhase(regiment, state, "FOLLOW_BANK");
+
+                    Debug.Log(
+                        "RIVER-09F30W|Unit=" + regiment.RegimentName +
+                        "|SameBankDetour=True|Bank=" + currentBank +
+                        "|BridgeCrossing=False|GoalBank=" + goalBank);
+                    return true;
+                }
+
                 steeringTarget = goal;
+                SetPhase(regiment, state, "DIRECT");
                 return false;
             }
 
-            state.StartSide = GetBankSide(current);
-            if (state.StartSide == 0 && state.HasLastSafe)
-                state.StartSide = GetBankSide(state.LastSafePosition);
-            if (state.StartSide == 0)
-                state.StartSide = current.x < StreamCenterX(current.z) ? -1 : 1;
-
+            state.StartSide = currentBank;
             state.BridgeRouteActive = true;
             SetPhase(regiment, state, "STAGE_BRIDGE");
 
@@ -272,8 +307,10 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
                 regiment.SetFormation(RegimentFormation.Column);
 
             Debug.Log(
-                "RIVER-09F15|Unit=" + regiment.RegimentName +
-                "|BridgeRoute=True|StartSide=" + state.StartSide +
+                "RIVER-09F30W|Unit=" + regiment.RegimentName +
+                "|BridgeRoute=True|TrueBankChange=True|StartSide=" +
+                state.StartSide +
+                "|GoalSide=" + goalBank +
                 "|ColumnForced=True|Attack=" + continuousAttackGoal);
         }
 
@@ -402,6 +439,56 @@ public sealed class PrototypeRiverBridgeOnly09F3 : MonoBehaviour
         requested.x = riverX + side * (RiverHalfWidth + 1.5f);
         requested.y = 0f;
         return requested;
+    }
+
+    private static bool TryGetSameBankSteering(
+        Vector3 current,
+        Vector3 goal,
+        int bankSide,
+        out Vector3 steering)
+    {
+        steering = goal;
+
+        if (bankSide == 0 ||
+            !SegmentTouchesOpenWater(current, goal))
+            return false;
+
+        float deltaZ = goal.z - current.z;
+        if (Mathf.Abs(deltaZ) < 0.5f)
+            return false;
+
+        float direction = Mathf.Sign(deltaZ);
+        float step =
+            Mathf.Min(SameBankStep, Mathf.Abs(deltaZ));
+
+        // Try progressively shorter bank-follow steps and slightly more clearance
+        // until the current -> waypoint segment itself remains dry.
+        for (int attempt = 0; attempt < 6; attempt++)
+        {
+            float z =
+                current.z + direction * step;
+
+            float clearance =
+                SameBankClearance + attempt * 1.5f;
+
+            Vector3 candidate = new Vector3(
+                StreamCenterX(z) +
+                    bankSide * (RiverHalfWidth + clearance),
+                0f,
+                z);
+
+            if (!SegmentTouchesOpenWater(current, candidate))
+            {
+                steering = candidate;
+                return true;
+            }
+
+            step *= 0.62f;
+            if (step < 2.0f)
+                break;
+        }
+
+        return false;
     }
 
     private static bool SegmentTouchesOpenWater(Vector3 a, Vector3 b)
