@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30u TEST**  
-**Gameplay-baseline: v00.00.09f30u**  
+**Konsolideret ved v00.00.09f30v TEST**  
+**Gameplay-baseline: v00.00.09f30v**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30U. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30V. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -429,6 +429,14 @@ Fejlrettelser/hardening:
 - Mounted gait articulates horse legs/hooves, head, tail and rider instead of only whole-root rocking.
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
+
+### v00.00.09f30v — Single Final-Slot Arrival Authority
+- Root cause of early-red/early-stop QA: three different company-arrival tolerances were layered across F27/F29E/F29L.
+- F27 core arrival reduced from 4.5 m to 0.50 m.
+- F29E precise-arrival threshold aligned to 0.50 m; legacy compatibility window reduced to 0.75 m.
+- F29L DefendHere latch aligned to 0.50 m with 1.25 m release hysteresis.
+- Parent order active-state now verifies physical distance to mission.Goal and Regiment movement destination in addition to mission.Arrived.
+- Parent order cannot return red while a company is physically outside the final-slot tolerance or still moving toward its assigned goal.
 
 ### v00.00.09f30u — Defend Command Authority + HQ Goal Conflict Fix
 - Reviewed two F30S QA recordings showing repeated DefensiveStability goal writes followed by HqDepthGuard corrections.
