@@ -810,35 +810,66 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
     public bool HasActiveMissionExecutors(MajorOrder09F18 order)
     {
         for (int b = 0; b < battalions.Count; b++)
+            if (IsBattalionOrderActive(b, order))
+                return true;
+
+        return false;
+    }
+
+    public bool IsBattalionOrderActive(int battalionIndex, MajorOrder09F18 order)
+    {
+        if (!ValidBattalion(battalionIndex))
+            return false;
+
+        Battalion battalion = battalions[battalionIndex];
+        if (battalion == null || !battalion.HasLastOrder || battalion.LastOrder != order)
+            return false;
+
+        // Standing missions remain active after arrival until explicitly replaced.
+        if (order == MajorOrder09F18.HoldPosition ||
+            order == MajorOrder09F18.DefendHere)
         {
-            Battalion battalion = battalions[b];
-            if (battalion == null)
-                continue;
-
-            if (order == MajorOrder09F18.HoldPosition)
+            for (int i = 0; i < battalion.Companies.Count; i++)
             {
-                if (battalion.HasLastOrder && battalion.LastOrder == MajorOrder09F18.HoldPosition)
-                {
-                    for (int i = 0; i < battalion.Companies.Count; i++)
-                    {
-                        Regiment unit = battalion.Companies[i];
-                        if (unit != null && !unit.IsRouted && unit.CurrentStrength > 0)
-                            return true;
-                    }
-                }
-                continue;
-            }
-
-            foreach (KeyValuePair<Regiment, CompanyMission> pair in battalion.Missions)
-            {
-                Regiment unit = pair.Key;
-                CompanyMission mission = pair.Value;
-                if (unit == null || mission == null || unit.IsRouted || unit.CurrentStrength <= 0)
-                    continue;
-                if (mission.Order == order && !mission.Arrived)
+                Regiment unit = battalion.Companies[i];
+                if (unit != null && !unit.IsRouted && unit.CurrentStrength > 0)
                     return true;
             }
+            return false;
         }
+
+        foreach (KeyValuePair<Regiment, CompanyMission> pair in battalion.Missions)
+        {
+            Regiment unit = pair.Key;
+            CompanyMission mission = pair.Value;
+            if (unit == null || mission == null || unit.IsRouted || unit.CurrentStrength <= 0)
+                continue;
+            if (mission.Order != order)
+                continue;
+
+            if (!mission.Arrived)
+                return true;
+
+            // Attack stays active while companies are still in local combat even
+            // after they have reached their planned attack slots.
+            if (order == MajorOrder09F18.AttackHere && IsCompanyStillEngaged(unit))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsCompanyStillEngaged(Regiment unit)
+    {
+        if (unit == null || unit.IsRouted || unit.CurrentStrength <= 0)
+            return false;
+
+        if (PrototypeAttackContact09F29G.GetLocalContactTarget(unit) != null)
+            return true;
+
+        if (PrototypeUnderFireReaction09F26.IsReacting(unit) || unit.HasHitFeedback)
+            return true;
+
         return false;
     }
 
