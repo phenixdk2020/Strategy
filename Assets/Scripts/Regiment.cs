@@ -637,6 +637,7 @@ public sealed class Regiment : MonoBehaviour
     public void SetFirePolicy(RegimentFirePolicy policy)
     {
         FirePolicy = policy;
+        RefreshRangeVisibility();
     }
 
     private float GetAttackStopRange()
@@ -831,6 +832,45 @@ public sealed class Regiment : MonoBehaviour
             mediumRangeFan.enabled = enabledValue;
         if (longRangeFan != null)
             longRangeFan.enabled = enabledValue;
+
+        if (!enabledValue)
+            return;
+
+        // F30S: same visual language as dismounted Dragon.
+        // Selected engagement band is strong; non-selected ranges remain
+        // visible as faint references. HOLD makes all three reference-only.
+        SetRangeFanEmphasis(
+            closeRangeFan,
+            FirePolicy == RegimentFirePolicy.CloseRange,
+            0.08f);
+        SetRangeFanEmphasis(
+            mediumRangeFan,
+            FirePolicy == RegimentFirePolicy.MediumRange,
+            0.11f);
+        SetRangeFanEmphasis(
+            longRangeFan,
+            FirePolicy == RegimentFirePolicy.LongRange,
+            0.17f);
+    }
+
+    private static void SetRangeFanEmphasis(
+        LineRenderer line,
+        bool active,
+        float baseWidth)
+    {
+        if (line == null)
+            return;
+
+        Color color = line.sharedMaterial != null
+            ? line.sharedMaterial.color
+            : line.startColor;
+
+        color.a = active ? 1.00f : 0.20f;
+        line.startColor = color;
+        line.endColor = color;
+        line.widthMultiplier = active
+            ? baseWidth * 1.55f
+            : baseWidth * 0.55f;
     }
 
     public void OrderMove(Vector3 worldPoint)
