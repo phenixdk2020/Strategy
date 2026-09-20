@@ -440,6 +440,15 @@ Fejlrettelser/hardening:
 - Dragon and infantry both emphasize the active fire band while keeping non-selected ranges faint.
 - Prussian infantry range cones are forced visible in TEST/QA so enemy facing/range/policy can be inspected; this is explicitly temporary before LOS/FOG gating.
 - Division/Brigade/Regiment/Major selection is preserved while shared objective/facing input is active and after order commit.
+- Anti-cavalry infantry fire now requires LOS + selected fire-policy range + fire-cone alignment.
+- Mounted-threat/Square reaction also requires LOS; TEST-visible enemy cones do not grant target knowledge.
+- BattleManager hover now resolves cavalry as well as infantry and renders cavalry unit info in the same hover layer.
+- Dismounted Dragon split hardened: mobile combat group moves independently while horse holders and horses remain anchored at the dismount point.
+- STIG OP away from the horse park now creates an automatic return-to-horses task and auto-remounts after combat-group reunion.
+- AttackHere arrival no longer hands company OfficerAI a fresh autonomous nearest-enemy chase; the parent move is finite and terminates at its assigned slot.
+- Post-arrival facing is no longer rewritten each frame, removing FormationMotion small-angle oscillation.
+- Precise-arrival hardening clears stale OfficerAI attack intent before controller re-enable.
+- DefensiveStability now clears settled Major HqGoal instead of re-arming the same goal every frame, allowing execution-state to finish and removing repeated stabilization log spam.
 ### v00.00.09f30r — Dragon Fire Control + F30Q Command State Baseline
 - Dismounted Dragon receives explicit HOLD/CLOSE/MED/LONG fire policy in cavalry HUD.
 - Trigger ranges are 0/35/70/100 m with MED as default.
