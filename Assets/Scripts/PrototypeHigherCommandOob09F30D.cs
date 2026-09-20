@@ -191,8 +191,18 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
         y = DrawAttachedForParent(y, content.width, 32f, cavalry, PrototypeCavalryCommandControl09F30C.BrigadeId, higher);
 
         Rect regimentRect = RowRect(y, content.width);
-        bool regimentClick = DrawRow(regimentRect, 28f, "III", "1. REGIMENT", AggregateStrength(hierarchy).ToString(), "", "", "",
-            regiment.Selected, 2, "Regimentschef: Oberstløjtnant");
+        bool regimentClick = DrawRow(
+            regimentRect,
+            28f,
+            "III",
+            "1. REGIMENT",
+            AggregateStrength(hierarchy).ToString(),
+            "",
+            regiment.AIEnabled ? "ON" : "OFF",
+            "",
+            regiment.Selected,
+            2,
+            "Regimentschef: Oberstløjtnant");
         if (HandleDropTarget(regimentRect, PrototypeCavalryCommandControl09F30C.RegimentId))
             regimentClick = false;
         if (regimentClick)
@@ -218,7 +228,7 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
             }
 
             string battalionName = (b + 1) + ". BATALJON";
-            string ai = hierarchy.GetBattalionAIEnabled(b) ? "AI" : "MAN";
+            string ai = hierarchy.GetBattalionAIEnabled(b) ? "ON" : "OFF";
             Rect entity = row;
             bool clicked = DrawRow(entity, 54f, "II", battalionName,
                 AggregateBattalionStrength(hierarchy, b).ToString(), "", ai, "",
@@ -251,8 +261,15 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
                         string name = unit != null ? PrototypeUnitNames09F29C.Get(unit) : "KOMPAGNI";
                         string men = unit != null ? unit.CurrentStrength.ToString() : "—";
                         string status = unit != null ? GetCompanyStatus(unit) : "—";
+                        OfficerAIController companyAi =
+                            unit != null ? unit.GetComponent<OfficerAIController>() : null;
+                        string ai =
+                            companyAi != null
+                                ? (companyAi.AIEnabled ? "ON" : "OFF")
+                                : "—";
+
                         Rect companyRect = RowRect(y, content.width);
-                        if (DrawRow(companyRect, 76f, "I", name, men, status, "", "",
+                        if (DrawRow(companyRect, 76f, "I", name, men, status, ai, "",
                             unit != null && unit.IsSelected, 5 + c + b * 4, name))
                         {
                             if (unit != null)
@@ -331,7 +348,10 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
             return y;
 
         PrototypeCavalryOfficerAI09F30C aiController = PrototypeCavalryOfficerAI09F30C.Instance;
-        string ai = aiController != null && aiController.IsAIEnabled(unit) ? "AI" : "MAN";
+        string ai =
+            aiController != null && aiController.IsAIEnabled(unit)
+                ? "ON"
+                : "OFF";
         Rect rect = RowRect(y, width);
         DrawRowVisual(rect, indent, "I", "↳ " + unit.UnitName, unit.CurrentStrength.ToString(),
             ShortCavalryStatus(unit), ai, "ATT", unit.IsSelected, key == "GARDE" ? 41 : 42,
