@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.31**  
+**Aktuel designbaseline: v00.02.32**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30o HIGHER AI ARMING + SHARED TARGET CIRCLE + TRUE F29G HUD PARITY TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
@@ -226,6 +226,35 @@ Regiment og Battalion har derfor en `AwaitHigherMission` authority-state ved hig
 Division/Brigade position-orders bruger nu samme `PrototypeOfficerFacingOrder09F29G` som Regiment/Major. Det betyder samme live objective-circle, click-to-place og drag-for-facing. QA-radius er 64 m for Brigade og 84 m for Division.
 
 Higher-HQ HUD tegnes nu gennem den autoritative `PrototypeUnifiedCommandHud09F29G` renderer. Regiment, Brigade og Division deler derfor samme faktiske runtime-kode for panelgeometri, sektioner, to-rækkers ordregrid, farver og knapdimensioner. Den tidligere separate higher-HQ OnGUI er kun fallback. En eksplicit sort top-edge erstatter den grønne linje over HUD'en.
+
+## Fremtidig LOS/Fog-of-war — cavalry SEEK, RECON og SCREEN
+
+Cavalry skal **beholde en selvstændig SEEK-funktion** som del af den senere LOS/fog-of-war-model. SEEK må dog ikke betyde "rid direkte hen til nærmeste fjende". Rollen er rekognoscering og kontaktbevarelse, ikke automatisk kampkontakt.
+
+Den ønskede taktiske state-sekvens er:
+
+`SEEK / RECON → CONTACT → SCREEN → OPPORTUNITY → CHARGE`
+
+**SEEK / RECON** bruges til at opdage fjendtlige enheder, etablere LOS, identificere type/styrke så langt observationen tillader det og sende observationen op gennem command chain. Når kontakt er etableret, skal CAV normalt bremse, flytte lateralt/flankere og holde observation i stedet for at fortsætte lige imod infantry.
+
+**SCREEN** betyder, at CAV forsøger at bevare kontakt og LOS på sikker afstand. Hvis fjendtligt infantry bevæger sig imod CAV, skal CAV give terræn, repositionere og forsøge at bevare observationsafstand frem for at acceptere unødvendig musketkontakt. CAV bør som udgangspunkt søge flank/rear observationsvinkler frem for at stå direkte foran en infantry-linje.
+
+Stand-off-afstanden skal på sigt være **dynamisk og våbenafhængig**, ikke en fast universel værdi. F30N's nuværende ca. 115/145 m er kun QA-tal. Fremtidig tuning bør tage udgangspunkt i den observerede fjendes aktuelle våbenrange, eksempelvis med designregler i retning af:
+
+- `DesiredReconDistance = max(minimum recon distance, Enemy.EffectiveRange × safety factor)`
+- `NeverApproachCloserThan = max(minimum hard safety distance, Enemy.CloseRange × safety factor)`
+
+De præcise faktorer er tuning-data og fastlåses ikke endnu.
+
+**OPPORTUNITY** åbnes først, når den taktiske situation giver mening: målet kan være bundet i infantry-firefight, svækket i morale/cohesion, uorganiseret, flankeret eller på anden måde udsat. Først derefter må autonomous cavalry overveje **CHARGE**.
+
+Når LOS/fog-of-war implementeres, skal observationer kunne bevæge sig op gennem command chain med delay og begrænset informationskvalitet:
+
+`CAV observerer fjende → observation rapporteres til parent HQ → Brigade/Division modtager kontakt efter command/information delay → higher HQ får kendt eller last-known enemy position`
+
+Det betyder, at Division/Brigade senere kan bruge cavalry som rekognosceringsressource uden selv at have direkte battlefield-omniscience.
+
+Vigtig authority-regel: **Division/Brigade AI ON må fortsat ikke automatisk starte SEEK.** SEEK/RECON skal aktiveres af en reel standing task, en eksplicit rekognosceringsordre eller som en defineret del af en allerede committed higher-HQ mission.
 
 ## v00.00.09f30n Regiment HUD parity, cavalry screen/opportunity AI og anti-cavalry infantry reaction — aktuel gameplay baseline
 
