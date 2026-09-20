@@ -27,6 +27,19 @@ v00.00.09f30s - Execution-State Orders + Defend CAV Reserve + Cone QA + Selectio
 - FIX: issuing an order no longer clears Division/Brigade/Regiment/Major selection.
 - Shared point/facing placement is ignored by the legacy world-selection handlers, so the selected HQ remains selected after objective/facing commit.
 - F30R Dragon HOLD/CLOSE/MED/LONG fire-control remains active.
+- Anti-CAV infantry reaction now requires all three conditions: actual LOS, target inside current fire-policy range, and target inside the infantry fire cone.
+- TEST-visible enemy cones do not grant target knowledge or firing authority by themselves.
+- Automatic Square/threat reaction also requires LOS to the cavalry threat.
+- Cavalry now has infantry-style mouse-over unit info via BattleManager, including strength/losses, morale/cohesion, mounted/dismounted state, formation, AI phase, command parent and Dragon fire-policy/ammo.
+- Dismounted Dragon is split into a mobile ~75% combat group and an anchored ~25% horse-holder/horse-park element.
+- A normal dismounted move moves only the combat group; horse holders and horses remain at the dismount point.
+- STIG OP from away from the horses now becomes an automatic return-to-horses task; HUD shows TIL HESTE... and remount begins when the combat group reaches the horse park.
+- Remount gather uses the dismounted combat-group centre, not the unit root, avoiding false early remount.
+- F30S preserves foot-figure world positions while recentering on the horse park to avoid a visible pre-remount snap.
+- FIX: ANGRIB HER is a finite positioning mission. On arrival, company OfficerAI is placed in HOLD rather than receiving a fresh nearest-enemy chase mission.
+- FIX: parent-facing is no longer rewritten every frame after arrival; PrototypeFormationMotion owns the one-time turn, removing small-angle formation flutter.
+- Precise-arrival hardening clears any stale OfficerAI attack mission before re-enabling the controller.
+- FIX: PrototypeDefensiveStability no longer re-arms an already-settled Major HqGoal every frame; settled goals are cleared so blue execution state can end and repeated HqGoalStabilized log spam stops.
 
 Primary F30S QA
 1. Overlay reads PROJECT 1864 | v00.00.09f30s TEST and Unity compiles with no red errors.
@@ -41,7 +54,15 @@ Primary F30S QA
 10. Select Danish infantry and switch fire policy: same active-band emphasis is visible.
 11. Prussian infantry cones are visible in TEST and show their active band/facing for QA.
 12. Routed/dead enemy units do not keep QA range cones visible.
-13. Re-test F30Q/F30R command/facing/Dragon fire-control behaviour for regression.
+13. Hover Gardehusar and Dragon: cavalry unit-info tooltip appears with strength, morale/cohesion, mode, formation, AI/order and command parent.
+14. Place Prussian infantry with CAV inside range but outside cone: no anti-CAV fire.
+15. Place CAV inside cone/range but behind a LOS blocker: no anti-CAV fire or automatic Square reaction.
+16. Give a dismounted Dragon a move order: combat group moves, horse holders/horses remain at the dismount point.
+17. Press STIG OP while away from horses: HUD shows TIL HESTE..., combat group returns, then remount begins automatically.
+18. Give ANGRIB HER and wait for companies to reach slots: no post-arrival chase/column/arrival loop and no persistent small-angle facing flutter.
+19. Verify the blue order button turns red once company/HQ/CAV execution has settled.
+20. On a settled DefendHere, verify DEF-STABILITY logs one settle transition rather than repeating HqGoalStabilized every frame.
+21. Re-test F30Q/F30R command/facing/Dragon fire-control behaviour for regression.
 
 Not runtime-verified by Unity yet.
 v00.00.09f30r - Dragon Fire Control + F30Q Command State Baseline
