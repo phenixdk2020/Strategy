@@ -1,14 +1,43 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30o
+Prototype version: v00.00.09f30p
 Build status: TEST
-Build name: HIGHER AI ARMING + SHARED TARGET CIRCLE + TRUE F29G HUD PARITY
-Visible build marker: PROJECT 1864 | v00.00.09f30o TEST
+Build name: COMMITTED FACING + HIGHER HQ FOLLOW + COMMAND ZONES
+Visible build marker: PROJECT 1864 | v00.00.09f30p TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30o
+Gameplay/build baseline: v00.00.09f30p
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30p - Committed Facing + Higher HQ Follow + Command Zones
+- Backup before F30P: backup/channel-test-v00.00.09f30o-pre-09f30p-defend-facing-propagation at F30O/F30O+design HEAD 82073a7673b8e50f3d9d4006059783cd1dc2f790.
+- FIX: click+drag facing is now part of the committed order before Regiment/Battalion/company formation planning.
+- Major direct orders, Regiment orders and Division/Brigade orders all pass explicit facing through the same planning pipeline.
+- FORSVAR HER therefore uses the dragged facing for battalion lateral axis, company slots, company destination facing, Regiment HQ rear position and attached CAV support/reserve positioning.
+- Removed the previous post-hoc facing patch that could make the arrow show one direction while companies planned against another.
+- Higher HQ follow now uses the Regiment's committed mission-facing instead of arbitrary world-axis offsets.
+- Removed +Vector3.forward*75 / -Vector3.forward*95 placement hacks.
+- Brigade follow QA: 120 m rear + 65 m relative lateral offset.
+- Division follow QA: 145 m rear - 75 m relative lateral offset from Brigade; Division movement speed increased to 5.9 m/s so it does not accumulate unnecessary lag.
+- Brigade/Division now receive visible command-reach circles when selected, using the same inner/outer visual language as Major/Regiment.
+- Current QA command bands: Major 320/450 m, Regiment 800/1100 m, Brigade 1350/1850 m, Division 2100/2850 m.
+- Higher command circles are currently visual/command-reach QA bands; later command delay/report quality will use the same distance model.
+
+Primary F30P QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30p TEST and Unity compiles with no red errors.
+2. Division FORSVAR HER: drag facing toward the bridge. The final company line and formation facing must match that arrow.
+3. Repeat with Regiment and Major; no command level may show a facing arrow that disagrees with its generated company slots.
+4. CAV reserve/support positions for FORSVAR HER must be behind/lateral relative to the same committed facing.
+5. During movement, Brigade stays roughly 120 m behind Regiment with relative lateral separation instead of world-Z drift.
+6. Division stays roughly 145 m behind Brigade and should no longer appear excessively far back from the command chain.
+7. Select Major: 320/450 m command circles remain visible.
+8. Select Regiment: 800/1100 m command circles remain visible.
+9. Select Brigade: new 1350/1850 m command circles appear.
+10. Select Division: new 2100/2850 m command circles appear.
+11. Only the selected HQ level should show its detailed command circles to avoid map clutter.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30o - Higher AI Arming + Shared Target Circle + True F29G HUD Parity
 - Backup before F30O: backup/channel-test-v00.00.09f30n-pre-09f30o-command-authority-target-preview at F30N HEAD d65a38b4ecc4f2a2d50abb2cbb516f6dfd000755.
