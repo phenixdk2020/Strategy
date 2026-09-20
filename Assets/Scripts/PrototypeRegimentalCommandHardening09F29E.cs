@@ -383,8 +383,8 @@ public sealed class PrototypeRegimentalCommandHardening09F29E : MonoBehaviour
     private const float DefendBattalionHalfSeparation = 84f;
     private const float BattalionReserveDepth = 285f;
     private const float BattalionFlankOffset = 285f;
-    private const float ExactSlotArrival = 0.85f;
-    private const float OriginalArrivalWindow = 5.0f;
+    private const float ExactSlotArrival = 0.50f;
+    private const float OriginalArrivalWindow = 0.75f;
     private const float LinkHeight = 0.88f;
     private const int LinkSamples = 28;
     private const int ObjectiveRingSamples = 96;
@@ -685,7 +685,7 @@ public sealed class PrototypeRegimentalCommandHardening09F29E : MonoBehaviour
                     arrivedField.SetValue(visual, true);
                     Add(ref completed, unit);
 
-                    Debug.Log("HQ-ARRIVAL-09F30S|Unit=" + unit.RegimentName +
+                    Debug.Log("HQ-ARRIVAL-09F30V|Unit=" + unit.RegimentName +
                               "|PreciseArrival=True|Distance=" + distance.ToString("0.00") +
                               "|Goal=" + goal.x.ToString("0.0") + "," + goal.z.ToString("0.0") +
                               "|Controller=HOLD|StaleAttackCleared=True");
@@ -699,17 +699,16 @@ public sealed class PrototypeRegimentalCommandHardening09F29E : MonoBehaviour
                 continue;
             }
 
-            // F27 historically marked arrival at 4.5 m. The displayed footprint is only
-            // 6.4 m deep, so the formation centre could visibly stop before entering it.
-            // Only correct that narrow legacy window; do not override genuine tactical
-            // pauses farther from the assigned slot.
+            // F30V: F27 itself now owns a 0.50 m final-slot tolerance. Keep only
+            // a tiny compatibility window for stale visuals created during hot reload;
+            // this hardening layer is no longer allowed to define a looser arrival.
             if (arrived && distance > ExactSlotArrival && distance <= OriginalArrivalWindow && !reacting)
             {
                 preciseArrivalOwned.Add(unit);
                 controller.enabled = false;
                 unit.OrderMove(goal);
                 arrivedField.SetValue(visual, false);
-                Debug.Log("HQ-ARRIVAL-09F29E|Unit=" + unit.RegimentName +
+                Debug.Log("HQ-ARRIVAL-09F30V|Unit=" + unit.RegimentName +
                           "|CorrectionStarted=True|LegacyDistance=" + distance.ToString("0.00"));
             }
         }
