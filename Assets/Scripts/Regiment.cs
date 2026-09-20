@@ -34,6 +34,8 @@ public sealed class Regiment : MonoBehaviour
     // Disable/remove when true LOS/FOG becomes authoritative.
     private const bool TestShowEnemyRangeCones = true;
 
+    private static readonly RaycastHit[] CavalryLosHits = new RaycastHit[64];
+
     public string RegimentName { get; private set; }
     public BattleTeam Team { get; private set; }
     public int InitialStrength { get; private set; }
@@ -600,7 +602,55 @@ public sealed class Regiment : MonoBehaviour
             target.transform.position);
 
         return distance <= GetFireTriggerRange() &&
-               IsTargetInFireArc(target);
+               IsTargetInFireArc(target) &&
+               CanSee(target);
+    }
+
+    public bool CanSee(PrototypeCavalryUnit09F30 target)
+    {
+        if (target == null || target.CurrentStrength <= 0)
+            return false;
+
+        // F30S geometric LOS baseline. TEST range-cone visibility is deliberately
+        // separate from target knowledge: seeing a QA cone does not grant fire.
+        Vector3 origin = transform.position + Vector3.up * 1.55f;
+        Vector3 targetPoint = target.transform.position + Vector3.up * 1.45f;
+        Vector3 delta = targetPoint - origin;
+        float distance = delta.magnitude;
+        if (distance <= 0.10f)
+            return true;
+
+        Vector3 direction = delta / distance;
+        int hitCount = Physics.RaycastNonAlloc(
+            origin,
+            direction,
+            CavalryLosHits,
+            distance,
+            ~0,
+            QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < hitCount; i++)
+        {
+            Collider collider = CavalryLosHits[i].collider;
+            if (collider == null)
+                continue;
+
+            Transform hitTransform = collider.transform;
+            if (hitTransform == transform ||
+                hitTransform.IsChildOf(transform))
+                continue;
+
+            if (hitTransform == target.transform ||
+                hitTransform.IsChildOf(target.transform))
+                continue;
+
+            // Anything else intersecting the eye-to-target ray before the cavalry
+            // is treated as a LOS blocker in the current tactical prototype.
+            if (CavalryLosHits[i].distance < distance - 0.35f)
+                return false;
+        }
+
+        return true;
     }
 
     private PrototypeCavalryUnit09F30 FindNearestEnemyCavalryInFireArc(
@@ -752,7 +802,7 @@ public sealed class Regiment : MonoBehaviour
                 Cohesion - Random.Range(0.4f, 1.2f));
 
         Debug.Log(
-            "INF-ANTI-CAV-09F30N|Unit=" + RegimentName +
+            "INF-ANTI-CAV-09F30S|Unit=" + RegimentName +
             "|Target=" + target.UnitName +
             "|Distance=" + distance.ToString("0") +
             "|Hits=" + hits +
