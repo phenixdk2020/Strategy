@@ -191,8 +191,8 @@ public sealed class PrototypeTerrainVisualPolish09F29Y : MonoBehaviour
 
         cropsBuilt = true;
         Debug.Log(
-            "TERRAIN-09F29Y|CropVisual=True|Fields=" + fields.Count +
-            "|GoldenGround=True|DenseRows=True|GameplayOwner=F29R|ConcealmentUnchanged=True");
+            "TERRAIN-09F30T|CropVisual=True|Fields=" + fields.Count +
+            "|GoldenGround=True|DenseTufts=True|LongBeamRows=False|GameplayOwner=F29R|ConcealmentUnchanged=True");
     }
 
     private void BuildField(
@@ -219,7 +219,7 @@ public sealed class PrototypeTerrainVisualPolish09F29Y : MonoBehaviour
         cropObject.AddComponent<MeshFilter>().sharedMesh = BuildCropRows(fieldRoot.transform, field, centerY);
         MeshRenderer cropRenderer = cropObject.AddComponent<MeshRenderer>();
         cropRenderer.sharedMaterial = cropMaterial;
-        cropRenderer.shadowCastingMode = ShadowCastingMode.On;
+        cropRenderer.shadowCastingMode = ShadowCastingMode.Off;
         cropRenderer.receiveShadows = true;
     }
 
@@ -285,50 +285,100 @@ public sealed class PrototypeTerrainVisualPolish09F29Y : MonoBehaviour
         PrototypeCropFieldTerrain09F29R.FieldDescriptor field,
         float centerY)
     {
-        float rowSpacing = Mathf.Lerp(2.7f, 1.8f, field.Density);
-        int rows = Mathf.Max(12, Mathf.FloorToInt(field.Depth * 0.94f / rowSpacing));
-        int segments = Mathf.Max(4, Mathf.CeilToInt(field.Width / 8f));
-        float segmentCell = field.Width * 0.94f / segments;
-        float segmentLength = segmentCell * 0.92f;
-        float halfRowWidth = 0.16f;
-        float cropHeight = Mathf.Lerp(0.48f, 0.66f, field.Density);
+        // F30T: dense crop is represented by many short upright crossed tufts,
+        // not long solid horizontal boxes. The old 7-8 m box segments are the
+        // "yellow beams" seen in close camera QA.
+        float rowSpacing = Mathf.Lerp(2.35f, 1.75f, field.Density);
+        float tuftSpacing = Mathf.Lerp(2.25f, 1.65f, field.Density);
+        int rows = Mathf.Max(
+            12,
+            Mathf.FloorToInt(field.Depth * 0.94f / rowSpacing));
+        int tuftsPerRow = Mathf.Max(
+            24,
+            Mathf.FloorToInt(field.Width * 0.94f / tuftSpacing));
 
-        List<Vector3> vertices = new List<Vector3>(rows * segments * 8);
-        List<int> triangles = new List<int>(rows * segments * 36);
+        float cropHeight = Mathf.Lerp(0.48f, 0.66f, field.Density);
+        float tuftHalfWidth = 0.085f;
+
+        List<Vector3> vertices =
+            new List<Vector3>(rows * tuftsPerRow * 8);
+        List<int> triangles =
+            new List<int>(rows * tuftsPerRow * 24);
 
         for (int row = 0; row < rows; row++)
         {
-            float tz = rows <= 1 ? 0.5f : row / (float)(rows - 1);
-            float localZ = Mathf.Lerp(-field.Depth * 0.47f, field.Depth * 0.47f, tz);
-            float stagger = (row & 1) == 0 ? 0f : segmentCell * 0.18f;
+            float tz = rows <= 1
+                ? 0.5f
+                : row / (float)(rows - 1);
 
-            for (int segment = 0; segment < segments; segment++)
+            float localZ = Mathf.Lerp(
+                -field.Depth * 0.47f,
+                field.Depth * 0.47f,
+                tz);
+
+            for (int tuft = 0; tuft < tuftsPerRow; tuft++)
             {
-                float localX = -field.Width * 0.47f + (segment + 0.5f) * segmentCell + stagger;
-                if (localX > field.Width * 0.47f)
-                    localX -= field.Width * 0.94f;
+                float tx = tuftsPerRow <= 1
+                    ? 0.5f
+                    : tuft / (float)(tuftsPerRow - 1);
 
-                Vector3 world = fieldRoot.TransformPoint(new Vector3(localX, 0f, localZ));
-                float ground = PrototypeBootstrap.SampleGroundHeight(world.x, world.z);
-                float bottom = ground - centerY + 0.06f;
-                float top = bottom + cropHeight;
-                AddBox(
+                float localX = Mathf.Lerp(
+                    -field.Width * 0.47f,
+                    field.Width * 0.47f,
+                    tx);
+
+                // Deterministic micro-jitter prevents the field looking like a
+                // perfect CAD grid while remaining stable between runs.
+                float jitterX =
+                    Mathf.Sin((row + 1) * 12.9898f + (tuft + 1) * 78.233f) *
+                    0.16f;
+                float jitterZ =
+                    Mathf.Cos((row + 1) * 41.137f + (tuft + 1) * 17.911f) *
+                    0.12f;
+
+                localX += jitterX;
+                float z = localZ + jitterZ;
+
+                Vector3 world =
+                    fieldRoot.TransformPoint(
+                        new Vector3(localX, 0f, z));
+
+                float ground =
+                    PrototypeBootstrap.SampleGroundHeight(
+                        world.x,
+                        world.z);
+
+                float bottom = ground - centerY + 0.055f;
+
+                float heightVariation =
+                    0.90f +
+                    0.12f *
+                    Mathf.Abs(
+                        Mathf.Sin(
+                            row * 0.71f +
+                            tuft * 1.13f));
+
+                float top =
+                    bottom +
+                    cropHeight * heightVariation;
+
+                AddCrossTuft(
                     vertices,
                     triangles,
-                    localX - segmentLength * 0.5f,
-                    localX + segmentLength * 0.5f,
+                    localX,
+                    z,
                     bottom,
                     top,
-                    localZ - halfRowWidth,
-                    localZ + halfRowWidth);
+                    tuftHalfWidth);
             }
         }
 
         Mesh mesh = new Mesh
         {
-            name = "DenseCropRowsMesh09F29Y",
+            name = "DenseCropTuftsMesh09F30T",
             indexFormat = IndexFormat.UInt32
         };
+
         mesh.SetVertices(vertices);
         mesh.SetTriangles(triangles, 0);
         mesh.RecalculateNormals();
@@ -336,37 +386,63 @@ public sealed class PrototypeTerrainVisualPolish09F29Y : MonoBehaviour
         return mesh;
     }
 
-    private static void AddBox(
-        List<Vector3> v,
-        List<int> t,
-        float x0,
-        float x1,
-        float y0,
-        float y1,
-        float z0,
-        float z1)
+    private static void AddCrossTuft(
+        List<Vector3> vertices,
+        List<int> triangles,
+        float x,
+        float z,
+        float bottom,
+        float top,
+        float halfWidth)
     {
-        int b = v.Count;
-        v.Add(new Vector3(x0, y0, z0));
-        v.Add(new Vector3(x1, y0, z0));
-        v.Add(new Vector3(x1, y0, z1));
-        v.Add(new Vector3(x0, y0, z1));
-        v.Add(new Vector3(x0, y1, z0));
-        v.Add(new Vector3(x1, y1, z0));
-        v.Add(new Vector3(x1, y1, z1));
-        v.Add(new Vector3(x0, y1, z1));
+        // Two crossed vertical quads. Both sides are explicitly triangulated so
+        // crop remains visible from all tactical camera angles.
+        AddDoubleSidedQuad(
+            vertices,
+            triangles,
+            new Vector3(x - halfWidth, bottom, z),
+            new Vector3(x + halfWidth, bottom, z),
+            new Vector3(x + halfWidth, top, z),
+            new Vector3(x - halfWidth, top, z));
 
-        int[] q =
-        {
-            0,2,1, 0,3,2,
-            4,5,6, 4,6,7,
-            0,1,5, 0,5,4,
-            1,2,6, 1,6,5,
-            2,3,7, 2,7,6,
-            3,0,4, 3,4,7
-        };
-        for (int i = 0; i < q.Length; i++)
-            t.Add(b + q[i]);
+        AddDoubleSidedQuad(
+            vertices,
+            triangles,
+            new Vector3(x, bottom, z - halfWidth),
+            new Vector3(x, bottom, z + halfWidth),
+            new Vector3(x, top, z + halfWidth),
+            new Vector3(x, top, z - halfWidth));
+    }
+
+    private static void AddDoubleSidedQuad(
+        List<Vector3> vertices,
+        List<int> triangles,
+        Vector3 a,
+        Vector3 b,
+        Vector3 c,
+        Vector3 d)
+    {
+        int start = vertices.Count;
+        vertices.Add(a);
+        vertices.Add(b);
+        vertices.Add(c);
+        vertices.Add(d);
+
+        // Front.
+        triangles.Add(start + 0);
+        triangles.Add(start + 1);
+        triangles.Add(start + 2);
+        triangles.Add(start + 0);
+        triangles.Add(start + 2);
+        triangles.Add(start + 3);
+
+        // Back.
+        triangles.Add(start + 2);
+        triangles.Add(start + 1);
+        triangles.Add(start + 0);
+        triangles.Add(start + 3);
+        triangles.Add(start + 2);
+        triangles.Add(start + 0);
     }
 
     private static float GetRenderedGroundHeight(MeshCollider groundCollider, float x, float z)
