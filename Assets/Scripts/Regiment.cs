@@ -29,6 +29,11 @@ public enum RegimentFirePolicy
 
 public sealed class Regiment : MonoBehaviour
 {
+    // F30S TEST/QA only: enemy infantry range fans remain visible so both
+    // sides' facing, range bands and active fire policy can be verified.
+    // Disable/remove when true LOS/FOG becomes authoritative.
+    private const bool TestShowEnemyRangeCones = true;
+
     public string RegimentName { get; private set; }
     public BattleTeam Team { get; private set; }
     public int InitialStrength { get; private set; }
@@ -256,7 +261,7 @@ public sealed class Regiment : MonoBehaviour
             0.17f,
             new Color(0.95f, 0.42f, 0.10f));
 
-        SetRangeVisualEnabled(false);
+        SetRangeVisualEnabled(ShouldShowRangeVisuals());
     }
 
     private LineRenderer CreateRangeFan(string objectName, float range, float width, Color color)
@@ -791,6 +796,7 @@ public sealed class Regiment : MonoBehaviour
             return;
 
         IsRouted = true;
+        SetRangeVisualEnabled(false);
         Morale = Mathf.Min(Morale, 15f);
         forcedTarget = null;
 
@@ -816,12 +822,26 @@ public sealed class Regiment : MonoBehaviour
         if (selectionMarker != null)
             selectionMarker.SetActive(selected);
 
-        SetRangeVisualEnabled(selected && ShowRange);
+        SetRangeVisualEnabled(ShouldShowRangeVisuals());
     }
 
     public void RefreshRangeVisibility()
     {
-        SetRangeVisualEnabled(IsSelected && ShowRange);
+        SetRangeVisualEnabled(ShouldShowRangeVisuals());
+    }
+
+    private bool ShouldShowRangeVisuals()
+    {
+        if (!ShowRange)
+            return false;
+
+        if (IsSelected)
+            return true;
+
+        return TestShowEnemyRangeCones &&
+               Team == BattleTeam.Prussia &&
+               !IsRouted &&
+               CurrentStrength > 0;
     }
 
     private void SetRangeVisualEnabled(bool enabledValue)
