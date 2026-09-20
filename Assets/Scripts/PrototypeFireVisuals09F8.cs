@@ -60,7 +60,7 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
         };
 
         Debug.Log(
-            "FIRE-VISUAL-09F29N|Installed=True|Ranges=35/70/100m|Cone=70deg|" +
+            "FIRE-VISUAL-09F30T|Installed=True|Ranges=35/70/100m|Cone=70deg|ActiveBandEmphasis=True|EnemyQaCones=True|" +
             "SharedSideRays=True|HiddenInColumn=True|HiddenDuringReform=True|" +
             "HiddenDuringCharge=True|HiddenDuringChargeMelee=True");
     }
@@ -84,8 +84,19 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
 
             bool formationReady = UpdateAndGetFormationReady(regiment);
             bool chargeSuppressed = IsChargeFireSuppressed(regiment);
-            bool visible = regiment.IsSelected && regiment.ShowRange && formationReady && !chargeSuppressed;
-            FormationBounds bounds = CalculateBounds(regiment.Formation, regiment.CurrentStrength);
+
+            // F30T TEST/QA:
+            // - Danish infantry shows cones when selected.
+            // - Prussian infantry cones remain visible for QA even without selection.
+            // - This visual rule does NOT grant LOS/target knowledge.
+            bool visible =
+                regiment.ShowRange &&
+                formationReady &&
+                !chargeSuppressed &&
+                (regiment.IsSelected || regiment.Team == BattleTeam.Prussia);
+
+            FormationBounds bounds =
+                CalculateBounds(regiment.Formation, regiment.CurrentStrength);
 
             BuildFan(
                 regiment,
@@ -93,8 +104,9 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
                 regiment.CloseRange,
                 bounds,
                 visible,
+                regiment.FirePolicy == RegimentFirePolicy.CloseRange,
                 0.15f,
-                new Color(1.00f, 0.92f, 0.10f, 0.96f));
+                new Color(1.00f, 0.92f, 0.10f, 1.00f));
 
             BuildFan(
                 regiment,
@@ -102,8 +114,9 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
                 regiment.EffectiveRange,
                 bounds,
                 visible,
+                regiment.FirePolicy == RegimentFirePolicy.MediumRange,
                 0.18f,
-                new Color(1.00f, 0.58f, 0.05f, 0.94f));
+                new Color(1.00f, 0.58f, 0.05f, 1.00f));
 
             BuildFan(
                 regiment,
@@ -111,8 +124,9 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
                 regiment.MaximumRange,
                 bounds,
                 visible,
+                regiment.FirePolicy == RegimentFirePolicy.LongRange,
                 0.22f,
-                new Color(1.00f, 0.16f, 0.04f, 0.94f));
+                new Color(1.00f, 0.16f, 0.04f, 1.00f));
         }
     }
 
@@ -199,6 +213,7 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
         float range,
         FormationBounds bounds,
         bool visible,
+        bool activeRange,
         float width,
         Color color)
     {
@@ -209,7 +224,7 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
         if (line == null)
             return;
 
-        ConfigureLine(line, width, color);
+        ConfigureLine(line, width, color, activeRange);
         line.enabled = visible;
         if (!visible)
             return;
@@ -250,13 +265,25 @@ public sealed class PrototypeFireVisuals09F8 : MonoBehaviour
             line.SetPosition(i, points[i]);
     }
 
-    private void ConfigureLine(LineRenderer line, float width, Color color)
+    private void ConfigureLine(
+        LineRenderer line,
+        float width,
+        Color color,
+        bool activeRange)
     {
         line.useWorldSpace = true;
         line.loop = false;
-        line.widthMultiplier = width;
-        line.numCapVertices = 2;
-        line.numCornerVertices = 2;
+
+        // F30T: PrototypeFireVisuals is the final LateUpdate authority for infantry
+        // cone appearance. Active fire-policy band is deliberately much stronger;
+        // other physical ranges remain faint reference geometry.
+        float alpha = activeRange ? 0.98f : 0.18f;
+        float widthScale = activeRange ? 1.55f : 0.55f;
+
+        color.a = alpha;
+        line.widthMultiplier = width * widthScale;
+        line.numCapVertices = activeRange ? 3 : 1;
+        line.numCornerVertices = activeRange ? 3 : 1;
         line.shadowCastingMode = ShadowCastingMode.Off;
         line.receiveShadows = false;
         line.sharedMaterial = lineMaterial;
