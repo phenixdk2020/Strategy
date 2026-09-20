@@ -601,8 +601,11 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
             if (zoomBand == MapZoomBand.Operational && city.Def.Tier != CampaignDenmark1851Registry.CityTier.A) continue;
 
             Vector3 labelWorld = city.Visual.transform.position;
-            if (CampaignBuildInfo.CurrentVersion == "v00.00.10n7e")
+            if (CampaignBuildInfo.IsCurrentVersion("v00.00.10n7e") ||
+                CampaignBuildInfo.IsCurrentVersion("v00.00.10n7f"))
+            {
                 labelWorld += CampaignCityVisualOffsetsV010N7E.Get(city.Id);
+            }
 
             Vector3 screen = campaignCamera.WorldToScreenPoint(labelWorld);
             if (screen.z <= 0f) continue;
