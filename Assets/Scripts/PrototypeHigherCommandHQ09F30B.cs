@@ -38,10 +38,22 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
     private const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
     private const float HudHeight = 96f;
-    private const float BrigadeFollowDistance = 125f;
-    private const float DivisionFollowDistance = 190f;
-    private const float BrigadeMoveSpeed = 6.0f;
-    private const float DivisionMoveSpeed = 5.2f;
+
+    // F30P: higher HQ positions are relative to the committed battle-facing.
+    // World-axis offsets are intentionally avoided.
+    private const float BrigadeFollowDistance = 120f;
+    private const float BrigadeLateralOffset = 65f;
+    private const float DivisionFollowDistance = 145f;
+    private const float DivisionLateralOffset = -75f;
+    private const float BrigadeMoveSpeed = 6.2f;
+    private const float DivisionMoveSpeed = 5.9f;
+
+    // QA command-reach bands. These are visual/command-delay bands, not weapon range.
+    private const float BrigadeCommandInner = 1350f;
+    private const float BrigadeCommandOuter = 1850f;
+    private const float DivisionCommandInner = 2100f;
+    private const float DivisionCommandOuter = 2850f;
+
     private const int LinkSamples = 28;
 
     private PrototypeRegimentalHQ09F28 regimental;
@@ -71,6 +83,10 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
     private LineRenderer cavalryLinkB;
     private LineRenderer divisionSelection;
     private LineRenderer brigadeSelection;
+    private LineRenderer divisionCommandInner;
+    private LineRenderer divisionCommandOuter;
+    private LineRenderer brigadeCommandInner;
+    private LineRenderer brigadeCommandOuter;
 
     private GUIStyle panelStyle;
     private GUIStyle headerStyle;
@@ -149,14 +165,18 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
             rear = Vector3.left;
         rear.Normalize();
 
+        Vector3 right = Vector3.Cross(Vector3.up, -rear).normalized;
+        if (right.sqrMagnitude < 0.01f)
+            right = Vector3.forward;
+
         BrigadeHqRoot = CreateHigherHq(
             "DK_Brigade_HQ_Brigadechef", "X HQ\n1. BRIGADE", PrototypeHigherCommandLevel09F30B.Brigade,
-            Ground(regimentPos + rear * BrigadeFollowDistance + Vector3.forward * 75f),
+            Ground(regimentPos + rear * BrigadeFollowDistance + right * BrigadeLateralOffset),
             new Color(0.07f, 0.17f, 0.31f));
 
         DivisionHqRoot = CreateHigherHq(
             "DK_Division_HQ_Divisionschef", "XX HQ\n1. DIVISION", PrototypeHigherCommandLevel09F30B.Division,
-            Ground(BrigadeHqRoot.transform.position + rear * DivisionFollowDistance - Vector3.forward * 95f),
+            Ground(BrigadeHqRoot.transform.position + rear * DivisionFollowDistance + right * DivisionLateralOffset),
             new Color(0.09f, 0.20f, 0.36f));
 
         ConfigureCommandParents();
@@ -164,9 +184,12 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         Installed = BrigadeHqRoot != null && DivisionHqRoot != null;
 
         Debug.Log(
-            "HQ-09F30B|Installed=" + Installed +
+            "HQ-09F30P|Installed=" + Installed +
             "|Chain=DIVISION>BRIGADE>REGIMENT>BATTALION>COMPANY|" +
-            "CavalryParent=BRIGADE|ArtilleryReadyAttachmentModel=True|HigherAI=False");
+            "CavalryParent=BRIGADE|HigherCommandZones=True|" +
+            "BrigadeReach=" + BrigadeCommandInner + "/" + BrigadeCommandOuter +
+            "|DivisionReach=" + DivisionCommandInner + "/" + DivisionCommandOuter +
+            "|RelativeFollow=True|HigherAI=False");
     }
 
     private void ConfigureCommandParents()
@@ -787,23 +810,36 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         if (regimental == null || regimental.HqRoot == null || BrigadeHqRoot == null || DivisionHqRoot == null)
             return;
 
-        Vector3 regimentForward = Flat(regimental.HqRoot.transform.forward);
+        Vector3 regimentForward = Flat(regimental.CurrentMissionFacing);
+        if (regimentForward.sqrMagnitude < 0.01f)
+            regimentForward = Flat(regimental.HqRoot.transform.forward);
         if (regimentForward.sqrMagnitude < 0.01f)
             regimentForward = Vector3.right;
         regimentForward.Normalize();
 
-        Vector3 brigadeDesired = Ground(
-            regimental.HqRoot.transform.position - regimentForward * BrigadeFollowDistance + Vector3.forward * 75f);
-        MoveHqToward(BrigadeHqRoot.transform, brigadeDesired, BrigadeMoveSpeed, regimentForward);
+        Vector3 right = Vector3.Cross(Vector3.up, regimentForward).normalized;
+        if (right.sqrMagnitude < 0.01f)
+            right = Vector3.forward;
 
-        Vector3 brigadeForward = Flat(BrigadeHqRoot.transform.forward);
-        if (brigadeForward.sqrMagnitude < 0.01f)
-            brigadeForward = regimentForward;
-        brigadeForward.Normalize();
+        Vector3 brigadeDesired = Ground(
+            regimental.HqRoot.transform.position
+            - regimentForward * BrigadeFollowDistance
+            + right * BrigadeLateralOffset);
+        MoveHqToward(
+            BrigadeHqRoot.transform,
+            brigadeDesired,
+            BrigadeMoveSpeed,
+            regimentForward);
 
         Vector3 divisionDesired = Ground(
-            BrigadeHqRoot.transform.position - brigadeForward * DivisionFollowDistance - Vector3.forward * 95f);
-        MoveHqToward(DivisionHqRoot.transform, divisionDesired, DivisionMoveSpeed, brigadeForward);
+            BrigadeHqRoot.transform.position
+            - regimentForward * DivisionFollowDistance
+            + right * DivisionLateralOffset);
+        MoveHqToward(
+            DivisionHqRoot.transform,
+            divisionDesired,
+            DivisionMoveSpeed,
+            regimentForward);
     }
 
     private static void MoveHqToward(Transform hq, Vector3 desired, float speed, Vector3 facing)
@@ -833,6 +869,8 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         Material highLink = PrototypeBootstrap.CreateSharedMaterial(new Color(0.48f, 0.78f, 0.98f, 0.92f), "F30B_HigherLink");
         Material supportLink = PrototypeBootstrap.CreateSharedMaterial(new Color(0.78f, 0.66f, 0.28f, 0.90f), "F30B_SupportLink");
         Material select = PrototypeBootstrap.CreateSharedMaterial(new Color(1f, 0.80f, 0.18f, 0.98f), "F30B_HqSelect");
+        Material inner = PrototypeBootstrap.CreateSharedMaterial(new Color(0.35f, 0.68f, 0.88f, 0.45f), "F30P_HigherCommandInner");
+        Material outer = PrototypeBootstrap.CreateSharedMaterial(new Color(0.82f, 0.52f, 0.18f, 0.40f), "F30P_HigherCommandOuter");
 
         divisionBrigadeLink = CreateLine("F30B_DivisionBrigadeLink", highLink, 0.20f);
         brigadeRegimentLink = CreateLine("F30B_BrigadeRegimentLink", highLink, 0.20f);
@@ -840,6 +878,11 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
         cavalryLinkB = CreateLine("F30B_CavalryLink_Dragon", supportLink, 0.17f);
         divisionSelection = CreateLine("F30B_DivisionSelection", select, 0.26f);
         brigadeSelection = CreateLine("F30B_BrigadeSelection", select, 0.26f);
+
+        divisionCommandInner = CreateLine("F30P_DivisionCommandInner", inner, 0.12f);
+        divisionCommandOuter = CreateLine("F30P_DivisionCommandOuter", outer, 0.12f);
+        brigadeCommandInner = CreateLine("F30P_BrigadeCommandInner", inner, 0.12f);
+        brigadeCommandOuter = CreateLine("F30P_BrigadeCommandOuter", outer, 0.12f);
     }
 
     private void UpdateCommandLinks()
@@ -865,6 +908,27 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
         SetCircle(divisionSelection, DivisionHqRoot.transform.position, 10.5f, divisionSelected);
         SetCircle(brigadeSelection, BrigadeHqRoot.transform.position, 9.5f, brigadeSelected);
+
+        SetCircle(
+            divisionCommandInner,
+            DivisionHqRoot.transform.position,
+            DivisionCommandInner,
+            divisionSelected);
+        SetCircle(
+            divisionCommandOuter,
+            DivisionHqRoot.transform.position,
+            DivisionCommandOuter,
+            divisionSelected);
+        SetCircle(
+            brigadeCommandInner,
+            BrigadeHqRoot.transform.position,
+            BrigadeCommandInner,
+            brigadeSelected);
+        SetCircle(
+            brigadeCommandOuter,
+            BrigadeHqRoot.transform.position,
+            BrigadeCommandOuter,
+            brigadeSelected);
     }
 
     private void UpdateCavalryLink(LineRenderer line, PrototypeCavalryUnit09F30 unit, bool requested)
