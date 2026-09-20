@@ -37,7 +37,7 @@ public sealed class PrototypeDefensiveStability09F29Y : MonoBehaviour
         regimentHasDestinationField = typeof(Regiment).GetField("hasDestination", BindingFlags.Instance | BindingFlags.NonPublic);
 
         Debug.Log(
-            "DEF-STABILITY-09F29Y|Installed=True|DefendBankLock=True|" +
+            "DEF-STABILITY-09F30U|Installed=True|DefendBankLock=True|CommittedFacingAuthority=True|" +
             "ReserveExcludedFromHqAnchor=True|StableMissionFacing=True|PhysicalMover=F27");
     }
 
@@ -120,16 +120,25 @@ public sealed class PrototypeDefensiveStability09F29Y : MonoBehaviour
         // HqGoalStabilized log spam every frame.
         if (distanceToDesired <= 4f)
         {
-            if (oldHasGoal &&
-                PlanarDistance(oldGoal, current) <= 4f)
+            // F30U: being physically settled at the committed defensive goal is
+            // authoritative. Clear ANY remaining HQ goal, even if another helper
+            // system previously wrote a different destination. The older check only
+            // cleared a goal that was already near current position, allowing the
+            // generic HQ depth guard to pull the Major away immediately afterwards.
+            if (oldHasGoal)
             {
+                float competingGoalDistance =
+                    PlanarDistance(oldGoal, current);
+
                 hqGoalField.SetValue(battalion, Ground(current));
                 hasHqGoalField.SetValue(battalion, false);
 
                 Debug.Log(
-                    "DEF-STABILITY-09F30S|Level=MAJOR|Battalion=" +
+                    "DEF-STABILITY-09F30U|Level=MAJOR|Battalion=" +
                     (battalionIndex + 1) +
-                    "|Settled=True|HqGoalCleared=True|Bank=" + defendBank +
+                    "|Settled=True|HqGoalCleared=True|CompetingGoalDistance=" +
+                    competingGoalDistance.ToString("0.0") +
+                    "|Bank=" + defendBank +
                     "|Position=" + current.x.ToString("0.0") + "," +
                     current.z.ToString("0.0"));
             }
