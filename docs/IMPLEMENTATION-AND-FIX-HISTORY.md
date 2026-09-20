@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30p TEST**  
-**Gameplay-baseline: v00.00.09f30p**  
+**Konsolideret ved v00.00.09f30q TEST**  
+**Gameplay-baseline: v00.00.09f30q**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30P. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30Q. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -430,6 +430,14 @@ Fejlrettelser/hardening:
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
 
+### v00.00.09f30q — Active Order Blue + Balanced Attack Front + Cavalry Scout Design
+- Shared officer order grid now has a dedicated blue state for pending and actively executing missions.
+- Major, Regiment, Brigade and Division query real mission state instead of drawing all six buttons red.
+- Attack mission activity includes movement and local combat/under-fire contact; Defend/Hold remain standing-active until replaced.
+- BAL regimental AttackHere no longer withholds an entire battalion at 285 m reserve depth.
+- BAL commits both battalions to the attack front; Major-level company reserve logic remains available.
+- DEF retains whole-battalion reserve authority and OFF retains flank-capable disposition.
+- Future `SPEJD HER` / RECON cavalry task is specified for true FOG/LOS but intentionally not exposed in runtime before enemy visibility is no longer omniscient.
 ### v00.00.09f30p — Committed Facing + Higher HQ Follow + Command Zones
 - Explicit drag-facing is now passed into formation planning before Regiment/Battalion/company slots are generated.
 - Removed post-hoc facing correction that could make order arrow and actual defensive line disagree.
