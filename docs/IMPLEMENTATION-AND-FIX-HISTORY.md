@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30t TEST**  
-**Gameplay-baseline: v00.00.09f30t**  
+**Konsolideret ved v00.00.09f30u TEST**  
+**Gameplay-baseline: v00.00.09f30u**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30T. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30U. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -429,6 +429,14 @@ Fejlrettelser/hardening:
 - Mounted gait articulates horse legs/hooves, head, tail and rider instead of only whole-root rocking.
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
+
+### v00.00.09f30u — Defend Command Authority + HQ Goal Conflict Fix
+- Reviewed two F30S QA recordings showing repeated DefensiveStability goal writes followed by HqDepthGuard corrections.
+- Root cause: two helper systems could own Major/Regiment HQ geometry simultaneously during DefendHere.
+- HqDepthGuard now yields for battalions whose current order is DefendHere.
+- HqDepthGuard also yields for Regiment HQ while the regimental current mission is DefendHere.
+- DefensiveStability clears any competing Major HqGoal when the HQ is already settled at its committed defensive position.
+- This removes defensive HQ tug-of-war, repeated stabilize/correct log cycles, and false continued execution state after the formation settles.
 
 ### v00.00.09f30t — Crop Tuft Visuals + Infantry Active Range Authority
 - Replaced F29Y long solid crop box segments with dense upright crossed crop tufts.
