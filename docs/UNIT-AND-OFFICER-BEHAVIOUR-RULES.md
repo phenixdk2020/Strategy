@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30o TEST  
+**Prototypebaseline:** v00.00.09f30p TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -729,6 +729,19 @@ Når Dragon får SID AF:
 
 ---
 
+## 35O. Committed facing, HQ follow og command reach
+
+- En drag-facing fra en point-order er mission-data og skal bruges **før** formation slots genereres.
+- En order-pil må aldrig pege i en retning, som den underliggende bataljon/company-plan ikke bruger.
+- `FORSVAR HER` bruger committed facing som formationens frontretning og lateral axis.
+- Regiment-HQ skal placeres bag sine Majorer i forhold til samme committed facing.
+- Brigade-HQ skal følge Regiment-HQ relativt til formationens facing, ikke via faste world-X/world-Z offsets.
+- Division-HQ skal følge Brigade-HQ relativt til formationens facing og må ikke akkumulere kunstigt efterslæb.
+- HQ command reach visualiseres med inner/outer cirkler på det valgte HQ.
+- Aktuelle QA-bands: Major 320/450 m, Regiment 800/1100 m, Brigade 1350/1850 m, Division 2100/2850 m.
+- Command reach skal senere påvirke command delay, coordination og information/report quality; det må ikke give direkte bonus/malus til våbenskade.
+
+---
 ## 35N. Higher-HQ AI arming og shared objective placement
 
 - **AI ON er ikke en ordre.** Division/Brigade AI ON må kun gøre command chain klar til delegated execution.
