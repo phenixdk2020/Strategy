@@ -593,7 +593,11 @@ public sealed class PrototypeCavalryManager09F30 : MonoBehaviour
         }
 
         string modeLabel = selected.Kind == PrototypeCavalryKind09F30.Dragon
-            ? (selected.Mode == PrototypeCavalryMode09F30.Mounted ? "SID AF" : "STIG OP")
+            ? (selected.Mode == PrototypeCavalryMode09F30.Mounted
+                ? "SID AF"
+                : selected.IsReturningToHorses
+                    ? "TIL HESTE..."
+                    : "STIG OP")
             : "MOUNTED";
         if (GUI.Button(new Rect(commandX + (actionW + gap) * 2f, actionY, actionW, 20f),
                 modeLabel, selected.Kind == PrototypeCavalryKind09F30.Dragon ? neutralStyle : activeStyle))
