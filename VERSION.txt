@@ -1,14 +1,45 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30s
+Prototype version: v00.00.09f30t
 Build status: TEST
-Build name: EXECUTION-STATE ORDERS + DEFEND CAV RESERVE + CONE QA + SELECTION PERSISTENCE
-Visible build marker: PROJECT 1864 | v00.00.09f30s TEST
+Build name: CROP TUFT VISUALS + INFANTRY ACTIVE RANGE AUTHORITY
+Visible build marker: PROJECT 1864 | v00.00.09f30t TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30s
+Gameplay/build baseline: v00.00.09f30t
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30t - Crop Tuft Visuals + Infantry Active Range Authority
+- Backup before F30T: backup/channel-test-v00.00.09f30s-pre-09f30t-crop-cone-visuals at F30S HEAD f546bca3edd88dcec94133ab0376496ed021a4c7.
+- FIX: close-up crop fields no longer use long 7-8 m solid box segments that appeared as yellow beams.
+- Dense crop visual now uses many short upright crossed crop tufts/stalk-clusters following terrain height.
+- Crop material/gameplay concealment owner remains unchanged; this is a presentation-only geometry replacement.
+- Previous CropFields09F29Y visual root is explicitly disabled and F30T creates CropFields09F30T so hot-reload/scene QA cannot keep the old beam geometry alive.
+- Crop tuft mesh uses deterministic micro-jitter and small height variation to avoid a perfect CAD-grid appearance.
+- Crop tufts do not cast the previous oversized beam-like shadows.
+- FIX: PrototypeFireVisuals09F8 is now the final visual authority for infantry fire-range emphasis.
+- Infantry active CLOSE/MED/LONG band is rendered much stronger/thicker; inactive physical ranges are faint references.
+- HOLD leaves all physical ranges faint/reference-only.
+- Prussian infantry cones remain visible in TEST/QA without selection, with the same active/inactive emphasis.
+- TEST cone visibility does not grant LOS, target knowledge or firing authority.
+- F30S LOS+range+cone anti-CAV rules remain authoritative.
+- F30S Dragon fire control, selection persistence, execution-state completion and Dragon horse-holder split remain unchanged.
+
+Primary F30T QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30t TEST and Unity compiles with no red errors.
+2. Restart/enter Play mode and inspect all crop fields at close tactical zoom: no long solid yellow beams remain.
+3. Crop should read as many short upright stalk/tuft elements over the golden field surface.
+4. Check field slopes: tufts follow sampled terrain height and do not float as long rigid beams.
+5. Select Danish infantry in Line and choose CLOSE: Close cone is clearly strongest; MED/LONG remain faint.
+6. Choose MED: Medium cone becomes strongest and Close/Long become faint.
+7. Choose LONG: Long cone becomes strongest and Close/Medium become faint.
+8. Choose HOLD: all three infantry cones are faint reference-only.
+9. Inspect Prussian infantry in TEST without selection: cones remain visible and active fire-policy band is visually strongest.
+10. Confirm Prussian QA cone visibility does not bypass LOS/range/cone firing checks against CAV.
+11. Re-test F30S CAV hover, Dragon dismount/remount split, order completion and selection persistence for regression.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30s - Execution-State Orders + Defend CAV Reserve + Cone QA + Selection Persistence
 - Backup before F30S: backup/channel-test-v00.00.09f30r-pre-09f30s-order-execution-cav-reserve at F30R HEAD 7813176bdab37399e55e2029c2e427cb6007072a.
