@@ -674,12 +674,21 @@ public sealed class PrototypeRegimentalCommandHardening09F29E : MonoBehaviour
                 {
                     unit.OrderHold();
                     Face(unit, facing);
+
+                    // F30S: exact-slot correction is terminal for the parent move.
+                    // Clear any stale AttackTarget/AttackNearest mission before the
+                    // local officer controller is re-enabled, otherwise it walks away
+                    // from the slot and hardening pulls it back again.
+                    controller.SetHoldMission();
                     controller.enabled = true;
+
                     arrivedField.SetValue(visual, true);
                     Add(ref completed, unit);
-                    Debug.Log("HQ-ARRIVAL-09F29E|Unit=" + unit.RegimentName +
+
+                    Debug.Log("HQ-ARRIVAL-09F30S|Unit=" + unit.RegimentName +
                               "|PreciseArrival=True|Distance=" + distance.ToString("0.00") +
-                              "|Goal=" + goal.x.ToString("0.0") + "," + goal.z.ToString("0.0"));
+                              "|Goal=" + goal.x.ToString("0.0") + "," + goal.z.ToString("0.0") +
+                              "|Controller=HOLD|StaleAttackCleared=True");
                 }
                 else
                 {
