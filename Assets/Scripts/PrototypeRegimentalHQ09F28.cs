@@ -191,6 +191,18 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
         return hierarchy != null && hierarchy.HasActiveMissionExecutors(order);
     }
 
+    public bool IsMissionActive(MajorOrder09F18 order)
+    {
+        if (currentMission == null || currentMission.Order != order)
+            return false;
+
+        if (order == MajorOrder09F18.HoldPosition ||
+            order == MajorOrder09F18.DefendHere)
+            return true;
+
+        return hierarchy != null && hierarchy.HasActiveMissionExecutors(order);
+    }
+
     public void SetDoctrine(OfficerAIDoctrine doctrine)
     {
         Doctrine = doctrine;
@@ -255,8 +267,10 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
 
         if (order == MajorOrder09F18.AttackHere)
         {
-            bool useReserve = Doctrine == OfficerAIDoctrine.Defensive ||
-                              (Doctrine == OfficerAIDoctrine.Balanced && knownEnemies.Count <= 4);
+            // F30Q: BAL commits both battalions to the attack front. Local
+            // company reserves remain available under the Majors, avoiding the
+            // previous over-reserve state where an entire battalion sat 285m back.
+            bool useReserve = Doctrine == OfficerAIDoctrine.Defensive;
             bool useFlank = Doctrine == OfficerAIDoctrine.Offensive && knownEnemies.Count <= 3;
 
             if (useFlank)
