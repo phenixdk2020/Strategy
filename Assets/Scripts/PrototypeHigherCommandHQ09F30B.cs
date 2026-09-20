@@ -797,7 +797,7 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
 
         if (regimental != null &&
             regimental.CurrentMissionOrder == order &&
-            regimental.HasActiveMissionExecutors(order))
+            regimental.IsMissionActive(order))
             return true;
 
         // F30S: higher-HQ button state is execution-based. A cavalry mission may
@@ -811,7 +811,49 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
                 return true;
         }
 
+        if (IsHigherHqStillMoving(level))
+            return true;
+
         return false;
+    }
+
+    private bool IsHigherHqStillMoving(PrototypeHigherCommandLevel09F30B level)
+    {
+        if (regimental == null || regimental.HqRoot == null ||
+            BrigadeHqRoot == null || DivisionHqRoot == null)
+            return false;
+
+        Vector3 forward = Flat(regimental.CurrentMissionFacing);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Flat(regimental.HqRoot.transform.forward);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.right;
+        forward.Normalize();
+
+        Vector3 right = Vector3.Cross(Vector3.up, forward).normalized;
+        if (right.sqrMagnitude < 0.01f)
+            right = Vector3.forward;
+
+        Vector3 brigadeDesired = Ground(
+            regimental.HqRoot.transform.position
+            - forward * BrigadeFollowDistance
+            + right * BrigadeLateralOffset);
+
+        bool brigadeMoving =
+            PlanarDistance(BrigadeHqRoot.transform.position, brigadeDesired) > 12f;
+
+        if (level == PrototypeHigherCommandLevel09F30B.Brigade)
+            return brigadeMoving;
+
+        Vector3 divisionDesired = Ground(
+            BrigadeHqRoot.transform.position
+            - forward * DivisionFollowDistance
+            + right * DivisionLateralOffset);
+
+        bool divisionMoving =
+            PlanarDistance(DivisionHqRoot.transform.position, divisionDesired) > 12f;
+
+        return brigadeMoving || divisionMoving;
     }
 
     private bool IsCavalryExecuting(
