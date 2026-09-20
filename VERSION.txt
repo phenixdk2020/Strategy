@@ -1,14 +1,37 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30t
+Prototype version: v00.00.09f30u
 Build status: TEST
-Build name: CROP TUFT VISUALS + INFANTRY ACTIVE RANGE AUTHORITY
-Visible build marker: PROJECT 1864 | v00.00.09f30t TEST
+Build name: DEFEND COMMAND AUTHORITY + HQ GOAL CONFLICT FIX
+Visible build marker: PROJECT 1864 | v00.00.09f30u TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30t
+Gameplay/build baseline: v00.00.09f30u
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30u - Defend Command Authority + HQ Goal Conflict Fix
+- Backup before F30U: backup/channel-test-v00.00.09f30t-pre-09f30u-defend-authority at F30T HEAD 36305c7cb97850634f9c84db13f03d203a1b242a.
+- QA recordings reviewed: both recordings were from F30S and showed repeated DEF-STABILITY HqGoalStabilized entries followed by HQ-DEPTH Corrected entries.
+- Root cause: PrototypeDefensiveStability09F29Y and PrototypeHqDepthGuard09F29W could both write Major/Regiment HQ goals during a committed FORSVAR HER mission.
+- FIX: committed FORSVAR HER now owns defensive HQ geometry.
+- PrototypeHqDepthGuard09F29W yields completely for Major HQs whose battalion LastOrder is DefendHere.
+- PrototypeHqDepthGuard09F29W also yields for Regiment HQ while the regimental CurrentMissionOrder is DefendHere.
+- PrototypeDefensiveStability09F29Y now clears ANY competing Major HqGoal once the HQ is already settled at the committed defensive position, even when the competing goal points somewhere else.
+- This prevents HQ-goal tug-of-war, repeated HqGoalStabilized/HQ-DEPTH correction loops and false continued blue execution-state after the formation has settled.
+- Existing F30T crop/cone fixes and F30S command/CAV/LOS/selection fixes remain inherited.
+
+Primary F30U QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30u TEST and Unity compiles with no red errors.
+2. Give Division FORSVAR HER with a dragged facing and let the entire formation settle.
+3. Major A/B and Regiment HQ must not receive HQ-DEPTH corrections while the committed DefendHere mission is current.
+4. DEF-STABILITY may set the defensive HQ goal while moving, but once settled it clears HasHqGoal and must not spam HqGoalStabilized every frame.
+5. The FORSVAR HER button stays blue only while real company/CAV/HQ execution is occurring and returns red after the command chain settles.
+6. Re-issue FORSVAR HER to a new point: the new mission must move normally and must not reproduce the previous stop/re-arm loop.
+7. Verify committed facing still controls battalion/company defensive geometry.
+8. Re-test F30T crop tufts and infantry active-range cone emphasis for regression.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30t - Crop Tuft Visuals + Infantry Active Range Authority
 - Backup before F30T: backup/channel-test-v00.00.09f30s-pre-09f30t-crop-cone-visuals at F30S HEAD f546bca3edd88dcec94133ab0376496ed021a4c7.
