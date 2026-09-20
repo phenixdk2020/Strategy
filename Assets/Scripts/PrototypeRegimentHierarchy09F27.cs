@@ -856,6 +856,12 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
                 return true;
         }
 
+        // Keep ANGRIB HER active while a live enemy still contests the objective
+        // area, even in the short gap between arrival and local-contact acquisition.
+        if (order == MajorOrder09F18.AttackHere &&
+            KnownEnemies(battalion.LastOrderPoint, 320f).Count > 0)
+            return true;
+
         return false;
     }
 
