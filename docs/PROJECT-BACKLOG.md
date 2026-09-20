@@ -12,19 +12,21 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 - **IDÉ** — relevant mulighed, som skal undersøges eller besluttes før den bliver bindende design.
 - **RESEARCH** — historiske detaljer skal verificeres før endelige værdier/organisation låses.
 
-## Aktiv Campaign gate — v00.00.10n7f
+## Aktiv Campaign gate — v00.00.10n7g
 
-**Stabiliseringsgate.** n7f rydder compiler-warnings og gør campaign HUD rent ved startup. City-art og coastal offsets ændres ikke.
+**City placement QA pass 2.** n7g ændrer kun visual offsets; canonical geography og click anchors er uændret.
 
 | ID | Status | Emne | Exit-kriterium |
 | --- | --- | --- | --- |
-| C-741 | AKTIV | CS0162 cleanup | Ingen unreachable-code warnings fra n7a/n7b/n7c/n7e city-art guards. |
-| C-742 | AKTIV | Clean INFO default | Selection/INFO starter OFF ved første n7f-run, også med gamle PlayerPrefs. |
-| C-743 | AKTIV | Clean DBG default | Technical/debug panels starter OFF ved første n7f-run. |
-| C-744 | AKTIV | Build badge debug-only | Separat top-left PROJECT 1864 badge vises kun når DBG er aktiv. |
-| C-745 | AKTIV | City click INFO | Direkte city-click må stadig åbne INFO-panelet automatisk. |
-| C-746 | PLANLAGT | Unity Input System migration | Migrer campaign + battle input samlet og regressionstest alle keyboard/mouse/hotkeys. |
-| C-747 | BESLUTTET | County/Amt pause | Amt boundaries/click/highlight/info forbliver OFF til city-art QA er accepteret. |
+| C-751 | AKTIV | Helsingør + Nykøbing Sj. retune | Begge icons ligger tydeligt på land ved normal campaign zoom. |
+| C-752 | AKTIV | Bogense | Artwork/label flyttes øst/syd fra kysten. |
+| C-753 | AKTIV | Assens | Artwork/label flyttes øst fra kysten. |
+| C-754 | AKTIV | Stege | Artwork/label flyttes øst/inland. |
+| C-755 | AKTIV | Præstø | Artwork/label flyttes nord-vest/inland fra fjorden. |
+| C-756 | AKTIV | Nykøbing Mors | Artwork/label flyttes nord-vest/inland. |
+| C-757 | AKTIV | Click preservation | Alle offset-byer vælger stadig canonical city marker og åbner korrekt INFO. |
+| C-758 | BESLUTTET | Canonical geography unchanged | CITY-REG-01 WGS84/ZoneId/save identity ændres ikke af visual offsets. |
+| C-759 | BESLUTTET | County/Amt pause | Amt boundaries/click/highlight/info forbliver OFF. |
 
 ## Aktiv gate — P0A v00.00.08
 
