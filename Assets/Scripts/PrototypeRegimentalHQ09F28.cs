@@ -13,6 +13,7 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
     {
         public MajorOrder09F18 Order;
         public Vector3 Objective;
+        public Vector3 Facing;
         public bool Autonomous;
     }
 
@@ -174,7 +175,11 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
         nextThink = Time.time + 0.25f;
     }
 
-    public void IssueRegimentalOrder(MajorOrder09F18 order, Vector3 point, bool autonomous = false)
+    public void IssueRegimentalOrder(
+        MajorOrder09F18 order,
+        Vector3 point,
+        bool autonomous = false,
+        Vector3? explicitFacing = null)
     {
         if (!Installed || hierarchy == null || hierarchy.BattalionCount < 2)
             return;
@@ -196,6 +201,7 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
             {
                 Order = order,
                 Objective = GetRegimentCenter(),
+                Facing = HqRoot != null ? Flat(HqRoot.transform.forward) : Vector3.forward,
                 Autonomous = autonomous
             };
             lastOrderText = "HOLD | regimentet fastholder nuværende disposition";
@@ -204,9 +210,20 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
         }
 
         Vector3 regimentCenter = GetRegimentCenter();
-        Vector3 forward = Flat(point - HqRoot.transform.position);
+        Vector3 forward = explicitFacing.HasValue
+            ? Flat(explicitFacing.Value)
+            : Vector3.zero;
+
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Flat(point - HqRoot.transform.position);
         if (forward.sqrMagnitude < 0.01f)
             forward = Flat(point - regimentCenter);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Flat(HqRoot.transform.forward);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
         Vector3 lateral = Vector3.Cross(Vector3.up, forward).normalized;
 
         List<Regiment> knownEnemies = KnownEnemies(point, 1200f);
@@ -267,13 +284,14 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
         Vector3 goal0 = normalCost <= swappedCost ? slotA : slotB;
         Vector3 goal1 = normalCost <= swappedCost ? slotB : slotA;
 
-        hierarchy.IssueBattalionOrderFromRegiment(0, order, goal0, Doctrine);
-        hierarchy.IssueBattalionOrderFromRegiment(1, order, goal1, Doctrine);
+        hierarchy.IssueBattalionOrderFromRegiment(0, order, goal0, Doctrine, forward);
+        hierarchy.IssueBattalionOrderFromRegiment(1, order, goal1, Doctrine, forward);
 
         currentMission = new PendingRegimentalOrder
         {
             Order = order,
             Objective = point,
+            Facing = forward,
             Autonomous = autonomous
         };
 
@@ -281,8 +299,10 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
                         (autonomous ? " | AI" : " | SPILLER");
         lastDecisionText = "Bataljonsroller: " + disposition;
 
-        Debug.Log("REG-ORDER-09F28|Order=" + order +
+        Debug.Log("REG-ORDER-09F30P|Order=" + order +
                   "|Objective=" + point.x.ToString("0.0") + "," + point.z.ToString("0.0") +
+                  "|ExplicitFacing=" + explicitFacing.HasValue +
+                  "|Facing=" + forward.x.ToString("0.00") + "," + forward.z.ToString("0.00") +
                   "|KnownEnemies=" + knownEnemies.Count +
                   "|Disposition=" + disposition +
                   "|Major0Goal=" + goal0.x.ToString("0.0") + "," + goal0.z.ToString("0.0") +
@@ -335,7 +355,15 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
             return;
 
         Vector3 majorMid = (major0.transform.position + major1.transform.position) * 0.5f;
-        Vector3 forward = Flat(currentMission.Objective - majorMid);
+        Vector3 forward = Flat(currentMission.Facing);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Flat(currentMission.Objective - majorMid);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Flat(HqRoot.transform.forward);
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
         Vector3 desired = Ground(majorMid - forward * RegimentalHqBehind);
 
         if (PlanarDistance(HqRoot.transform.position, desired) < RegimentalRelocateThreshold)
