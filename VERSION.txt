@@ -27,6 +27,7 @@ v00.00.09f30s - Execution-State Orders + Defend CAV Reserve + Cone QA + Selectio
 - FIX: issuing an order no longer clears Division/Brigade/Regiment/Major selection.
 - Shared point/facing placement is ignored by the legacy world-selection handlers, so the selected HQ remains selected after objective/facing commit.
 - F30R Dragon HOLD/CLOSE/MED/LONG fire-control remains active.
+- HOTFIX: BattleManager cavalry hover rendering was moved out of Update() and into OnGUI(), fixing CS0103 scope errors for hoveredCavalry/mainCamera.
 - Anti-CAV infantry reaction now requires all three conditions: actual LOS, target inside current fire-policy range, and target inside the infantry fire cone.
 - TEST-visible enemy cones do not grant target knowledge or firing authority by themselves.
 - Automatic Square/threat reaction also requires LOS to the cavalry threat.
