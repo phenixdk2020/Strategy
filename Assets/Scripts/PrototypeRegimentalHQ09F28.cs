@@ -196,8 +196,10 @@ public sealed class PrototypeRegimentalHQ09F28 : MonoBehaviour
         if (currentMission == null || currentMission.Order != order)
             return false;
 
-        // F30S: active HUD state follows execution, not persistent intent.
-        return hierarchy != null && hierarchy.HasActiveMissionExecutors(order);
+        // F30S: active HUD state follows physical execution, including the
+        // Regimental HQ still relocating behind its Majors.
+        return hasHqGoal ||
+               (hierarchy != null && hierarchy.HasActiveMissionExecutors(order));
     }
 
     public void SetDoctrine(OfficerAIDoctrine doctrine)
