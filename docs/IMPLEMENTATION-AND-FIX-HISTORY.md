@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30s TEST**  
-**Gameplay-baseline: v00.00.09f30s**  
+**Konsolideret ved v00.00.09f30t TEST**  
+**Gameplay-baseline: v00.00.09f30t**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30S. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30T. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -429,6 +429,16 @@ Fejlrettelser/hardening:
 - Mounted gait articulates horse legs/hooves, head, tail and rider instead of only whole-root rocking.
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
+
+### v00.00.09f30t — Crop Tuft Visuals + Infantry Active Range Authority
+- Replaced F29Y long solid crop box segments with dense upright crossed crop tufts.
+- Crop gameplay/concealment remains owned by F29R; only presentation geometry changed.
+- F30T creates a new CropFields09F30T root and explicitly disables the old F29Y visual root to avoid stale hot-reload geometry.
+- Crop tufts sample terrain individually, use deterministic micro-jitter/height variation and disable the previous oversized beam shadows.
+- PrototypeFireVisuals09F8 is now the final LateUpdate authority for infantry fire-cone active/inactive emphasis.
+- Active CLOSE/MED/LONG is thick/strong; inactive physical ranges are faint reference geometry; HOLD leaves all ranges faint.
+- Prussian TEST/QA cones remain visible without selection and use the same emphasis rules.
+- Enemy TEST cone visibility remains visual-only and does not bypass LOS, fire-policy range or fire-cone checks.
 
 ### v00.00.09f30s — Execution-State Orders + Defend CAV Reserve + Cone QA + Selection Persistence
 - Officer-order blue state now reflects physical execution only, not persistent standing intent.
