@@ -769,7 +769,7 @@ public sealed class PrototypeHigherCommandHQ09F30B : MonoBehaviour
                parent == PrototypeCavalryCommandControl09F30C.MajorBId;
     }
 
-    private bool HasHigherOrderActive(
+    public bool HasHigherOrderActive(
         PrototypeHigherCommandLevel09F30B level,
         MajorOrder09F18 order)
     {
