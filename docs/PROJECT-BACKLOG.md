@@ -139,6 +139,7 @@ v00.00.09 skal mindst bevise:
 | B-084 | BESLUTTET | Knowledge-state fog of war | Fjendtlige observationer har timestamp, confidence, last known position og strength/type estimates. AI må kun bruge sin egen knowledge state. |
 | B-085 | BESLUTTET | Recon sources | Cavalry, scouts/skirmishers, observationspunkter, civilians, telegraph reports og naval spotting bidrager forskelligt til intel. |
 | B-086 | IDÉ | Deception/demonstrations | Informationsmodellen skal kunne understøtte vildledning og demonstrations senere; konkrete mechanics fastlægges senere. |
+| B-087 | BESLUTTET | CAV `SPEJD HER` tactical recon order | Når true FOG/LOS er aktiv, kan mounted cavalry få et område-/punktmål til SEEK/RECON → CONTACT → SCREEN. CAV holder våbenafhængig stand-off, rapporterer observationer via CurrentCommandParent/command delay og skaber last-known contacts; ordren giver ikke automatisk CHARGE-authority og er skjult/disabled uden FOG. |
 
 ## Strategisk logistik og forsyning
 
