@@ -12,6 +12,7 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
     {
         public float NextFire;
         public float AmmoRoundsPerMan = 20f;
+        public RegimentFirePolicy FirePolicy = RegimentFirePolicy.MediumRange;
         public Regiment Target;
         public ParticleSystem Smoke;
         public LineRenderer Close;
@@ -41,8 +42,9 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
     private void Awake()
     {
         instance = this;
-        Debug.Log("DRAGON-FIRE-09F30J|Installed=True|HorseHolders=25pct|CombatGroup=75pct|" +
-                  "Forward=18m|Ranges=35/70/100|Cone=70deg|Reload=7s");
+        Debug.Log("DRAGON-FIRE-09F30R|Installed=True|HorseHolders=25pct|CombatGroup=75pct|" +
+                  "Forward=18m|Ranges=35/70/100|FirePolicies=HOLD/CLOSE/MED/LONG|" +
+                  "Default=MED|Cone=70deg|Reload=7s");
     }
 
     private void OnDestroy()
@@ -62,6 +64,42 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         if (instance == null || unit == null || !instance.states.TryGetValue(unit, out State s) || s.Target == null)
             return "—";
         return s.Target.RegimentName;
+    }
+
+    public static RegimentFirePolicy GetFirePolicy(PrototypeCavalryUnit09F30 unit)
+    {
+        if (instance == null || unit == null)
+            return RegimentFirePolicy.MediumRange;
+
+        return instance.GetState(unit).FirePolicy;
+    }
+
+    public static void SetFirePolicy(
+        PrototypeCavalryUnit09F30 unit,
+        RegimentFirePolicy policy)
+    {
+        if (instance == null || unit == null)
+            return;
+
+        State state = instance.GetState(unit);
+        state.FirePolicy = policy;
+
+        if (policy == RegimentFirePolicy.HoldFire)
+            state.Target = null;
+
+        Debug.Log("DRAGON-FIRE-09F30R|Unit=" + unit.UnitName +
+                  "|FirePolicy=" + FirePolicyLabel(policy) +
+                  "|Range=" + GetPolicyRange(policy).ToString("0"));
+    }
+
+    public static string GetFirePolicyLabel(PrototypeCavalryUnit09F30 unit)
+    {
+        return FirePolicyLabel(GetFirePolicy(unit));
+    }
+
+    public static float GetSelectedRange(PrototypeCavalryUnit09F30 unit)
+    {
+        return GetPolicyRange(GetFirePolicy(unit));
     }
 
     private void Update()
@@ -86,7 +124,13 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
             return;
         }
 
-        state.Target = FindTarget(dragon);
+        if (state.FirePolicy == RegimentFirePolicy.HoldFire)
+        {
+            state.Target = null;
+            return;
+        }
+
+        state.Target = FindTarget(dragon, state.FirePolicy);
         if (state.Target == null || Time.time < state.NextFire)
             return;
 
@@ -110,15 +154,24 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         return s;
     }
 
-    private static Regiment FindTarget(PrototypeCavalryUnit09F30 dragon)
+    private static Regiment FindTarget(
+        PrototypeCavalryUnit09F30 dragon,
+        RegimentFirePolicy policy)
     {
         BattleManager battle = BattleManager.Instance;
-        if (battle == null || battle.Regiments == null)
+        if (battle == null || battle.Regiments == null ||
+            policy == RegimentFirePolicy.HoldFire)
+            return null;
+
+        float triggerRange = GetPolicyRange(policy);
+        if (triggerRange <= 0.01f)
             return null;
 
         Vector3 origin = dragon.GetDismountedCombatCenterWorld();
         Vector3 forward = dragon.transform.forward;
         forward.y = 0f;
+        if (forward.sqrMagnitude < 0.01f)
+            forward = Vector3.forward;
         forward.Normalize();
 
         Regiment best = null;
@@ -132,7 +185,7 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
             Vector3 delta = candidate.transform.position - origin;
             delta.y = 0f;
             float distance = delta.magnitude;
-            if (distance > LongRange || distance >= bestDistance || distance < 0.1f)
+            if (distance > triggerRange || distance >= bestDistance || distance < 0.1f)
                 continue;
 
             float angle = Vector3.Angle(forward, delta.normalized);
@@ -164,7 +217,7 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         state.NextFire = Time.time + ReloadSeconds * Random.Range(0.90f, 1.12f);
         EmitSmoke(dragon, state);
 
-        Debug.Log("DRAGON-FIRE-09F30J|Unit=" + dragon.UnitName +
+        Debug.Log("DRAGON-FIRE-09F30R|Unit=" + dragon.UnitName +
                   "|CombatMen=" + combatMen +
                   "|HorseHolders=" + dragon.GetHorseHolderStrength() +
                   "|Target=" + target.RegimentName +
@@ -193,7 +246,10 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         return line;
     }
 
-    private static void UpdateCones(PrototypeCavalryUnit09F30 dragon, State state, bool visible)
+    private static void UpdateCones(
+        PrototypeCavalryUnit09F30 dragon,
+        State state,
+        bool visible)
     {
         state.Close.enabled = visible;
         state.Medium.enabled = visible;
@@ -204,6 +260,31 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         BuildFan(dragon, state.Close, CloseRange);
         BuildFan(dragon, state.Medium, MediumRange);
         BuildFan(dragon, state.Long, LongRange);
+
+        // Keep all three ranges readable like infantry, but make the selected
+        // engagement band materially stronger. HOLD leaves all as reference only.
+        SetConeEmphasis(
+            state.Close,
+            state.FirePolicy == RegimentFirePolicy.CloseRange);
+        SetConeEmphasis(
+            state.Medium,
+            state.FirePolicy == RegimentFirePolicy.MediumRange);
+        SetConeEmphasis(
+            state.Long,
+            state.FirePolicy == RegimentFirePolicy.LongRange);
+    }
+
+    private static void SetConeEmphasis(LineRenderer line, bool active)
+    {
+        if (line == null)
+            return;
+
+        Color baseColor = line.sharedMaterial != null
+            ? line.sharedMaterial.color
+            : line.startColor;
+        baseColor.a = active ? 0.96f : 0.24f;
+        line.startColor = baseColor;
+        line.endColor = baseColor;
     }
 
     private static void BuildFan(PrototypeCavalryUnit09F30 dragon, LineRenderer line, float range)
@@ -283,6 +364,36 @@ public sealed class PrototypeDismountedDragonFire09F30J : MonoBehaviour
         int columns = Mathf.CeilToInt(dragon.GetDismountedCombatStrength() / 2f);
         shape.scale = new Vector3(Mathf.Max(7f, columns * 0.78f), 0.45f, 0.8f);
         state.Smoke.Emit(Random.Range(14, 24));
+    }
+
+    private static float GetPolicyRange(RegimentFirePolicy policy)
+    {
+        switch (policy)
+        {
+            case RegimentFirePolicy.CloseRange:
+                return CloseRange;
+            case RegimentFirePolicy.MediumRange:
+                return MediumRange;
+            case RegimentFirePolicy.LongRange:
+                return LongRange;
+            default:
+                return 0f;
+        }
+    }
+
+    private static string FirePolicyLabel(RegimentFirePolicy policy)
+    {
+        switch (policy)
+        {
+            case RegimentFirePolicy.HoldFire:
+                return "HOLD";
+            case RegimentFirePolicy.CloseRange:
+                return "CLOSE";
+            case RegimentFirePolicy.LongRange:
+                return "LONG";
+            default:
+                return "MED";
+        }
     }
 
     private static Vector3 Terrain(Vector3 p)
