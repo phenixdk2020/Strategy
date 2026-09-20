@@ -424,30 +424,26 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
 
                     if (controller != null)
                     {
-                        controller.enabled = true;
+                        // F30S: parent point-orders are finite positioning missions.
+                        // Reaching an ANGRIB HER slot must not immediately create a
+                        // fresh autonomous chase toward the nearest enemy.
                         if (mission.Order == MajorOrder09F18.AttackHere)
-                        {
                             controller.SetDoctrine(OfficerAIDoctrine.Offensive);
-                            Regiment target = FindNearestEnemy(regiment.transform.position, 220f);
-                            if (target != null)
-                                controller.SetAttackMission(target);
-                            else
-                                controller.SetHoldMission();
-                        }
-                        else
-                        {
-                            controller.SetHoldMission();
-                        }
+
+                        controller.SetHoldMission();
+                        controller.enabled = true;
                     }
 
                     MarkMissionVisualArrived(regiment);
-                    Debug.Log("HQ-09F27|Arrived=True|Battalion=" + (battalionIndex + 1) +
-                              "|Unit=" + regiment.RegimentName + "|Order=" + mission.Order);
+                    Debug.Log("HQ-ARRIVAL-09F30S|Arrived=True|Battalion=" + (battalionIndex + 1) +
+                              "|Unit=" + regiment.RegimentName +
+                              "|Order=" + mission.Order +
+                              "|ExecutionComplete=True|AutonomousChase=False");
                 }
-                else
-                {
-                    FaceDirection(regiment, mission.Facing, false);
-                }
+                // F30S: do not continuously rewrite transform.rotation after arrival.
+                // PrototypeFormationMotion09F3 owns the one-time visual turn to the
+                // committed facing; repeated parent writes caused small-angle flutter.
+
             }
         }
 
