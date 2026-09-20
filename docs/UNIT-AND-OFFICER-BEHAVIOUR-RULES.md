@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30v TEST  
+**Prototypebaseline:** v00.00.09f30w TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -726,6 +726,18 @@ Når Dragon får SID AF:
 - Horse leg/hoof, head/tail og rider motion må være procedural indtil rigged assets erstatter prototypen.
 - HOLD skal returnere til en stabil neutral pose.
 - Gardehusar og Dragon skal have tydeligt forskellig uniform/equipment silhouette.
+
+---
+
+## 35V. TEST enemy cones, river bank routing og OOB AI state
+
+- I TEST/QA skal alle levende preussiske infantry fire-cones være synlige uden krav om dansk selection eller afstand.
+- Enemy cone visibility er kun visuel QA og må ikke give LOS, target knowledge eller firing authority.
+- Aktiv enemy fire-policy range er stærk; øvrige ranges er svage references.
+- En river route må kun bruge bridge crossing ved et reelt bankskifte.
+- Hvis start og slutmål er på samme bred, men den rette linje skærer en bugtet å, skal enheden følge en tør bank-rute og ikke krydse broen frem og tilbage.
+- OOB-kolonnen `AI` bruger konsekvent `ON / OFF` på alle niveauer.
+- Brigade/Division follow og ren CAV-reform er background housekeeping og holder ikke taktisk ordrestate blå.
 
 ---
 
