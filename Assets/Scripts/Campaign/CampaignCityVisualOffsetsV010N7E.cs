@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Campaign3 v00.00.10n7e - visual-only city offsets.
+/// Visual-only city offsets introduced in n7e and expanded in n7g.
 ///
 /// IMPORTANT:
 /// These offsets do NOT change CITY-REG-01 WGS84 coordinates, click anchors,
@@ -14,17 +14,37 @@ public static class CampaignCityVisualOffsetsV010N7E
     {
         switch (cityId)
         {
-            // Move artwork inland from the east coast.
+            // Existing pass 1 correction.
             case "SAEBY":
                 return new Vector3(-0.18f, 0f, -0.02f);
 
-            // Move artwork inland from Øresund and slightly south from the narrow tip.
+            // Pass 2: move farther inland from Øresund.
             case "HELSINGOR":
-                return new Vector3(-0.22f, 0f, -0.08f);
+                return new Vector3(-0.34f, 0f, -0.12f);
 
-            // Move artwork slightly south from the Isefjord/kattegat-facing shoreline.
+            // Pass 2: move farther south from the north-coast shoreline.
             case "NYKOBING_SJ":
-                return new Vector3(0.00f, 0f, -0.13f);
+                return new Vector3(0.00f, 0f, -0.24f);
+
+            // North-west Fyn: move east/south onto land.
+            case "BOGENSE":
+                return new Vector3(0.14f, 0f, -0.12f);
+
+            // West Fyn: move east from the coast.
+            case "ASSENS":
+                return new Vector3(0.18f, 0f, 0.00f);
+
+            // Møn: move east/inland from Stege Nor/coast.
+            case "STEGE":
+                return new Vector3(0.12f, 0f, 0.02f);
+
+            // Præstø Fjord: move north-west/inland.
+            case "PRAESTO":
+                return new Vector3(-0.10f, 0f, 0.10f);
+
+            // South-east Mors: move north-west/inland.
+            case "NYKOBING_MORS":
+                return new Vector3(-0.12f, 0f, 0.08f);
 
             default:
                 return Vector3.zero;
@@ -33,8 +53,19 @@ public static class CampaignCityVisualOffsetsV010N7E
 
     public static bool HasOffset(string cityId)
     {
-        return cityId == "SAEBY" ||
-               cityId == "HELSINGOR" ||
-               cityId == "NYKOBING_SJ";
+        switch (cityId)
+        {
+            case "SAEBY":
+            case "HELSINGOR":
+            case "NYKOBING_SJ":
+            case "BOGENSE":
+            case "ASSENS":
+            case "STEGE":
+            case "PRAESTO":
+            case "NYKOBING_MORS":
+                return true;
+            default:
+                return false;
+        }
     }
 }
