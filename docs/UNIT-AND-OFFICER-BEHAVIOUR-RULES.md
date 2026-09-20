@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30q TEST  
+**Prototypebaseline:** v00.00.09f30r TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -729,6 +729,20 @@ Når Dragon får SID AF:
 
 ---
 
+## 35Q. Afsiddet Dragon fire-control
+
+- Dismounted Dragon bruger eksplicit fire policy: `HOLD / CLOSE / MED / LONG`.
+- `HOLD` giver 0 m trigger-range og forhindrer automatisk karabinild.
+- `CLOSE` = 35 m.
+- `MED` = 70 m og er default fire policy.
+- `LONG` = 100 m.
+- Fire policy ændrer engagement-threshold, men ikke carbinens eksisterende ±35° fire arc.
+- Reload, ammunition, smoke og damage-resolution fortsætter gennem den eksisterende Dragon-fire pipeline.
+- Valgt/afsiddet Dragon må vise alle range-cones som reference, men aktiv policy skal visuelt fremhæves.
+- Mounted Dragon må ikke bruge de afsiddede fire-control knapper; de bliver tilgængelige efter `SID AF`.
+- Mounted carbine-fire er fortsat ikke implementeret.
+
+---
 ## 35P. Active-order state, BAL attack commitment og fremtidig CAV reconnaissance
 
 - Officer-order buttons use **blue = pending/active mission** and **red = no current mission**.
