@@ -741,6 +741,15 @@ Når Dragon får SID AF:
 - I TEST/QA må preussiske infantry-cones vises uden normal player selection for at kontrollere range/facing/fire-policy.
 - Enemy cone visibility er midlertidig QA og skal senere styres af LOS/FOG.
 - En ordre til Division, Brigade, Regiment eller Major må ikke rydde det valgte HQ. Selection bevares gennem objective/facing placement og efter commit.
+- Enemy infantry må kun reagere med ild mod CAV når **LOS + fire-policy range + fire-cone** alle er opfyldt.
+- TEST-synlige enemy cones er QA og må ikke i sig selv skabe target knowledge.
+- Square/mounted-threat reaction kræver også LOS til CAV.
+- CAV skal have mouse-over unit info på samme informationslag som infantry.
+- Afsiddet Dragon består funktionelt af mobile combat dragons og stationære horse holders/horse park; normal afsiddet movement må ikke flytte horse-holder elementet.
+- `STIG OP` væk fra hestene betyder return-to-horses og derefter auto-remount, ikke direkte remount på afstand.
+- `ANGRIB HER` er finite positioning: ved arrival holdes attack-slot; OfficerAI må ikke straks starte nearest-enemy chase.
+- Efter arrival må parent mission ikke genskrive facing hver frame; formation-motion afslutter drejningen.
+- Et settled defensive HQ-goal skal cleares, så execution-state kan afslutte.
 
 ---
 ## 35Q. Afsiddet Dragon fire-control
@@ -762,7 +771,7 @@ Når Dragon får SID AF:
 - Officer-order buttons use **blue = pending/active mission** and **red = no current mission**.
 - A point-order becomes blue as soon as target placement starts and stays blue after commit while the mission still has active executors.
 - `ANGRIB HER` remains active while subordinate companies are moving or still in local combat/under-fire contact.
-- `FORSVAR HER` and `STOP/HOLD` are standing missions and remain active until explicitly replaced.
+- `FORSVAR HER` and `STOP/HOLD` may remain the standing intent, but their **blue HUD execution state** ends when physical execution has settled.
 - BAL doctrine must not reserve an entire battalion behind an `ANGRIB HER` front by default.
 - BAL `ANGRIB HER` commits both battalions forward side-by-side; Majors may still keep local company reserves.
 - DEF doctrine may retain a whole battalion as regimental reserve.
