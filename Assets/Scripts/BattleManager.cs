@@ -52,94 +52,6 @@ public sealed class BattleManager : MonoBehaviour
             return;
         }
 
-        if (hoveredCavalry != null && mainCamera != null)
-        {
-            Vector3 screen = mainCamera.WorldToScreenPoint(
-                hoveredCavalry.transform.position + Vector3.up * 2.4f);
-
-            if (screen.z > 0f)
-            {
-                int losses = Mathf.Max(
-                    0,
-                    hoveredCavalry.InitialStrength -
-                    hoveredCavalry.CurrentStrength);
-
-                string kind =
-                    hoveredCavalry.Kind == PrototypeCavalryKind09F30.Gardehusar
-                        ? "Gardehusar"
-                        : "Dragon";
-
-                string mode =
-                    hoveredCavalry.Mode == PrototypeCavalryMode09F30.Mounted
-                        ? "Mounted"
-                        : "Afsiddet";
-
-                string formation =
-                    hoveredCavalry.Formation == PrototypeCavalryFormation09F30.Line
-                        ? "Linje"
-                        : (hoveredCavalry.IsBridgeRouteActive
-                            ? "Brokolonne 2"
-                            : "Marchkolonne 4");
-
-                PrototypeCavalryOfficerAI09F30C cavAi =
-                    PrototypeCavalryOfficerAI09F30C.Instance;
-
-                bool aiOn =
-                    cavAi != null &&
-                    cavAi.IsAIEnabled(hoveredCavalry);
-
-                string phase =
-                    cavAi != null
-                        ? cavAi.GetPhase(hoveredCavalry)
-                        : "Manuel";
-
-                string parent =
-                    PrototypeCavalryCommandControl09F30C.GetParent(
-                        hoveredCavalry);
-
-                string weaponLine =
-                    "Sabel / Karabin / Pistol";
-
-                if (hoveredCavalry.Kind == PrototypeCavalryKind09F30.Dragon &&
-                    hoveredCavalry.Mode == PrototypeCavalryMode09F30.Dismounted)
-                {
-                    weaponLine =
-                        "Karabin " +
-                        PrototypeDismountedDragonFire09F30J
-                            .GetFirePolicyLabel(hoveredCavalry) +
-                        "  |  Range " +
-                        PrototypeDismountedDragonFire09F30J
-                            .GetSelectedRange(hoveredCavalry)
-                            .ToString("0") +
-                        " m  |  Ammo " +
-                        PrototypeDismountedDragonFire09F30J
-                            .GetAmmoRoundsPerMan(hoveredCavalry)
-                            .ToString("0");
-                }
-
-                string label =
-                    hoveredCavalry.UnitName + " - " + kind + "\n" +
-                    "Side: Danmark   Styrke: " +
-                    hoveredCavalry.CurrentStrength + "/" +
-                    hoveredCavalry.InitialStrength +
-                    "   Faldne: " + losses + "\n" +
-                    "Formation: " + formation +
-                    "   Tilstand: " + mode + "\n" +
-                    "Moral: " + hoveredCavalry.Morale.ToString("0") +
-                    "   Cohesion: " +
-                    hoveredCavalry.Cohesion.ToString("0") +
-                    "   AI: " + (aiOn ? "ON" : "OFF") + "\n" +
-                    weaponLine +
-                    "   |   Ordre: " + phase +
-                    "   |   Parent: " + parent;
-
-                GUI.Box(
-                    GetHoverInfoRect(screen),
-                    label,
-                    hoverStyle);
-            }
-        }
-
         if (!string.IsNullOrEmpty(resultMessage))
         {
             if (!paused)
@@ -476,6 +388,94 @@ public sealed class BattleManager : MonoBehaviour
             {
                 float hitY = Mathf.Max(42f, Screen.height - screen.y - 42f);
                 GUI.Box(new Rect(screen.x - 55f, hitY, 110f, 24f), $"Ramte {volleyHits}", hitStyle);
+            }
+        }
+
+        if (hoveredCavalry != null && mainCamera != null)
+        {
+            Vector3 screen = mainCamera.WorldToScreenPoint(
+                hoveredCavalry.transform.position + Vector3.up * 2.4f);
+
+            if (screen.z > 0f)
+            {
+                int losses = Mathf.Max(
+                    0,
+                    hoveredCavalry.InitialStrength -
+                    hoveredCavalry.CurrentStrength);
+
+                string kind =
+                    hoveredCavalry.Kind == PrototypeCavalryKind09F30.Gardehusar
+                        ? "Gardehusar"
+                        : "Dragon";
+
+                string mode =
+                    hoveredCavalry.Mode == PrototypeCavalryMode09F30.Mounted
+                        ? "Mounted"
+                        : "Afsiddet";
+
+                string formation =
+                    hoveredCavalry.Formation == PrototypeCavalryFormation09F30.Line
+                        ? "Linje"
+                        : (hoveredCavalry.IsBridgeRouteActive
+                            ? "Brokolonne 2"
+                            : "Marchkolonne 4");
+
+                PrototypeCavalryOfficerAI09F30C cavAi =
+                    PrototypeCavalryOfficerAI09F30C.Instance;
+
+                bool aiOn =
+                    cavAi != null &&
+                    cavAi.IsAIEnabled(hoveredCavalry);
+
+                string phase =
+                    cavAi != null
+                        ? cavAi.GetPhase(hoveredCavalry)
+                        : "Manuel";
+
+                string parent =
+                    PrototypeCavalryCommandControl09F30C.GetParent(
+                        hoveredCavalry);
+
+                string weaponLine =
+                    "Sabel / Karabin / Pistol";
+
+                if (hoveredCavalry.Kind == PrototypeCavalryKind09F30.Dragon &&
+                    hoveredCavalry.Mode == PrototypeCavalryMode09F30.Dismounted)
+                {
+                    weaponLine =
+                        "Karabin " +
+                        PrototypeDismountedDragonFire09F30J
+                            .GetFirePolicyLabel(hoveredCavalry) +
+                        "  |  Range " +
+                        PrototypeDismountedDragonFire09F30J
+                            .GetSelectedRange(hoveredCavalry)
+                            .ToString("0") +
+                        " m  |  Ammo " +
+                        PrototypeDismountedDragonFire09F30J
+                            .GetAmmoRoundsPerMan(hoveredCavalry)
+                            .ToString("0");
+                }
+
+                string label =
+                    hoveredCavalry.UnitName + " - " + kind + "\n" +
+                    "Side: Danmark   Styrke: " +
+                    hoveredCavalry.CurrentStrength + "/" +
+                    hoveredCavalry.InitialStrength +
+                    "   Faldne: " + losses + "\n" +
+                    "Formation: " + formation +
+                    "   Tilstand: " + mode + "\n" +
+                    "Moral: " + hoveredCavalry.Morale.ToString("0") +
+                    "   Cohesion: " +
+                    hoveredCavalry.Cohesion.ToString("0") +
+                    "   AI: " + (aiOn ? "ON" : "OFF") + "\n" +
+                    weaponLine +
+                    "   |   Ordre: " + phase +
+                    "   |   Parent: " + parent;
+
+                GUI.Box(
+                    GetHoverInfoRect(screen),
+                    label,
+                    hoverStyle);
             }
         }
 
