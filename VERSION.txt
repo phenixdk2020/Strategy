@@ -1,14 +1,48 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30q
+Prototype version: v00.00.09f30r
 Build status: TEST
-Build name: ACTIVE ORDER BLUE + BALANCED ATTACK FRONT + CAV SCOUT DESIGN
-Visible build marker: PROJECT 1864 | v00.00.09f30q TEST
+Build name: DRAGON FIRE CONTROL + F30Q COMMAND STATE BASELINE
+Visible build marker: PROJECT 1864 | v00.00.09f30r TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30q
+Gameplay/build baseline: v00.00.09f30r
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30r - Dragon Fire Control + F30Q Command State Baseline
+- Backup before F30R: backup/channel-test-v00.00.09f30q-pre-09f30r-dragon-fire-control at F30Q HEAD 4af7c497a2ecfb3917d5c60971fe23e5f7de1bc0.
+- F30Q active-order blue, balanced attack-front, committed facing, higher-HQ follow and command-zone behaviour remain the baseline.
+- FIX: dismounted Dragon no longer uses an opaque Karabin AUTO fire rule.
+- Added HOLD / CLOSE / MED / LONG fire-control buttons to the Dragon cavalry HUD while dismounted.
+- Fire policy ranges are 0 / 35 / 70 / 100 m.
+- Default dismounted Dragon fire policy is MED (70 m), matching infantry-style explicit fire control.
+- HOLD suppresses automatic target acquisition and fire.
+- CLOSE limits target acquisition to 35 m.
+- MED limits target acquisition to 70 m.
+- LONG limits target acquisition to 100 m.
+- Fire policy still respects the existing +/-35 degree carbine arc, 7s TEST reload and 20 rounds/man TEST ammunition.
+- Dragon range cones remain visible while selected/dismounted; the currently selected engagement band is emphasized and the other bands remain faint references.
+- Mounted Dragon does not show active fire-control buttons; HUD indicates that carbine fire-control becomes available after SID AF.
+- Mounted fire remains deliberately unimplemented.
+- Future CAV SPEJD HER remains design-only until true FOG/LOS owns enemy visibility.
+
+Primary F30R QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30r TEST and Unity compiles with no red errors.
+2. Select mounted Dragon: no HOLD/CLOSE/MED/LONG fire buttons are active; HUD says carbine fire-control requires SID AF.
+3. Press SID AF and wait for dismount transition/reform to complete.
+4. Dismounted Dragon shows HOLD / CLOSE / MED / LONG.
+5. MED is selected by default and displays 70m.
+6. Select HOLD: Dragon must not acquire/fire at a target.
+7. Select CLOSE: target outside 35m must not be engaged; target inside 35m and arc may be engaged.
+8. Select MED: trigger range is 70m.
+9. Select LONG: trigger range is 100m.
+10. All policies still respect the +/-35 degree firing arc and ammo decreases by one round/man per volley.
+11. Selected range cone is visually emphasized; other ranges remain faint references.
+12. Re-mount Dragon: fire-control buttons disappear/disable again.
+13. Re-test F30Q: active officer order stays blue during mission and BAL ANGRIB HER commits both battalions forward.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30q - Active Order Blue + Balanced Attack Front + Cavalry Scout Design
 - Backup before F30Q: backup/channel-test-v00.00.09f30p-pre-09f30q-active-orders-balanced-attack at F30P HEAD 9451efadff9bf369c874d23d2afc7cf46ff9d86c.
