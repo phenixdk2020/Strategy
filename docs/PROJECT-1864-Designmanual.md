@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.31**  
+**Aktuel designbaseline: v00.02.32**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10n7e COASTAL CITY VISUAL OFFSETS**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n7f COMPILE + HUD CLEANUP**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -38,6 +38,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 28: 63 — Campaign3 v00.00.10n7c: Embedded City Asset Reset](parts/part-28-63-CAMPAIGN-V10N7C-EMBEDDED-CITY-ASSET-RESET.md)
 - [Del 29: 64 — Campaign3 v00.00.10n7d: City Info + Legacy Startup Hotfix](parts/part-29-64-CAMPAIGN-V10N7D-CITY-INFO-HOTFIX.md)
 - [Del 30: 65 — Campaign3 v00.00.10n7e: Coastal City Visual Offsets](parts/part-30-65-CAMPAIGN-V10N7E-COASTAL-CITY-OFFSETS.md)
+- [Del 31: 66 — Campaign3 v00.00.10n7f: Compile + HUD Cleanup](parts/part-31-66-CAMPAIGN-V10N7F-COMPILE-HUD-CLEANUP.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -155,6 +156,16 @@ Zone-line renderer registrerer samtidig hvilke forskellige ZoneIds der ejer hver
 Historisk guardrail er uændret: zoneidentiteterne er kanoniske, men den nuværende center-derived polygongeometri er stadig prototype og ikke historisk 1851-facit.
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 16 / Campaign3 v00.00.10n4](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md).
+
+## Campaign3 v00.00.10n7f — Compile + HUD Cleanup
+
+Designbaseline v00.02.32 rydder `CS0162`-warnings fra de ældre city-art build guards ved at flytte versionstesten bag `CampaignBuildInfo.IsCurrentVersion()`.
+
+n7f indfører samtidig en **clean campaign HUD default**. Ved første n7f-run starter selection/INFO og debug skjult — også hvis ældre PlayerPrefs havde dem slået til. Den separate top-left build-boks, WORLD IMAGERY + 3D TERRAIN og BASEMAP/WGS84-boksene er nu debug-only. Topbaren med tid, pause/hastighed, INFO og DBG er fortsat altid synlig. Direkte klik på en by åbner stadig city INFO.
+
+Unitys Input Manager deprecation-warning er registreret som teknisk gæld og migreres ikke i n7f; Input System migration skal ske separat med fuld campaign/battle regression.
+
+[Del 31 / v00.00.10n7f](parts/part-31-66-CAMPAIGN-V10N7F-COMPILE-HUD-CLEANUP.md)
 
 ## Campaign3 v00.00.10n7e — Coastal City Visual Offsets
 
