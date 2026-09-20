@@ -1,8 +1,8 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.32**  
+**Aktuel designbaseline: v00.02.33**  
 **Aktuel prototype-workbranch: P0A v00.00.09 TACTICAL COMMAND TEST**  
-**Aktuel campaign-workbranch: Campaign3 v00.00.10n7f COMPILE + HUD CLEANUP**
+**Aktuel campaign-workbranch: Campaign3 v00.00.10n7g COASTAL CITY OFFSET PASS 2**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
@@ -39,6 +39,7 @@ Den komplette dokumentation af **hvad der implementeres og skal testes i P0A v00
 - [Del 29: 64 — Campaign3 v00.00.10n7d: City Info + Legacy Startup Hotfix](parts/part-29-64-CAMPAIGN-V10N7D-CITY-INFO-HOTFIX.md)
 - [Del 30: 65 — Campaign3 v00.00.10n7e: Coastal City Visual Offsets](parts/part-30-65-CAMPAIGN-V10N7E-COASTAL-CITY-OFFSETS.md)
 - [Del 31: 66 — Campaign3 v00.00.10n7f: Compile + HUD Cleanup](parts/part-31-66-CAMPAIGN-V10N7F-COMPILE-HUD-CLEANUP.md)
+- [Del 32: 67 — Campaign3 v00.00.10n7g: Coastal City Offset Pass 2](parts/part-32-67-CAMPAIGN-V10N7G-COASTAL-OFFSET-PASS2.md)
 - [Release Notes — P0A v00.00.08 TEST](releases/P0A-v00.00.08-RELEASE-NOTES.md)
 - [Release Notes — P0A v00.00.09 TACTICAL COMMAND TEST](releases/P0A-v00.00.09-RELEASE-NOTES.md)
 - [Projekt-backlog — beslutninger, planlagte funktioner, research og idéer](PROJECT-BACKLOG.md)
@@ -156,6 +157,14 @@ Zone-line renderer registrerer samtidig hvilke forskellige ZoneIds der ejer hver
 Historisk guardrail er uændret: zoneidentiteterne er kanoniske, men den nuværende center-derived polygongeometri er stadig prototype og ikke historisk 1851-facit.
 
 Den fulde implementerings- og QA-specifikation ligger i [Del 16 / Campaign3 v00.00.10n4](parts/part-16-51-CAMPAIGN-V10N4-HUD-SELECTION-BORDERS.md).
+
+## Campaign3 v00.00.10n7g — Coastal City Offset Pass 2
+
+Designbaseline v00.02.33 udvider de visuelle coastal city offsets efter ny screenshot-QA. City-art, city scale, clean HUD og city INFO bevares.
+
+Artwork + label får nu visual-only offsets for **Sæby, Helsingør, Nykøbing Sjælland, Bogense, Assens, Stege, Præstø og Nykøbing Mors**. Helsingør og Nykøbing Sjælland flyttes lidt længere ind på land end i n7e. WGS84, CityId, ZoneId, click collider, save identity og simulation geography ændres ikke.
+
+[Del 32 / v00.00.10n7g](parts/part-32-67-CAMPAIGN-V10N7G-COASTAL-OFFSET-PASS2.md)
 
 ## Campaign3 v00.00.10n7f — Compile + HUD Cleanup
 
