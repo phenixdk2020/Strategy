@@ -16,6 +16,7 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
     private FieldInfo destinationField;
 
     private const float EnterColumnDestinationDistance = 28f;
+    private const float EnemyFireDeploymentBuffer = 35f;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoCreate()
@@ -41,9 +42,11 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
         }
 
         Debug.Log(
-            "MARCH-09F29N|Installed=True|Policy=ColumnOnlyOutsideEnemyLongRange|" +
+            "MARCH-09F30X|Installed=True|Policy=DeployBeforeEnemyFireRange|" +
             "DestinationEnter=" + EnterColumnDestinationDistance.ToString("0") +
-            "m|EnemyDeploy=DynamicMaximumRange|ChargeLineLock=True|BridgeExceptionExceptCharge=True");
+            "m|EnemyFireBuffer=" + EnemyFireDeploymentBuffer.ToString("0") +
+            "m|ThreatRange=NearestEnemyMaximumRange|ChargeLineLock=True|" +
+            "BridgeExceptionExceptCharge=True");
     }
 
     private void Update()
@@ -102,17 +105,35 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
         }
 
         Vector3 destination = (Vector3)destinationField.GetValue(regiment);
-        float destinationDistance = PlanarDistance(regiment.transform.position, destination);
-        float enemyDistance = FindNearestEnemyDistance(regiment, battle);
-        float combatDeploymentDistance = Mathf.Max(1f, regiment.MaximumRange);
+        float destinationDistance =
+            PlanarDistance(regiment.transform.position, destination);
 
-        // v09f10 hard combat-formation rule:
-        // if any valid enemy is already inside Long/MaximumRange, never enter Column.
-        // This also covers switching fire policy LONG -> MEDIUM before an ATTACK order.
+        float enemyThreatRange;
+        float enemyDistance =
+            FindNearestEnemyThreat(
+                regiment,
+                battle,
+                out enemyThreatRange);
+
+        // F30X: do not wait until the company is already inside enemy fire range.
+        // Deploy early enough for the physical three-rank reform to complete before
+        // entering the nearest enemy's MaximumRange.
+        float combatDeploymentDistance =
+            Mathf.Max(
+                Mathf.Max(1f, regiment.MaximumRange),
+                enemyThreatRange) +
+            EnemyFireDeploymentBuffer;
+
         if (enemyDistance <= combatDeploymentDistance)
         {
-            if (regiment.Formation != RegimentFormation.Line || autoColumn.Contains(regiment))
-                EnsureLine(regiment, "ENEMY_INSIDE_LONG", enemyDistance);
+            if (regiment.Formation != RegimentFormation.Line ||
+                autoColumn.Contains(regiment))
+            {
+                EnsureLine(
+                    regiment,
+                    "DEPLOY_BEFORE_ENEMY_FIRE_RANGE",
+                    enemyDistance);
+            }
 
             autoColumn.Remove(regiment);
             return;
@@ -133,11 +154,12 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
             regiment.SetFormation(RegimentFormation.Column);
 
         Debug.Log(
-            "MARCH-09F29N|Unit=" + regiment.RegimentName +
+            "MARCH-09F30X|Unit=" + regiment.RegimentName +
             "|Column=True|Destination=" + destinationDistance.ToString("0.0") +
             "|Enemy=" + FormatDistance(enemyDistance) +
-            "|LongRange=" + combatDeploymentDistance.ToString("0.0") +
-            "|Reason=LONG_MOVE_OUTSIDE_COMBAT_RANGE");
+            "|DeployThreshold=" + combatDeploymentDistance.ToString("0.0") +
+            "|EnemyFireBuffer=" + EnemyFireDeploymentBuffer.ToString("0") +
+            "|Reason=LONG_MOVE_OUTSIDE_DEPLOY_ZONE");
     }
 
     private static void EnsureLine(Regiment regiment, string reason, float enemyDistance)
@@ -146,15 +168,19 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
             regiment.SetFormation(RegimentFormation.Line);
 
         Debug.Log(
-            "MARCH-09F29N|Unit=" + regiment.RegimentName +
+            "MARCH-09F30X|Unit=" + regiment.RegimentName +
             "|Column=False|Enemy=" + FormatDistance(enemyDistance) +
-            "|LongRange=" + regiment.MaximumRange.ToString("0.0") +
+            "|OwnMaximumRange=" + regiment.MaximumRange.ToString("0.0") +
             "|Reason=" + reason);
     }
 
-    private static float FindNearestEnemyDistance(Regiment regiment, BattleManager battle)
+    private static float FindNearestEnemyThreat(
+        Regiment regiment,
+        BattleManager battle,
+        out float enemyMaximumRange)
     {
         float best = float.PositiveInfinity;
+        enemyMaximumRange = 0f;
 
         foreach (Regiment candidate in battle.Regiments)
         {
@@ -167,9 +193,17 @@ public sealed class PrototypeMarchColumn09F6 : MonoBehaviour
                 continue;
             }
 
-            float distance = PlanarDistance(regiment.transform.position, candidate.transform.position);
+            float distance =
+                PlanarDistance(
+                    regiment.transform.position,
+                    candidate.transform.position);
+
             if (distance < best)
+            {
                 best = distance;
+                enemyMaximumRange =
+                    Mathf.Max(1f, candidate.MaximumRange);
+            }
         }
 
         return best;
