@@ -1,14 +1,49 @@
 PROJECT 1864 - Unity Battle Prototype
-Prototype version: v00.00.09f30w
+Prototype version: v00.00.09f30x
 Build status: TEST
-Build name: ENEMY CONE QA + SAME-BANK RIVER ROUTING + OOB AI CONSISTENCY
-Visible build marker: PROJECT 1864 | v00.00.09f30w TEST
+Build name: EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES
+Visible build marker: PROJECT 1864 | v00.00.09f30x TEST
 Unity editor baseline: 6000.6.0f1 (Unity 6.6)
 Repository layout: Unity project root = repository root
-Gameplay/build baseline: v00.00.09f30w
+Gameplay/build baseline: v00.00.09f30x
 Cavalry visual baseline: v00.00.09f30l
 Canonical behaviour reference: docs/UNIT-AND-OFFICER-BEHAVIOUR-RULES.md
 Full implementation/fix history: docs/IMPLEMENTATION-AND-FIX-HISTORY.md
+
+v00.00.09f30x - Early Infantry Deploy + Company Spacing + CAV Bridge Approach + Startup Enemy Cones
+- Backup before F30X: backup/channel-test-v00.00.09f30w-pre-09f30x-deploy-spacing-cav-bridge at F30W HEAD b69945de0743e67f16e9ab140c21aea4efae6d6f.
+- FIX: infantry no longer waits until it is already inside enemy MaximumRange before leaving march Column.
+- Infantry deploy threshold is now nearest enemy MaximumRange plus a 35 m safety/reform buffer.
+- Example with 100 m enemy maximum range: company should begin Line reform at approximately 135 m, allowing the physical three-rank reform to complete before entering enemy fire range.
+- MarchColumn is now the sole normal movement-formation authority; F27 parent mission reassert no longer forces Line every 1.1 s during long movement.
+- FIX: company final-slot spacing increased from 60 m to 72 m centre-to-centre.
+- Formation-slot minimum reservation spacing increased from 55 m to 68 m.
+- A full 190-man three-rank company is about 48 m wide, so the new spacing gives materially more lateral clearance and reduces companies standing through/over each other at oblique angles.
+- FIX: cavalry bridge routing is now split into planned route and actual narrow bridge approach.
+- Opposite-bank destination no longer puts CAV into two-abreast immediately.
+- CAV travels toward the bridge in its normal Line or normal four-abreast Column.
+- Two-abreast bridge/defile geometry activates only within approximately 36 m of the near bridge bank.
+- After the bridge and exit-clearance phase, CAV restores the formation it had immediately before entering the narrow bridge mode.
+- FIX: TEST enemy cones no longer depend on pre-existing range-fan GameObjects.
+- The late enemy QA overlay creates missing Close/Medium/Long fan renderers as soon as a Prussian Regiment exists, so cones can be visible from initial battle setup rather than waiting for another visual/selection state to create them.
+- Enemy cones remain always-visible TEST/QA visuals and do not grant LOS/target knowledge/fire authority.
+- Existing F30W same-bank routing/OOB AI, F30V final-slot arrival and earlier command/CAV fixes remain inherited.
+
+Primary F30X QA
+1. Overlay reads PROJECT 1864 | v00.00.09f30x TEST and Unity compiles with no red errors.
+2. At battle start, before selecting Danish units, every spawned living Prussian infantry unit already has its QA cones visible.
+3. March Danish infantry toward an enemy with 100 m maximum fire range: physical Line reform begins around 135 m, not at/inside 100 m.
+4. The company should be substantially/completely reformed before it enters the enemy's 100 m fire range.
+5. Long parent movement must not oscillate Line/Column because F27 reasserts the destination.
+6. Give Battalion/Regiment/Division a formation order and inspect final company spacing: centres are about 72 m apart and lines no longer overlap.
+7. Check oblique/facing changes: 68 m minimum reserved spacing prevents neighbouring company footprints from sitting through each other.
+8. Give mounted CAV an opposite-bank destination while far from the bridge: CAV remains in normal four-rank Line or normal four-abreast Column.
+9. Only near the bridge (about 36 m from near-bank approach point) does CAV physically reform to two-abreast.
+10. After clearing the far bank, CAV restores its pre-bridge formation.
+11. Re-test a same-bank curved-river route: no unnecessary bridge crossing.
+12. Re-test F30W/F30V command completion and OOB AI status for regression.
+
+Not runtime-verified by Unity yet.
 
 v00.00.09f30w - Enemy Cone QA + Same-Bank River Routing + OOB AI Consistency
 - Backup before F30W: backup/channel-test-v00.00.09f30v-pre-09f30w-river-execution-state at F30V HEAD 8f3a1b352bd0e48bd82cb81e7086144ebaeb3146.
