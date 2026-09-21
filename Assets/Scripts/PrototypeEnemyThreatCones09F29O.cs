@@ -44,7 +44,7 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
             color = Color.white
         };
 
-        Debug.Log("ENEMY-CONE-09F30W|Installed=True|TestAlwaysVisible=True|SelectionRequired=False|DistanceGate=False|FormationReadyGate=False|SimulationChanged=False");
+        Debug.Log("ENEMY-CONE-09F30X|Installed=True|TestAlwaysVisible=True|StartupFanCreation=True|SelectionRequired=False|DistanceGate=False|FormationReadyGate=False|SimulationChanged=False");
     }
 
     private void LateUpdate()
@@ -103,7 +103,7 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
 
         BuildFan(
             enemy,
-            enemy.transform.Find("CloseRangeFan"),
+            EnsureFanTransform(enemy, "CloseRangeFan"),
             enemy.CloseRange,
             bounds,
             visible,
@@ -113,7 +113,7 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
 
         BuildFan(
             enemy,
-            enemy.transform.Find("MediumRangeFan"),
+            EnsureFanTransform(enemy, "MediumRangeFan"),
             enemy.EffectiveRange,
             bounds,
             visible,
@@ -123,13 +123,43 @@ public sealed class PrototypeEnemyThreatCones09F29O : MonoBehaviour
 
         BuildFan(
             enemy,
-            enemy.transform.Find("LongRangeFan"),
+            EnsureFanTransform(enemy, "LongRangeFan"),
             enemy.MaximumRange,
             bounds,
             visible,
             enemy.FirePolicy == RegimentFirePolicy.LongRange,
             0.17f,
             new Color(0.86f, 0.04f, 0.04f, 1.00f));
+    }
+
+    private Transform EnsureFanTransform(
+        Regiment regiment,
+        string name)
+    {
+        if (regiment == null)
+            return null;
+
+        Transform existing = regiment.transform.Find(name);
+        if (existing != null)
+        {
+            if (existing.GetComponent<LineRenderer>() == null)
+                existing.gameObject.AddComponent<LineRenderer>();
+            return existing;
+        }
+
+        // F30X TEST startup hardening:
+        // enemy QA cones must exist as soon as the Regiment exists. Do not wait
+        // for a selection-driven or later visual initialization path to create them.
+        GameObject fan = new GameObject(name);
+        fan.transform.SetParent(regiment.transform, false);
+        fan.AddComponent<LineRenderer>();
+
+        Debug.Log(
+            "ENEMY-CONE-09F30X|Unit=" + regiment.RegimentName +
+            "|FanCreated=True|Name=" + name +
+            "|Reason=TEST_STARTUP_AUTHORITY");
+
+        return fan.transform;
     }
 
     private void BuildFan(
