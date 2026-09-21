@@ -94,7 +94,7 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
 
     private const float HudHeight = 90f;
     private const float DragThreshold = 9f;
-    private const float CompanySpacing = 60f;
+    private const float CompanySpacing = 72f;
     private const float ReserveDepth = 86f;
     private const float FlankOffset = 126f;
     private const float ExactArrival = 0.50f;
@@ -410,7 +410,11 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
                 if (!HasDestination(regiment) || Time.time >= mission.NextAssert)
                 {
                     mission.NextAssert = Time.time + 1.1f;
-                    regiment.SetFormation(RegimentFormation.Line);
+
+                    // F30X: parent mission owns destination, not march formation.
+                    // PrototypeMarchColumn09F6 decides Column/Line from bridge state
+                    // and enemy-fire deployment distance. Reasserting Line here every
+                    // 1.1s caused authority thrash during long movement.
                     regiment.OrderMove(mission.Goal);
                 }
             }
@@ -703,6 +707,7 @@ public sealed class PrototypeRegimentHierarchy09F27 : MonoBehaviour
                   "|FromRegiment=" + fromHigherCommand +
                   "|ExplicitFacing=" + explicitFacing.HasValue +
                   "|Facing=" + forward.x.ToString("0.00") + "," + forward.z.ToString("0.00") +
+                  "|CompanySpacing=" + CompanySpacing.ToString("0") +
                   "|Front=" + front.Count +
                   "|Reserve=" + (reserve != null ? reserve.RegimentName : "NONE") +
                   "|Flank=" + flank + "|CompanyAI=ON|SharedController=True");
