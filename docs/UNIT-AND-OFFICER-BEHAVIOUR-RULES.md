@@ -1,7 +1,7 @@
 # PROJECT 1864 — Enheds- og AI-officerregler
 
 **Status:** Kanonisk adfærdsreference  
-**Prototypebaseline:** v00.00.09f30w TEST  
+**Prototypebaseline:** v00.00.09f30x TEST  
 **Formål:** Dette dokument samler de regler, der bestemmer hvordan enheder, formationer, kampordrer og AI-officerer skal opføre sig. Når runtime-kode og dette dokument er uenige, skal afvigelsen behandles som en bug eller som en eksplicit ny designændring.
 
 > Bemærk: Den nuværende prototype bruger fortsat klassenavnet `Regiment`, men den aktive test-enhed repræsenterer i praksis et **kompagni på ca. 190 mand**.
@@ -73,7 +73,7 @@ Line er den primære kampformation.
 
 En enhed skal være i Line når:
 
-- en fjendtlig enhed er inden for enhedens **Long/MaximumRange**;
+- en fjendtlig enhed nærmer sig enhedens **Long/MaximumRange + deployment-buffer**;
 - enheden skal skyde;
 - enheden netop har afsluttet march og skal deployere til kamp;
 - enheden udfører kontrolleret fighting withdrawal;
@@ -86,12 +86,12 @@ Column er primært en march-/passageformation.
 En enhed må automatisk gå i Column når:
 
 - den har en længere bevægelse foran sig;
-- **ingen fjendtlig enhed er inden for Long/MaximumRange**;
+- **ingen fjendtlig enhed er inden for Long/MaximumRange + deployment-buffer**;
 - eller en højere-prioritets terrænregel kræver Column, fx brokrydsning.
 
 ### Hård v00.00.09f10+-regel
 
-> **Hvis nærmeste gyldige fjende er inden for Long/MaximumRange, må enheden ikke skifte til Column alene fordi den får en ANGREB-ordre eller fordi fire policy ændres fra LONG til MEDIUM/CLOSE.**
+> **Hvis nærmeste gyldige fjende er inden for Long/MaximumRange + deployment-buffer, må enheden ikke skifte til Column alene fordi den får en ANGREB-ordre eller fordi fire policy ændres fra LONG til MEDIUM/CLOSE.**
 
 Den skal i stedet blive i/deployere til Line og manøvrere i kampformation.
 
@@ -726,6 +726,22 @@ Når Dragon får SID AF:
 - Horse leg/hoof, head/tail og rider motion må være procedural indtil rigged assets erstatter prototypen.
 - HOLD skal returnere til en stabil neutral pose.
 - Gardehusar og Dragon skal have tydeligt forskellig uniform/equipment silhouette.
+
+---
+
+## 35W. Early deploy, company separation, CAV bridge approach og startup enemy cones
+
+- Infantry må ikke vente med Column → Line til det allerede er inde i fjendens maksimale ildafstand.
+- Aktuel TEST deployment-regel er **nærmeste fjendes MaximumRange + 35 m buffer**.
+- Ved 100 m enemy MaximumRange starter Line-reform derfor omkring 135 m.
+- `PrototypeMarchColumn09F6` ejer normal marchformation; parent mission ejer destinationen og må ikke periodisk gennemtvinge Line under lang march.
+- Full-strength 190-man company har ca. 48 m frontage; standard company slot-spacing er derfor **72 m center-center**.
+- Formation-slot minimum reservation spacing er **68 m**.
+- Hvis terrain/slot-safety kræver forskydning, bør det primært ske lateralt, så companies ikke står gennem hinanden.
+- CAV med destination på modsatte bred må gerne have en bridge-route planlagt uden at gå i 2-abreast.
+- Speciel CAV **2-abreast bridge/defile column** aktiveres først ved actual bridge approach, aktuelt ca. **36 m** fra near-bank approach.
+- Efter far-bank exit gendannes formationen fra før bridge narrow mode.
+- I TEST skal enemy fire-cone renderers oprettes straks, når enemy Regiment findes; cone visibility må ikke vente på selection eller senere visual-state.
 
 ---
 
