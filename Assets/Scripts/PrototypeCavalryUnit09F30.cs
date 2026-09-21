@@ -58,7 +58,12 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     public bool IsBridgeRouteActive => bridgePhase != BridgePhase.Direct;
     public bool IsReforming { get; private set; }
     public float FormationReadyFraction { get; private set; } = 1f;
-    public string BridgePhaseLabel => bridgePhase == BridgePhase.Direct ? "DIRECT" : bridgePhase.ToString().ToUpperInvariant();
+    public string BridgePhaseLabel =>
+        bridgePhase != BridgePhase.Direct
+            ? bridgePhase.ToString().ToUpperInvariant()
+            : bridgeRoutePlanned
+                ? "BRIDGE PLANNED"
+                : "DIRECT";
     public bool HasDestination => hasDestination;
     public Vector3 FinalDestination => finalDestination;
     public Vector3 PlannedDestinationFacing
@@ -181,11 +186,13 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
     private bool chargeResolved;
 
     private BridgePhase bridgePhase = BridgePhase.Direct;
+    private bool bridgeRoutePlanned;
     private int bridgeStartSide;
     private PrototypeCavalryFormation09F30 formationBeforeBridge;
 
     private const float BridgeZ = 22f;
     private const float BridgeBankOffset = 13.5f;
+    private const float BridgeNarrowApproachDistance = 36f;
     private const float ContactDistance = 7.5f;
     private const float MountedReformSpeed = 8.0f;
     private const float FootReformSpeed = 5.0f;
@@ -264,6 +271,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
             }
         }
 
+        UpdateBridgeApproachState();
         UpdateMountedMoveFormationPolicy();
         UpdateMovement();
         UpdateRemountRequest();
@@ -386,6 +394,7 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         chargeTarget = null;
         chargeResolved = false;
         bridgePhase = BridgePhase.Direct;
+        bridgeRoutePlanned = false;
         autoMarchColumnActive = false;
         manualFormationOverride = false;
         hasExplicitFinalFacing = false;
@@ -661,33 +670,78 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         finalDestination = Ground(goal);
         hasDestination = true;
 
-        // Preserve an active bridge transaction. F30C Officer AI can reissue a maneuver
-        // goal while the unit is crossing; resetting the phase here stranded 1:1 cavalry
-        // on/near the bridge.
+        // Preserve an active physical bridge transaction. Reissued maneuver goals
+        // while actually on the bridge must not reset the narrow crossing phase.
         if (bridgePhase != BridgePhase.Direct)
             return;
 
         int startSide = BankSide(transform.position);
         int goalSide = BankSide(finalDestination);
-        if (startSide != 0 && goalSide != 0 && startSide != goalSide)
+
+        if (startSide != 0 &&
+            goalSide != 0 &&
+            startSide != goalSide)
         {
             bridgeStartSide = startSide;
-            bridgePhase = BridgePhase.NearBank;
-            formationBeforeBridge = Formation;
-            Formation = PrototypeCavalryFormation09F30.Column;
-            IsReforming = true;
-            FormationReadyFraction = 0f;
-            ResizeCollider();
+            bridgeRoutePlanned = true;
 
+            // F30X: route planning and narrow bridge formation are separate.
+            // Stay in the normal 4-rank/4-abreast formation while travelling
+            // toward the bridge. Two-abreast activates only near the bridge.
             Debug.Log(
-                "CAVALRY-09F30|Unit=" + UnitName +
-                "|BridgeRoute=True|StartSide=" + bridgeStartSide +
-                "|ColumnForced=True");
+                "CAVALRY-09F30X|Unit=" + UnitName +
+                "|BridgeRoutePlanned=True|StartSide=" +
+                bridgeStartSide +
+                "|GoalSide=" + goalSide +
+                "|TwoAbreast=False|UntilWithin=" +
+                BridgeNarrowApproachDistance.ToString("0") + "m");
         }
         else
         {
+            bridgeRoutePlanned = false;
             bridgePhase = BridgePhase.Direct;
         }
+    }
+
+    private void UpdateBridgeApproachState()
+    {
+        if (!bridgeRoutePlanned ||
+            bridgePhase != BridgePhase.Direct ||
+            !hasDestination ||
+            Mode != PrototypeCavalryMode09F30.Mounted)
+        {
+            return;
+        }
+
+        Vector3 bridge = new Vector3(
+            PrototypeBootstrap.StreamCenterX(BridgeZ),
+            0f,
+            BridgeZ);
+        bridge = Ground(bridge);
+
+        Vector3 nearBank =
+            Ground(
+                bridge +
+                Vector3.right *
+                (bridgeStartSide * BridgeBankOffset));
+
+        float distance =
+            PlanarDistance(transform.position, nearBank);
+
+        if (distance > BridgeNarrowApproachDistance)
+            return;
+
+        formationBeforeBridge = Formation;
+        bridgePhase = BridgePhase.NearBank;
+        IsReforming = true;
+        FormationReadyFraction = 0f;
+        ResizeCollider();
+
+        Debug.Log(
+            "CAVALRY-09F30X|Unit=" + UnitName +
+            "|BridgeNarrow=True|TwoAbreast=True|DistanceToNearBank=" +
+            distance.ToString("0.0") +
+            "|RestoreAfterBridge=" + formationBeforeBridge);
     }
 
     private void UpdateMountedMoveFormationPolicy()
@@ -819,14 +873,24 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
 
     private Vector3 ResolveSteeringTarget()
     {
-        if (bridgePhase == BridgePhase.Direct)
-            return finalDestination;
-
         Vector3 bridge = new Vector3(
             PrototypeBootstrap.StreamCenterX(BridgeZ),
             0f,
             BridgeZ);
         bridge = Ground(bridge);
+
+        if (bridgePhase == BridgePhase.Direct)
+        {
+            if (bridgeRoutePlanned)
+            {
+                return Ground(
+                    bridge +
+                    Vector3.right *
+                    (bridgeStartSide * BridgeBankOffset));
+            }
+
+            return finalDestination;
+        }
 
         if (bridgePhase == BridgePhase.NearBank)
             return Ground(bridge + Vector3.right * (bridgeStartSide * BridgeBankOffset));
@@ -858,12 +922,16 @@ public sealed class PrototypeCavalryUnit09F30 : MonoBehaviour
         if (bridgePhase == BridgePhase.ExitBank)
         {
             bridgePhase = BridgePhase.Direct;
+            bridgeRoutePlanned = false;
             Formation = formationBeforeBridge;
             IsReforming = true;
             FormationReadyFraction = 0f;
             ResizeCollider();
-            Debug.Log("CAVALRY-09F30H|Unit=" + UnitName +
-                      "|BridgeRoute=False|CrossingComplete=True|Reform=" + Formation);
+
+            Debug.Log(
+                "CAVALRY-09F30X|Unit=" + UnitName +
+                "|BridgeRoute=False|CrossingComplete=True|" +
+                "TwoAbreast=False|Reform=" + Formation);
             return true;
         }
 
