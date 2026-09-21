@@ -1,10 +1,10 @@
 # PROJECT 1864 — Implementation & Fix History
 
-**Konsolideret ved v00.00.09f30w TEST**  
-**Gameplay-baseline: v00.00.09f30w**  
+**Konsolideret ved v00.00.09f30x TEST**  
+**Gameplay-baseline: v00.00.09f30x**  
 **Unity-baseline: 6000.6.0f1**
 
-Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30W. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
+Dette dokument er den samlede, kronologiske registrering af de funktioner og kendte fejlrettelser/hardening-trin, der er implementeret i den taktiske prototype frem til og med F30X. F30F konsoliderede historikken; F30G tilføjede OOB/input/visibility-hardening; F30H konsoliderede cavalry formation/bridge/HUD/semantic zoom/selection; F30I authority/order-visual/animation; F30J dismounted Dragon fire og formation-anchor.
 
 > Statusregel: "implementeret" betyder at koden er lagt i repository. Seneste builds er fortsat TEST indtil de er runtime-verificeret i Unity uden røde compilerfejl.
 
@@ -429,6 +429,17 @@ Fejlrettelser/hardening:
 - Mounted gait articulates horse legs/hooves, head, tail and rider instead of only whole-root rocking.
 - CHARGE receives faster cadence, larger leg swing and stronger forward rider lean.
 - HOLD restores neutral articulated pose.
+
+### v00.00.09f30x — Early Infantry Deploy + Company Spacing + CAV Bridge Approach + Startup Enemy Cones
+- Infantry march formation now deploys to Line before entering enemy fire range rather than at the edge of MaximumRange.
+- Deployment threshold uses nearest enemy MaximumRange + 35 m safety/reform buffer.
+- F27 parent mission reassert no longer forces Line every 1.1 s; MarchColumn owns normal movement formation.
+- Company slot spacing increased from 60 m to 72 m.
+- Formation-slot minimum centre separation increased from 55 m to 68 m.
+- Enemy TEST cone overlay creates missing range-fan renderers immediately when a Prussian Regiment exists, removing startup dependency on later selection/visual initialization.
+- Cavalry bridge routing now separates planned route from actual narrow bridge approach.
+- Opposite-bank orders keep cavalry in normal Line/4-abreast Column until approximately 36 m from the near bridge approach.
+- Two-abreast bridge geometry applies only during near-bank/crossing/exit transaction, then restores the pre-bridge formation.
 
 ### v00.00.09f30w — Enemy Cone QA + Same-Bank River Routing + OOB AI Consistency
 - Legacy enemy-cone overlay no longer requires selected Danish infantry within 180 m.
