@@ -10,7 +10,7 @@ using UnityEngine;
 // and an illegal river endpoint is never deliberately returned while a nearby legal slot exists.
 public static class PrototypeFormationSlotSafety09F23
 {
-    public const float CompanyMinCentreSpacing = 55f;
+    public const float CompanyMinCentreSpacing = 68f;
 
     private static readonly float[] AlongLineOffsets =
     {
