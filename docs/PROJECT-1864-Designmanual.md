@@ -1,13 +1,13 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.41**  
+**Aktuel designbaseline: v00.02.42**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
 Projektets centrale intake-log for besluttede men endnu ikke implementerede funktioner, planlagte opgaver, research-emner og løse idéer ligger i [PROJECT-BACKLOG.md](PROJECT-BACKLOG.md). Større emner kan have detaljerede backlog-supplementer, som senere konsolideres ind i hovedbackloggen.
 
-Den aktuelle **gameplay-/buildbaseline** ligger på **v00.00.09f30x**. Cavalry visual-fidelity bygger fortsat på **v00.00.09f30l**. F30H fastlåser cavalry som 1:1 med **4 geledder i normal Line og ved Charge**, 4-abreast normal Column og 2-abreast bridge/defile column; formation changes er fysisk synlige, bridge routing er en vedvarende transaction, cavalry HUD følger company-HUD designet, og den aktive semantic-zoom-owner viser cavalry samt Brigade/Division. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), OOB/HQ-discoverability i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md), crop-field concealment/map polish i [v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md), defensive/UI/terrain-hardening i [v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md), Square face-fire i [v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md), første mounted cavalry implementation i [v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md), command/officer-hardening i [v00.00.09f30a — Command, Square and Officer AI Hardening](design-supplements/v00.00.09f30a-command-officer-hardening.md), og den højere kommandokæde i [v00.00.09f30b — Higher Command HQ](design-supplements/v00.00.09f30b-higher-command-hq.md). Cavalry Officer AI/dynamic attachment ligger i [F30C](design-supplements/v00.00.09f30c-cavalry-ai-dynamic-attachment.md), OOB scroll/drag-drop i [F30D](design-supplements/v00.00.09f30d-oob-scroll-dnd-cavalry-visuals.md), 1:1 cavalry/visual fidelity i [F30E](design-supplements/v00.00.09f30e-1to1-cavalry-visuals.md), og den samlede historik i [Implementation & Fix History](IMPLEMENTATION-AND-FIX-HISTORY.md) samt [F30F-supplementet](design-supplements/v00.00.09f30f-history-consolidation.md). F30G OOB/input/HQ-cavalry visibility hotfix er dokumenteret i [F30G-supplementet](design-supplements/v00.00.09f30g-oob-input-hq-cavalry-visibility-hotfix.md). F30H 4-rank/bridge/HUD/NATO/selection-baseline er dokumenteret i [F30H-supplementet](design-supplements/v00.00.09f30h-cavalry-4rank-bridge-hud-nato-selection.md). F30I authority/single-HUD/order-visual/animation-hardening ligger i [F30I-supplementet](design-supplements/v00.00.09f30i-cavalry-authority-hud-order-visual-animation.md). F30J dismounted Dragon fire/horse-holder/anchor-fix ligger i [F30J-supplementet](design-supplements/v00.00.09f30j-dismounted-dragon-fire-anchor.md). F30K auto-march/RMB-facing/split-selection/higher-HQ-AI ligger i [F30K-supplementet](design-supplements/v00.00.09f30k-auto-march-rmb-facing-higher-hq-ai.md). F30L cavalry visual/gait-pass ligger i [F30L-supplementet](design-supplements/v00.00.09f30l-cavalry-visual-fidelity-gait.md). F30M higher-command delegation, mission-visual parity og midlertidig cavalry task-attachment ligger i [F30M-supplementet](design-supplements/v00.00.09f30m-higher-command-delegation-cavalry-tasking.md). F30N higher-HQ HUD-parity, cavalry screen/opportunity AI og anti-cavalry infantry reaction ligger i [F30N-supplementet](design-supplements/v00.00.09f30n-hud-parity-cavalry-screen-anti-cav.md). F30O higher-AI arming, shared target-circle og true F29G HUD parity ligger i [F30O-supplementet](design-supplements/v00.00.09f30o-command-authority-target-preview.md). F30P committed facing, higher-HQ follow og command zones ligger i [F30P-supplementet](design-supplements/v00.00.09f30p-facing-hq-follow-command-zones.md). F30Q active-order HUD, balanced attack-front og CAV scout-design ligger i [F30Q-supplementet](design-supplements/v00.00.09f30q-active-orders-balanced-attack-scout.md). F30R Dragon fire-control ligger i [F30R-supplementet](design-supplements/v00.00.09f30r-dragon-fire-control.md). F30S execution-state, defensive CAV reserve, cone-QA og selection persistence ligger i [F30S-supplementet](design-supplements/v00.00.09f30s-execution-cav-cone-selection.md). F30T crop-tufts og infantry active-range authority ligger i [F30T-supplementet](design-supplements/v00.00.09f30t-crop-tufts-infantry-cones.md). F30U defend-command authority og HQ-goal conflict fix ligger i [F30U-supplementet](design-supplements/v00.00.09f30u-defend-command-authority.md). F30V single final-slot arrival authority ligger i [F30V-supplementet](design-supplements/v00.00.09f30v-final-slot-arrival-authority.md).
+Den aktuelle **gameplay-/buildbaseline** ligger på **v00.00.09f30x**. Cavalry visual-fidelity bygger fortsat på **v00.00.09f30l**. F30H fastlåser cavalry som 1:1 med **4 geledder i normal Line og ved Charge**, 4-abreast normal Column og 2-abreast bridge/defile column; formation changes er fysisk synlige, bridge routing er en vedvarende transaction, cavalry HUD følger company-HUD designet, og den aktive semantic-zoom-owner viser cavalry samt Brigade/Division. Det centrale design for regimentschef, cavalry, charge shock og infantry square er samlet i [Designsupplement v00.02.09 — Regimentskommando, cavalry og square](design-supplements/v00.02.09-regimental-command-cavalry-square.md). Map/attack-AI-hardening er dokumenteret i [v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md), den fælles Major/Company command UI i [v00.00.09f29c — Unified Command HUD](design-supplements/v00.00.09f29c-unified-command-hud.md), semantic zoom/HQ visibility/NATO-symboler i [v00.00.09f29d — Semantic Zoom + NATO Symbols](design-supplements/v00.00.09f29d-semantic-zoom-nato-symbols.md), navigation/sidestep/visual polish i [v00.00.09f29p — Navigation, Side Step & Visual Polish](design-supplements/v00.00.09f29p-navigation-sidestep-visual-polish.md), OOB/HQ-discoverability i [v00.00.09f29q — OOB, HQ Discoverability & Semantic Zoom](design-supplements/v00.00.09f29q-oob-hq-semantic-zoom.md), crop-field concealment/map polish i [v00.00.09f29r — Crop Field Concealment & Map Polish](design-supplements/v00.00.09f29r-crop-field-concealment.md), defensive/UI/terrain-hardening i [v00.00.09f29y — Defensive Stability, TEST AI, HUD Status & Terrain Polish](design-supplements/v00.00.09f29y-defensive-stability-ui-terrain-polish.md), Square face-fire i [v00.00.09f29z — Square Face Fire & Directional Smoke](design-supplements/v00.00.09f29z-square-face-fire-smoke.md), første mounted cavalry implementation i [v00.00.09f30 — First Cavalry Core](design-supplements/v00.00.09f30-cavalry-core.md), command/officer-hardening i [v00.00.09f30a — Command, Square and Officer AI Hardening](design-supplements/v00.00.09f30a-command-officer-hardening.md), og den højere kommandokæde i [v00.00.09f30b — Higher Command HQ](design-supplements/v00.00.09f30b-higher-command-hq.md). Cavalry Officer AI/dynamic attachment ligger i [F30C](design-supplements/v00.00.09f30c-cavalry-ai-dynamic-attachment.md), OOB scroll/drag-drop i [F30D](design-supplements/v00.00.09f30d-oob-scroll-dnd-cavalry-visuals.md), 1:1 cavalry/visual fidelity i [F30E](design-supplements/v00.00.09f30e-1to1-cavalry-visuals.md), og den samlede historik i [Implementation & Fix History](IMPLEMENTATION-AND-FIX-HISTORY.md) samt [F30F-supplementet](design-supplements/v00.00.09f30f-history-consolidation.md). F30G OOB/input/HQ-cavalry visibility hotfix er dokumenteret i [F30G-supplementet](design-supplements/v00.00.09f30g-oob-input-hq-cavalry-visibility-hotfix.md). F30H 4-rank/bridge/HUD/NATO/selection-baseline er dokumenteret i [F30H-supplementet](design-supplements/v00.00.09f30h-cavalry-4rank-bridge-hud-nato-selection.md). F30I authority/single-HUD/order-visual/animation-hardening ligger i [F30I-supplementet](design-supplements/v00.00.09f30i-cavalry-authority-hud-order-visual-animation.md). F30J dismounted Dragon fire/horse-holder/anchor-fix ligger i [F30J-supplementet](design-supplements/v00.00.09f30j-dismounted-dragon-fire-anchor.md). F30K auto-march/RMB-facing/split-selection/higher-HQ-AI ligger i [F30K-supplementet](design-supplements/v00.00.09f30k-auto-march-rmb-facing-higher-hq-ai.md). F30L cavalry visual/gait-pass ligger i [F30L-supplementet](design-supplements/v00.00.09f30l-cavalry-visual-fidelity-gait.md). F30M higher-command delegation, mission-visual parity og midlertidig cavalry task-attachment ligger i [F30M-supplementet](design-supplements/v00.00.09f30m-higher-command-delegation-cavalry-tasking.md). F30N higher-HQ HUD-parity, cavalry screen/opportunity AI og anti-cavalry infantry reaction ligger i [F30N-supplementet](design-supplements/v00.00.09f30n-hud-parity-cavalry-screen-anti-cav.md). F30O higher-AI arming, shared target-circle og true F29G HUD parity ligger i [F30O-supplementet](design-supplements/v00.00.09f30o-command-authority-target-preview.md). F30P committed facing, higher-HQ follow og command zones ligger i [F30P-supplementet](design-supplements/v00.00.09f30p-facing-hq-follow-command-zones.md). F30Q active-order HUD, balanced attack-front og CAV scout-design ligger i [F30Q-supplementet](design-supplements/v00.00.09f30q-active-orders-balanced-attack-scout.md). F30R Dragon fire-control ligger i [F30R-supplementet](design-supplements/v00.00.09f30r-dragon-fire-control.md). F30S execution-state, defensive CAV reserve, cone-QA og selection persistence ligger i [F30S-supplementet](design-supplements/v00.00.09f30s-execution-cav-cone-selection.md). F30T crop-tufts og infantry active-range authority ligger i [F30T-supplementet](design-supplements/v00.00.09f30t-crop-tufts-infantry-cones.md). F30U defend-command authority og HQ-goal conflict fix ligger i [F30U-supplementet](design-supplements/v00.00.09f30u-defend-command-authority.md). F30V single final-slot arrival authority ligger i [F30V-supplementet](design-supplements/v00.00.09f30v-final-slot-arrival-authority.md). F30W enemy-cone QA, same-bank river routing og OOB AI consistency ligger i [F30W-supplementet](design-supplements/v00.00.09f30w-enemy-cone-river-oob.md). F30X early infantry deploy, company spacing, CAV bridge approach og startup enemy cones ligger i [F30X-supplementet](design-supplements/v00.00.09f30x-deploy-spacing-cav-bridge.md).
 
 ## Indhold
 
@@ -27,6 +27,13 @@ Den aktuelle **gameplay-/buildbaseline** ligger på **v00.00.09f30x**. Cavalry v
 - [Implementation & Fix History — samlet historik over implementeringer og fejlrettelser](IMPLEMENTATION-AND-FIX-HISTORY.md)
 - [Designsupplement v00.00.09f30f — Implementation & Fix History Consolidation](design-supplements/v00.00.09f30f-history-consolidation.md)
 - [Designsupplement v00.00.09f30h — Cavalry 4-rank, bridge, HUD, NATO & selection](design-supplements/v00.00.09f30h-cavalry-4rank-bridge-hud-nato-selection.md)
+- [Designsupplement v00.00.09f30m — Higher Command Delegation + Temporary Cavalry Tasking](design-supplements/v00.00.09f30m-higher-command-delegation-cavalry-tasking.md)
+- [Designsupplement v00.00.09f30s — Execution State, Defend CAV, Cone QA & Selection](design-supplements/v00.00.09f30s-execution-cav-cone-selection.md)
+- [Designsupplement v00.00.09f30t — Crop Tufts + Infantry Active Range Authority](design-supplements/v00.00.09f30t-crop-tufts-infantry-cones.md)
+- [Designsupplement v00.00.09f30u — Defend Command Authority](design-supplements/v00.00.09f30u-defend-command-authority.md)
+- [Designsupplement v00.00.09f30v — Single Final-Slot Arrival Authority](design-supplements/v00.00.09f30v-final-slot-arrival-authority.md)
+- [Designsupplement v00.00.09f30w — Enemy Cone QA, Same-Bank River Routing & OOB AI](design-supplements/v00.00.09f30w-enemy-cone-river-oob.md)
+- [Designsupplement v00.00.09f30x — Early Deploy, Company Spacing, CAV Bridge Approach & Startup Enemy Cones](design-supplements/v00.00.09f30x-deploy-spacing-cav-bridge.md)
 - [Designsupplement v00.00.09f30g — OOB input / higher HQ & cavalry visibility hotfix](design-supplements/v00.00.09f30g-oob-input-hq-cavalry-visibility-hotfix.md)
 - [Designsupplement v00.02.09 — Regimentskommando, cavalry, charge shock og infantry square](design-supplements/v00.02.09-regimental-command-cavalry-square.md)
 - [Designsupplement v00.00.09f29b — Battlefield + Attack AI Hardening](design-supplements/v00.00.09f29b-battlefield-attack-ai-hardening.md)
@@ -58,6 +65,142 @@ Den aktuelle **gameplay-/buildbaseline** ligger på **v00.00.09f30x**. Cavalry v
 - [Backlog B-240–B-249 — udvidet kavaleri-, Gardehusar- og dragonmodel](backlog/B-240-CAVALRY-DRAGOONS-EXPANDED.md)
 - [Backlog B-250–B-259 — fog of war, scouts og HQ command effectiveness](backlog/B-250-FOG-SCOUTS-COMMAND-EFFECTIVENESS.md)
 - [Backlog B-280–B-291 — Charge, melee, Regiments-HQ, Dragoons og artilleri](backlog/B-280-CHARGE-REGIMENT-HQ-HIERARCHY.md)
+
+## Aktuel taktisk baseline — konsolideret efter F30X
+
+Denne sektion er den korte operative reference for den aktuelle P0A battle-prototype. Den ændrer ikke gameplay-buildet; **v00.00.09f30x** er fortsat runtime-baseline.
+
+### Command hierarchy og authority
+
+Den aktive danske command chain er:
+
+`Division → Brigade → Regiment → Major A / Major B → Companies`
+
+- En højere ordre delegeres ned gennem command chain i stedet for at flytte alle underenheder direkte fra samme controller.
+- Direkte player order har højere authority end inherited Officer AI mission.
+- Selection af Division/Brigade/Regiment/Major bevares gennem objective/facing placement og efter order commit.
+- `OrganicParent` ændres ikke ved midlertidige attachments. `CurrentCommandParent` kan midlertidigt ændres ved tactical tasking.
+- OOB AI-kolonnen bruger konsekvent `ON / OFF` på alle niveauer.
+
+### Ordrestatus og completion
+
+- **Blå ordreknap = fysisk execution i gang.**
+- **Rød ordreknap = ingen relevant movement/charge executor er længere aktiv.**
+- Standing intent kan fortsat være `FORSVAR HER` eller `HOLD`, selv om knappen igen er rød.
+- Company parent-mission completion kræver fysisk final-slot arrival på **≤0,50 m** fra `mission.Goal`.
+- Parent HUD må ikke stole på `mission.Arrived` alene; aktiv destination og fysisk afstand indgår.
+- Brigade/Division background follow og ren CAV visual reform må ikke alene holde ordreknappen blå.
+
+### FORSVAR HER
+
+- Den committed objective/facing er autoritativ for defensive disposition.
+- DefensiveStability ejer Major-HQ rear placement under `DefendHere`.
+- HqDepthGuard må ikke konkurrere om Major-/Regiment-HQ goals under samme committed defend-mission.
+- Når et HQ er fysisk settled, skal competing/stale HQ-goals cleares.
+- Defensive CAV placeres som reserve/flankesikring **bag** den bataljon, den støtter.
+
+### Infantry movement og formation
+
+- Line er kampformation; Column er march-/passageformation.
+- Normal marchformation ejes af `PrototypeMarchColumn09F6`; parent mission ejer destinationen.
+- Infantry skal ikke vente til det allerede er inde i fjendens ildområde med at deployere.
+- Aktuel TEST-regel: **deploy til Line ved nærmeste fjendes MaximumRange + 35 m buffer**.
+- Ved den nuværende 100 m TEST maximum range starter fysisk Line-reform derfor omkring **135 m**.
+- Formation change skal være fysisk synlig; enheden må ikke skyde, før Line-reform er klar.
+- En aktiv bridge route kan fortsat kræve Column gennem selve passagen.
+
+### Company spacing og deconfliction
+
+- Et full-strength 190-man company i tre geledder har ca. **48 m frontage**.
+- Nominal company spacing er **72 m center-center**.
+- Minimum reserved centre spacing er **68 m**.
+- Hvis terrain/slot-safety kræver korrektion, foretrækkes lateral forskydning før større depth-stagger.
+- Companies må ikke ende fysisk gennem/oven i hinanden i den færdige formation.
+
+### Fire cones, TEST visibility og LOS
+
+Aktuelle TEST-ranges er:
+
+- Close: **35 m**
+- Medium/Effective: **70 m**
+- Long/Maximum: **100 m**
+- Fire arc: **±35°**
+
+Visual language:
+
+- aktiv `CLOSE / MED / LONG` er stærk/tydelig;
+- øvrige ranges er svage reference-cones;
+- `HOLD` viser kun reference-ranges.
+
+I TEST/QA:
+
+- alle levende preussiske infantry cones skal være synlige fra battle-start uden selection eller distance-gate;
+- manglende enemy fan-renderers oprettes af QA-overlayet, når enemy Regiment findes;
+- synlig enemy cone er **kun QA** og giver ikke LOS, target knowledge eller firing authority.
+
+Reel enemy fire/reaction mod CAV kræver fortsat **LOS + valgt fire-policy range + fire-cone**.
+
+### Cavalry
+
+Normal mounted cavalry baseline:
+
+- Line/Charge: **4 geledder**
+- normal march Column: **4 abreast**
+- bridge/defile: **2 abreast**
+
+Bridge rule:
+
+- opposite-bank destination kan sætte `bridgeRoutePlanned` uden at ændre formation;
+- CAV rider mod broen i normal formation;
+- 2-abreast aktiveres først ved actual bridge approach, aktuelt ca. **36 m** fra near-bank approach;
+- efter far-bank exit-clearance gendannes pre-bridge formation.
+
+Tactical cavalry behaviour:
+
+- CAV må ikke bare ride direkte gennem fjendtlig infantry;
+- Officer AI skal screene/holde stand-off og vente på en taktisk mulighed;
+- infantry kan reagere på synlig CAV med ild og/eller Square, når de relevante LOS/range/cone-betingelser er opfyldt;
+- ved højere `ANGRIB HER` kan cavalry midlertidigt task-attaches til Major A/B uden at ændre OrganicParent;
+- efter afsluttet attack-task returneres det til tidligere command parent som reserve;
+- fremtidig FOG/LOS-baseline inkluderer `SPEJD HER` som cavalry reconnaissance-order.
+
+### Dragon
+
+- Mounted Dragon følger samme cavalry movement/bridge-baseline.
+- Afsiddet Dragon deles i ca. **75 % mobile combat dragons** og **25 % horse holders**.
+- Horse holders og horse park forbliver ved dismount-positionen under normal afsiddet movement.
+- `STIG OP` væk fra hestene betyder return-to-horses og derefter remount.
+- Dismounted Dragon har `HOLD / CLOSE / MED / LONG` fire-control med samme active-range visual language som infantry.
+
+### HQ og command zones
+
+- Major, Regiment, Brigade og Division er fysiske HQ'er.
+- HQ'er følger fremad i taktisk relevante bounds i stedet for at stå permanent ved spawn.
+- Division skal ikke blive unødigt langt bagud, men højere HQ skal samtidig bevare større rear-depth end Regiment/Major.
+- HQ command circles/zones er en del af command-visualiseringen og skal være læsbare, når det relevante HQ er selected.
+- Higher-HQ movement er command housekeeping; det må ikke forveksles med company mission completion.
+
+### River routing
+
+- Åbent vand er hard blocker; bridge er den lovlige crossing i den aktuelle test.
+- Bridge route kræver et **reelt bankskifte**.
+- Hvis start og mål er på samme bred, men den geometriske straight line skærer en bugtet del af åen, bruges bank-follow i stedet for et unødvendigt bridge round-trip.
+- Slutmålet bevares gennem routing; bridge steering er midlertidig fysisk execution, ikke en ny strategisk mission.
+
+### Aktuel QA-prioritet
+
+Ved regressionstest efter F30X kontrolleres især:
+
+1. enemy cones synlige straks ved battle-start;
+2. infantry deployer til Line før enemy fire envelope;
+3. companies ender uden overlap;
+4. CAV går først i 2-abreast tæt ved broen;
+5. same-bank routes giver ikke bridge round-trip;
+6. `FORSVAR HER` og `ANGRIB HER` forbliver blå kun under reel execution;
+7. parent-order går først rød, når final-slot/HQ/CAV execution reelt er afsluttet;
+8. OOB viser konsekvent AI `ON/OFF`;
+9. selection bevares efter højere ordre;
+10. fjendens CAV-/Square-/fire reaction respekterer LOS, range og cone.
 
 ## v00.00.09f28 Regiment Control Test — implementeringsstatus
 
@@ -584,6 +727,9 @@ Reconnaissance kommer fra faktiske kilder som cavalry patrols, dragoner, skirmis
 HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radius. Dårlig connectivity påvirker order delay, acknowledgement, reporting, coordination, reserve/support reaction og afhængighed af lokal Initiative/Tactical Skill/Composure. Den giver ikke en vilkårlig direkte accuracy- eller damage-penalty.
 
 ## Versionshistorik
+
+- **v00.02.42 / DOC CONSOLIDATION — P0A v00.00.09f30x** — samlet aktuel taktisk baseline efter F30X direkte i hovedmanualen: command authority, execution-state, DefendHere authority, 0,50 m final-slot arrival, early Line deployment, 72/68 m company spacing, TEST enemy cones, CAV 4-rank/4-abreast/2-abreast bridge-regel, Dragon split/remount, HQ/command zones og river routing. Ingen gameplayændring; runtime-baseline forbliver F30X.
+
 
 - **v00.02.41 / P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST** — infantry deployer ved enemy MaximumRange +35 m; company spacing 72 m/minimum 68 m; CAV 2-abreast først ca. 36 m før broen; enemy TEST-cones oprettes straks når enemy Regiment findes.
 
