@@ -263,13 +263,13 @@ public sealed class PrototypeHigherCommandOob09F30D : MonoBehaviour
                         string status = unit != null ? GetCompanyStatus(unit) : "—";
                         OfficerAIController companyAi =
                             unit != null ? unit.GetComponent<OfficerAIController>() : null;
-                        string ai =
+                        string companyAiState =
                             companyAi != null
                                 ? (companyAi.AIEnabled ? "ON" : "OFF")
                                 : "—";
 
                         Rect companyRect = RowRect(y, content.width);
-                        if (DrawRow(companyRect, 76f, "I", name, men, status, ai, "",
+                        if (DrawRow(companyRect, 76f, "I", name, men, status, companyAiState, "",
                             unit != null && unit.IsSelected, 5 + c + b * 4, name))
                         {
                             if (unit != null)
