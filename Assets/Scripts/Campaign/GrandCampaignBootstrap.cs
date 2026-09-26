@@ -32,7 +32,8 @@ public sealed class GrandCampaignBootstrap : MonoBehaviour
         get
         {
             Scene scene = SceneManager.GetActiveScene();
-            return string.Equals(scene.name, "CampaignMap", StringComparison.Ordinal);
+            return string.Equals(scene.name, "CampaignMap", StringComparison.Ordinal) ||
+                   string.Equals(scene.name, CampaignMap1851.SceneName, StringComparison.Ordinal);
         }
     }
 }
