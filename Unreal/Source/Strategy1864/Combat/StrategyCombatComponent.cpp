@@ -36,6 +36,24 @@ void UStrategyCombatComponent::TickComponent(
         return;
     }
 
+    if (UnderFireRemainingSeconds > 0.0f)
+    {
+        UnderFireRemainingSeconds = FMath::Max(
+            0.0f,
+            UnderFireRemainingSeconds - DeltaTime);
+
+        const bool bMovementStillPaused =
+            OwnerUnit->MovementExecutor &&
+            OwnerUnit->MovementExecutor->IsTemporarilyPaused();
+
+        if (UnderFireRemainingSeconds <= 0.0f &&
+            !bMovementStillPaused &&
+            OwnerUnit->UnitState == EStrategyUnitState::UnderFire)
+        {
+            OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+        }
+    }
+
     if (ReloadRemainingSeconds > 0.0f)
     {
         ReloadRemainingSeconds = FMath::Max(
@@ -90,13 +108,9 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         Target->ApplyStrengthLoss(Hits);
     }
 
-    if (Target->MovementExecutor && Target->MovementExecutor->HasMovementGoal())
+    if (Target->CombatComponent)
     {
-        Target->MovementExecutor->PauseMovementForSeconds(2.5f);
-    }
-    else if (Target->IsCombatEffective())
-    {
-        Target->SetUnitState(EStrategyUnitState::UnderFire);
+        Target->CombatComponent->NotifyIncomingVolley(Hits);
     }
 
     ReloadRemainingSeconds = ReloadSeconds;
@@ -167,4 +181,43 @@ int32 UStrategyCombatComponent::ResolveHits(int32 ShotCount, float DistanceCm)
     }
 
     return Hits;
+}
+
+
+void UStrategyCombatComponent::NotifyIncomingVolley(int32 Hits)
+{
+    if (!OwnerUnit || !OwnerUnit->IsCombatEffective())
+    {
+        return;
+    }
+
+    UnderFireRemainingSeconds = FMath::Max(
+        UnderFireRemainingSeconds,
+        UnderFireDurationSeconds);
+
+    const float Shock =
+        Hits > 0
+        ? FMath::Clamp(static_cast<float>(Hits) * 0.35f, 0.5f, 8.0f)
+        : 0.25f;
+
+    OwnerUnit->Morale = FMath::Clamp(
+        OwnerUnit->Morale - Shock,
+        0.0f,
+        100.0f);
+
+    OwnerUnit->Cohesion = FMath::Clamp(
+        OwnerUnit->Cohesion - Shock * 0.75f,
+        0.0f,
+        100.0f);
+
+    if (OwnerUnit->MovementExecutor &&
+        OwnerUnit->MovementExecutor->HasMovementGoal())
+    {
+        OwnerUnit->MovementExecutor->PauseMovementForSeconds(
+            UnderFireDurationSeconds);
+    }
+    else
+    {
+        OwnerUnit->SetUnitState(EStrategyUnitState::UnderFire);
+    }
 }
