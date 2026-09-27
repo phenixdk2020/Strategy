@@ -83,13 +83,16 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Arrival tolerance is currently 50 cm, aligned with the Unity F30V final-slot authority scale.
 - ANGRIB HER/FORSVAR HER still need U04 formation/subordinate slot planning; click-drag facing still needs its final interaction pass before U03 PASS.
 
-### U04 — Infantry movement/formations
-- Line.
-- March Column.
-- Three-rank company geometry.
-- Early deployment before enemy fire range.
-- Company final-slot spacing/deconfliction.
-- Final-slot arrival authority.
+### U04 — Infantry movement/formations — GEOMETRY/MAJOR PLANNER IMPLEMENTED, RUNTIME QA PENDING
+- `UStrategyFormationComponent` now owns unit formation state and reusable slot generation.
+- Three-rank infantry Line geometry is implemented as the default company line model.
+- March Column geometry is implemented with a 4-wide baseline.
+- `UStrategyParentFormationPlannerComponent` generates deterministic company slots under Battalion/Major command.
+- Major ANGRIB HER/FORSVAR HER missions decompose into subordinate company missions.
+- Parent committed facing is applied before company slots are generated.
+- Current Unity F30X company spacing baseline is preserved: 72 m nominal / 68 m reserved minimum.
+- Parent order authority is preserved in generated child missions.
+- Early deployment before enemy fire range, physical soldier reform, deeper Regiment/Brigade/Division slot planning and final runtime deconfliction remain pending.
 
 ### U05 — Terrain/navigation
 - Hard-blocking river/water.
