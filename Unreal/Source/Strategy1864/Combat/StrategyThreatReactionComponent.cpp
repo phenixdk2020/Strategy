@@ -34,10 +34,6 @@ void UStrategyThreatReactionComponent::TickComponent(
     EvaluationAccumulator += DeltaTime;
     if (EvaluationAccumulator < EvaluationIntervalSeconds)
     {
-        if (bRespondingToCavalry)
-        {
-            TryLeaveSquare(DeltaTime);
-        }
         return;
     }
 
