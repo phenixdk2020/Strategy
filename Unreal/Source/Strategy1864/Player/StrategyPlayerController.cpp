@@ -47,6 +47,17 @@ void AStrategyPlayerController::PlayerTick(float DeltaTime)
 
 void AStrategyPlayerController::SelectionPressed()
 {
+    if (bOrderPlacementPending)
+    {
+        FVector GroundPoint;
+        if (ResolveGroundPointUnderCursor(GroundPoint))
+        {
+            PendingOrderTarget = GroundPoint;
+            bOrderFacingDragActive = true;
+        }
+        return;
+    }
+
     float MouseX = 0.0f;
     float MouseY = 0.0f;
     if (!GetMousePosition(MouseX, MouseY))
@@ -66,6 +77,39 @@ void AStrategyPlayerController::SelectionPressed()
 
 void AStrategyPlayerController::SelectionReleased()
 {
+    if (bOrderPlacementPending && bOrderFacingDragActive)
+    {
+        FVector FacingPoint;
+        const bool bHasFacingPoint = ResolveGroundPointUnderCursor(FacingPoint);
+
+        const FVector FlatFacingDelta(
+            FacingPoint.X - PendingOrderTarget.X,
+            FacingPoint.Y - PendingOrderTarget.Y,
+            0.0f);
+
+        const bool bHasFacing =
+            bHasFacingPoint &&
+            FlatFacingDelta.SizeSquared() >= FMath::Square(100.0f);
+
+        const float FacingYaw =
+            bHasFacing
+            ? FlatFacingDelta.Rotation().Yaw
+            : 0.0f;
+
+        const EStrategyOrderType OrderType = PendingOrderType;
+        const FVector Target = PendingOrderTarget;
+
+        CancelOrderPlacement();
+
+        IssueOrderToSelection(
+            OrderType,
+            Target,
+            FacingYaw,
+            bHasFacing);
+
+        return;
+    }
+
     if (!bSelectionInputDown)
     {
         return;
@@ -76,12 +120,6 @@ void AStrategyPlayerController::SelectionReleased()
     if (AStrategyHUD* HUD = GetStrategyHUD())
     {
         HUD->EndSelectionBox();
-    }
-
-    if (bOrderPlacementPending)
-    {
-        CommitPendingOrderUnderCursor();
-        return;
     }
 
     const float DragDistance = FVector2D::Distance(SelectionStart, SelectionCurrent);
@@ -257,6 +295,8 @@ void AStrategyPlayerController::BeginOrderPlacement(EStrategyOrderType OrderType
 void AStrategyPlayerController::CancelOrderPlacement()
 {
     PendingOrderType = EStrategyOrderType::None;
+    PendingOrderTarget = FVector::ZeroVector;
+    bOrderFacingDragActive = false;
     bOrderPlacementPending = false;
 }
 
