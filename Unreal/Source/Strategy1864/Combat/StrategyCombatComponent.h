@@ -50,8 +50,17 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Combat")
     float ReloadRemainingSeconds = 0.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    float UnderFireDurationSeconds = 2.5f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Combat")
+    float UnderFireRemainingSeconds = 0.0f;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Combat")
     bool TryFireAt(AStrategyUnit* Target);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Combat")
+    void NotifyIncomingVolley(int32 Hits);
 
     UFUNCTION(BlueprintPure, Category="Strategy|Combat")
     bool IsReloading() const { return ReloadRemainingSeconds > 0.0f; }
