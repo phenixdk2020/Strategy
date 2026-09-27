@@ -6,6 +6,7 @@
 #include "StrategyOrderComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStrategyOrderChanged, const FStrategyOrder&, NewOrder);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FStrategyExecutionStateChanged, EStrategyOrderExecutionState, OldState, EStrategyOrderExecutionState, NewState);
 
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
 class STRATEGY1864_API UStrategyOrderComponent : public UActorComponent
@@ -18,16 +19,49 @@ public:
     UPROPERTY(BlueprintAssignable, Category="Strategy|Orders")
     FStrategyOrderChanged OnOrderChanged;
 
+    UPROPERTY(BlueprintAssignable, Category="Strategy|Orders")
+    FStrategyExecutionStateChanged OnExecutionStateChanged;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
-    void SetOrder(const FStrategyOrder& NewOrder);
+    bool SetOrder(const FStrategyOrder& NewOrder);
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
     void ClearOrder();
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    void BeginExecution();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    void CompleteExecution();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    void FailExecution();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    void MarkPendingTarget();
+
     UFUNCTION(BlueprintPure, Category="Strategy|Orders")
-    const FStrategyOrder& GetCurrentOrder() const { return CurrentOrder; }
+    FStrategyOrder GetCurrentOrder() const { return CurrentOrder; }
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Orders")
+    EStrategyOrderExecutionState GetExecutionState() const { return ExecutionState; }
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Orders")
+    bool IsPhysicallyExecuting() const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Orders")
+    bool HasStandingIntent() const;
 
 private:
+    bool CanReplaceCurrentOrder(const FStrategyOrder& NewOrder) const;
+    void SetExecutionState(EStrategyOrderExecutionState NewState);
+
     UPROPERTY(VisibleInstanceOnly, Category="Strategy|Orders")
     FStrategyOrder CurrentOrder;
+
+    UPROPERTY(VisibleInstanceOnly, Category="Strategy|Orders")
+    EStrategyOrderExecutionState ExecutionState = EStrategyOrderExecutionState::Idle;
+
+    UPROPERTY(VisibleInstanceOnly, Category="Strategy|Orders")
+    int32 NextOrderSerial = 1;
 };
