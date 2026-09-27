@@ -4,7 +4,8 @@
 **Reference branch:** `channel-test`  
 **Unity reference baseline:** `v00.00.09f30x` plus subsequent compile fixes and imported infantry rig  
 **Unreal Engine baseline:** `5.8.3`  
-**Migration principle:** preserve gameplay/design behaviour first; replace engine implementation second.
+**Migration principle:** preserve gameplay/design behaviour first; replace engine implementation second.  
+**U00 status:** PASS — UE 5.8.3 C++ editor build verified on Windows.
 
 ## Goal
 
@@ -25,7 +26,7 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 
 ## Migration order
 
-### U00 — Project/bootstrap
+### U00 — Project/bootstrap — PASS
 - Create Unreal C++ project scaffold.
 - Establish module, source layout and ignore rules.
 - Establish source-asset handoff rules.
