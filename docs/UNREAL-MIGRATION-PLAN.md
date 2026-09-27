@@ -32,12 +32,27 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Establish source-asset handoff rules.
 - Preserve the Unity files as reference.
 
-### U01 — Camera and selection
-- RTS camera.
-- Left-click unit selection.
-- Box selection.
-- Shift/Ctrl additive/removal behaviour.
-- Selection persistence through order placement.
+### U01 — Camera and selection — IMPLEMENTED / BUILD+QA PENDING
+- RTS camera Pawn with WASD pan, Q/E yaw and mouse-wheel zoom.
+- Left-click unit selection through visibility trace.
+- Drag box selection uses each unit actor's projected centre, matching the established Unity selection rule.
+- Shift adds to the current selection.
+- Ctrl removes units from the current selection.
+- Empty plain click clears selection; additive/removal modifiers do not clear unrelated units.
+- Selection state lives on `AStrategyUnit`; Blueprint receives `OnSelectionChanged` for rings/highlights.
+- Order placement is intentionally separate from selection input, preserving selected units through future order placement.
+- Default GameMode now wires the RTS camera Pawn, player controller and selection HUD.
+- U01 is not marked PASS until the UE 5.8.3 editor target builds and the interaction QA below is completed.
+
+#### U01 QA gate
+1. UE 5.8.3 editor target builds without C++/UHT errors.
+2. WASD pans over the tactical level; Q/E rotates; mouse wheel zooms within configured limits.
+3. Plain click selects one player-controllable `AStrategyUnit`.
+4. Drag selection selects every player-controllable unit whose actor centre lies inside the rectangle.
+5. Shift-click/drag adds units without dropping the existing selection.
+6. Ctrl-click/drag removes only targeted units.
+7. Plain click on empty ground clears selection.
+8. Future right-click/order placement must not clear selection.
 
 ### U02 — Unit/OOB data model
 - Division → Brigade → Regiment → Battalion/Major → Company.
