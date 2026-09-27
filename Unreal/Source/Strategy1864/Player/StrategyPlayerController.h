@@ -25,6 +25,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Strategy|Selection")
     TArray<AStrategyUnit*> GetSelectedUnits() const;
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|OOB")
+    void SelectUnitFromOOB(AStrategyUnit* Unit, bool bFocusCamera);
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
     void BeginOrderPlacement(EStrategyOrderType OrderType);
 
