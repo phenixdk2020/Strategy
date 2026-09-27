@@ -145,16 +145,28 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Attack completion restores the previous command parent and issues a background reserve move.
 - FORSVAR HER assigns cavalry reserve positions behind/lateral to paired Majors while retaining higher ownership.
 - Runtime QA scenario now includes two Danish cavalry under Division.
-- Charge/contact collision, physical rider reform, Dragon dismount/remount and SPEJD HER remain pending.
+- Charge is now a finite mounted movement mission with swept enemy contact detection; valid contact stops the cavalry before it can pass through the enemy.
+- Dragoon role now has a 75/25 combat-group/horse-holder data split, persistent horse-park anchor, dismounted movement/fire limit and STIG OP return/remount core.
+- Physical 1:1 rider reform, detailed melee resolution and SPEJD HER remain pending.
 
-### U09 — OOB/HUD/semantic zoom
-- OOB panel.
-- AI ON/OFF status.
-- Drag/drop cavalry attachment.
-- Command buttons and execution colours.
-- NATO/semantic zoom ownership.
-- HQ command circles.
-- Range/cone visual language.
+### U09 — OOB/HUD/semantic zoom — QA/PRESENTATION CORE IMPLEMENTED / FINAL UMG PENDING
+- HUD now shows a visible Unreal-port build marker and selected-unit QA state.
+- Recursive OOB aggregate data exposes strength/status/execution for future UMG rows.
+- OOB selection backend supports select and select+camera-focus.
+- Command visual state is blue only during physical execution; completed standing intent returns red. Green remains reserved for toggles/state controls.
+- Semantic zoom now exposes Close/Medium/Operational/Strategic/VeryFar states.
+- Camera zoom range reaches the documented tactical semantic-zoom distances.
+- World labels expose NATO echelon markers I/II/III/X/XX and CAV.
+- Strategic/VeryFar zoom suppresses tactical meshes without suppressing simulation/colliders.
+- Selected command entities expose command-tree lines, mission targets/facing and subordinate routes for QA.
+- Existing selected-HQ command circles and range/cone language remain active.
+- Final UMG OOB tree, per-echelon production HUD layout, attachment drag/drop and hover presentation remain pending.
+
+### Tactical time controls — CORE IMPLEMENTED / QA PENDING
+- Space toggles tactical pause.
+- 1/2/3 select 1x/2x/3x global time dilation and leave pause.
+- Movement/combat/AI timers remain simulation-time driven and therefore scale together.
+- Victory/defeat and deterministic restart/reset remain pending.
 
 ### U10 — Tactical parity gate
 The Unreal battle test is not considered a replacement for the Unity prototype until the current tactical QA baseline is reproduced.
