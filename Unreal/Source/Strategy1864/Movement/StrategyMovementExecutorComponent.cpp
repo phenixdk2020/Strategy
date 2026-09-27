@@ -3,6 +3,7 @@
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Command/StrategyCommandComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "../Navigation/StrategyRoutePlannerComponent.h"
 
 UStrategyMovementExecutorComponent::UStrategyMovementExecutorComponent()
 {
@@ -71,6 +72,21 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
 void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOrder& Order)
 {
     MovementGoal = Order.TargetLocation;
+    RoutePoints.Reset();
+    RoutePointIndex = 0;
+
+    if (OwnerUnit && OwnerUnit->RoutePlanner)
+    {
+        RoutePoints = OwnerUnit->RoutePlanner->BuildRoute(
+            OwnerUnit->GetActorLocation(),
+            MovementGoal);
+    }
+
+    if (RoutePoints.Num() == 0)
+    {
+        RoutePoints.Add(MovementGoal);
+    }
+
     GoalFacingYaw = Order.FacingYaw;
     bApplyGoalFacing = Order.bHasFacing;
     ExecutingOrderSerial = Order.OrderSerial;
@@ -110,11 +126,31 @@ void UStrategyMovementExecutorComponent::TickComponent(
     }
 
     const FVector CurrentLocation = OwnerUnit->GetActorLocation();
-    const FVector Delta = MovementGoal - CurrentLocation;
-    const FVector FlatDelta(Delta.X, Delta.Y, 0.0f);
 
-    if (FlatDelta.Size() <= ArrivalToleranceCm)
+    if (!RoutePoints.IsValidIndex(RoutePointIndex))
     {
+        FinishMovement();
+        return;
+    }
+
+    const FVector ActiveWaypoint = RoutePoints[RoutePointIndex];
+    const FVector WaypointDelta = ActiveWaypoint - CurrentLocation;
+    const FVector FlatDelta(WaypointDelta.X, WaypointDelta.Y, 0.0f);
+
+    const bool bFinalWaypoint = RoutePointIndex == RoutePoints.Num() - 1;
+    const float WaypointToleranceCm =
+        bFinalWaypoint
+        ? ArrivalToleranceCm
+        : FMath::Max(ArrivalToleranceCm, 100.0f);
+
+    if (FlatDelta.Size() <= WaypointToleranceCm)
+    {
+        if (!bFinalWaypoint)
+        {
+            ++RoutePointIndex;
+            return;
+        }
+
         OwnerUnit->SetActorLocation(FVector(MovementGoal.X, MovementGoal.Y, CurrentLocation.Z));
 
         if (bApplyGoalFacing)
@@ -170,6 +206,8 @@ void UStrategyMovementExecutorComponent::StopMovement()
 {
     bHasMovementGoal = false;
     ExecutingOrderSerial = 0;
+    RoutePoints.Reset();
+    RoutePointIndex = 0;
     SetComponentTickEnabled(false);
 }
 
