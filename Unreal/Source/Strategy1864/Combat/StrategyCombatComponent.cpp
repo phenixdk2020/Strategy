@@ -2,6 +2,7 @@
 
 #include "StrategyFireControlComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "../Movement/StrategyMovementExecutorComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -87,6 +88,15 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
     if (Hits > 0)
     {
         Target->ApplyStrengthLoss(Hits);
+    }
+
+    if (Target->MovementExecutor && Target->MovementExecutor->HasMovementGoal())
+    {
+        Target->MovementExecutor->PauseMovementForSeconds(2.5f);
+    }
+    else if (Target->IsCombatEffective())
+    {
+        Target->SetUnitState(EStrategyUnitState::UnderFire);
     }
 
     ReloadRemainingSeconds = ReloadSeconds;
