@@ -153,7 +153,7 @@
 
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
-| UE-P130 | P1 | Square formation geometry | F29 | Formation component | BACKLOG | Infantry physically reforms to square. |
+| UE-P130 | P1 | Square formation geometry | F29 | Formation component | IMPLEMENTED CORE | Infantry physically reforms to square. |
 | UE-P131 | P1 | Four square fire sectors | F29V/X/Z | Combat geometry | BACKLOG | Square fires only from eligible face/sector. |
 | UE-P132 | P1 | Square visual ownership | F29X | Presentation | BACKLOG | Square outline replaces incompatible Line/Column footprint/fans. |
 | UE-P133 | P1 | No formation phantom volley | F29X | Fire state machine | BACKLOG | Entering/readying Square does not produce smoke/0-hit volley. |
@@ -186,12 +186,12 @@
 |---|---:|---|---|---|---|---|
 | UE-P180 | P0 | Cavalry base actor | F30 | `ACavalryUnit` | SCAFFOLD | Mounted tactical entity has strength/order/command state. |
 | UE-P181 | P1 | Mounted cavalry movement | F30 | Cavalry movement | BACKLOG | Mounted unit moves as formation with appropriate speed/state. |
-| UE-P182 | P1 | 4-rank Line | F30H | Formation generator | BACKLOG | Normal mounted Line physically uses four ranks. |
-| UE-P183 | P1 | 4-rank Charge | F30H | Formation generator | BACKLOG | Charge line uses four ranks. |
-| UE-P184 | P1 | 4-abreast Column | F30H | Formation generator | BACKLOG | Normal mounted march column is four abreast. |
-| UE-P185 | P1 | 2-abreast bridge/defile | F30H/X | Formation policy | BACKLOG | Narrow two-abreast geometry exists only near/on crossing. |
+| UE-P182 | P1 | 4-rank Line | F30H | Formation generator | IMPLEMENTED CORE | Normal mounted Line physically uses four ranks. |
+| UE-P183 | P1 | 4-rank Charge | F30H | Formation generator | GEOMETRY CORE VIA CAVALRY LINE | Charge line uses four ranks. |
+| UE-P184 | P1 | 4-abreast Column | F30H | Formation generator | IMPLEMENTED CORE | Normal mounted march column is four abreast. |
+| UE-P185 | P1 | 2-abreast bridge/defile | F30H/X | Formation policy | GEOMETRY CORE IMPLEMENTED | Narrow two-abreast geometry exists only near/on crossing. |
 | UE-P186 | P1 | 36 m narrow-mode approach | F30X | Bridge formation policy | BACKLOG | Opposite-bank mission does not trigger two-abreast hundreds of metres early. |
-| UE-P187 | P1 | Restore pre-bridge formation | F30H/X | Crossing state | BACKLOG | Formation used before narrow mode is restored after exit clearance. |
+| UE-P187 | P1 | Restore pre-bridge formation | F30H/X | Crossing state | DEFILE RESTORE CORE IMPLEMENTED | Formation used before narrow mode is restored after exit clearance. |
 | UE-P188 | P1 | Physical cavalry reform | F30H | Formation movement | BACKLOG | Riders physically reform; charge speed respects incomplete reform. |
 | UE-P189 | P1 | Cavalry charge/contact | F30/F30N | Cavalry combat | BACKLOG | Charge executes to valid contact without passing through enemy formation. |
 | UE-P190 | P1 | Defensive cavalry reserve | F30S | Higher mission planner | BACKLOG | Attached CAV stays behind/outside supported battalion (~150m rear/~45m lateral QA baseline). |
@@ -204,7 +204,7 @@
 | UE-P197 | P2 | Horse-holder anchor | F30J/S | Dismounted state | BACKLOG | Horse holders/horses stay at dismount anchor while combat group moves. |
 | UE-P198 | P2 | STIG OP return/remount | F30S | Remount task | BACKLOG | Away-from-horses remount becomes return task then auto-remount. |
 | UE-P199 | P2 | Dismounted Dragon fire control | F30R | Fire component | BACKLOG | Dragon firing respects policy, range, LOS and anchor state. |
-| UE-P200 | P1 | Horse + rider separate rigs | Engine-port decision | Skeletal meshes + AnimBP | BACKLOG | Horse/rider are independent rigs synchronized at RiderSocket/saddle. |
+| UE-P200 | P1 | Horse + rider separate rigs | Engine-port decision | Skeletal meshes + AnimBP | SCAFFOLD IMPLEMENTED | Horse/rider are independent rigs synchronized at RiderSocket/saddle. |
 
 # 11. OOB, HUD, semantic zoom and tactical presentation — U09
 
@@ -381,3 +381,13 @@ Still pending before parity:
 - actual volley/reload/ammunition/casualty execution;
 - final command-HQ rear/follow geometry;
 - UMG active-order colour presentation.
+
+
+## Formation extension checkpoint
+
+- Square now has a four-sided slot geometry core with outward-facing side orientations.
+- Cavalry Line uses four ranks.
+- Cavalry Column uses four abreast.
+- Defile Column uses two abreast.
+- `ACavalryUnit::SetDefileMode()` stores the pre-defile formation and restores it when narrow mode ends.
+- These are geometry/state cores only. Bridge-distance activation, cavalry physical rider reform, Square fire-sector authority and charge-contact logic still require their later systems.
