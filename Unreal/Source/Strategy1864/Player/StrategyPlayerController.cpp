@@ -1,6 +1,7 @@
 #include "StrategyPlayerController.h"
 
 #include "StrategyHUD.h"
+#include "StrategyCameraPawn.h"
 #include "EngineUtils.h"
 #include "InputCoreTypes.h"
 #include "../Units/StrategyUnit.h"
@@ -380,4 +381,28 @@ bool AStrategyPlayerController::ResolveGroundPointUnderCursor(FVector& OutWorldP
 
     OutWorldPoint = Hit.ImpactPoint;
     return true;
+}
+
+
+void AStrategyPlayerController::SelectUnitFromOOB(
+    AStrategyUnit* Unit,
+    bool bFocusCamera)
+{
+    if (!IsValid(Unit) || !Unit->bPlayerControllable)
+    {
+        return;
+    }
+
+    ClearSelection();
+    SelectedUnitObjects.Add(Unit);
+    Unit->SetSelected(true);
+
+    if (bFocusCamera)
+    {
+        if (AStrategyCameraPawn* CameraPawn =
+            Cast<AStrategyCameraPawn>(GetPawn()))
+        {
+            CameraPawn->FocusOnWorldLocation(Unit->GetActorLocation());
+        }
+    }
 }
