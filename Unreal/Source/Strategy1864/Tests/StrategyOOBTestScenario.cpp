@@ -4,6 +4,7 @@
 #include "../Units/StrategyCompanyUnit.h"
 #include "../Units/StrategyHQUnit.h"
 #include "../Units/StrategyUnit.h"
+#include "../Navigation/StrategyRiverBarrier.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -84,6 +85,23 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             static_cast<uint8>(EStrategySide::Denmark));
     }
 
+    if (bSpawnRiverQA && GetWorld())
+    {
+        SpawnedRiverBarrier = GetWorld()->SpawnActor<AStrategyRiverBarrier>(
+            AStrategyRiverBarrier::StaticClass(),
+            Origin + FVector(15000.0f, 0.0f, 0.0f),
+            FRotator::ZeroRotator);
+
+        if (SpawnedRiverBarrier)
+        {
+            SpawnedRiverBarrier->RiverAxisDirection = FVector(0.0f, 1.0f, 0.0f);
+            SpawnedRiverBarrier->RiverHalfWidthCm = 1200.0f;
+            SpawnedRiverBarrier->BankAApproachOffset = FVector(-1800.0f, 0.0f, 0.0f);
+            SpawnedRiverBarrier->BankBApproachOffset = FVector(1800.0f, 0.0f, 0.0f);
+            SpawnedRiverBarrier->ExitClearanceCm = 3600.0f;
+        }
+    }
+
     if (bSpawnEnemyQAUnits)
     {
         SpawnCompany(
@@ -140,6 +158,13 @@ void AStrategyOOBTestScenario::ClearSpawnedUnits()
     }
 
     SpawnedUnitObjects.Reset();
+
+    if (IsValid(SpawnedRiverBarrier))
+    {
+        SpawnedRiverBarrier->Destroy();
+    }
+
+    SpawnedRiverBarrier = nullptr;
 }
 
 AStrategyHQUnit* AStrategyOOBTestScenario::SpawnHQ(
