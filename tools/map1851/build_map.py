@@ -6,6 +6,7 @@ Builds from Natural Earth 10m (public domain):
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Height.png   16-bit height (0 = sea floor visual, land > sea level)
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Regions.png  region ids (R channel), see REGION_*
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Features.png land (R) + woodland (G) for 3D scenery placement
+  Assets/Campaign1851/Resources/Map1851/Denmark1851_Amter.png    amt id + 1 (R), see amter1851.json
   Assets/Campaign1851/Resources/Map1851/Fields1851_Parcels.png  tileable field parcels + hedgerows (Unreal close zoom)
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Map.json     projection + cities + labels + roads
 
@@ -295,11 +296,12 @@ def parcel_texture(size, tile_km, seed):
     return (np.clip(out, 0, 1) * 255).astype(np.uint8)
 
 
-def route_roads(raster, monarchy, forest, height, cities):
-    """Main roads between neighbouring towns, routed over land on a ROAD_CELL_KM grid.
+def route_roads(raster, monarchy, forest, height, cities, ferries):
+    """Main roads between towns, routed over land on a ROAD_CELL_KM grid, with the 1851 ferries.
 
-    Costs favour open, level ground; the sea is impassable (ferries are not modelled). Returns
-    [{"kind": "main", "km": [[x, y], ...]}] in projected km, smoothed with Chaikin's algorithm.
+    Costs favour open, level ground; the sea is only crossed at the listed ferries. Every town is
+    linked to its ROAD_NEIGHBOURS nearest reachable towns (by travel cost). Returns
+    [{"kind": "main" | "ferry", "km": [[x, y], ...]}] in projected km; roads are smoothed.
     """
     from scipy.sparse import coo_matrix
     from scipy.sparse.csgraph import dijkstra
@@ -315,8 +317,19 @@ def route_roads(raster, monarchy, forest, height, cities):
     cost = 1.0 + 2.5 * block(forest) + 40.0 * np.hypot(gx, gy)
     cell_x = (raster.x_max - raster.x_min) / raster.w * f
     cell_y = (raster.y_max - raster.y_min) / raster.h * f
-
     idx = np.arange(h * w).reshape(h, w)
+    _, (near_r, near_c) = ndimage.distance_transform_edt(~land, return_indices=True)
+
+    def node_at(km_xy):
+        x, y = km_xy
+        r = min(h - 1, max(0, int((raster.y_max - y) / cell_y)))
+        c = min(w - 1, max(0, int((x - raster.x_min) / cell_x)))
+        return int(idx[near_r[r, c], near_c[r, c]])
+
+    def node_km(n):
+        r, c = divmod(n, w)
+        return np.array([raster.x_min + (c + 0.5) * cell_x, raster.y_max - (r + 0.5) * cell_y])
+
     rows, cols, wts = [], [], []
     for dy, dx in ((0, 1), (1, 0), (1, 1), (1, -1)):
         src = (slice(0, h - dy), slice(max(0, -dx), w - max(0, dx)))
@@ -326,25 +339,22 @@ def route_roads(raster, monarchy, forest, height, cities):
         rows.append(idx[src][ok])
         cols.append(idx[dst][ok])
         wts.append((step * 0.5 * (cost[src] + cost[dst]))[ok])
+    # Ferries: an edge between the two landings, costlier than the same distance on land.
+    ferry_nodes = {}
+    for k, fy in enumerate(ferries):
+        a_km, b_km = np.array(project(*fy["a"])), np.array(project(*fy["b"]))
+        a, b = node_at(a_km), node_at(b_km)
+        if a == b:
+            continue
+        ferry_nodes[(min(a, b), max(a, b))] = (k, a_km, b_km)
+        rows.append(np.array([a]))
+        cols.append(np.array([b]))
+        wts.append(np.array([np.hypot(*(a_km - b_km)) * 3.0 + 6.0]))
     graph = coo_matrix((np.concatenate(wts), (np.concatenate(rows), np.concatenate(cols))), shape=(h * w, h * w)).tocsr()
 
-    # Towns on the sea front snap to the nearest land cell.
-    _, (near_r, near_c) = ndimage.distance_transform_edt(~land, return_indices=True)
     towns = [c for c in cities if not c.get("bornholm")]
     km = np.array([project(c["lon"], c["lat"]) for c in towns], np.float64)
-    nodes = []
-    for x, y in km:
-        r = min(h - 1, max(0, int((raster.y_max - y) / cell_y)))
-        c = min(w - 1, max(0, int((x - raster.x_min) / cell_x)))
-        nodes.append(int(idx[near_r[r, c], near_c[r, c]]))
-
-    pairs = set()
-    for i in range(len(towns)):
-        d = np.hypot(*(km - km[i]).T)
-        order = [j for j in np.argsort(d) if j != i]
-        for rank, j in enumerate(order[:ROAD_NEIGHBOURS]):
-            if rank == 0 or d[j] <= ROAD_MAX_KM:
-                pairs.add((min(i, j), max(i, j)))
+    nodes = [node_at(p) for p in km]
 
     def chaikin(p, rounds=3):
         for _ in range(rounds):
@@ -355,28 +365,90 @@ def route_roads(raster, monarchy, forest, height, cities):
             p = np.array(q)
         return p
 
-    roads = []
-    for i in sorted({a for a, _ in pairs}):
-        targets = [b for a, b in pairs if a == i]
-        _, pred = dijkstra(graph, directed=False, indices=nodes[i], return_predecessors=True, limit=ROAD_MAX_KM * 4)
-        for j in targets:
-            node, path = nodes[j], []
-            while node >= 0 and node != nodes[i]:
-                path.append(node)
-                node = pred[node]
-            if node != nodes[i]:
-                continue  # not reachable over land (different island)
-            path.append(nodes[i])
-            path.reverse()
-            rr, cc = np.divmod(np.array(path), w)
-            pts = np.column_stack([raster.x_min + (cc + 0.5) * cell_x, raster.y_max - (rr + 0.5) * cell_y])
-            pts = np.vstack([km[i], pts[1:-1:2], km[j]])
-            length = np.sum(np.hypot(*np.diff(pts, axis=0).T))
-            if length > 1.45 * np.hypot(*(km[j] - km[i])) + 4.0:
-                continue  # a long detour around a fjord or bay: no direct road
-            roads.append({"kind": "main", "from": towns[i]["name"], "to": towns[j]["name"],
-                          "km": np.round(chaikin(pts), 3).tolist()})
+    town_nodes = np.array(nodes)
+    pairs, preds = set(), {}
+    for i in range(len(towns)):
+        dist, pred = dijkstra(graph, directed=False, indices=nodes[i], return_predecessors=True, limit=ROAD_MAX_KM * 5)
+        preds[i] = pred
+        reach = [(dist[n], j) for j, n in enumerate(town_nodes) if j != i and np.isfinite(dist[n])]
+        for _, j in sorted(reach)[:ROAD_NEIGHBOURS]:
+            pairs.add((min(i, j), max(i, j)))
+
+    # Every ferry links the nearest towns on its two shores (the crossings carried the main routes).
+    for fy in ferries:
+        ends = [int(np.argmin(np.hypot(*(km - np.array(project(*fy[s]))).T))) for s in ("a", "b")]
+        if ends[0] != ends[1]:
+            pairs.add((min(ends), max(ends)))
+
+    roads, used_ferries = [], set()
+    for i, j in sorted(pairs):
+        pred, node, path = preds[i], nodes[j], []
+        while node >= 0 and node != nodes[i]:
+            path.append(node)
+            node = pred[node]
+        if node != nodes[i]:
+            continue
+        path.append(nodes[i])
+        path.reverse()
+        # Split at ferry jumps (consecutive nodes that are not grid neighbours).
+        runs, run = [], [km[i]]
+        for a, b in zip(path[:-1], path[1:]):
+            ra, ca = divmod(a, w)
+            rb, cb = divmod(b, w)
+            if max(abs(ra - rb), abs(ca - cb)) > 1:
+                k, a_km, b_km = ferry_nodes[(min(a, b), max(a, b))]
+                used_ferries.add(k)
+                start_km, end_km = (a_km, b_km) if node_at(a_km) == a else (b_km, a_km)
+                runs.append(run + [start_km])
+                run = [end_km]
+            else:
+                run.append(node_km(b))
+        run[-1] = km[j]
+        runs.append(run)
+        for r in runs:
+            pts = np.array(r)
+            if len(pts) > 3:
+                pts = np.vstack([pts[0], pts[1:-1:2], pts[-1]])
+            if len(pts) >= 2:
+                roads.append({"kind": "main", "km": np.round(chaikin(pts), 3).tolist()})
+    for k in sorted(used_ferries):
+        fy = ferries[k]
+        roads.append({"kind": "ferry", "name": fy["name"],
+                      "km": np.round(np.array([project(*fy["a"]), project(*fy["b"])]), 3).tolist()})
     return roads
+
+
+def amter_raster(raster, regions, land, amter):
+    """Amt index + 1 per pixel (0 = sea/foreign): nearest anchor of an amt in the same region."""
+    km_x, km_y = raster.xy_grids()
+    out = np.zeros(land.shape, np.uint8)
+    for code, region in (("K", REGION_KINGDOM), ("S", REGION_SCHLESWIG), ("H", REGION_HOLSTEIN)):
+        anchors, owner = [], []
+        for n, a in enumerate(amter):
+            if a["region"] == code:
+                for lon, lat in a["anchors"]:
+                    anchors.append(project(lon, lat))
+                    owner.append(n + 1)
+        mask = land & (regions == region)
+        _, nearest = cKDTree(np.array(anchors)).query(np.column_stack([km_x[mask], km_y[mask]]), workers=-1)
+        out[mask] = np.array(owner, np.uint8)[nearest]
+    return out
+
+
+def paint_amt_borders(colour, amt, regions):
+    """Thin dotted borders between amter of the same duchy/kingdom, painted into the map."""
+    edge = np.zeros(amt.shape, bool)
+    for dy, dx in ((0, 1), (1, 0)):
+        a, b = amt[:amt.shape[0] - dy, :amt.shape[1] - dx], amt[dy:, dx:]
+        ra, rb = regions[:amt.shape[0] - dy, :amt.shape[1] - dx], regions[dy:, dx:]
+        diff = (a != b) & (a > 0) & (b > 0) & (ra == rb)
+        edge[:amt.shape[0] - dy, :amt.shape[1] - dx] |= diff
+    edge = ndimage.binary_dilation(edge, iterations=2)
+    dots = ((np.indices(amt.shape).sum(axis=0) // 9) % 3) != 2
+    line = edge & dots
+    out = colour.astype(np.float32)
+    out[line] = out[line] * 0.25 + np.array([66, 44, 22], np.float32) * 0.75
+    return out.astype(np.uint8)
 
 
 def lerp(a, b, t):
@@ -594,6 +666,12 @@ def main():
     bh_r = Raster(bx0, bx1, by0, by1, bh_w, 1024)
     bh_colour, _, _, _, _, _ = build(ne_dir, bh_r, 1865)
 
+    with open(os.path.join(HERE, "amter1851.json"), encoding="utf-8") as f:
+        admin = json.load(f)
+    amt = amter_raster(main_r, regions, land, admin["amter"])
+    colour = paint_amt_borders(colour, amt, regions)
+    Image.fromarray(amt).resize((WIDTH_PX // 2, HEIGHT_PX // 2), Image.NEAREST).save(os.path.join(OUT_DIR, "Denmark1851_Amter.png"))
+
     Image.fromarray(colour).save(os.path.join(OUT_DIR, "Denmark1851_Color.png"))
     save_png16(os.path.join(OUT_DIR, "Denmark1851_Height.png"), height / max(height.max(), 1e-6))
     Image.fromarray(regions * 60).save(os.path.join(OUT_DIR, "Denmark1851_Regions.png"))
@@ -658,14 +736,31 @@ def main():
             {"text": "Mecklenburg", "lat": 53.75, "lon": 11.6, "kind": "foreign"}
         ]
     }
-    meta["roads"] = route_roads(main_r, land & (regions != REGION_FOREIGN), forest, height, cities["cities"])
+    meta["roads"] = route_roads(main_r, land & (regions != REGION_FOREIGN), forest, height, cities["cities"], admin["ferries"])
+
+    # Amter: index i + 1 in Denmark1851_Amter.png; label at the amt pixel nearest its centre of mass.
+    km_x, km_y = main_r.xy_grids()
+    meta["amter"] = []
+    for n, a in enumerate(admin["amter"]):
+        mask = amt == n + 1
+        entry = {"id": n + 1, "name": a["name"], "seat": a["seat"], "region": a["region"],
+                 "areaKm2": round(float(mask.sum()) * main_r.km_per_px ** 2)}
+        if mask.any():
+            xs, ys = km_x[mask], km_y[mask]
+            k = np.argmin((xs - xs.mean()) ** 2 + (ys - ys.mean()) ** 2)
+            lon, lat = unproject(xs[k], ys[k])
+            entry["lat"], entry["lon"] = round(float(lat), 4), round(float(lon), 4)
+            if a.get("label", True):
+                meta["labels"].append({"text": a["name"], "lat": entry["lat"], "lon": entry["lon"], "kind": "amt"})
+        meta["amter"].append(entry)
 
     with open(os.path.join(OUT_DIR, "Denmark1851_Map.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=1)
 
     if preview:
         Image.fromarray(colour).resize((WIDTH_PX // 4, HEIGHT_PX // 4), Image.LANCZOS).save(os.path.join(HERE, "preview.png"))
-    print(f"roads: {len(meta['roads'])} main roads, {sum(len(r['km']) for r in meta['roads'])} points")
+    print(f"roads: {sum(r['kind'] == 'main' for r in meta['roads'])} road runs, {sum(r['kind'] == 'ferry' for r in meta['roads'])} ferries; amter: {len(meta['amter'])}")
+    print("  " + ", ".join(f"{a['name']} {a['areaKm2']}" for a in meta["amter"]))
     print(f"map {REGION}: {WIDTH_PX}x{HEIGHT_PX} px, {width_km:.0f}x{height_km:.0f} km (LAEA), {height_km / HEIGHT_PX * 1000:.0f} m/px")
 
 
