@@ -7,6 +7,7 @@
 class AStrategyCompanyUnit;
 class AStrategyHQUnit;
 class AStrategyUnit;
+class AStrategyRiverBarrier;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API AStrategyOOBTestScenario : public AActor
@@ -31,6 +32,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     bool bSpawnEnemyQAUnits = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnRiverQA = true;
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Test")
     void BuildTestOOB();
@@ -59,5 +63,8 @@ private:
 
     UPROPERTY()
     TArray<TObjectPtr<AStrategyUnit>> SpawnedUnitObjects;
+
+    UPROPERTY()
+    TObjectPtr<AStrategyRiverBarrier> SpawnedRiverBarrier;
 
 };
