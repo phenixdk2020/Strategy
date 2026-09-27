@@ -35,10 +35,10 @@ public:
     float MinZoom = 800.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Camera")
-    float MaxZoom = 6000.0f;
+    float MaxZoom = 60000.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Camera")
-    float ZoomStep = 500.0f;
+    float ZoomStep = 2500.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Camera")
     float RotationSpeedDegrees = 70.0f;
