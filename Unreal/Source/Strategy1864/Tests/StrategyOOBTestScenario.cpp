@@ -5,6 +5,7 @@
 #include "../Units/StrategyHQUnit.h"
 #include "../Units/StrategyUnit.h"
 #include "../Units/CavalryUnit.h"
+#include "../Units/StrategyDragoonComponent.h"
 #include "../Navigation/StrategyRiverBarrier.h"
 #include "Engine/World.h"
 
@@ -70,11 +71,18 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             Origin + FVector(2500.0f, -5000.0f, 0.0f),
             Division);
 
-        SpawnCavalry(
+        if (ACavalryUnit* Dragoon = SpawnCavalry(
             TEXT("DK-CAV-2"),
             TEXT("Dragon QA"),
             Origin + FVector(2500.0f, 5000.0f, 0.0f),
-            Division);
+            Division))
+        {
+            if (Dragoon->DragoonComponent)
+            {
+                Dragoon->DragoonComponent->Role =
+                    EStrategyCavalryRole::Dragoon;
+            }
+        }
     }
 
     for (int32 Index = 0; Index < 4; ++Index)
