@@ -1,9 +1,17 @@
 #include "CavalryUnit.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "../Formations/StrategyFormationComponent.h"
 
 ACavalryUnit::ACavalryUnit()
 {
     Echelon = EStrategyEchelon::Cavalry;
+
+    if (FormationComponent)
+    {
+        FormationComponent->RankCount = 4;
+        FormationComponent->ColumnWidth = 4;
+        FormationComponent->CurrentFormation = EStrategyFormationType::CavalryLine;
+    }
 
     HorseMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HorseMesh"));
     HorseMesh->SetupAttachment(SceneRoot);
@@ -22,5 +30,29 @@ void ACavalryUnit::BeginPlay()
             HorseMesh,
             FAttachmentTransformRules::SnapToTargetNotIncludingScale,
             RiderSocketName);
+    }
+}
+
+
+void ACavalryUnit::SetDefileMode(bool bEnable)
+{
+    if (!FormationComponent)
+    {
+        return;
+    }
+
+    if (bEnable)
+    {
+        if (FormationComponent->CurrentFormation != EStrategyFormationType::DefileColumn)
+        {
+            PreDefileFormation = FormationComponent->CurrentFormation;
+            FormationComponent->SetFormation(EStrategyFormationType::DefileColumn);
+        }
+        return;
+    }
+
+    if (FormationComponent->CurrentFormation == EStrategyFormationType::DefileColumn)
+    {
+        FormationComponent->SetFormation(PreDefileFormation);
     }
 }
