@@ -19,6 +19,12 @@ protected:
     virtual void BeginPlay() override;
 
 public:
+    virtual void TickComponent(
+        float DeltaTime,
+        ELevelTick TickType,
+        FActorComponentTickFunction* ThisTickFunction) override;
+
+public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Fire")
     EStrategyFirePolicy FirePolicy = EStrategyFirePolicy::Long;
 
@@ -34,6 +40,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Fire")
     float FireConeHalfAngleDegrees = 35.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
+    bool bDrawQARangeCones = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
+    bool bShowPrussianQARangesFromStartup = true;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Fire")
     void SetFirePolicy(EStrategyFirePolicy NewPolicy);
 
@@ -47,6 +59,9 @@ public:
     bool CanEngageTarget(const AStrategyUnit* Target) const;
 
 private:
+    void DrawQARangeCones() const;
+    void DrawRangeArc(float RangeCm, bool bActive, const FColor& Color) const;
+
     UPROPERTY()
     TObjectPtr<AStrategyUnit> OwnerUnit;
 };
