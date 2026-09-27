@@ -54,6 +54,7 @@ private:
         EStrategyOrderExecutionState NewState);
 
     void AssignForAttack(const FStrategyOrder& AttackOrder);
+    void AssignDefensiveReserve(const FStrategyOrder& DefendOrder);
     TArray<ACavalryUnit*> GetAvailableDirectCavalry() const;
     TArray<AStrategyUnit*> GetCommandedMajorsRecursive() const;
     void CollectMajorsRecursive(AStrategyUnit* Parent, TArray<AStrategyUnit*>& OutMajors) const;
