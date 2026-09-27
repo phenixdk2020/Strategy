@@ -7,7 +7,10 @@ Builds from Natural Earth 10m (public domain):
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Regions.png  region ids (R channel), see REGION_*
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Map.json     projection + cities + labels for Unity
 
-Usage: python build_map.py <natural-earth-dir> [--preview]
+Projection: Lambert Azimuthal Equal-Area centred on 52N 10E (as EPSG:3035, on a sphere), so the
+same map can grow from Denmark to Northern Europe or Europe by choosing a larger --region.
+
+Usage: python build_map.py <natural-earth-dir> [--region=denmark1851] [--height=4096] [--out=DIR] [--preview]
 """
 import json
 import math
@@ -23,18 +26,60 @@ from shp import read
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROJECT = os.path.abspath(os.path.join(HERE, "..", ".."))
-OUT_DIR = os.path.join(PROJECT, "Assets", "Campaign1851", "Resources", "Map1851")
 
-# Map extent (WGS84) and projection: equirectangular, x scaled by cos(LAT0).
-LON_MIN, LON_MAX = 7.6, 13.6
-LAT_MIN, LAT_MAX = 53.25, 57.85
-LAT0 = (LAT_MIN + LAT_MAX) / 2
-KX = math.cos(math.radians(LAT0))
-KM_PER_DEG_LAT = 110.57
-# Override with --height N (e.g. 2048 when memory is tight). Full quality is 4096.
-HEIGHT_PX = int(next((a.split('=')[1] for a in __import__('sys').argv if a.startswith('--height=')), 4096))
+
+def arg(name, default):
+    return next((a.split("=", 1)[1] for a in sys.argv if a.startswith(f"--{name}=")), default)
+
+
+OUT_DIR = arg("out", os.path.join(PROJECT, "Assets", "Campaign1851", "Resources", "Map1851"))
+
+# ------------------------------------------------------------------ projection
+# Lambert Azimuthal Equal-Area on a sphere, centred like EPSG:3035 (ETRS89-LAEA Europe).
+PROJ_LAT0, PROJ_LON0, EARTH_R_KM = 52.0, 10.0, 6371.0088
+
+
+def project(lon, lat):
+    """lon/lat degrees -> x (east), y (north) in km. Works on scalars and numpy arrays."""
+    lam, phi = np.radians(np.asarray(lon, np.float64) - PROJ_LON0), np.radians(np.asarray(lat, np.float64))
+    phi0 = math.radians(PROJ_LAT0)
+    k = np.sqrt(2.0 / (1.0 + math.sin(phi0) * np.sin(phi) + math.cos(phi0) * np.cos(phi) * np.cos(lam)))
+    x = EARTH_R_KM * k * np.cos(phi) * np.sin(lam)
+    y = EARTH_R_KM * k * (math.cos(phi0) * np.sin(phi) - math.sin(phi0) * np.cos(phi) * np.cos(lam))
+    return x, y
+
+
+def unproject(x, y):
+    """x/y km -> lon, lat degrees (inverse LAEA)."""
+    x, y = np.asarray(x, np.float64), np.asarray(y, np.float64)
+    phi0 = math.radians(PROJ_LAT0)
+    rho = np.maximum(np.hypot(x, y), 1e-9)
+    c = 2.0 * np.arcsin(np.clip(rho / (2.0 * EARTH_R_KM), -1.0, 1.0))
+    lat = np.degrees(np.arcsin(np.cos(c) * math.sin(phi0) + y * np.sin(c) * math.cos(phi0) / rho))
+    lon = PROJ_LON0 + np.degrees(np.arctan2(x * np.sin(c), rho * math.cos(phi0) * np.cos(c) - y * math.sin(phi0) * np.sin(c)))
+    return lon, lat
+
+
+def box_extent(lon_min, lon_max, lat_min, lat_max):
+    """Projected km bounding box of a lon/lat box (its edges curve in LAEA, so sample them)."""
+    t = np.linspace(0.0, 1.0, 64)
+    lons = np.concatenate([lon_min + (lon_max - lon_min) * t, np.full(64, lon_max), lon_max - (lon_max - lon_min) * t, np.full(64, lon_min)])
+    lats = np.concatenate([np.full(64, lat_min), lat_min + (lat_max - lat_min) * t, np.full(64, lat_max), lat_max - (lat_max - lat_min) * t])
+    x, y = project(lons, lats)
+    return float(x.min()), float(x.max()), float(y.min()), float(y.max())
+
+
+# Named map regions (lon/lat boxes). Add larger ones (e.g. northern_europe) as the campaign grows.
+REGIONS = {
+    "denmark1851": (7.6, 13.6, 53.25, 57.85),
+}
+REGION = arg("region", "denmark1851")
+X_MIN, X_MAX, Y_MIN, Y_MAX = box_extent(*REGIONS[REGION])
+
+# Override with --height=N (e.g. 2048 when memory is tight). Full quality is 4096.
+HEIGHT_PX = int(arg("height", 4096))
 # Multiple of 4 so the GPU block compression can use it without padding.
-WIDTH_PX = int(round(HEIGHT_PX * (LON_MAX - LON_MIN) * KX / (LAT_MAX - LAT_MIN) / 4)) * 4
+WIDTH_PX = int(round(HEIGHT_PX * (X_MAX - X_MIN) / (Y_MAX - Y_MIN) / 4)) * 4
 
 # Size of one repeat of the close-zoom field detail texture.
 DETAIL_TILE_KM = 2.5
@@ -78,37 +123,47 @@ def boundary_lat(line, lon):
 
 
 class Raster:
-    def __init__(self, lon_min, lon_max, lat_min, lat_max, width, height):
-        self.lon_min, self.lon_max, self.lat_min, self.lat_max = lon_min, lon_max, lat_min, lat_max
+    """A pixel grid over a projected (LAEA km) rectangle. Row 0 is north."""
+
+    def __init__(self, x_min, x_max, y_min, y_max, width, height):
+        self.x_min, self.x_max, self.y_min, self.y_max = x_min, x_max, y_min, y_max
         self.w, self.h = width, height
+        self.km_per_px = (y_max - y_min) / height
 
     def to_px(self, lon, lat):
-        x = (lon - self.lon_min) / (self.lon_max - self.lon_min) * self.w
-        y = (self.lat_max - lat) / (self.lat_max - self.lat_min) * self.h
-        return x, y
+        x, y = project(lon, lat)
+        return (x - self.x_min) / (self.x_max - self.x_min) * self.w, (self.y_max - y) / (self.y_max - self.y_min) * self.h
+
+    def xy_grids(self):
+        """Projected km of every pixel centre."""
+        x = self.x_min + (np.arange(self.w) + 0.5) / self.w * (self.x_max - self.x_min)
+        y = self.y_max - (np.arange(self.h) + 0.5) / self.h * (self.y_max - self.y_min)
+        return np.meshgrid(x, y)
 
     def grids(self):
-        lon = self.lon_min + (np.arange(self.w) + 0.5) / self.w * (self.lon_max - self.lon_min)
-        lat = self.lat_max - (np.arange(self.h) + 0.5) / self.h * (self.lat_max - self.lat_min)
-        lon_g, lat_g = np.meshgrid(lon.astype(np.float32), lat.astype(np.float32))
-        return lon_g, lat_g
+        """lon/lat of every pixel centre (float32), for rules written in geographic terms."""
+        x, y = self.xy_grids()
+        lon, lat = unproject(x, y)
+        return lon.astype(np.float32), lat.astype(np.float32)
 
     def fill(self, shapes):
         """Rasterises polygon shapes (outer rings clockwise, holes counter-clockwise)."""
         img = Image.new("L", (self.w, self.h), 0)
         draw = ImageDraw.Draw(img)
-        bounds = (self.lon_min - 1, self.lon_max + 1, self.lat_min - 1, self.lat_max + 1)
+        margin = 0.05 * max(self.x_max - self.x_min, self.y_max - self.y_min)
         for parts in shapes:
             for ring in parts:
                 if len(ring) < 3:
                     continue
-                lons = [p[0] for p in ring]
-                lats = [p[1] for p in ring]
-                if max(lons) < bounds[0] or min(lons) > bounds[1] or max(lats) < bounds[2] or min(lats) > bounds[3]:
+                pts = np.asarray(ring, np.float64)
+                x, y = project(pts[:, 0], pts[:, 1])
+                if x.max() < self.x_min - margin or x.min() > self.x_max + margin or y.max() < self.y_min - margin or y.min() > self.y_max + margin:
                     continue
-                area = sum(ring[i][0] * ring[i - 1][1] - ring[i - 1][0] * ring[i][1] for i in range(len(ring)))
+                area = float(np.sum(pts[:, 0] * np.roll(pts[:, 1], 1) - np.roll(pts[:, 0], 1) * pts[:, 1]))
                 hole = area < 0  # counter-clockwise in lon/lat = hole in shapefile convention
-                draw.polygon([self.to_px(x, y) for x, y in ring], fill=0 if hole else 255)
+                px = (x - self.x_min) / (self.x_max - self.x_min) * self.w
+                py = (self.y_max - y) / (self.y_max - self.y_min) * self.h
+                draw.polygon(list(zip(px.tolist(), py.tolist())), fill=0 if hole else 255)
         return np.asarray(img) > 127
 
 
@@ -179,7 +234,7 @@ def rgb(*c):
 
 def paint(r, land, regions, lon, lat, seed):
     shape = land.shape
-    px_km = (r.lat_max - r.lat_min) * KM_PER_DEG_LAT / r.h
+    px_km = r.km_per_px
 
     # --- Distances (km) to the coast, on both sides.
     dist_sea = (ndimage.distance_transform_edt(~land) * px_km).astype(np.float32)   # sea pixels: distance to land
@@ -220,14 +275,12 @@ def paint(r, land, regions, lon, lat, seed):
     colour = lerp(colour, patch, np.full(shape, 0.32, np.float32))
 
     # Woodland: many small woods, more in the east, plus the major historic forests.
-    km_x = (lon - LON_MIN) * KX * 111.32
-    km_y = (lat - LAT_MIN) * KM_PER_DEG_LAT
+    km_x, km_y = r.xy_grids()
     forest_noise = fbm(shape, 45, 3, seed + 5)
     forest_mask = np.clip((forest_noise - (0.70 - 0.06 * eastness)) * 10, 0, 1)
     edge_noise = fbm(shape, 90, 3, seed + 9)
     for f_lon, f_lat, radius in FORESTS:
-        fx = (f_lon - LON_MIN) * KX * 111.32
-        fy = (f_lat - LAT_MIN) * KM_PER_DEG_LAT
+        fx, fy = project(f_lon, f_lat)
         d = np.sqrt((km_x - fx) ** 2 + (km_y - fy) ** 2) / radius
         # Ragged edges and clearings: the noise term dominates near the rim.
         forest_mask = np.maximum(forest_mask, np.clip((1.0 - d) * 2.2 + (edge_noise - 0.55) * 4.0, 0, 1))
@@ -327,8 +380,7 @@ def classify(r, land, dk, sh, lon, lat):
             continue
         cy = (slices[0].start + slices[0].stop) / 2
         cx = (slices[1].start + slices[1].stop) / 2
-        c_lon = r.lon_min + cx / r.w * (r.lon_max - r.lon_min)
-        c_lat = r.lat_max - cy / r.h * (r.lat_max - r.lat_min)
+        c_lon, c_lat = float(lon[int(cy), int(cx)]), float(lat[int(cy), int(cx)])
         if any(x0 <= c_lon <= x1 and y0 <= c_lat <= y1 for x0, x1, y0, y1 in island_boxes):
             schleswig_islands[slices] |= labels[slices] == index
     dk_schleswig = dk & ((jutland & south_of_kongeaa) | (~jutland & schleswig_islands))
@@ -376,11 +428,12 @@ def main():
     preview = "--preview" in sys.argv
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    main_r = Raster(LON_MIN, LON_MAX, LAT_MIN, LAT_MAX, WIDTH_PX, HEIGHT_PX)
+    main_r = Raster(X_MIN, X_MAX, Y_MIN, Y_MAX, WIDTH_PX, HEIGHT_PX)
     colour, height, regions, land = build(ne_dir, main_r, 1864)
 
-    bh_w = int(round(1024 * (BORNHOLM[1] - BORNHOLM[0]) * KX / (BORNHOLM[3] - BORNHOLM[2])))
-    bh_r = Raster(BORNHOLM[0], BORNHOLM[1], BORNHOLM[2], BORNHOLM[3], bh_w, 1024)
+    bx0, bx1, by0, by1 = box_extent(*BORNHOLM)
+    bh_w = int(round(1024 * (bx1 - bx0) / (by1 - by0)))
+    bh_r = Raster(bx0, bx1, by0, by1, bh_w, 1024)
     bh_colour, _, _, _ = build(ne_dir, bh_r, 1865)
 
     Image.fromarray(colour).save(os.path.join(OUT_DIR, "Denmark1851_Color.png"))
@@ -398,15 +451,19 @@ def main():
     with open(os.path.join(HERE, "cities1850.json"), encoding="utf-8") as f:
         cities = json.load(f)
 
-    width_km = (LON_MAX - LON_MIN) * KX * 111.32
-    height_km = (LAT_MAX - LAT_MIN) * KM_PER_DEG_LAT
+    width_km, height_km = X_MAX - X_MIN, Y_MAX - Y_MIN
+    lon_min, lon_max, lat_min, lat_max = REGIONS[REGION]
     meta = {
-        "version": "v00.00.14",
-        "extent": {"lonMin": LON_MIN, "lonMax": LON_MAX, "latMin": LAT_MIN, "latMax": LAT_MAX},
+        "version": "v00.00.15",
+        "region": REGION,
+        "projection": {"type": "laea", "lat0": PROJ_LAT0, "lon0": PROJ_LON0, "radiusKm": EARTH_R_KM},
+        "extentKm": {"xMin": X_MIN, "xMax": X_MAX, "yMin": Y_MIN, "yMax": Y_MAX},
+        "extent": {"lonMin": lon_min, "lonMax": lon_max, "latMin": lat_min, "latMax": lat_max},
         "sizeKm": {"width": round(width_km, 2), "height": round(height_km, 2)},
         "textureSize": {"width": WIDTH_PX, "height": HEIGHT_PX},
         "detailTileKm": DETAIL_TILE_KM,
         "bornholm": {"lonMin": BORNHOLM[0], "lonMax": BORNHOLM[1], "latMin": BORNHOLM[2], "latMax": BORNHOLM[3]},
+        "bornholmKm": {"xMin": bx0, "xMax": bx1, "yMin": by0, "yMax": by1},
         "regions": {"0": "Hav", "1": "Kongeriget", "2": "Hertugdømmet Slesvig", "3": "Holsten og Lauenborg", "4": "Udland"},
         "cities": cities["cities"],
         "foreignCities": cities["foreign"],
@@ -437,7 +494,7 @@ def main():
 
     if preview:
         Image.fromarray(colour).resize((WIDTH_PX // 4, HEIGHT_PX // 4), Image.LANCZOS).save(os.path.join(HERE, "preview.png"))
-    print(f"map {WIDTH_PX}x{HEIGHT_PX} px, {width_km:.0f}x{height_km:.0f} km, {height_km / HEIGHT_PX * 1000:.0f} m/px")
+    print(f"map {REGION}: {WIDTH_PX}x{HEIGHT_PX} px, {width_km:.0f}x{height_km:.0f} km (LAEA), {height_km / HEIGHT_PX * 1000:.0f} m/px")
 
 
 if __name__ == "__main__":

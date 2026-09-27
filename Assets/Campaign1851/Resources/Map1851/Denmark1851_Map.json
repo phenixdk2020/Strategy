@@ -1,5 +1,18 @@
 {
- "version": "v00.00.14",
+ "version": "v00.00.15",
+ "region": "denmark1851",
+ "projection": {
+  "type": "laea",
+  "lat0": 52.0,
+  "lon0": 10.0,
+  "radiusKm": 6371.0088
+ },
+ "extentKm": {
+  "xMin": -159.64951105497414,
+  "xMax": 239.41090279616304,
+  "yMin": 138.9912605090965,
+  "yMax": 655.5935299844937
+ },
  "extent": {
   "lonMin": 7.6,
   "lonMax": 13.6,
@@ -7,11 +20,11 @@
   "latMax": 57.85
  },
  "sizeKm": {
-  "width": 377.83,
-  "height": 508.62
+  "width": 399.06,
+  "height": 516.6
  },
  "textureSize": {
-  "width": 3024,
+  "width": 3164,
   "height": 4096
  },
  "detailTileKm": 2.5,
@@ -20,6 +33,12 @@
   "lonMax": 15.25,
   "latMin": 54.95,
   "latMax": 55.35
+ },
+ "bornholmKm": {
+  "xMin": 290.71178179809385,
+  "xMax": 335.0226536716782,
+  "yMin": 337.3755567120229,
+  "yMax": 384.57141181559257
  },
  "regions": {
   "0": "Hav",

@@ -369,7 +369,7 @@ public sealed class CampaignMap1851Ui : MonoBehaviour
         {
             if (!c.bornholm)
                 continue;
-            Vector2 uv = map.Data.bornholm.ToUv(c.lat, c.lon);
+            Vector2 uv = map.Data.bornholmKm.ToUv(map.Data.projection, c.lat, c.lon);
             var pos = new Vector2((uv.x - 0.5f) * imageRect.sizeDelta.x, (uv.y - 0.5f) * imageRect.sizeDelta.y);
             var dot = NewImage(NewRect("Dot", imageRect, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), pos, new Vector2(11f, 11f)), CityRed);
             dot.sprite = circle;

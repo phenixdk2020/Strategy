@@ -13,7 +13,7 @@ using UnityEngine.SceneManagement;
 public sealed class CampaignMap1851 : MonoBehaviour
 {
     public const string SceneName = "CampaignMap1851";
-    public const string Version = "v00.00.14 MALET DANMARKSKORT 1851 DEV";
+    public const string Version = "v00.00.15 MALET DANMARKSKORT 1851 (LAEA) DEV";
 
     private const string ResourceFolder = "Map1851/";
     private const float HeightScale = 3f;   // ~18x vertical exaggeration; Danish relief reads at close zoom
@@ -78,7 +78,7 @@ public sealed class CampaignMap1851 : MonoBehaviour
 
     public Vector3 Project(float lat, float lon)
     {
-        Vector2 uv = Data.extent.ToUv(lat, lon);
+        Vector2 uv = Data.extentKm.ToUv(Data.projection, lat, lon);
         float x = (uv.x - 0.5f) * Data.sizeKm.width;
         float z = (uv.y - 0.5f) * Data.sizeKm.height;
         return new Vector3(x, SampleHeight(uv), z);
