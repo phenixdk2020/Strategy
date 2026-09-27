@@ -12,8 +12,8 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 | Major HQ | Physical HQ Pawn/Actor | **HQ actor scaffold implemented** |
 | Regimental HQ | Physical HQ Pawn/Actor | **HQ actor scaffold implemented** |
 | Brigade/Division HQ F30B | Higher HQ actors + command components | **HQ actor scaffold implemented** |
-| Manual order authority F18 | `UOrderComponent` authority model | Scaffold builds |
-| Attack/Forsvar/Hold | `EStrategyOrderType` + order executors | Scaffold started |
+| Manual order authority F18 | `UOrderComponent` authority model | **DirectPlayer/OfficerAI/InheritedAI core implemented** |
+| Attack/Forsvar/Hold | `EStrategyOrderType` + order executors | **Physical executor core implemented; formation planning pending** |
 | March Column F6 | `UFormationComponent` / formation executor | Planned |
 | Line/Square | Formation component + animation/slot generation | Planned |
 | Company slot deconfliction | Formation planner | Planned |
