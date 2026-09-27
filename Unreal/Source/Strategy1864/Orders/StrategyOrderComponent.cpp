@@ -117,3 +117,15 @@ void UStrategyOrderComponent::SetExecutionState(EStrategyOrderExecutionState New
     ExecutionState = NewState;
     OnExecutionStateChanged.Broadcast(OldState, ExecutionState);
 }
+
+
+EStrategyCommandVisualState UStrategyOrderComponent::GetCommandVisualState() const
+{
+    if (IsPhysicallyExecuting())
+    {
+        return EStrategyCommandVisualState::Blue;
+    }
+
+    // Green is reserved for explicit toggle/state controls, not completed movement.
+    return EStrategyCommandVisualState::Red;
+}
