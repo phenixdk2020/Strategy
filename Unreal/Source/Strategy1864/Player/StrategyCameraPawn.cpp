@@ -91,3 +91,12 @@ void AStrategyCameraPawn::RotateCamera(float Value)
 
     AddActorLocalRotation(FRotator(0.0f, Value * RotationSpeedDegrees * GetWorld()->GetDeltaSeconds(), 0.0f));
 }
+
+
+void AStrategyCameraPawn::FocusOnWorldLocation(const FVector& WorldLocation)
+{
+    FVector NewLocation = GetActorLocation();
+    NewLocation.X = WorldLocation.X;
+    NewLocation.Y = WorldLocation.Y;
+    SetActorLocation(NewLocation);
+}
