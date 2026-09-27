@@ -52,6 +52,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Strategy|Orders")
     bool HasStandingIntent() const;
 
+    UFUNCTION(BlueprintPure, Category="Strategy|Orders")
+    EStrategyCommandVisualState GetCommandVisualState() const;
+
 private:
     bool CanReplaceCurrentOrder(const FStrategyOrder& NewOrder) const;
     void SetExecutionState(EStrategyOrderExecutionState NewState);
