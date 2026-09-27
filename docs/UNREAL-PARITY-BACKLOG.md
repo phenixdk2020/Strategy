@@ -53,7 +53,7 @@
 | UE-P015 | P0 | Shift additive selection | Selection baseline | PlayerController | IMPLEMENTED | Shift adds without clearing existing selection. |
 | UE-P016 | P0 | Ctrl removal selection | Selection baseline | PlayerController | IMPLEMENTED | Ctrl removes targeted units only. |
 | UE-P017 | P0 | Selection visual hook | Unity selection marker | Unit BP event | IMPLEMENTED | Selected state can drive ring/highlight without owning gameplay state. |
-| UE-P018 | P0 | Selection persistence through order | F29X/F30S | Controller/order input | IMPLEMENTED DESIGN / U03 DEPENDENCY | Issuing point/facing orders never clears selected HQ/formation. |
+| UE-P018 | P0 | Selection persistence through order | F29X/F30S | Controller/order input | IMPLEMENTED | Issuing point/facing orders never clears selected HQ/formation. |
 | UE-P019 | P1 | OOB click selection | F29X | UMG OOB | BACKLOG | Single-click selects; double-click selects + camera navigation. |
 | UE-P020 | P1 | Mixed entity box selection | F30H | Selection subsystem | BACKLOG | Infantry, cavalry and higher HQs are selectable by marquee according to ownership rules. |
 
@@ -78,16 +78,16 @@
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
 | UE-P050 | P0 | Order component/core | F18+ | `UStrategyOrderComponent` | IMPLEMENTED | One authoritative current order + execution state per command entity. |
-| UE-P051 | P0 | MOVE | Unity movement baseline | Order executor | BACKLOG | Selected command entity moves to assigned point. |
-| UE-P052 | P0 | ANGRIB HER | F18/F29E/F30S | Attack executor | SCAFFOLD | Finite attack mission reaches assigned attack slots and does not chase forever. |
-| UE-P053 | P0 | FORSVAR HER | F29Y/F30U | Defend executor | SCAFFOLD | Defensive mission owns formation/HQ geometry until replaced. |
-| UE-P054 | P0 | HOLD/STOP | Command HUD baseline | Hold executor | SCAFFOLD | Movement cancels/stops without corrupting standing state. |
-| UE-P055 | P0 | Click-drag facing | F30P | Order target/facing data | BACKLOG | Player-committed facing is mission data before slot generation. |
+| UE-P051 | P0 | MOVE | Unity movement baseline | Order executor | IMPLEMENTED | Selected command entity moves to assigned point. |
+| UE-P052 | P0 | ANGRIB HER | F18/F29E/F30S | Attack executor | SCAFFOLD / PHYSICAL CORE IMPLEMENTED | Finite attack mission reaches assigned attack slots and does not chase forever. |
+| UE-P053 | P0 | FORSVAR HER | F29Y/F30U | Defend executor | SCAFFOLD / PHYSICAL CORE IMPLEMENTED | Defensive mission owns formation/HQ geometry until replaced. |
+| UE-P054 | P0 | HOLD/STOP | Command HUD baseline | Hold executor | IMPLEMENTED | Movement cancels/stops without corrupting standing state. |
+| UE-P055 | P0 | Click-drag facing | F30P | Order target/facing data | SCAFFOLD | Player-committed facing is mission data before slot generation. |
 | UE-P056 | P0 | Direct player authority | F18 | Authority model | IMPLEMENTED | Direct order overrides inherited officer AI for its scope. |
 | UE-P057 | P0 | Standing intent vs execution | F30S/W | Order state model | IMPLEMENTED | Persistent intent and physical execution are independent states. |
 | UE-P058 | P0 | Active order colour lifecycle | F30Q/S/W | UMG command state | BACKLOG | Red=no active execution, blue=pending/executing, green=toggle/state. |
 | UE-P059 | P0 | Higher order propagation | F27/F30M | Command planner | BACKLOG | Division/Brigade/Regiment/Major correctly generate subordinate missions. |
-| UE-P060 | P0 | Re-issue/supersede | F30V/U | Order lifecycle | SCAFFOLD | New mission cleanly replaces previous destinations and stale executors. |
+| UE-P060 | P0 | Re-issue/supersede | F30V/U | Order lifecycle | IMPLEMENTED CORE | New mission cleanly replaces previous destinations and stale executors. |
 | UE-P061 | P1 | RYK FREM | F30Q | Order executor | BACKLOG | Movement active only while executors remain. |
 | UE-P062 | P1 | TILBAGETRÆK | F30Q | Order executor | BACKLOG | Coordinated withdrawal maintains command ownership. |
 | UE-P063 | P1 | SAML | F30Q | Order executor | BACKLOG | Formation assembles at valid slots and completion is physical. |
@@ -323,3 +323,19 @@ Expected runtime checks:
 6. `RestoreOrganicCommandParent()` can restore a temporarily retasked unit without changing OrganicParent.
 7. All placeholder actors can be selected through the Visibility trace collider.
 8. No C++/UHT/editor build errors.
+
+
+## U03 direct-order executor QA
+
+Current U03 executor baseline:
+
+1. Select one or more strategy units.
+2. Issue MOVE through `IssueOrderToSelection` or pending-order placement.
+3. Selection remains unchanged after the order is committed.
+4. Unit enters `Moving`, order enters `Executing`, and actor moves toward the target.
+5. Arrival uses a 50 cm tolerance, matching the current Unity final-slot authority scale.
+6. On arrival, actor reaches target XY, unit returns to `Ready`, and execution becomes `Completed`.
+7. HOLD immediately stops physical movement and completes execution while retaining HOLD as standing intent.
+8. A new DirectPlayer order supersedes the previous executing DirectPlayer order cleanly.
+9. Lower OfficerAI/InheritedAI authority cannot replace an active DirectPlayer order.
+10. ANGRIB HER and FORSVAR HER currently share the finite physical movement executor; their formation/subordinate geometry remains U04/U03-planner work and must not yet be marked parity verified.
