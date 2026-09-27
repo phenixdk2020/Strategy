@@ -14,9 +14,9 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 | Brigade/Division HQ F30B | Higher HQ actors + command components | **HQ actor scaffold implemented** |
 | Manual order authority F18 | `UOrderComponent` authority model | **DirectPlayer/OfficerAI/InheritedAI core implemented** |
 | Attack/Forsvar/Hold | `EStrategyOrderType` + order executors | **Physical executor core implemented; formation planning pending** |
-| March Column F6 | `UFormationComponent` / formation executor | Planned |
-| Line/Square | Formation component + animation/slot generation | Planned |
-| Company slot deconfliction | Formation planner | Planned |
+| March Column F6 | `UFormationComponent` / formation executor | **Formation geometry core implemented** |
+| Line/Square | Formation component + animation/slot generation | **Line slot core implemented; Square pending** |
+| Company slot deconfliction | Formation planner | **72m/68m Major company-slot baseline implemented** |
 | Final-slot arrival F30V | Shared movement completion authority | Planned |
 | Navigation V3 | Navigation/path execution service | Planned |
 | River/bridge routing | Route planner + bridge transaction | Planned |
