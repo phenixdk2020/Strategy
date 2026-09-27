@@ -56,11 +56,15 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 7. Plain click on empty ground clears selection.
 8. Future right-click/order placement must not clear selection.
 
-### U02 — Unit/OOB data model
-- Division → Brigade → Regiment → Battalion/Major → Company.
-- Physical HQ actors.
-- OrganicParent vs CurrentCommandParent.
-- Strength, status and selection state.
+### U02 — Unit/OOB data model — SCAFFOLD IMPLEMENTED / BUILD+QA PENDING
+- Base `AStrategyUnit` now owns stable unit ID, display name, side, echelon, initial/current strength, unit state, AI state, order component and command component.
+- `AStrategyCompanyUnit` provides the company entity baseline.
+- `AStrategyHQUnit` provides physical Battalion/Major, Regiment, Brigade and Division HQ actors.
+- HQ defaults preserve the documented command-zone radii for each echelon.
+- `UStrategyCommandComponent` separates `OrganicParent` from `CurrentCommandParent`.
+- Organic/current subordinate lists update when command parent changes.
+- `RestoreOrganicCommandParent()` is available for later temporary cavalry task attachment/release.
+- Division → Brigade → Regiment → Battalion/Major → Company runtime assembly still needs a test scenario/data builder before U02 can be marked PASS.
 
 ### U03 — Orders and authority
 - MOVE.
