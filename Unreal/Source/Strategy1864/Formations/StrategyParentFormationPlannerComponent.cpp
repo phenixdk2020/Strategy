@@ -47,7 +47,8 @@ TArray<FStrategyFormationSlot> UStrategyParentFormationPlannerComponent::Generat
 bool UStrategyParentFormationPlannerComponent::IssueCompanySlots(
     const FVector& ObjectiveCenter,
     float FacingYaw,
-    bool bDefensiveMission)
+    bool bDefensiveMission,
+    EStrategyOrderAuthority Authority)
 {
     AStrategyUnit* OwnerUnit = Cast<AStrategyUnit>(GetOwner());
     if (!OwnerUnit)
@@ -91,7 +92,7 @@ bool UStrategyParentFormationPlannerComponent::IssueCompanySlots(
         ChildOrder.TargetLocation = Slots[Index].WorldLocation;
         ChildOrder.FacingYaw = Slots[Index].FacingYaw;
         ChildOrder.bHasFacing = true;
-        ChildOrder.Authority = EStrategyOrderAuthority::OfficerAI;
+        ChildOrder.Authority = Authority;
 
         if (Company->OrderComponent->SetOrder(ChildOrder))
         {
