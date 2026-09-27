@@ -6,12 +6,13 @@ Builds from Natural Earth 10m (public domain):
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Height.png   16-bit height (0 = sea floor visual, land > sea level)
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Regions.png  region ids (R channel), see REGION_*
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Features.png land (R) + woodland (G) for 3D scenery placement
-  Assets/Campaign1851/Resources/Map1851/Denmark1851_Map.json     projection + cities + labels for Unity
+  Assets/Campaign1851/Resources/Map1851/Fields1851_Parcels.png  tileable field parcels + hedgerows (Unreal close zoom)
+  Assets/Campaign1851/Resources/Map1851/Denmark1851_Map.json     projection + cities + labels + roads
 
 Projection: Lambert Azimuthal Equal-Area centred on 52N 10E (as EPSG:3035, on a sphere), so the
 same map can grow from Denmark to Northern Europe or Europe by choosing a larger --region.
 
-Usage: python build_map.py <natural-earth-dir> [--region=denmark1851] [--height=4096] [--out=DIR] [--preview]
+Usage: python build_map.py <natural-earth-dir> [--region=denmark1851] [--height=4096] [--out=DIR] [--parcels] [--preview]
 """
 import json
 import math
@@ -84,6 +85,13 @@ WIDTH_PX = int(round(HEIGHT_PX * (X_MAX - X_MIN) / (Y_MAX - Y_MIN) / 4)) * 4
 
 # Size of one repeat of the close-zoom field detail texture.
 DETAIL_TILE_KM = 2.5
+# Field parcels for the Unreal close zoom: one repeat covers this many km (4096 px).
+PARCEL_TILE_KM = 8.0
+PARCEL_TEXTURE_PX = 4096
+# Road routing grid, and how far/which towns are linked by main roads.
+ROAD_CELL_KM = 0.5
+ROAD_NEIGHBOURS = 3
+ROAD_MAX_KM = 70.0
 
 # Bornholm is drawn as an inset in Unity; it gets its own small texture.
 BORNHOLM = (14.60, 15.25, 54.95, 55.35)
@@ -224,6 +232,153 @@ def detail_texture(size, cells, seed):
     return (np.clip(np.stack([r, g, b], axis=2), 0, 1) * 255).astype(np.uint8)
 
 
+def parcel_texture(size, tile_km, seed):
+    """Tileable field parcels for the close zoom, in absolute colours (sRGB).
+
+    Farm blocks (Voronoi cells ~1.1 km) are cut into parallel strips, as after the land reforms
+    (udskiftningen); each strip carries its own crop. Blocks are edged by hedgerows with a shadow
+    on the south-east side, strips by thin furrow lines. Pieces are drawn ~2x real size to match
+    the exaggerated 3D scenery.
+    """
+    rng = np.random.default_rng(seed)
+    n = int((tile_km / 1.1) ** 2)
+    pts = rng.random((n, 2))
+    angle = rng.random(n) * np.pi
+    strip_km = rng.uniform(0.14, 0.34, n)
+    offset = rng.random(n)
+    pasture_block = rng.random(n) < 0.12
+    # pasture, young grain, ripe grain, hay, ploughed, fallow
+    crops = np.array([rgb(84, 118, 48), rgb(128, 146, 58), rgb(192, 166, 82), rgb(158, 150, 84), rgb(132, 102, 68), rgb(108, 112, 58)])
+    weights = np.array([0.18, 0.22, 0.18, 0.14, 0.14, 0.14])
+    table = rng.choice(len(crops), size=4096, p=weights)
+
+    shifts = [(dx, dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)]
+    tiled = np.concatenate([pts + s for s in shifts])
+    tree = cKDTree(tiled)
+    out = np.zeros((size, size, 3), np.float32)
+    # Hedgerows are rows of tree crowns: a bumpy width.
+    crowns = fbm((size, size), 700, 2, seed + 2)
+    rows = 512
+    for y0 in range(0, size, rows):
+        yy, xx = np.mgrid[y0:y0 + rows, 0:size]
+        q = np.column_stack([(xx.ravel() + 0.5) / size, (yy.ravel() + 0.5) / size])
+        dist, idx = tree.query(q, k=2, workers=-1)
+        i = idx[:, 0] % n
+        centre = tiled[idx[:, 0]]
+        lx, ly = (q[:, 0] - centre[:, 0]) * tile_km, (q[:, 1] - centre[:, 1]) * tile_km
+        u = lx * np.cos(angle[i]) + ly * np.sin(angle[i])
+        v = -lx * np.sin(angle[i]) + ly * np.cos(angle[i])
+        s = u / strip_km[i] + offset[i]
+        strip = np.floor(s).astype(np.int64)
+        crop = table[(i * 7919 + strip * 104729) % len(table)]
+        crop = np.where(pasture_block[i], 0, crop)
+        colour = crops[crop]
+        # Furrows along the strips, and a thin line between strips (not in pastures).
+        furrow = 1.0 + 0.045 * np.sin(v * 2 * np.pi / 0.014) * (crop != 0)
+        edge = np.minimum(s - strip, strip + 1 - s) * strip_km[i]
+        line = np.where((edge < 0.006) & ~pasture_block[i], 0.86, 1.0)
+        colour = colour * (furrow * line)[:, None]
+        # Hedgerows on block borders: true distance (km) to the bisector with the next block.
+        other = tiled[idx[:, 1]]
+        nrm = other - centre
+        border = ((other ** 2).sum(1) - (centre ** 2).sum(1) - 2 * (nrm * q).sum(1)) / (2 * np.hypot(*nrm.T)) * tile_km
+        # Texture rows run north to south, so a neighbour block to the north-west has dx + dy < 0.
+        north_west = (other[:, 0] - centre[:, 0]) + (other[:, 1] - centre[:, 1]) < 0
+        bump = crowns[y0:y0 + rows].ravel()
+        hedge = border < 0.009 + 0.014 * bump
+        shadow = (border < 0.024 + 0.016 * bump) & north_west
+        colour = np.where(shadow[:, None], colour * 0.72, colour)
+        colour = np.where(hedge[:, None], rgb(44, 68, 32), colour)
+        out[y0:y0 + rows] = colour.reshape(rows, size, 3)
+    grain = (fbm((size, size), 60, 3, seed + 1) - 0.5) * 0.08 + (rng.random((size, size)) - 0.5) * 0.04
+    out *= (1.0 + grain)[..., None]
+    return (np.clip(out, 0, 1) * 255).astype(np.uint8)
+
+
+def route_roads(raster, monarchy, forest, height, cities):
+    """Main roads between neighbouring towns, routed over land on a ROAD_CELL_KM grid.
+
+    Costs favour open, level ground; the sea is impassable (ferries are not modelled). Returns
+    [{"kind": "main", "km": [[x, y], ...]}] in projected km, smoothed with Chaikin's algorithm.
+    """
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import dijkstra
+
+    f = max(1, int(round(ROAD_CELL_KM / raster.km_per_px)))
+    h, w = monarchy.shape[0] // f, monarchy.shape[1] // f
+
+    def block(a):
+        return a[:h * f, :w * f].astype(np.float32).reshape(h, f, w, f).mean(axis=(1, 3))
+
+    land = block(monarchy) > 0.5
+    gy, gx = np.gradient(block(height))
+    cost = 1.0 + 2.5 * block(forest) + 40.0 * np.hypot(gx, gy)
+    cell_x = (raster.x_max - raster.x_min) / raster.w * f
+    cell_y = (raster.y_max - raster.y_min) / raster.h * f
+
+    idx = np.arange(h * w).reshape(h, w)
+    rows, cols, wts = [], [], []
+    for dy, dx in ((0, 1), (1, 0), (1, 1), (1, -1)):
+        src = (slice(0, h - dy), slice(max(0, -dx), w - max(0, dx)))
+        dst = (slice(dy, h), slice(max(0, dx), w - max(0, -dx)))
+        ok = land[src] & land[dst]
+        step = math.hypot(dx * cell_x, dy * cell_y)
+        rows.append(idx[src][ok])
+        cols.append(idx[dst][ok])
+        wts.append((step * 0.5 * (cost[src] + cost[dst]))[ok])
+    graph = coo_matrix((np.concatenate(wts), (np.concatenate(rows), np.concatenate(cols))), shape=(h * w, h * w)).tocsr()
+
+    # Towns on the sea front snap to the nearest land cell.
+    _, (near_r, near_c) = ndimage.distance_transform_edt(~land, return_indices=True)
+    towns = [c for c in cities if not c.get("bornholm")]
+    km = np.array([project(c["lon"], c["lat"]) for c in towns], np.float64)
+    nodes = []
+    for x, y in km:
+        r = min(h - 1, max(0, int((raster.y_max - y) / cell_y)))
+        c = min(w - 1, max(0, int((x - raster.x_min) / cell_x)))
+        nodes.append(int(idx[near_r[r, c], near_c[r, c]]))
+
+    pairs = set()
+    for i in range(len(towns)):
+        d = np.hypot(*(km - km[i]).T)
+        order = [j for j in np.argsort(d) if j != i]
+        for rank, j in enumerate(order[:ROAD_NEIGHBOURS]):
+            if rank == 0 or d[j] <= ROAD_MAX_KM:
+                pairs.add((min(i, j), max(i, j)))
+
+    def chaikin(p, rounds=3):
+        for _ in range(rounds):
+            q = [p[0]]
+            for a, b in zip(p[:-1], p[1:]):
+                q += [0.75 * a + 0.25 * b, 0.25 * a + 0.75 * b]
+            q.append(p[-1])
+            p = np.array(q)
+        return p
+
+    roads = []
+    for i in sorted({a for a, _ in pairs}):
+        targets = [b for a, b in pairs if a == i]
+        _, pred = dijkstra(graph, directed=False, indices=nodes[i], return_predecessors=True, limit=ROAD_MAX_KM * 4)
+        for j in targets:
+            node, path = nodes[j], []
+            while node >= 0 and node != nodes[i]:
+                path.append(node)
+                node = pred[node]
+            if node != nodes[i]:
+                continue  # not reachable over land (different island)
+            path.append(nodes[i])
+            path.reverse()
+            rr, cc = np.divmod(np.array(path), w)
+            pts = np.column_stack([raster.x_min + (cc + 0.5) * cell_x, raster.y_max - (rr + 0.5) * cell_y])
+            pts = np.vstack([km[i], pts[1:-1:2], km[j]])
+            length = np.sum(np.hypot(*np.diff(pts, axis=0).T))
+            if length > 1.45 * np.hypot(*(km[j] - km[i])) + 4.0:
+                continue  # a long detour around a fjord or bay: no direct road
+            roads.append({"kind": "main", "from": towns[i]["name"], "to": towns[j]["name"],
+                          "km": np.round(chaikin(pts), 3).tolist()})
+    return roads
+
+
 def lerp(a, b, t):
     t = t[..., None] if np.ndim(t) == 2 else t
     return a + (b - a) * t
@@ -298,6 +453,8 @@ def paint(r, land, regions, lon, lat, seed):
     shore_km = 0.35 + 1.4 * np.clip((8.7 - lon) / 0.5, 0, 1)
     shore = np.clip(1 - dist_land / shore_km, 0, 1)
     colour = lerp(colour, dune, shore * 0.85)
+    # Where fields are painted at close zoom: not on heath, dunes or in the woods.
+    farmland = land * (1 - np.clip(heath_mask / 0.5, 0, 1)) * (1 - shore) * (1 - 0.85 * forest_mask)
 
     colour *= shade[..., None]
 
@@ -351,7 +508,7 @@ def paint(r, land, regions, lon, lat, seed):
     img = img.filter(ImageFilter.GaussianBlur(0.6))
     grain = (fbm(shape, 180, 2, seed + 8) - 0.5) * 10
     arr = np.clip(np.asarray(img).astype(np.float32) + grain[..., None], 0, 255).astype(np.uint8)
-    return arr, height, forest_mask
+    return arr, height, forest_mask, farmland.astype(np.float32)
 
 
 def classify(r, land, dk, sh, lon, lat):
@@ -416,8 +573,8 @@ def build(ne_dir, raster, seed):
     dk = raster.fill(dk_shapes)
     sh = raster.fill(sh_shapes)
     regions = classify(raster, land, dk, sh, lon, lat)
-    colour, height, forest = paint(raster, land, regions, lon, lat, seed)
-    return colour, height, regions, land, forest
+    colour, height, forest, farmland = paint(raster, land, regions, lon, lat, seed)
+    return colour, height, regions, land, forest, farmland
 
 
 def save_png16(path, arr01):
@@ -430,12 +587,12 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     main_r = Raster(X_MIN, X_MAX, Y_MIN, Y_MAX, WIDTH_PX, HEIGHT_PX)
-    colour, height, regions, land, forest = build(ne_dir, main_r, 1864)
+    colour, height, regions, land, forest, farmland = build(ne_dir, main_r, 1864)
 
     bx0, bx1, by0, by1 = box_extent(*BORNHOLM)
     bh_w = int(round(1024 * (bx1 - bx0) / (by1 - by0)))
     bh_r = Raster(bx0, bx1, by0, by1, bh_w, 1024)
-    bh_colour, _, _, _, _ = build(ne_dir, bh_r, 1865)
+    bh_colour, _, _, _, _, _ = build(ne_dir, bh_r, 1865)
 
     Image.fromarray(colour).save(os.path.join(OUT_DIR, "Denmark1851_Color.png"))
     save_png16(os.path.join(OUT_DIR, "Denmark1851_Height.png"), height / max(height.max(), 1e-6))
@@ -444,8 +601,10 @@ def main():
 
     # Close-zoom detail: tileable fields (one tile = DETAIL_TILE_KM) masked to land.
     Image.fromarray(detail_texture(1024, 160, 1866)).save(os.path.join(OUT_DIR, "Fields1851_Detail.png"))
+    if "--parcels" in sys.argv:  # Unreal only (20 MB); Unity uses Fields1851_Detail
+        Image.fromarray(parcel_texture(PARCEL_TEXTURE_PX, PARCEL_TILE_KM, 1867)).save(os.path.join(OUT_DIR, "Fields1851_Parcels.png"))
     mask = np.zeros(land.shape + (4,), np.uint8)
-    mask[..., 3] = (land & (regions != REGION_FOREIGN)) * 255
+    mask[..., 3] = (farmland * (regions != REGION_FOREIGN) * 255).astype(np.uint8)
     mask[..., 3] = np.asarray(Image.fromarray(mask[..., 3]).filter(ImageFilter.GaussianBlur(1.5)))
     Image.fromarray(mask).resize((WIDTH_PX // 2, HEIGHT_PX // 2), Image.BILINEAR).save(os.path.join(OUT_DIR, "Denmark1851_DetailMask.png"))
 
@@ -471,6 +630,7 @@ def main():
         "sizeKm": {"width": round(width_km, 2), "height": round(height_km, 2)},
         "textureSize": {"width": WIDTH_PX, "height": HEIGHT_PX},
         "detailTileKm": DETAIL_TILE_KM,
+        "parcelTileKm": PARCEL_TILE_KM,
         "bornholm": {"lonMin": BORNHOLM[0], "lonMax": BORNHOLM[1], "latMin": BORNHOLM[2], "latMax": BORNHOLM[3]},
         "bornholmKm": {"xMin": bx0, "xMax": bx1, "yMin": by0, "yMax": by1},
         "regions": {"0": "Hav", "1": "Kongeriget", "2": "Hertugdømmet Slesvig", "3": "Holsten og Lauenborg", "4": "Udland"},
@@ -498,11 +658,14 @@ def main():
             {"text": "Mecklenburg", "lat": 53.75, "lon": 11.6, "kind": "foreign"}
         ]
     }
+    meta["roads"] = route_roads(main_r, land & (regions != REGION_FOREIGN), forest, height, cities["cities"])
+
     with open(os.path.join(OUT_DIR, "Denmark1851_Map.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=1)
 
     if preview:
         Image.fromarray(colour).resize((WIDTH_PX // 4, HEIGHT_PX // 4), Image.LANCZOS).save(os.path.join(HERE, "preview.png"))
+    print(f"roads: {len(meta['roads'])} main roads, {sum(len(r['km']) for r in meta['roads'])} points")
     print(f"map {REGION}: {WIDTH_PX}x{HEIGHT_PX} px, {width_km:.0f}x{height_km:.0f} km (LAEA), {height_km / HEIGHT_PX * 1000:.0f} m/px")
 
 
