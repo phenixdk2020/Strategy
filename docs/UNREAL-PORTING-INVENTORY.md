@@ -7,11 +7,11 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 | Unreal C++ project/bootstrap | UE 5.8.3 editor target/module | **Build verified** |
 | Unity tactical selection/input | `AStrategyPlayerController` + `AStrategyHUD` | **Implemented; build/QA pending** |
 | Unity RTS camera | `AStrategyCameraPawn` | **Implemented; build/QA pending** |
-| `Regiment.cs` | `AStrategyUnit` + infantry-specific actor/components | Planned |
-| Regiment hierarchy F27 | OOB/command hierarchy data + components | Planned |
-| Major HQ | Physical HQ Pawn/Actor | Planned |
-| Regimental HQ | Physical HQ Pawn/Actor | Planned |
-| Brigade/Division HQ F30B | Higher HQ actors + command components | Planned |
+| `Regiment.cs` | `AStrategyUnit` + infantry-specific actor/components | **Unit state implemented; infantry behaviour pending** |
+| Regiment hierarchy F27 | OOB/command hierarchy data + components | **Command relationship scaffold implemented** |
+| Major HQ | Physical HQ Pawn/Actor | **HQ actor scaffold implemented** |
+| Regimental HQ | Physical HQ Pawn/Actor | **HQ actor scaffold implemented** |
+| Brigade/Division HQ F30B | Higher HQ actors + command components | **HQ actor scaffold implemented** |
 | Manual order authority F18 | `UOrderComponent` authority model | Scaffold builds |
 | Attack/Forsvar/Hold | `EStrategyOrderType` + order executors | Scaffold started |
 | March Column F6 | `UFormationComponent` / formation executor | Planned |
@@ -28,7 +28,7 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 | Infantry Square F29 | Formation + anti-cavalry reaction | Planned |
 | Cavalry core F30 | `ACavalryUnit` | Scaffold builds |
 | Cavalry AI F30C+ | Cavalry AIController/behaviour logic | Planned |
-| Dynamic task attachment | Command-parent state/data | Planned |
+| Dynamic task attachment | Command-parent state/data | **Organic/current parent foundation implemented** |
 | Dragon mounted/dismounted | Cavalry specialization | Planned |
 | OOB F29Q/F30D | UMG OOB widget | Planned |
 | Semantic zoom/NATO | Tactical presentation subsystem | Planned |
