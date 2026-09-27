@@ -17,6 +17,7 @@ class UStrategyRoutePlannerComponent;
 class UStrategyVisibilityComponent;
 class UStrategyFireControlComponent;
 class UStrategyCombatComponent;
+class UStrategyOfficerAIComponent;
 
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
@@ -99,6 +100,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyCombatComponent> CombatComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyOfficerAIComponent> OfficerAIComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
