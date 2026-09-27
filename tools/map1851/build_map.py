@@ -5,6 +5,7 @@ Builds from Natural Earth 10m (public domain):
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Color.png    painted colour map (sRGB)
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Height.png   16-bit height (0 = sea floor visual, land > sea level)
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Regions.png  region ids (R channel), see REGION_*
+  Assets/Campaign1851/Resources/Map1851/Denmark1851_Features.png land (R) + woodland (G) for 3D scenery placement
   Assets/Campaign1851/Resources/Map1851/Denmark1851_Map.json     projection + cities + labels for Unity
 
 Projection: Lambert Azimuthal Equal-Area centred on 52N 10E (as EPSG:3035, on a sphere), so the
@@ -350,7 +351,7 @@ def paint(r, land, regions, lon, lat, seed):
     img = img.filter(ImageFilter.GaussianBlur(0.6))
     grain = (fbm(shape, 180, 2, seed + 8) - 0.5) * 10
     arr = np.clip(np.asarray(img).astype(np.float32) + grain[..., None], 0, 255).astype(np.uint8)
-    return arr, height
+    return arr, height, forest_mask
 
 
 def classify(r, land, dk, sh, lon, lat):
@@ -415,8 +416,8 @@ def build(ne_dir, raster, seed):
     dk = raster.fill(dk_shapes)
     sh = raster.fill(sh_shapes)
     regions = classify(raster, land, dk, sh, lon, lat)
-    colour, height = paint(raster, land, regions, lon, lat, seed)
-    return colour, height, regions, land
+    colour, height, forest = paint(raster, land, regions, lon, lat, seed)
+    return colour, height, regions, land, forest
 
 
 def save_png16(path, arr01):
@@ -429,12 +430,12 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     main_r = Raster(X_MIN, X_MAX, Y_MIN, Y_MAX, WIDTH_PX, HEIGHT_PX)
-    colour, height, regions, land = build(ne_dir, main_r, 1864)
+    colour, height, regions, land, forest = build(ne_dir, main_r, 1864)
 
     bx0, bx1, by0, by1 = box_extent(*BORNHOLM)
     bh_w = int(round(1024 * (bx1 - bx0) / (by1 - by0)))
     bh_r = Raster(bx0, bx1, by0, by1, bh_w, 1024)
-    bh_colour, _, _, _ = build(ne_dir, bh_r, 1865)
+    bh_colour, _, _, _, _ = build(ne_dir, bh_r, 1865)
 
     Image.fromarray(colour).save(os.path.join(OUT_DIR, "Denmark1851_Color.png"))
     save_png16(os.path.join(OUT_DIR, "Denmark1851_Height.png"), height / max(height.max(), 1e-6))
@@ -447,6 +448,14 @@ def main():
     mask[..., 3] = (land & (regions != REGION_FOREIGN)) * 255
     mask[..., 3] = np.asarray(Image.fromarray(mask[..., 3]).filter(ImageFilter.GaussianBlur(1.5)))
     Image.fromarray(mask).resize((WIDTH_PX // 2, HEIGHT_PX // 2), Image.BILINEAR).save(os.path.join(OUT_DIR, "Denmark1851_DetailMask.png"))
+
+    # Scenery placement for the 3D close zoom (read on the CPU, not a texture):
+    # R = monarchy land, G = woodland density; both 0..255 at half resolution.
+    monarchy = land & (regions != REGION_FOREIGN)
+    features = np.zeros(land.shape + (3,), np.uint8)
+    features[..., 0] = monarchy * 255
+    features[..., 1] = (np.clip(forest, 0, 1) * monarchy * 255).astype(np.uint8)
+    Image.fromarray(features).resize((WIDTH_PX // 2, HEIGHT_PX // 2), Image.NEAREST).save(os.path.join(OUT_DIR, "Denmark1851_Features.png"))
 
     with open(os.path.join(HERE, "cities1850.json"), encoding="utf-8") as f:
         cities = json.load(f)
