@@ -3,6 +3,7 @@
 **Migration branch:** `unreal-port`  
 **Reference branch:** `channel-test`  
 **Unity reference baseline:** `v00.00.09f30x` plus subsequent compile fixes and imported infantry rig  
+**Unreal Engine baseline:** `5.8`  
 **Migration principle:** preserve gameplay/design behaviour first; replace engine implementation second.
 
 ## Goal
