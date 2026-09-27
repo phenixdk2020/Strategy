@@ -2,6 +2,7 @@
 
 #include "StrategyVisibilityComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "../Formations/StrategyFormationComponent.h"
 #include "DrawDebugHelpers.h"
 
 UStrategyFireControlComponent::UStrategyFireControlComponent()
@@ -82,8 +83,38 @@ bool UStrategyFireControlComponent::IsInsideFireCone(const AStrategyUnit* Target
         return true;
     }
 
-    const FVector Forward = Unit->GetActorForwardVector().GetSafeNormal2D();
     const FVector Direction = ToTarget.GetSafeNormal();
+
+    if (Unit->FormationComponent &&
+        Unit->FormationComponent->CurrentFormation == EStrategyFormationType::Square)
+    {
+        const float BaseYaw = Unit->GetActorRotation().Yaw;
+
+        for (int32 FaceIndex = 0; FaceIndex < 4; ++FaceIndex)
+        {
+            const FVector FaceForward =
+                FRotator(0.0f, BaseYaw + FaceIndex * 90.0f, 0.0f)
+                .Vector()
+                .GetSafeNormal2D();
+
+            const float FaceDot = FMath::Clamp(
+                FVector::DotProduct(FaceForward, Direction),
+                -1.0f,
+                1.0f);
+
+            const float FaceAngleDegrees =
+                FMath::RadiansToDegrees(FMath::Acos(FaceDot));
+
+            if (FaceAngleDegrees <= 45.0f)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    const FVector Forward = Unit->GetActorForwardVector().GetSafeNormal2D();
 
     const float Dot = FMath::Clamp(
         FVector::DotProduct(Forward, Direction),
