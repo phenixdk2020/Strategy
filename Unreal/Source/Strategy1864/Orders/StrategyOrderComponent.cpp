@@ -1,4 +1,4 @@
-#include "Orders/StrategyOrderComponent.h"
+#include "StrategyOrderComponent.h"
 
 UStrategyOrderComponent::UStrategyOrderComponent()
 {
