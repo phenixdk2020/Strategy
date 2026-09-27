@@ -296,7 +296,7 @@ def parcel_texture(size, tile_km, seed):
     return (np.clip(out, 0, 1) * 255).astype(np.uint8)
 
 
-def route_roads(raster, monarchy, forest, height, cities, ferries):
+def route_roads(raster, monarchy, all_land, forest, height, cities, ferries):
     """Main roads between towns, routed over land on a ROAD_CELL_KM grid, with the 1851 ferries.
 
     Costs favour open, level ground; the sea is only crossed at the listed ferries. Every town is
@@ -313,6 +313,21 @@ def route_roads(raster, monarchy, forest, height, cities, ferries):
         return a[:h * f, :w * f].astype(np.float32).reshape(h, f, w, f).mean(axis=(1, 3))
 
     land = block(monarchy) > 0.5
+    # Cut the grid at the historical ferries so a narrow strait (Lillebælt at Snoghøj) is not
+    # bridged by coarse cells: the road has to take the ferry.
+    rr, cc = np.mgrid[0:h, 0:w]
+    cell_x_km = (raster.x_max - raster.x_min) / raster.w * f
+    cell_y_km = (raster.y_max - raster.y_min) / raster.h * f
+    cx = raster.x_min + (cc + 0.5) * cell_x_km
+    cy = raster.y_max - (rr + 0.5) * cell_y_km
+    for fy in ferries:
+        # Remove a band across the middle of the crossing only; both landings stay on their shores.
+        a_km, b_km = np.array(project(*fy["a"])), np.array(project(*fy["b"]))
+        d = b_km - a_km
+        length = max(np.hypot(*d), 1e-6)
+        along = ((cx - a_km[0]) * d[0] + (cy - a_km[1]) * d[1]) / length ** 2
+        across = np.abs((cx - a_km[0]) * d[1] - (cy - a_km[1]) * d[0]) / length
+        land &= ~((along > 0.3) & (along < 0.7) & (across < 1.5))
     gy, gx = np.gradient(block(height))
     cost = 1.0 + 2.5 * block(forest) + 40.0 * np.hypot(gx, gy)
     cell_x = (raster.x_max - raster.x_min) / raster.w * f
@@ -375,12 +390,63 @@ def route_roads(raster, monarchy, forest, height, cities, ferries):
             pairs.add((min(i, j), max(i, j)))
 
     # Every ferry links the nearest towns on its two shores (the crossings carried the main routes).
+    names = [c["name"] for c in towns]
     for fy in ferries:
-        ends = [int(np.argmin(np.hypot(*(km - np.array(project(*fy[s]))).T))) for s in ("a", "b")]
+        if "link" in fy:  # the towns the crossing historically joined
+            ends = [names.index(n) for n in fy["link"]]
+        else:
+            ends = [int(np.argmin(np.hypot(*(km - np.array(project(*fy[s]))).T))) for s in ("a", "b")]
         if ends[0] != ends[1]:
             pairs.add((min(ends), max(ends)))
 
-    roads, used_ferries = [], set()
+    def is_land(p):
+        r = int((raster.y_max - p[1]) / (raster.y_max - raster.y_min) * raster.h)
+        c = int((p[0] - raster.x_min) / (raster.x_max - raster.x_min) * raster.w)
+        return 0 <= r < raster.h and 0 <= c < raster.w and bool(all_land[r, c])
+
+    def split_at_water(pts, step_km=0.06):
+        """Land runs of a polyline, plus (from, to) for every stretch of more than ~250 m over water."""
+        dense = [pts[0]]
+        for a, b in zip(pts[:-1], pts[1:]):
+            n = max(1, int(np.ceil(np.hypot(*(b - a)) / step_km)))
+            dense += [a + (b - a) * (s / n) for s in range(1, n + 1)]
+        wet = [not is_land(p) for p in dense]
+        wet[0] = wet[-1] = False  # towns on the shore snap to land
+        # Islets and grid noise: a dry gap of under ~300 m between two wet stretches is still water.
+        k = 0
+        while k < len(wet):
+            if not wet[k]:
+                e = k
+                while e < len(wet) and not wet[e]:
+                    e += 1
+                if 0 < k and e < len(wet) and (e - k) * step_km < 0.3:
+                    wet[k:e] = [True] * (e - k)
+                k = e
+            else:
+                k += 1
+        runs, crossings, run, k = [], [], [dense[0]], 1
+        while k < len(dense):
+            if wet[k]:
+                e = k
+                while e < len(dense) and wet[e]:
+                    e += 1
+                if (e - k) * step_km > 0.25 and e < len(dense):
+                    runs.append(np.array(run))
+                    crossings.append((dense[k - 1], dense[e]))
+                    run = [dense[e]]
+                else:
+                    run += dense[k:e]
+                k = e
+            else:
+                run.append(dense[k])
+                k += 1
+        runs.append(np.array(run))
+        # Thin the dense samples back to ~0.5 km so the smoothing still has corners to round.
+        thin = [r[::8] if len(r) > 16 else r for r in runs]
+        thin = [np.vstack([r, run_end[-1:]]) if len(r) and not np.allclose(r[-1], run_end[-1]) else r for r, run_end in zip(thin, runs)]
+        return [r for r in thin if len(r) >= 2], crossings
+
+    roads, used_ferries, extra_ferries, seen_crossings = [], set(), [], set()
     for i, j in sorted(pairs):
         pred, node, path = preds[i], nodes[j], []
         while node >= 0 and node != nodes[i]:
@@ -406,15 +472,35 @@ def route_roads(raster, monarchy, forest, height, cities, ferries):
         run[-1] = km[j]
         runs.append(run)
         for r in runs:
-            pts = np.array(r)
-            if len(pts) > 3:
-                pts = np.vstack([pts[0], pts[1:-1:2], pts[-1]])
-            if len(pts) >= 2:
-                roads.append({"kind": "main", "km": np.round(chaikin(pts), 3).tolist()})
+            # The routing grid can bridge a narrow strait (Lillebælt at Snoghøj); on the full-resolution
+            # map such a stretch is water, so it becomes a ferry crossing instead of a road.
+            land_runs, crossings = split_at_water(np.array(r))
+            for pts in land_runs:
+                if len(pts) > 3:
+                    pts = np.vstack([pts[0], pts[1:-1:2], pts[-1]])
+                if len(pts) >= 2:
+                    roads.append({"kind": "main", "km": np.round(chaikin(pts), 3).tolist()})
+            for a_km, b_km in crossings:
+                mid = (a_km + b_km) / 2
+                key = (round(mid[0]), round(mid[1]))
+                if key not in seen_crossings:
+                    seen_crossings.add(key)
+                    extra_ferries.append((a_km, b_km))
     for k in sorted(used_ferries):
         fy = ferries[k]
         roads.append({"kind": "ferry", "name": fy["name"],
                       "km": np.round(np.array([project(*fy["a"]), project(*fy["b"])]), 3).tolist()})
+    named_extra = set()
+    for a_km, b_km in sorted(extra_ferries, key=lambda ab: -np.hypot(*(ab[1] - ab[0]))):
+        mid = (a_km + b_km) / 2
+        named = [(np.hypot(*(mid - (np.array(project(*f["a"])) + np.array(project(*f["b"]))) / 2)), k) for k, f in enumerate(ferries)]
+        dist, k = min(named)
+        if dist < 6.0 and (k in used_ferries or k in named_extra):
+            continue  # the listed ferry (or an earlier fragment of it) already covers this crossing
+        if dist < 6.0:
+            named_extra.add(k)
+        roads.append({"kind": "ferry", "name": ferries[k]["name"] if dist < 6.0 else "Overfart",
+                      "km": np.round(np.array([a_km, b_km]), 3).tolist()})
     return roads
 
 
@@ -736,7 +822,7 @@ def main():
             {"text": "Mecklenburg", "lat": 53.75, "lon": 11.6, "kind": "foreign"}
         ]
     }
-    meta["roads"] = route_roads(main_r, land & (regions != REGION_FOREIGN), forest, height, cities["cities"], admin["ferries"])
+    meta["roads"] = route_roads(main_r, land & (regions != REGION_FOREIGN), land, forest, height, cities["cities"], admin["ferries"])
 
     # Amter: index i + 1 in Denmark1851_Amter.png; label at the amt pixel nearest its centre of mass.
     km_x, km_y = main_r.xy_grids()

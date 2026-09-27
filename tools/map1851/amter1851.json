@@ -46,9 +46,9 @@
   {"name": "Lauenborg", "seat": "Ratzeburg", "region": "H", "label": false, "anchors": [[10.75, 53.70], [10.69, 53.63], [10.57, 53.37], [10.48, 53.50], [10.85, 53.50]]}
  ],
  "ferries": [
-  {"name": "Storebælt (Nyborg–Korsør)", "a": [10.80, 55.31], "b": [11.13, 55.33]},
-  {"name": "Lillebælt (Snoghøj–Middelfart)", "a": [9.715, 55.525], "b": [9.735, 55.505]},
-  {"name": "Limfjorden (Aalborg–Nørresundby)", "a": [9.92, 57.048], "b": [9.92, 57.062]},
+  {"name": "Storebælt (Nyborg–Korsør)", "a": [10.80, 55.31], "b": [11.13, 55.33], "link": ["Nyborg", "Slagelse"]},
+  {"name": "Lillebælt (Snoghøj–Middelfart)", "a": [9.710, 55.545], "b": [9.738, 55.504], "link": ["Fredericia", "Middelfart"]},
+  {"name": "Limfjorden (Aalborg–Nørresundby)", "a": [9.92, 57.048], "b": [9.92, 57.062], "link": ["Aalborg", "Hjørring"]},
   {"name": "Aggersund", "a": [9.30, 56.995], "b": [9.30, 57.008]},
   {"name": "Oddesund", "a": [8.56, 56.585], "b": [8.555, 56.568]},
   {"name": "Vilsund", "a": [8.635, 56.878], "b": [8.65, 56.865]},
@@ -58,8 +58,7 @@
   {"name": "Svendborgsund", "a": [10.61, 55.058], "b": [10.61, 55.045]},
   {"name": "Tåsinge–Langeland", "a": [10.69, 54.955], "b": [10.715, 54.945]},
   {"name": "Guldborgsund", "a": [11.745, 54.868], "b": [11.765, 54.868]},
-  {"name": "Storstrømmen (Orehoved–Vordingborg)", "a": [11.85, 54.955], "b": [11.89, 54.995]},
-  {"name": "Ulvsund (Kalvehave–Stege)", "a": [12.165, 55.0], "b": [12.2, 54.99]},
-  {"name": "Fænøsund (Fredericia–Strib)", "a": [9.765, 55.558], "b": [9.77, 55.545]}
+  {"name": "Storstrømmen (Orehoved–Vordingborg)", "a": [11.85, 54.955], "b": [11.89, 54.995], "link": ["Nykøbing F", "Vordingborg"]},
+  {"name": "Ulvsund (Kalvehave–Stege)", "a": [12.165, 55.0], "b": [12.2, 54.99]}
  ]
 }
