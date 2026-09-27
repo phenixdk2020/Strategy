@@ -287,6 +287,7 @@ bool UStrategyMovementExecutorComponent::IsMovementOrder(EStrategyOrderType Type
         case EStrategyOrderType::Withdraw:
         case EStrategyOrderType::Assemble:
         case EStrategyOrderType::ScoutHere:
+        case EStrategyOrderType::Charge:
             return true;
 
         default:
