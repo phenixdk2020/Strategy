@@ -16,6 +16,7 @@ class UStrategyParentExecutionComponent;
 class UStrategyRoutePlannerComponent;
 class UStrategyVisibilityComponent;
 class UStrategyFireControlComponent;
+class UStrategyCombatComponent;
 
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
@@ -96,6 +97,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyFireControlComponent> FireControlComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyCombatComponent> CombatComponent;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
 
@@ -134,6 +138,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Unit")
     void SetUnitState(EStrategyUnitState NewState);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Combat")
+    int32 ApplyStrengthLoss(int32 RequestedLoss);
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Identity")
     void RefreshDebugLabel();
