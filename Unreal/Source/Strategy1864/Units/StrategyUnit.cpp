@@ -11,6 +11,7 @@
 #include "../Navigation/StrategyRoutePlannerComponent.h"
 #include "../Combat/StrategyVisibilityComponent.h"
 #include "../Combat/StrategyFireControlComponent.h"
+#include "../Combat/StrategyCombatComponent.h"
 
 AStrategyUnit::AStrategyUnit()
 {
@@ -42,6 +43,7 @@ AStrategyUnit::AStrategyUnit()
     RoutePlanner = CreateDefaultSubobject<UStrategyRoutePlannerComponent>(TEXT("RoutePlanner"));
     VisibilityComponent = CreateDefaultSubobject<UStrategyVisibilityComponent>(TEXT("VisibilityComponent"));
     FireControlComponent = CreateDefaultSubobject<UStrategyFireControlComponent>(TEXT("FireControlComponent"));
+    CombatComponent = CreateDefaultSubobject<UStrategyCombatComponent>(TEXT("CombatComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
@@ -65,6 +67,26 @@ void AStrategyUnit::RefreshDebugLabel()
     const FString NameText = DisplayName.IsEmpty() ? StableUnitId.ToString() : DisplayName.ToString();
     const FString StrengthText = FString::Printf(TEXT("%d/%d"), CurrentStrength, InitialStrength);
     DebugLabel->SetText(FText::FromString(FString::Printf(TEXT("%s\n%s"), *NameText, *StrengthText)));
+}
+
+int32 AStrategyUnit::ApplyStrengthLoss(int32 RequestedLoss)
+{
+    if (RequestedLoss <= 0 || CurrentStrength <= 0)
+    {
+        return 0;
+    }
+
+    const int32 AppliedLoss = FMath::Min(RequestedLoss, CurrentStrength);
+    CurrentStrength -= AppliedLoss;
+
+    if (CurrentStrength <= 0)
+    {
+        CurrentStrength = 0;
+        SetUnitState(EStrategyUnitState::Destroyed);
+    }
+
+    RefreshDebugLabel();
+    return AppliedLoss;
 }
 
 void AStrategyUnit::SetUnitState(EStrategyUnitState NewState)
