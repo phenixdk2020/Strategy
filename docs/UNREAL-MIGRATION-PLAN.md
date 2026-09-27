@@ -13,6 +13,8 @@ Port PROJECT 1864 from the existing Unity tactical prototype to Unreal Engine wi
 
 The Unity implementation remains the behavioural reference until the Unreal implementation passes equivalent QA. The Unreal port must not silently simplify or reinterpret established rules.
 
+The detailed feature-for-feature tracker is [UNREAL-PARITY-BACKLOG.md](UNREAL-PARITY-BACKLOG.md). The migration plan defines the phase order; the parity backlog defines the individual required features and QA exits.
+
 ## Repository strategy
 
 The existing repository remains authoritative during the port.
