@@ -10,6 +10,7 @@ class UTextRenderComponent;
 class UStrategyOrderComponent;
 class UStrategyCommandComponent;
 class UStrategyMovementExecutorComponent;
+class UStrategyFormationComponent;
 
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
@@ -71,6 +72,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyMovementExecutorComponent> MovementExecutor;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyFormationComponent> FormationComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
