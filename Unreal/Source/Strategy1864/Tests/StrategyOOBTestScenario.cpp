@@ -119,7 +119,6 @@ void AStrategyOOBTestScenario::ClearSpawnedUnits()
     }
 
     SpawnedUnitObjects.Reset();
-    SpawnedUnits.Reset();
 }
 
 AStrategyHQUnit* AStrategyOOBTestScenario::SpawnHQ(
@@ -203,18 +202,18 @@ AStrategyCompanyUnit* AStrategyOOBTestScenario::SpawnCompany(
     return Company;
 }
 
-const TArray<AStrategyUnit*>& AStrategyOOBTestScenario::GetSpawnedUnits() const
+TArray<AStrategyUnit*> AStrategyOOBTestScenario::GetSpawnedUnits() const
 {
-    SpawnedUnits.Reset();
-    SpawnedUnits.Reserve(SpawnedUnitObjects.Num());
+    TArray<AStrategyUnit*> Result;
+    Result.Reserve(SpawnedUnitObjects.Num());
 
     for (AStrategyUnit* Unit : SpawnedUnitObjects)
     {
         if (IsValid(Unit))
         {
-            SpawnedUnits.Add(Unit);
+            Result.Add(Unit);
         }
     }
 
-    return SpawnedUnits;
+    return Result;
 }
