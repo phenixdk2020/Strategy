@@ -4,6 +4,7 @@
 #include "../Orders/StrategyOrderComponent.h"
 #include "../AI/StrategyHQFollowComponent.h"
 #include "../AI/StrategyCommandZoneComponent.h"
+#include "../AI/StrategyCavalryTaskingComponent.h"
 
 AStrategyHQUnit::AStrategyHQUnit()
 {
@@ -11,6 +12,7 @@ AStrategyHQUnit::AStrategyHQUnit()
     FormationPlanner = CreateDefaultSubobject<UStrategyParentFormationPlannerComponent>(TEXT("FormationPlanner"));
     HQFollowComponent = CreateDefaultSubobject<UStrategyHQFollowComponent>(TEXT("HQFollowComponent"));
     CommandZoneComponent = CreateDefaultSubobject<UStrategyCommandZoneComponent>(TEXT("CommandZoneComponent"));
+    CavalryTaskingComponent = CreateDefaultSubobject<UStrategyCavalryTaskingComponent>(TEXT("CavalryTaskingComponent"));
     ApplyHQLevelDefaults();
 }
 
