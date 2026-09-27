@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "../Orders/StrategyOrderTypes.h"
+#include "../Navigation/StrategyRouteTypes.h"
 #include "StrategyMovementExecutorComponent.generated.h"
 
 class AStrategyUnit;
@@ -54,10 +55,14 @@ private:
     TObjectPtr<AStrategyUnit> OwnerUnit;
 
     FVector MovementGoal = FVector::ZeroVector;
+    FStrategyRoutePlan ActiveRoutePlan;
     TArray<FVector> RoutePoints;
     int32 RoutePointIndex = 0;
     float GoalFacingYaw = 0.0f;
     bool bHasMovementGoal = false;
     bool bApplyGoalFacing = false;
     int32 ExecutingOrderSerial = 0;
+    bool bCavalryDefileActive = false;
+
+    void UpdateBridgeFormationState(const FVector& CurrentLocation);
 };
