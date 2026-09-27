@@ -4,6 +4,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "StrategyGameMode.generated.h"
 
+class AStrategyOOBTestScenario;
+
 UCLASS()
 class STRATEGY1864_API AStrategyGameMode : public AGameModeBase
 {
@@ -11,4 +13,14 @@ class STRATEGY1864_API AStrategyGameMode : public AGameModeBase
 
 public:
     AStrategyGameMode();
+
+protected:
+    virtual void BeginPlay() override;
+
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnOOBTestScenario = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    TSubclassOf<AStrategyOOBTestScenario> OOBTestScenarioClass;
 };
