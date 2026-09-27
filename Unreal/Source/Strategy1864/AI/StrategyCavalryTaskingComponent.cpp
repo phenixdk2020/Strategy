@@ -40,6 +40,13 @@ void UStrategyCavalryTaskingComponent::HandleOwnerOrderChanged(
         return;
     }
 
+    if (NewOrder.Type == EStrategyOrderType::DefendHere)
+    {
+        ReleaseTemporaryAttachments(false);
+        AssignDefensiveReserve(NewOrder);
+        return;
+    }
+
     if (ActiveAttachments.Num() > 0)
     {
         ReleaseTemporaryAttachments(true);
@@ -115,6 +122,76 @@ void UStrategyCavalryTaskingComponent::AssignForAttack(
             Majors[Index],
             AttackOrder,
             LateralSign);
+    }
+}
+
+void UStrategyCavalryTaskingComponent::AssignDefensiveReserve(
+    const FStrategyOrder& DefendOrder)
+{
+    TArray<ACavalryUnit*> CavalryUnits = GetAvailableDirectCavalry();
+    TArray<AStrategyUnit*> Majors = GetCommandedMajorsRecursive();
+
+    if (CavalryUnits.Num() == 0 || Majors.Num() == 0)
+    {
+        return;
+    }
+
+    CavalryUnits.Sort([](const ACavalryUnit& A, const ACavalryUnit& B)
+    {
+        return A.StableUnitId.LexicalLess(B.StableUnitId);
+    });
+
+    Majors.Sort([](const AStrategyUnit& A, const AStrategyUnit& B)
+    {
+        return A.StableUnitId.LexicalLess(B.StableUnitId);
+    });
+
+    if (CavalryUnits.Num() >= 2 && Majors.Num() >= 2)
+    {
+        const float DirectCost =
+            FVector::DistSquared2D(CavalryUnits[0]->GetActorLocation(), Majors[0]->GetActorLocation()) +
+            FVector::DistSquared2D(CavalryUnits[1]->GetActorLocation(), Majors[1]->GetActorLocation());
+
+        const float CrossCost =
+            FVector::DistSquared2D(CavalryUnits[0]->GetActorLocation(), Majors[1]->GetActorLocation()) +
+            FVector::DistSquared2D(CavalryUnits[1]->GetActorLocation(), Majors[0]->GetActorLocation());
+
+        if (CrossCost < DirectCost)
+        {
+            Swap(Majors[0], Majors[1]);
+        }
+    }
+
+    const int32 PairCount = FMath::Min(CavalryUnits.Num(), Majors.Num());
+
+    for (int32 Index = 0; Index < PairCount; ++Index)
+    {
+        ACavalryUnit* Cavalry = CavalryUnits[Index];
+        AStrategyUnit* Major = Majors[Index];
+
+        if (!IsValid(Cavalry) ||
+            !IsValid(Major) ||
+            !Cavalry->OrderComponent)
+        {
+            continue;
+        }
+
+        const float FacingYaw =
+            DefendOrder.bHasFacing
+            ? DefendOrder.FacingYaw
+            : Major->GetActorRotation().Yaw;
+
+        const float LateralSign = (Index % 2 == 0) ? -1.0f : 1.0f;
+
+        FStrategyOrder ReserveOrder;
+        ReserveOrder.Type = EStrategyOrderType::Move;
+        ReserveOrder.TargetLocation =
+            CalculateReservePosition(Major, FacingYaw, LateralSign);
+        ReserveOrder.FacingYaw = FacingYaw;
+        ReserveOrder.bHasFacing = true;
+        ReserveOrder.Authority = EStrategyOrderAuthority::OfficerAI;
+
+        Cavalry->OrderComponent->SetOrder(ReserveOrder);
     }
 }
 
