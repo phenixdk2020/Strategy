@@ -61,7 +61,9 @@ private:
     bool ResolveGroundPointUnderCursor(FVector& OutWorldPoint) const;
 
     bool bOrderPlacementPending = false;
+    bool bOrderFacingDragActive = false;
     EStrategyOrderType PendingOrderType = EStrategyOrderType::None;
+    FVector PendingOrderTarget = FVector::ZeroVector;
     bool bSelectionInputDown = false;
     FVector2D SelectionStart = FVector2D::ZeroVector;
     FVector2D SelectionCurrent = FVector2D::ZeroVector;
