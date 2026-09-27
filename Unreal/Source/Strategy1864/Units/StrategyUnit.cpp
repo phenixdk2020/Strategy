@@ -6,6 +6,8 @@
 #include "../Command/StrategyCommandComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Formations/StrategyFormationComponent.h"
+#include "../Formations/StrategyFormationPolicyComponent.h"
+#include "../Orders/StrategyParentExecutionComponent.h"
 
 AStrategyUnit::AStrategyUnit()
 {
@@ -32,6 +34,8 @@ AStrategyUnit::AStrategyUnit()
     CommandComponent = CreateDefaultSubobject<UStrategyCommandComponent>(TEXT("CommandComponent"));
     MovementExecutor = CreateDefaultSubobject<UStrategyMovementExecutorComponent>(TEXT("MovementExecutor"));
     FormationComponent = CreateDefaultSubobject<UStrategyFormationComponent>(TEXT("FormationComponent"));
+    FormationPolicy = CreateDefaultSubobject<UStrategyFormationPolicyComponent>(TEXT("FormationPolicy"));
+    ParentExecution = CreateDefaultSubobject<UStrategyParentExecutionComponent>(TEXT("ParentExecution"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
