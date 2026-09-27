@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Units/StrategyUnit.h"
+#include "StrategyUnit.h"
 #include "CavalryUnit.generated.h"
 
 class USkeletalMeshComponent;
