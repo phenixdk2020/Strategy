@@ -1,0 +1,220 @@
+#include "StrategyOOBTestScenario.h"
+
+#include "../Command/StrategyCommandComponent.h"
+#include "../Units/StrategyCompanyUnit.h"
+#include "../Units/StrategyHQUnit.h"
+#include "../Units/StrategyUnit.h"
+#include "Engine/World.h"
+
+AStrategyOOBTestScenario::AStrategyOOBTestScenario()
+{
+    PrimaryActorTick.bCanEverTick = false;
+}
+
+void AStrategyOOBTestScenario::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (bBuildOnBeginPlay)
+    {
+        BuildTestOOB();
+    }
+}
+
+void AStrategyOOBTestScenario::BuildTestOOB()
+{
+    ClearSpawnedUnits();
+
+    AStrategyHQUnit* Division = SpawnHQ(
+        TEXT("DK-DIV-1"),
+        TEXT("1. Division"),
+        static_cast<uint8>(EStrategyHQLevel::Division),
+        Origin + FVector(0.0f, 0.0f, 0.0f),
+        nullptr);
+
+    AStrategyHQUnit* Brigade = SpawnHQ(
+        TEXT("DK-BDE-1"),
+        TEXT("1. Brigade"),
+        static_cast<uint8>(EStrategyHQLevel::Brigade),
+        Origin + FVector(1800.0f, 0.0f, 0.0f),
+        Division);
+
+    AStrategyHQUnit* Regiment = SpawnHQ(
+        TEXT("DK-REG-1"),
+        TEXT("1. Regiment"),
+        static_cast<uint8>(EStrategyHQLevel::Regiment),
+        Origin + FVector(3600.0f, 0.0f, 0.0f),
+        Brigade);
+
+    AStrategyHQUnit* MajorA = SpawnHQ(
+        TEXT("DK-REG-1-MAJ-A"),
+        TEXT("Major A"),
+        static_cast<uint8>(EStrategyHQLevel::Battalion),
+        Origin + FVector(5400.0f, -2200.0f, 0.0f),
+        Regiment);
+
+    AStrategyHQUnit* MajorB = SpawnHQ(
+        TEXT("DK-REG-1-MAJ-B"),
+        TEXT("Major B"),
+        static_cast<uint8>(EStrategyHQLevel::Battalion),
+        Origin + FVector(5400.0f, 2200.0f, 0.0f),
+        Regiment);
+
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        const int32 CompanyNumber = Index + 1;
+        SpawnCompany(
+            FName(*FString::Printf(TEXT("DK-REG-1-A-C%d"), CompanyNumber)),
+            FString::Printf(TEXT("%d. Kompagni"), CompanyNumber),
+            CompanyNumber,
+            Origin + FVector(7600.0f, -4300.0f + Index * CompanySpacing, 0.0f),
+            MajorA);
+    }
+
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        const int32 CompanyNumber = Index + 5;
+        SpawnCompany(
+            FName(*FString::Printf(TEXT("DK-REG-1-B-C%d"), CompanyNumber)),
+            FString::Printf(TEXT("%d. Kompagni"), CompanyNumber),
+            CompanyNumber,
+            Origin + FVector(9800.0f, -4300.0f + Index * CompanySpacing, 0.0f),
+            MajorB);
+    }
+
+    UE_LOG(LogTemp, Display, TEXT("PROJECT1864-OOB: spawned %d units"), SpawnedUnitObjects.Num());
+
+    for (AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        if (!IsValid(Unit))
+        {
+            continue;
+        }
+
+        const FString ParentName =
+            Unit->CommandComponent && Unit->CommandComponent->CurrentCommandParent
+            ? Unit->CommandComponent->CurrentCommandParent->DisplayName.ToString()
+            : TEXT("<ROOT>");
+
+        UE_LOG(
+            LogTemp,
+            Display,
+            TEXT("PROJECT1864-OOB: %s [%s] CurrentParent=%s OrganicSubordinates=%d CurrentSubordinates=%d"),
+            *Unit->DisplayName.ToString(),
+            *Unit->StableUnitId.ToString(),
+            *ParentName,
+            Unit->CommandComponent ? Unit->CommandComponent->OrganicSubordinates.Num() : 0,
+            Unit->CommandComponent ? Unit->CommandComponent->CurrentSubordinates.Num() : 0);
+    }
+}
+
+void AStrategyOOBTestScenario::ClearSpawnedUnits()
+{
+    for (AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        if (IsValid(Unit))
+        {
+            Unit->Destroy();
+        }
+    }
+
+    SpawnedUnitObjects.Reset();
+    SpawnedUnits.Reset();
+}
+
+AStrategyHQUnit* AStrategyOOBTestScenario::SpawnHQ(
+    const FName StableId,
+    const FString& Name,
+    uint8 HQLevelValue,
+    const FVector& Location,
+    AStrategyUnit* OrganicParent)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    AStrategyHQUnit* HQ = World->SpawnActor<AStrategyHQUnit>(
+        AStrategyHQUnit::StaticClass(),
+        Location,
+        FRotator::ZeroRotator);
+
+    if (!HQ)
+    {
+        return nullptr;
+    }
+
+    HQ->StableUnitId = StableId;
+    HQ->DisplayName = FText::FromString(Name);
+    HQ->HQLevel = static_cast<EStrategyHQLevel>(HQLevelValue);
+    HQ->ApplyHQLevelDefaults();
+    HQ->InitialStrength = 1;
+    HQ->CurrentStrength = 1;
+    HQ->Side = EStrategySide::Denmark;
+    HQ->RefreshDebugLabel();
+
+    if (HQ->CommandComponent)
+    {
+        HQ->CommandComponent->SetOrganicParent(OrganicParent);
+    }
+
+    SpawnedUnitObjects.Add(HQ);
+    return HQ;
+}
+
+AStrategyCompanyUnit* AStrategyOOBTestScenario::SpawnCompany(
+    const FName StableId,
+    const FString& Name,
+    int32 CompanyNumber,
+    const FVector& Location,
+    AStrategyUnit* OrganicParent)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    AStrategyCompanyUnit* Company = World->SpawnActor<AStrategyCompanyUnit>(
+        AStrategyCompanyUnit::StaticClass(),
+        Location,
+        FRotator::ZeroRotator);
+
+    if (!Company)
+    {
+        return nullptr;
+    }
+
+    Company->StableUnitId = StableId;
+    Company->DisplayName = FText::FromString(Name);
+    Company->CompanyNumber = CompanyNumber;
+    Company->InitialStrength = 190;
+    Company->CurrentStrength = 190;
+    Company->Side = EStrategySide::Denmark;
+    Company->RefreshDebugLabel();
+
+    if (Company->CommandComponent)
+    {
+        Company->CommandComponent->SetOrganicParent(OrganicParent);
+    }
+
+    SpawnedUnitObjects.Add(Company);
+    return Company;
+}
+
+const TArray<AStrategyUnit*>& AStrategyOOBTestScenario::GetSpawnedUnits() const
+{
+    SpawnedUnits.Reset();
+    SpawnedUnits.Reserve(SpawnedUnitObjects.Num());
+
+    for (AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        if (IsValid(Unit))
+        {
+            SpawnedUnits.Add(Unit);
+        }
+    }
+
+    return SpawnedUnits;
+}
