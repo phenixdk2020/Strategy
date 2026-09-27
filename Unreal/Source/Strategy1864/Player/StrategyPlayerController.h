@@ -6,6 +6,7 @@
 
 class AStrategyHUD;
 class AStrategyUnit;
+enum class EStrategyOrderType : uint8;
 
 UCLASS()
 class STRATEGY1864_API AStrategyPlayerController : public APlayerController
@@ -24,6 +25,28 @@ public:
     UFUNCTION(BlueprintPure, Category="Strategy|Selection")
     TArray<AStrategyUnit*> GetSelectedUnits() const;
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    void BeginOrderPlacement(EStrategyOrderType OrderType);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    void CancelOrderPlacement();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    bool CommitPendingOrderUnderCursor();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    bool IssueOrderToSelection(
+        EStrategyOrderType OrderType,
+        const FVector& TargetLocation,
+        float FacingYaw,
+        bool bHasFacing);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    void IssueHoldToSelection();
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Orders")
+    bool HasPendingOrderPlacement() const { return bOrderPlacementPending; }
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Selection")
     float BoxSelectionThresholdPixels = 6.0f;
 
@@ -35,7 +58,10 @@ private:
     void ApplySelection(AStrategyUnit* Unit, bool bAdd, bool bRemove);
     void ReadModifierState(bool& bOutAdd, bool& bOutRemove) const;
     AStrategyHUD* GetStrategyHUD() const;
+    bool ResolveGroundPointUnderCursor(FVector& OutWorldPoint) const;
 
+    bool bOrderPlacementPending = false;
+    EStrategyOrderType PendingOrderType;
     bool bSelectionInputDown = false;
     FVector2D SelectionStart = FVector2D::ZeroVector;
     FVector2D SelectionCurrent = FVector2D::ZeroVector;
