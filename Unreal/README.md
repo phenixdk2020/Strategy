@@ -23,7 +23,7 @@ Not yet implemented:
 
 ## Open locally
 
-Open `Strategy1864.uproject` with Unreal Engine **5.8**. UE 5.8 is the project's current Unreal editor baseline.
+Open `Strategy1864.uproject` with Unreal Engine **5.8.2**. UE 5.8 is the project's current Unreal editor baseline.
 
 If Unreal asks to generate project files or compile the C++ module, allow it.
 
