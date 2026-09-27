@@ -4,6 +4,7 @@
 #include "StrategyCameraPawn.h"
 #include "EngineUtils.h"
 #include "InputCoreTypes.h"
+#include "Kismet/GameplayStatics.h"
 #include "../Units/StrategyUnit.h"
 #include "../Orders/StrategyOrderComponent.h"
 
@@ -430,22 +431,18 @@ void AStrategyPlayerController::SelectUnitFromOOB(
 
 void AStrategyPlayerController::TogglePauseSimulation()
 {
-    const bool bNewPaused = !IsPaused();
-    SetPause(bNewPaused);
+    const bool bNewPaused = !UGameplayStatics::IsGamePaused(this);
+    UGameplayStatics::SetGamePaused(this, bNewPaused);
 }
 
 void AStrategyPlayerController::SetSimulationSpeed(float NewSpeed)
 {
     SimulationSpeed = FMath::Clamp(NewSpeed, 1.0f, 3.0f);
+    UGameplayStatics::SetGlobalTimeDilation(this, SimulationSpeed);
 
-    if (UWorld* World = GetWorld())
+    if (UGameplayStatics::IsGamePaused(this))
     {
-        World->GetWorldSettings()->SetTimeDilation(SimulationSpeed);
-    }
-
-    if (IsPaused())
-    {
-        SetPause(false);
+        UGameplayStatics::SetGamePaused(this, false);
     }
 }
 
