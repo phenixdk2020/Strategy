@@ -4,6 +4,7 @@
 #include "EngineUtils.h"
 #include "InputCoreTypes.h"
 #include "../Units/StrategyUnit.h"
+#include "../Orders/StrategyOrderComponent.h"
 
 AStrategyPlayerController::AStrategyPlayerController()
 {
@@ -75,6 +76,12 @@ void AStrategyPlayerController::SelectionReleased()
     if (AStrategyHUD* HUD = GetStrategyHUD())
     {
         HUD->EndSelectionBox();
+    }
+
+    if (bOrderPlacementPending)
+    {
+        CommitPendingOrderUnderCursor();
+        return;
     }
 
     const float DragDistance = FVector2D::Distance(SelectionStart, SelectionCurrent);
@@ -227,4 +234,110 @@ TArray<AStrategyUnit*> AStrategyPlayerController::GetSelectedUnits() const
 AStrategyHUD* AStrategyPlayerController::GetStrategyHUD() const
 {
     return Cast<AStrategyHUD>(GetHUD());
+}
+
+
+void AStrategyPlayerController::BeginOrderPlacement(EStrategyOrderType OrderType)
+{
+    if (OrderType == EStrategyOrderType::None || SelectedUnitObjects.Num() == 0)
+    {
+        return;
+    }
+
+    if (OrderType == EStrategyOrderType::Hold)
+    {
+        IssueHoldToSelection();
+        return;
+    }
+
+    PendingOrderType = OrderType;
+    bOrderPlacementPending = true;
+}
+
+void AStrategyPlayerController::CancelOrderPlacement()
+{
+    PendingOrderType = EStrategyOrderType::None;
+    bOrderPlacementPending = false;
+}
+
+bool AStrategyPlayerController::CommitPendingOrderUnderCursor()
+{
+    if (!bOrderPlacementPending || PendingOrderType == EStrategyOrderType::None)
+    {
+        return false;
+    }
+
+    FVector GroundPoint;
+    if (!ResolveGroundPointUnderCursor(GroundPoint))
+    {
+        return false;
+    }
+
+    const EStrategyOrderType OrderType = PendingOrderType;
+    CancelOrderPlacement();
+
+    return IssueOrderToSelection(
+        OrderType,
+        GroundPoint,
+        0.0f,
+        false);
+}
+
+bool AStrategyPlayerController::IssueOrderToSelection(
+    EStrategyOrderType OrderType,
+    const FVector& TargetLocation,
+    float FacingYaw,
+    bool bHasFacing)
+{
+    if (OrderType == EStrategyOrderType::None)
+    {
+        return false;
+    }
+
+    bool bIssuedAny = false;
+
+    for (AStrategyUnit* Unit : SelectedUnitObjects)
+    {
+        if (!IsValid(Unit) || !Unit->OrderComponent)
+        {
+            continue;
+        }
+
+        FStrategyOrder Order;
+        Order.Type = OrderType;
+        Order.TargetLocation = TargetLocation;
+        Order.FacingYaw = FacingYaw;
+        Order.bHasFacing = bHasFacing;
+        Order.Authority = EStrategyOrderAuthority::DirectPlayer;
+
+        if (Unit->OrderComponent->SetOrder(Order))
+        {
+            bIssuedAny = true;
+        }
+    }
+
+    return bIssuedAny;
+}
+
+void AStrategyPlayerController::IssueHoldToSelection()
+{
+    IssueOrderToSelection(
+        EStrategyOrderType::Hold,
+        FVector::ZeroVector,
+        0.0f,
+        false);
+
+    CancelOrderPlacement();
+}
+
+bool AStrategyPlayerController::ResolveGroundPointUnderCursor(FVector& OutWorldPoint) const
+{
+    FHitResult Hit;
+    if (!GetHitResultUnderCursor(ECC_Visibility, true, Hit))
+    {
+        return false;
+    }
+
+    OutWorldPoint = Hit.ImpactPoint;
+    return true;
 }
