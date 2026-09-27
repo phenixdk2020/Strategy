@@ -53,9 +53,21 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Selection")
     float BoxSelectionThresholdPixels = 6.0f;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Time")
+    float SimulationSpeed = 1.0f;
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Time")
+    void TogglePauseSimulation();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Time")
+    void SetSimulationSpeed(float NewSpeed);
+
 private:
     void SelectionPressed();
     void SelectionReleased();
+    void SetSpeed1x();
+    void SetSpeed2x();
+    void SetSpeed3x();
     void SelectSingleUnderCursor();
     void SelectUnitsInScreenRectangle(const FVector2D& Start, const FVector2D& End);
     void ApplySelection(AStrategyUnit* Unit, bool bAdd, bool bRemove);
