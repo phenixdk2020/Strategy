@@ -129,6 +129,19 @@ void UStrategyMovementExecutorComponent::TickComponent(
         return;
     }
 
+    if (PauseRemainingSeconds > 0.0f)
+    {
+        PauseRemainingSeconds = FMath::Max(0.0f, PauseRemainingSeconds - DeltaTime);
+
+        if (PauseRemainingSeconds <= 0.0f &&
+            OwnerUnit->UnitState == EStrategyUnitState::UnderFire)
+        {
+            OwnerUnit->SetUnitState(EStrategyUnitState::Moving);
+        }
+
+        return;
+    }
+
     const FVector CurrentLocation = OwnerUnit->GetActorLocation();
     UpdateBridgeFormationState(CurrentLocation);
 
@@ -218,6 +231,7 @@ void UStrategyMovementExecutorComponent::StopMovement()
     }
 
     bCavalryDefileActive = false;
+    PauseRemainingSeconds = 0.0f;
     bHasMovementGoal = false;
     ExecutingOrderSerial = 0;
     ActiveRoutePlan = FStrategyRoutePlan();
@@ -278,4 +292,20 @@ bool UStrategyMovementExecutorComponent::IsMovementOrder(EStrategyOrderType Type
         default:
             return false;
     }
+}
+
+
+void UStrategyMovementExecutorComponent::PauseMovementForSeconds(float DurationSeconds)
+{
+    if (!bHasMovementGoal || DurationSeconds <= 0.0f || !OwnerUnit)
+    {
+        return;
+    }
+
+    PauseRemainingSeconds = FMath::Max(PauseRemainingSeconds, DurationSeconds);
+    OwnerUnit->SetUnitState(EStrategyUnitState::UnderFire);
+
+    // Deliberately do not change OrderComponent execution state or route.
+    // The authoritative parent mission remains active and movement resumes.
+    SetComponentTickEnabled(true);
 }
