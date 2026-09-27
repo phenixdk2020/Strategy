@@ -6,6 +6,7 @@
 
 class USceneComponent;
 class UStrategyOrderComponent;
+class UStrategyCommandComponent;
 
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
@@ -17,6 +18,29 @@ enum class EStrategyEchelon : uint8
     Division,
     Cavalry,
     Headquarters
+};
+
+UENUM(BlueprintType)
+enum class EStrategySide : uint8
+{
+    Neutral,
+    Denmark,
+    Prussia,
+    Austria,
+    Allied,
+    Enemy
+};
+
+UENUM(BlueprintType)
+enum class EStrategyUnitState : uint8
+{
+    Ready,
+    Moving,
+    Reforming,
+    Engaged,
+    UnderFire,
+    Routed,
+    Destroyed
 };
 
 UCLASS(Abstract, Blueprintable)
@@ -33,11 +57,32 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyOrderComponent> OrderComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyCommandComponent> CommandComponent;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
+    FName StableUnitId = NAME_None;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
+    FText DisplayName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Unit")
+    EStrategySide Side = EStrategySide::Neutral;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Unit")
     EStrategyEchelon Echelon = EStrategyEchelon::Company;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Unit")
+    int32 InitialStrength = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Unit")
     int32 CurrentStrength = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Unit")
+    EStrategyUnitState UnitState = EStrategyUnitState::Ready;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|AI")
+    bool bOfficerAIEnabled = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Selection")
     bool bPlayerControllable = true;
@@ -48,6 +93,15 @@ public:
     UFUNCTION(BlueprintCallable, Category="Strategy|Selection")
     virtual void SetSelected(bool bNewSelected);
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|Unit")
+    void SetUnitState(EStrategyUnitState NewState);
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Unit")
+    bool IsCombatEffective() const;
+
     UFUNCTION(BlueprintImplementableEvent, Category="Strategy|Selection")
     void OnSelectionChanged(bool bNewSelected);
+
+    UFUNCTION(BlueprintImplementableEvent, Category="Strategy|Unit")
+    void OnUnitStateChanged(EStrategyUnitState NewState);
 };
