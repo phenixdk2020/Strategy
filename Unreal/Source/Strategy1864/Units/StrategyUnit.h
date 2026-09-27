@@ -13,6 +13,7 @@ class UStrategyMovementExecutorComponent;
 class UStrategyFormationComponent;
 class UStrategyFormationPolicyComponent;
 class UStrategyParentExecutionComponent;
+class UStrategyRoutePlannerComponent;
 
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
@@ -83,6 +84,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyParentExecutionComponent> ParentExecution;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyRoutePlannerComponent> RoutePlanner;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
