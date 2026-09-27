@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "StrategyUnit.h"
+#include "../Formations/StrategyFormationTypes.h"
 #include "CavalryUnit.generated.h"
 
 class USkeletalMeshComponent;
@@ -26,4 +27,10 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Cavalry")
     FName RiderSocketName = TEXT("RiderSocket");
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Cavalry")
+    void SetDefileMode(bool bEnable);
+
+private:
+    EStrategyFormationType PreDefileFormation = EStrategyFormationType::CavalryLine;
 };
