@@ -4,6 +4,7 @@
 #include "../Units/StrategyCompanyUnit.h"
 #include "../Units/StrategyHQUnit.h"
 #include "../Units/StrategyUnit.h"
+#include "../Units/CavalryUnit.h"
 #include "../Navigation/StrategyRiverBarrier.h"
 #include "Engine/World.h"
 
@@ -60,6 +61,21 @@ void AStrategyOOBTestScenario::BuildTestOOB()
         static_cast<uint8>(EStrategyHQLevel::Battalion),
         Origin + FVector(5400.0f, 2200.0f, 0.0f),
         Regiment);
+
+    if (bSpawnCavalryQA)
+    {
+        SpawnCavalry(
+            TEXT("DK-CAV-1"),
+            TEXT("Gardehusar QA"),
+            Origin + FVector(2500.0f, -5000.0f, 0.0f),
+            Division);
+
+        SpawnCavalry(
+            TEXT("DK-CAV-2"),
+            TEXT("Dragon QA"),
+            Origin + FVector(2500.0f, 5000.0f, 0.0f),
+            Division);
+    }
 
     for (int32 Index = 0; Index < 4; ++Index)
     {
@@ -238,6 +254,7 @@ AStrategyCompanyUnit* AStrategyOOBTestScenario::SpawnCompany(
     Company->InitialStrength = 190;
     Company->CurrentStrength = 190;
     Company->Side = static_cast<EStrategySide>(SideValue);
+    Company->bPlayerControllable = Company->Side == EStrategySide::Denmark;
     Company->RefreshDebugLabel();
 
     if (Company->CommandComponent)
@@ -247,6 +264,45 @@ AStrategyCompanyUnit* AStrategyOOBTestScenario::SpawnCompany(
 
     SpawnedUnitObjects.Add(Company);
     return Company;
+}
+
+ACavalryUnit* AStrategyOOBTestScenario::SpawnCavalry(
+    const FName StableId,
+    const FString& Name,
+    const FVector& Location,
+    AStrategyUnit* OrganicParent)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    ACavalryUnit* Cavalry = World->SpawnActor<ACavalryUnit>(
+        ACavalryUnit::StaticClass(),
+        Location,
+        FRotator::ZeroRotator);
+
+    if (!Cavalry)
+    {
+        return nullptr;
+    }
+
+    Cavalry->StableUnitId = StableId;
+    Cavalry->DisplayName = FText::FromString(Name);
+    Cavalry->InitialStrength = 80;
+    Cavalry->CurrentStrength = 80;
+    Cavalry->Side = EStrategySide::Denmark;
+    Cavalry->bPlayerControllable = true;
+    Cavalry->RefreshDebugLabel();
+
+    if (Cavalry->CommandComponent)
+    {
+        Cavalry->CommandComponent->SetOrganicParent(OrganicParent);
+    }
+
+    SpawnedUnitObjects.Add(Cavalry);
+    return Cavalry;
 }
 
 TArray<AStrategyUnit*> AStrategyOOBTestScenario::GetSpawnedUnits() const
