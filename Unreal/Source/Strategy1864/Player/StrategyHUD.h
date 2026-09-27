@@ -22,6 +22,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Selection")
     FLinearColor SelectionBorderColor = FLinearColor(0.25f, 0.65f, 1.0f, 0.95f);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
+    bool bDrawQABuildMarker = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
+    bool bDrawSelectedUnitQA = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
+    FString BuildMarker = TEXT("PROJECT 1864 | UNREAL PORT | v00.02.54-dev");
+
 private:
     bool bSelectionBoxActive = false;
     FVector2D SelectionStart = FVector2D::ZeroVector;
