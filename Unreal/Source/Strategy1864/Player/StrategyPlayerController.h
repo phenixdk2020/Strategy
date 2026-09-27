@@ -2,11 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "../Orders/StrategyOrderTypes.h"
 #include "StrategyPlayerController.generated.h"
 
 class AStrategyHUD;
 class AStrategyUnit;
-enum class EStrategyOrderType : uint8;
 
 UCLASS()
 class STRATEGY1864_API AStrategyPlayerController : public APlayerController
@@ -61,7 +61,7 @@ private:
     bool ResolveGroundPointUnderCursor(FVector& OutWorldPoint) const;
 
     bool bOrderPlacementPending = false;
-    EStrategyOrderType PendingOrderType;
+    EStrategyOrderType PendingOrderType = EStrategyOrderType::None;
     bool bSelectionInputDown = false;
     FVector2D SelectionStart = FVector2D::ZeroVector;
     FVector2D SelectionCurrent = FVector2D::ZeroVector;
