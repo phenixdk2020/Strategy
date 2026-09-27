@@ -123,3 +123,83 @@ TArray<AStrategyUnit*> UStrategyParentFormationPlannerComponent::GetCommandedCom
 
     return Result;
 }
+
+
+bool UStrategyParentFormationPlannerComponent::IssueDirectSubordinateSlots(
+    const FVector& ObjectiveCenter,
+    float FacingYaw,
+    EStrategyOrderType OrderType,
+    EStrategyOrderAuthority Authority,
+    float SpacingCm)
+{
+    if (OrderType != EStrategyOrderType::AttackHere &&
+        OrderType != EStrategyOrderType::DefendHere)
+    {
+        return false;
+    }
+
+    TArray<AStrategyUnit*> Subordinates = GetDirectCommandedSubordinates();
+    if (Subordinates.Num() == 0)
+    {
+        return false;
+    }
+
+    Subordinates.Sort([](const AStrategyUnit& A, const AStrategyUnit& B)
+    {
+        return A.StableUnitId.LexicalLess(B.StableUnitId);
+    });
+
+    const FRotator FacingRotation(0.0f, FacingYaw, 0.0f);
+    const FVector Right = FRotationMatrix(FacingRotation).GetScaledAxis(EAxis::Y);
+    const float EffectiveSpacing = FMath::Max(SpacingCm, CompanyMinimumReservedSpacingCm);
+
+    bool bIssuedAny = false;
+
+    for (int32 Index = 0; Index < Subordinates.Num(); ++Index)
+    {
+        AStrategyUnit* Subordinate = Subordinates[Index];
+        if (!IsValid(Subordinate) || !Subordinate->OrderComponent)
+        {
+            continue;
+        }
+
+        const float CenteredIndex =
+            static_cast<float>(Index) - (Subordinates.Num() - 1) * 0.5f;
+
+        FStrategyOrder ChildOrder;
+        ChildOrder.Type = OrderType;
+        ChildOrder.TargetLocation =
+            ObjectiveCenter + Right * CenteredIndex * EffectiveSpacing;
+        ChildOrder.FacingYaw = FacingYaw;
+        ChildOrder.bHasFacing = true;
+        ChildOrder.Authority = Authority;
+
+        if (Subordinate->OrderComponent->SetOrder(ChildOrder))
+        {
+            bIssuedAny = true;
+        }
+    }
+
+    return bIssuedAny;
+}
+
+TArray<AStrategyUnit*> UStrategyParentFormationPlannerComponent::GetDirectCommandedSubordinates() const
+{
+    TArray<AStrategyUnit*> Result;
+
+    const AStrategyUnit* OwnerUnit = Cast<AStrategyUnit>(GetOwner());
+    if (!OwnerUnit || !OwnerUnit->CommandComponent)
+    {
+        return Result;
+    }
+
+    for (AStrategyUnit* Subordinate : OwnerUnit->CommandComponent->CurrentSubordinates)
+    {
+        if (IsValid(Subordinate))
+        {
+            Result.Add(Subordinate);
+        }
+    }
+
+    return Result;
+}
