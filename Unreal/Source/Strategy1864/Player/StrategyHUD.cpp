@@ -88,6 +88,35 @@ void AStrategyHUD::DrawHUD()
                     nullptr,
                     0.9f,
                     false);
+
+                if (Unit->OrderComponent)
+                {
+                    const EStrategyCommandVisualState VisualState =
+                        Unit->OrderComponent->GetCommandVisualState();
+
+                    const FLinearColor CommandColor =
+                        VisualState == EStrategyCommandVisualState::Blue
+                        ? FLinearColor(0.10f, 0.45f, 1.0f, 1.0f)
+                        : VisualState == EStrategyCommandVisualState::Green
+                            ? FLinearColor(0.10f, 0.85f, 0.25f, 1.0f)
+                            : FLinearColor(0.90f, 0.10f, 0.10f, 1.0f);
+
+                    const FString CommandText =
+                        FString::Printf(
+                            TEXT("COMMAND %s"),
+                            *StaticEnum<EStrategyCommandVisualState>()
+                                ->GetNameStringByValue(
+                                    static_cast<int64>(VisualState)));
+
+                    DrawText(
+                        CommandText,
+                        CommandColor,
+                        18.0f,
+                        104.0f,
+                        nullptr,
+                        1.0f,
+                        false);
+                }
             }
         }
     }
