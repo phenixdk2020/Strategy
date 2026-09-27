@@ -43,6 +43,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Camera")
     float RotationSpeedDegrees = 70.0f;
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|Camera")
+    void FocusOnWorldLocation(const FVector& WorldLocation);
+
 private:
     void MoveForward(float Value);
     void MoveRight(float Value);
