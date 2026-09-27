@@ -5,6 +5,8 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 | Unity/reference area | Unreal destination | Initial status |
 |---|---|---|
 | Unreal C++ project/bootstrap | UE 5.8.3 editor target/module | **Build verified** |
+| Unity tactical selection/input | `AStrategyPlayerController` + `AStrategyHUD` | **Implemented; build/QA pending** |
+| Unity RTS camera | `AStrategyCameraPawn` | **Implemented; build/QA pending** |
 | `Regiment.cs` | `AStrategyUnit` + infantry-specific actor/components | Planned |
 | Regiment hierarchy F27 | OOB/command hierarchy data + components | Planned |
 | Major HQ | Physical HQ Pawn/Actor | Planned |
