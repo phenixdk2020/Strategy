@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "../UI/StrategySemanticZoomTypes.h"
 #include "StrategyUnit.generated.h"
 
 class USceneComponent;
@@ -20,6 +21,7 @@ class UStrategyCombatComponent;
 class UStrategyOfficerAIComponent;
 class UStrategyThreatReactionComponent;
 class UStrategyOOBStatusComponent;
+class UStrategySemanticZoomComponent;
 
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
@@ -112,6 +114,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyOOBStatusComponent> OOBStatusComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategySemanticZoomComponent> SemanticZoomComponent;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
 
@@ -157,6 +162,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Selection")
     bool bSelected = false;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Semantic Zoom")
+    EStrategySemanticZoomState SemanticZoomState = EStrategySemanticZoomState::Close;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Selection")
     virtual void SetSelected(bool bNewSelected);
 
@@ -169,6 +177,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="Strategy|Identity")
     void RefreshDebugLabel();
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|Semantic Zoom")
+    void SetSemanticZoomState(EStrategySemanticZoomState NewState);
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Presentation")
+    FString GetNATOEchelonSymbol() const;
+
     UFUNCTION(BlueprintPure, Category="Strategy|Unit")
     bool IsCombatEffective() const;
 
@@ -177,4 +191,7 @@ public:
 
     UFUNCTION(BlueprintImplementableEvent, Category="Strategy|Unit")
     void OnUnitStateChanged(EStrategyUnitState NewState);
+
+    UFUNCTION(BlueprintImplementableEvent, Category="Strategy|Semantic Zoom")
+    void OnSemanticZoomChanged(EStrategySemanticZoomState NewState);
 };
