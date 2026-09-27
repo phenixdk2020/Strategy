@@ -1,9 +1,25 @@
 #include "StrategyHQUnit.h"
 
+#include "../Formations/StrategyParentFormationPlannerComponent.h"
+#include "../Orders/StrategyOrderComponent.h"
+
 AStrategyHQUnit::AStrategyHQUnit()
 {
     Echelon = EStrategyEchelon::Headquarters;
+    FormationPlanner = CreateDefaultSubobject<UStrategyParentFormationPlannerComponent>(TEXT("FormationPlanner"));
     ApplyHQLevelDefaults();
+}
+
+void AStrategyHQUnit::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (OrderComponent)
+    {
+        OrderComponent->OnOrderChanged.AddDynamic(
+            this,
+            &AStrategyHQUnit::HandleHQOrderChanged);
+    }
 }
 
 void AStrategyHQUnit::ApplyHQLevelDefaults()
@@ -37,4 +53,29 @@ void AStrategyHQUnit::ApplyHQLevelDefaults()
         default:
             break;
     }
+}
+
+void AStrategyHQUnit::HandleHQOrderChanged(const FStrategyOrder& NewOrder)
+{
+    if (!FormationPlanner || HQLevel != EStrategyHQLevel::Battalion)
+    {
+        return;
+    }
+
+    if (NewOrder.Type != EStrategyOrderType::AttackHere &&
+        NewOrder.Type != EStrategyOrderType::DefendHere)
+    {
+        return;
+    }
+
+    const float FacingYaw =
+        NewOrder.bHasFacing
+        ? NewOrder.FacingYaw
+        : GetActorRotation().Yaw;
+
+    FormationPlanner->IssueCompanySlots(
+        NewOrder.TargetLocation,
+        FacingYaw,
+        NewOrder.Type == EStrategyOrderType::DefendHere,
+        NewOrder.Authority);
 }
