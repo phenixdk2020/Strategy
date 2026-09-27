@@ -86,7 +86,24 @@ bool UStrategyOrderComponent::CanReplaceCurrentOrder(const FStrategyOrder& NewOr
         return true;
     }
 
-    return static_cast<uint8>(NewOrder.Authority) >= static_cast<uint8>(CurrentOrder.Authority);
+    const bool bNewAuthorityAtLeastCurrent =
+        static_cast<uint8>(NewOrder.Authority) >=
+        static_cast<uint8>(CurrentOrder.Authority);
+
+    if (bNewAuthorityAtLeastCurrent)
+    {
+        return true;
+    }
+
+    // A standing player/officer intent remains authoritative until explicitly replaced.
+    if (CurrentOrder.IsStandingIntent())
+    {
+        return false;
+    }
+
+    // A finite higher-authority order only blocks lower authority while it is physically active.
+    // Once Completed/Failed/Superseded, delegated AI may resume normal tasking.
+    return !IsPhysicallyExecuting();
 }
 
 void UStrategyOrderComponent::SetExecutionState(EStrategyOrderExecutionState NewState)
