@@ -68,7 +68,8 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             FString::Printf(TEXT("%d. Kompagni"), CompanyNumber),
             CompanyNumber,
             Origin + FVector(7600.0f, -4300.0f + Index * CompanySpacing, 0.0f),
-            MajorA);
+            MajorA,
+            static_cast<uint8>(EStrategySide::Denmark));
     }
 
     for (int32 Index = 0; Index < 4; ++Index)
@@ -79,7 +80,27 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             FString::Printf(TEXT("%d. Kompagni"), CompanyNumber),
             CompanyNumber,
             Origin + FVector(9800.0f, -4300.0f + Index * CompanySpacing, 0.0f),
-            MajorB);
+            MajorB,
+            static_cast<uint8>(EStrategySide::Denmark));
+    }
+
+    if (bSpawnEnemyQAUnits)
+    {
+        SpawnCompany(
+            TEXT("PR-QA-C1"),
+            TEXT("PR. 1. KOMPAGNI"),
+            1,
+            Origin + FVector(22000.0f, -3500.0f, 0.0f),
+            nullptr,
+            static_cast<uint8>(EStrategySide::Prussia));
+
+        SpawnCompany(
+            TEXT("PR-QA-C2"),
+            TEXT("PR. 2. KOMPAGNI"),
+            2,
+            Origin + FVector(22000.0f, 3500.0f, 0.0f),
+            nullptr,
+            static_cast<uint8>(EStrategySide::Prussia));
     }
 
     UE_LOG(LogTemp, Display, TEXT("PROJECT1864-OOB: spawned %d units"), SpawnedUnitObjects.Num());
@@ -167,7 +188,8 @@ AStrategyCompanyUnit* AStrategyOOBTestScenario::SpawnCompany(
     const FString& Name,
     int32 CompanyNumber,
     const FVector& Location,
-    AStrategyUnit* OrganicParent)
+    AStrategyUnit* OrganicParent,
+    uint8 SideValue)
 {
     UWorld* World = GetWorld();
     if (!World)
@@ -190,7 +212,7 @@ AStrategyCompanyUnit* AStrategyOOBTestScenario::SpawnCompany(
     Company->CompanyNumber = CompanyNumber;
     Company->InitialStrength = 190;
     Company->CurrentStrength = 190;
-    Company->Side = EStrategySide::Denmark;
+    Company->Side = static_cast<EStrategySide>(SideValue);
     Company->RefreshDebugLabel();
 
     if (Company->CommandComponent)
