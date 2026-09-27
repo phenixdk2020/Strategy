@@ -28,7 +28,7 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 | Infantry Square F29 | Formation + anti-cavalry reaction | Planned |
 | Cavalry core F30 | `ACavalryUnit` | Scaffold builds |
 | Cavalry AI F30C+ | Cavalry AIController/behaviour logic | Planned |
-| Dynamic task attachment | Command-parent state/data | **Organic/current parent foundation implemented** |
+| Dynamic task attachment | Command-parent state/data | **Temporary cavalry attack attachment core implemented** |
 | Dragon mounted/dismounted | Cavalry specialization | Planned |
 | OOB F29Q/F30D | UMG OOB widget | Planned |
 | Semantic zoom/NATO | Tactical presentation subsystem | Planned |
