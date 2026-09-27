@@ -31,6 +31,14 @@ enum class EStrategyOrderExecutionState : uint8
 };
 
 UENUM(BlueprintType)
+enum class EStrategyCommandVisualState : uint8
+{
+    Red,
+    Blue,
+    Green
+};
+
+UENUM(BlueprintType)
 enum class EStrategyOrderAuthority : uint8
 {
     InheritedAI,
