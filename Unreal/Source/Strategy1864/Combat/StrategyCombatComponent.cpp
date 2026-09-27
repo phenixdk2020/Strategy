@@ -1,6 +1,8 @@
 #include "StrategyCombatComponent.h"
 
 #include "StrategyFireControlComponent.h"
+#include "StrategyFireControlTypes.h"
+#include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "EngineUtils.h"
@@ -210,6 +212,13 @@ void UStrategyCombatComponent::NotifyIncomingVolley(int32 Hits)
         0.0f,
         100.0f);
 
+    EvaluateRoutState();
+
+    if (OwnerUnit->UnitState == EStrategyUnitState::Routed)
+    {
+        return;
+    }
+
     if (OwnerUnit->MovementExecutor &&
         OwnerUnit->MovementExecutor->HasMovementGoal())
     {
@@ -219,5 +228,43 @@ void UStrategyCombatComponent::NotifyIncomingVolley(int32 Hits)
     else
     {
         OwnerUnit->SetUnitState(EStrategyUnitState::UnderFire);
+    }
+}
+
+
+void UStrategyCombatComponent::EvaluateRoutState()
+{
+    if (!OwnerUnit ||
+        OwnerUnit->UnitState == EStrategyUnitState::Destroyed ||
+        OwnerUnit->UnitState == EStrategyUnitState::Routed)
+    {
+        return;
+    }
+
+    const bool bShouldRout =
+        OwnerUnit->Morale <= RoutMoraleThreshold ||
+        OwnerUnit->Cohesion <= RoutCohesionThreshold;
+
+    if (!bShouldRout)
+    {
+        return;
+    }
+
+    OwnerUnit->SetUnitState(EStrategyUnitState::Routed);
+
+    if (OwnerUnit->MovementExecutor)
+    {
+        OwnerUnit->MovementExecutor->StopMovement();
+    }
+
+    if (OwnerUnit->FireControlComponent)
+    {
+        OwnerUnit->FireControlComponent->SetFirePolicy(EStrategyFirePolicy::Hold);
+    }
+
+    if (OwnerUnit->OrderComponent &&
+        OwnerUnit->OrderComponent->GetCurrentOrder().IsValidOrder())
+    {
+        OwnerUnit->OrderComponent->FailExecution();
     }
 }
