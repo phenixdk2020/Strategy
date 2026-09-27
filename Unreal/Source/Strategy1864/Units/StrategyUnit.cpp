@@ -1,6 +1,7 @@
 #include "StrategyUnit.h"
 #include "Components/SceneComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
+#include "../Command/StrategyCommandComponent.h"
 
 AStrategyUnit::AStrategyUnit()
 {
@@ -10,6 +11,7 @@ AStrategyUnit::AStrategyUnit()
     SetRootComponent(SceneRoot);
 
     OrderComponent = CreateDefaultSubobject<UStrategyOrderComponent>(TEXT("OrderComponent"));
+    CommandComponent = CreateDefaultSubobject<UStrategyCommandComponent>(TEXT("CommandComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
@@ -21,4 +23,22 @@ void AStrategyUnit::SetSelected(bool bNewSelected)
 
     bSelected = bNewSelected;
     OnSelectionChanged(bSelected);
+}
+
+void AStrategyUnit::SetUnitState(EStrategyUnitState NewState)
+{
+    if (UnitState == NewState)
+    {
+        return;
+    }
+
+    UnitState = NewState;
+    OnUnitStateChanged(UnitState);
+}
+
+bool AStrategyUnit::IsCombatEffective() const
+{
+    return CurrentStrength > 0 &&
+        UnitState != EStrategyUnitState::Routed &&
+        UnitState != EStrategyUnitState::Destroyed;
 }
