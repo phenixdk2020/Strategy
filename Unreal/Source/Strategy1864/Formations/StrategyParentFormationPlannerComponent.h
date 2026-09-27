@@ -25,6 +25,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Formation")
     float MajorRearOffsetCm = 6500.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Formation")
+    float RegimentChildSpacingCm = 30000.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Formation")
+    float BrigadeChildSpacingCm = 60000.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Formation")
+    float DivisionChildSpacingCm = 90000.0f;
+
     UFUNCTION(BlueprintPure, Category="Strategy|Formation")
     TArray<FStrategyFormationSlot> GenerateCompanyLineSlots(
         const FVector& ObjectiveCenter,
@@ -38,6 +47,15 @@ public:
         bool bDefensiveMission,
         EStrategyOrderAuthority Authority);
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|Formation")
+    bool IssueDirectSubordinateSlots(
+        const FVector& ObjectiveCenter,
+        float FacingYaw,
+        EStrategyOrderType OrderType,
+        EStrategyOrderAuthority Authority,
+        float SpacingCm);
+
 private:
     TArray<AStrategyUnit*> GetCommandedCompanies() const;
+    TArray<AStrategyUnit*> GetDirectCommandedSubordinates() const;
 };
