@@ -103,7 +103,11 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Movement executor follows route waypoints while preserving one authoritative final goal.
 - The 50 cm final-arrival rule applies only to the real mission destination; intermediate waypoint tolerance cannot complete the mission.
 - NavMesh provides the initial obstacle/building-avoidance foundation.
-- Hard-blocking water classification, true-bank-change detection, same-bank bank-follow routing and persistent bridge transaction remain pending.
+- River barrier model now classifies bank side and detects true bank changes.
+- Opposite-bank routes receive an explicit bridge transaction with approach/exit metadata.
+- Same-bank chord-through-water missions create a same-bank detour instead of a bridge round-trip.
+- Cavalry defile mode activates only near the bridge (~36 m) or during the bridge transaction and restores its previous formation after exit.
+- Hard physical water blocking and final bridge congestion/queueing still require runtime/map integration.
 
 ### U06 — Combat/visibility — ELIGIBILITY CORE IMPLEMENTED / FIRE EXECUTION PENDING
 - Shared fire-control state implements HOLD, CLOSE, MEDIUM and LONG policies.
@@ -112,7 +116,12 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - QA Close/Medium/Long cone drawing is separate from fire authority.
 - Prussian QA cones can be visible from battle startup without granting target knowledge or firing permission.
 - Runtime QA scenario now includes optional Prussian company targets.
-- Volley/reload/ammunition/casualties, under-fire reactions and Square-vs-CAV execution remain pending.
+- Volley/reload/ammunition and authoritative strength-loss execution are now implemented at core level.
+- Zero-hit volleys are valid and do not cause casualties.
+- Morale and Cohesion are separate states; incoming volleys apply shock even when hits are zero.
+- Under-fire can temporarily pause movement without completing the mission, then movement resumes.
+- Square target eligibility uses four 90-degree fire sectors.
+- Smoke/Niagara, detailed casualty categories, routed thresholds and full Square-vs-CAV reaction remain pending.
 
 ### U07 — Officer AI
 - Captain/company AI.
