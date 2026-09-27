@@ -11,6 +11,8 @@ class UStrategyOrderComponent;
 class UStrategyCommandComponent;
 class UStrategyMovementExecutorComponent;
 class UStrategyFormationComponent;
+class UStrategyFormationPolicyComponent;
+class UStrategyParentExecutionComponent;
 
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
@@ -76,6 +78,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyFormationComponent> FormationComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyFormationPolicyComponent> FormationPolicy;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyParentExecutionComponent> ParentExecution;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
 
@@ -93,6 +101,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Unit")
     int32 CurrentStrength = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    float MaximumFireRangeCm = 10000.0f;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Unit")
     EStrategyUnitState UnitState = EStrategyUnitState::Ready;
