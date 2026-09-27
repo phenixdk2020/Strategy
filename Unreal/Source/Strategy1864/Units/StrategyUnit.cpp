@@ -12,6 +12,7 @@
 #include "../Combat/StrategyVisibilityComponent.h"
 #include "../Combat/StrategyFireControlComponent.h"
 #include "../Combat/StrategyCombatComponent.h"
+#include "../AI/StrategyOfficerAIComponent.h"
 
 AStrategyUnit::AStrategyUnit()
 {
@@ -44,6 +45,7 @@ AStrategyUnit::AStrategyUnit()
     VisibilityComponent = CreateDefaultSubobject<UStrategyVisibilityComponent>(TEXT("VisibilityComponent"));
     FireControlComponent = CreateDefaultSubobject<UStrategyFireControlComponent>(TEXT("FireControlComponent"));
     CombatComponent = CreateDefaultSubobject<UStrategyCombatComponent>(TEXT("CombatComponent"));
+    OfficerAIComponent = CreateDefaultSubobject<UStrategyOfficerAIComponent>(TEXT("OfficerAIComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
