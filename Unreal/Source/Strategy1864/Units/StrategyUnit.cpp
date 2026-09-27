@@ -1,6 +1,6 @@
-#include "Units/StrategyUnit.h"
+#include "StrategyUnit.h"
 #include "Components/SceneComponent.h"
-#include "Orders/StrategyOrderComponent.h"
+#include "../Orders/StrategyOrderComponent.h"
 
 AStrategyUnit::AStrategyUnit()
 {
