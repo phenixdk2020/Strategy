@@ -22,7 +22,7 @@ public:
     void ClearSelection();
 
     UFUNCTION(BlueprintPure, Category="Strategy|Selection")
-    const TArray<AStrategyUnit*>& GetSelectedUnits() const { return SelectedUnits; }
+    TArray<AStrategyUnit*> GetSelectedUnits() const;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Selection")
     float BoxSelectionThresholdPixels = 6.0f;
@@ -42,6 +42,4 @@ private:
 
     UPROPERTY()
     TArray<TObjectPtr<AStrategyUnit>> SelectedUnitObjects;
-
-    mutable TArray<AStrategyUnit*> SelectedUnits;
 };
