@@ -11,8 +11,31 @@ enum class EStrategyOrderType : uint8
     AttackHere  UMETA(DisplayName = "Angrib her"),
     DefendHere  UMETA(DisplayName = "Forsvar her"),
     Hold        UMETA(DisplayName = "Hold"),
+    Advance     UMETA(DisplayName = "Ryk frem"),
+    Withdraw    UMETA(DisplayName = "Tilbagetræk"),
+    Assemble    UMETA(DisplayName = "Saml"),
     ScoutHere   UMETA(DisplayName = "Spejd her"),
     Charge      UMETA(DisplayName = "Charge")
+};
+
+UENUM(BlueprintType)
+enum class EStrategyOrderExecutionState : uint8
+{
+    Idle,
+    PendingTarget,
+    Pending,
+    Executing,
+    Completed,
+    Failed,
+    Superseded
+};
+
+UENUM(BlueprintType)
+enum class EStrategyOrderAuthority : uint8
+{
+    InheritedAI,
+    OfficerAI,
+    DirectPlayer
 };
 
 USTRUCT(BlueprintType)
@@ -33,9 +56,18 @@ struct FStrategyOrder
     bool bHasFacing = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bPlayerAuthority = false;
+    EStrategyOrderAuthority Authority = EStrategyOrderAuthority::InheritedAI;
 
-    bool IsActive() const
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 OrderSerial = 0;
+
+    bool IsStandingIntent() const
+    {
+        return Type == EStrategyOrderType::DefendHere ||
+               Type == EStrategyOrderType::Hold;
+    }
+
+    bool IsValidOrder() const
     {
         return Type != EStrategyOrderType::None;
     }
