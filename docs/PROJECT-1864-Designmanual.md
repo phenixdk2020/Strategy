@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.51**  
+**Aktuel designbaseline: v00.02.52**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
@@ -10,6 +10,8 @@ Projektets centrale intake-log for besluttede men endnu ikke implementerede funk
 ## Engine-port beslutning — Unreal Engine
 
 Projektet har fra 2026-09-27 et parallelt Unreal Engine-portspor på branchen `unreal-port`. Unity `channel-test` forbliver den operative reference for den eksisterende battle-prototype, indtil Unreal-versionen har opnået dokumenteret feature/QA-paritet. Porten er en implementeringsændring, ikke et redesign: eksisterende command hierarchy, order authority, formationsregler, LOS/range/cones, river/bridge-routing, cavalry behaviour, OOB/HUD-semantik og historiske data skal bevares. Permanent Unreal-kode skal bruge stabile domænenavne frem for Unity-prototypens revisionssuffixer. Se [UNREAL-MIGRATION-PLAN.md](UNREAL-MIGRATION-PLAN.md) og [UNREAL-PORTING-INVENTORY.md](UNREAL-PORTING-INVENTORY.md).
+
+**Unreal river/bridge + combat execution checkpoint (v00.02.52):** U05 har nu et data-drevet river/bridge-lag med bank-side klassifikation, true-bank-change, same-bank detour og eksplicit bridge transaction metadata. Cavalry går først i 2-abreast Defile ca. 36 m fra bridge approach eller under selve crossing og gendanner derefter pre-defile formation. U06 har nu rigtig volley/reload/ammunition/casualty core: ammo forbruges, reload times, 0-hit volley er gyldig uden strength loss, positive hits reducerer authoritative strength og kan sætte Destroyed. Morale/Cohesion er separate states, og incoming fire giver shock samt en midlertidig movement-pause uden at afslutte parent missionen. Square bruger fire 90-graders fire sectors. Alt afventer samlet UE 5.8.3 build/runtime QA.
 
 **Unreal broad parity checkpoint (v00.02.51):** Unreal-porten er udvidet på tværs af U03-U06/U08. Click-drag ordreplacering giver committed facing uden at rydde selection. ANGRIB HER/FORSVAR HER kan nu kaskadere Division → Brigade → Regiment → Major/Battalion → Company, mens command-parent HQ ikke selv løber ind på objective. Parent execution afsluttes først, når underordnede executors er færdige. Infantry long-move kan bruge March Column og skifter mod Line ved F30X-reglen `max(own/enemy MaximumFireRange)+35 m`. Movement bruger nu Unreal NavMesh-waypoints med 50 cm final-arrival authority. Et fælles LOS/fire-control lag ejer HOLD/CLOSE/MEDIUM/LONG, ±35° cone og target eligibility, mens QA-cones er rent visuelt lag og kan vises på preussiske test-enheder fra battle-start. Formation core understøtter desuden Square, Cavalry 4-rank Line, 4-abreast Column og 2-abreast Defile med restore af pre-defile formation. Alt i dette checkpoint er kodeimplementeret men afventer samlet UE 5.8.3 build/runtime QA før parity-status kan gives.
 
