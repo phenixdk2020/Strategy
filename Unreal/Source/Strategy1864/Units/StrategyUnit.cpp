@@ -15,6 +15,8 @@
 #include "../AI/StrategyOfficerAIComponent.h"
 #include "../Combat/StrategyThreatReactionComponent.h"
 #include "../Command/StrategyOOBStatusComponent.h"
+#include "../UI/StrategySemanticZoomComponent.h"
+#include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
 {
@@ -50,6 +52,7 @@ AStrategyUnit::AStrategyUnit()
     OfficerAIComponent = CreateDefaultSubobject<UStrategyOfficerAIComponent>(TEXT("OfficerAIComponent"));
     ThreatReactionComponent = CreateDefaultSubobject<UStrategyThreatReactionComponent>(TEXT("ThreatReactionComponent"));
     OOBStatusComponent = CreateDefaultSubobject<UStrategyOOBStatusComponent>(TEXT("OOBStatusComponent"));
+    SemanticZoomComponent = CreateDefaultSubobject<UStrategySemanticZoomComponent>(TEXT("SemanticZoomComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
@@ -70,9 +73,21 @@ void AStrategyUnit::RefreshDebugLabel()
         return;
     }
 
-    const FString NameText = DisplayName.IsEmpty() ? StableUnitId.ToString() : DisplayName.ToString();
-    const FString StrengthText = FString::Printf(TEXT("%d/%d"), CurrentStrength, InitialStrength);
-    DebugLabel->SetText(FText::FromString(FString::Printf(TEXT("%s\n%s"), *NameText, *StrengthText)));
+    const FString NameText =
+        DisplayName.IsEmpty()
+        ? StableUnitId.ToString()
+        : DisplayName.ToString();
+
+    const FString StrengthText =
+        FString::Printf(TEXT("%d/%d"), CurrentStrength, InitialStrength);
+
+    DebugLabel->SetText(
+        FText::FromString(
+            FString::Printf(
+                TEXT("[%s] %s\n%s"),
+                *GetNATOEchelonSymbol(),
+                *NameText,
+                *StrengthText)));
 }
 
 int32 AStrategyUnit::ApplyStrengthLoss(int32 RequestedLoss)
@@ -111,4 +126,74 @@ bool AStrategyUnit::IsCombatEffective() const
     return CurrentStrength > 0 &&
         UnitState != EStrategyUnitState::Routed &&
         UnitState != EStrategyUnitState::Destroyed;
+}
+
+
+void AStrategyUnit::SetSemanticZoomState(EStrategySemanticZoomState NewState)
+{
+    if (SemanticZoomState == NewState)
+    {
+        return;
+    }
+
+    SemanticZoomState = NewState;
+
+    const bool bStrategic =
+        SemanticZoomState == EStrategySemanticZoomState::Strategic ||
+        SemanticZoomState == EStrategySemanticZoomState::VeryFar;
+
+    TArray<UMeshComponent*> MeshComponents;
+    GetComponents<UMeshComponent>(MeshComponents);
+
+    for (UMeshComponent* Mesh : MeshComponents)
+    {
+        if (IsValid(Mesh))
+        {
+            Mesh->SetVisibility(!bStrategic, true);
+        }
+    }
+
+    if (DebugLabel)
+    {
+        const bool bShowLabel =
+            bSelected ||
+            Echelon == EStrategyEchelon::Battalion ||
+            Echelon == EStrategyEchelon::Regiment ||
+            Echelon == EStrategyEchelon::Brigade ||
+            Echelon == EStrategyEchelon::Division ||
+            SemanticZoomState == EStrategySemanticZoomState::Operational ||
+            bStrategic;
+
+        DebugLabel->SetVisibility(bShowLabel);
+    }
+
+    OnSemanticZoomChanged(SemanticZoomState);
+}
+
+FString AStrategyUnit::GetNATOEchelonSymbol() const
+{
+    switch (Echelon)
+    {
+        case EStrategyEchelon::Company:
+            return TEXT("I");
+
+        case EStrategyEchelon::Battalion:
+            return TEXT("II");
+
+        case EStrategyEchelon::Regiment:
+            return TEXT("III");
+
+        case EStrategyEchelon::Brigade:
+            return TEXT("X");
+
+        case EStrategyEchelon::Division:
+            return TEXT("XX");
+
+        case EStrategyEchelon::Cavalry:
+            return TEXT("CAV");
+
+        case EStrategyEchelon::Headquarters:
+        default:
+            return TEXT("HQ");
+    }
 }
