@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.52**  
+**Aktuel designbaseline: v00.02.53**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
@@ -10,6 +10,8 @@ Projektets centrale intake-log for besluttede men endnu ikke implementerede funk
 ## Engine-port beslutning — Unreal Engine
 
 Projektet har fra 2026-09-27 et parallelt Unreal Engine-portspor på branchen `unreal-port`. Unity `channel-test` forbliver den operative reference for den eksisterende battle-prototype, indtil Unreal-versionen har opnået dokumenteret feature/QA-paritet. Porten er en implementeringsændring, ikke et redesign: eksisterende command hierarchy, order authority, formationsregler, LOS/range/cones, river/bridge-routing, cavalry behaviour, OOB/HUD-semantik og historiske data skal bevares. Permanent Unreal-kode skal bruge stabile domænenavne frem for Unity-prototypens revisionssuffixer. Se [UNREAL-MIGRATION-PLAN.md](UNREAL-MIGRATION-PLAN.md) og [UNREAL-PORTING-INVENTORY.md](UNREAL-PORTING-INVENTORY.md).
+
+**Unreal Officer AI + cavalry tasking checkpoint (v00.02.53):** U07 har nu et fælles OfficerAI-lag på alle strategy-units med AI ON/OFF cascade, inherited mission-regler og DirectPlayer authority-beskyttelse. HQ follow er et separat background movement-lag baseret på subordinate centroid og committed facing, så det ikke kan konkurrere med Defend/Attack mission ownership; valgte HQ'er viser command-zone QA-ringe. Rout er nu autoritativ ved lave morale/cohesion thresholds og stopper movement/fire/execution. Infantry anti-cavalry reaction kræver faktisk LOS og går i Square med restore af tidligere formation efter fravær af trussel. U08 har nu temporary cavalry task attachment: højere ANGRIB HER kan lægge cavalry under Major A/B via CurrentCommandParent uden at ændre OrganicParent, to-mod-to pairing vælger laveste samlede travel cost, og cavalry returnerer til tidligere parent/reserve efter missionen. FORSVAR HER placerer cavalry som reserve ca. 150 m bag / 45 m lateralt for parret Major. Runtime QA OOB kan nu spawne to danske cavalry og to ikke-selekterbare preussiske test-companies. Alt afventer UE 5.8.3 build/runtime QA.
 
 **Unreal river/bridge + combat execution checkpoint (v00.02.52):** U05 har nu et data-drevet river/bridge-lag med bank-side klassifikation, true-bank-change, same-bank detour og eksplicit bridge transaction metadata. Cavalry går først i 2-abreast Defile ca. 36 m fra bridge approach eller under selve crossing og gendanner derefter pre-defile formation. U06 har nu rigtig volley/reload/ammunition/casualty core: ammo forbruges, reload times, 0-hit volley er gyldig uden strength loss, positive hits reducerer authoritative strength og kan sætte Destroyed. Morale/Cohesion er separate states, og incoming fire giver shock samt en midlertidig movement-pause uden at afslutte parent missionen. Square bruger fire 90-graders fire sectors. Alt afventer samlet UE 5.8.3 build/runtime QA.
 
