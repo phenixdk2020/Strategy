@@ -4,12 +4,13 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 
 | Unity/reference area | Unreal destination | Initial status |
 |---|---|---|
+| Unreal C++ project/bootstrap | UE 5.8.3 editor target/module | **Build verified** |
 | `Regiment.cs` | `AStrategyUnit` + infantry-specific actor/components | Planned |
 | Regiment hierarchy F27 | OOB/command hierarchy data + components | Planned |
 | Major HQ | Physical HQ Pawn/Actor | Planned |
 | Regimental HQ | Physical HQ Pawn/Actor | Planned |
 | Brigade/Division HQ F30B | Higher HQ actors + command components | Planned |
-| Manual order authority F18 | `UOrderComponent` authority model | Scaffold started |
+| Manual order authority F18 | `UOrderComponent` authority model | Scaffold builds |
 | Attack/Forsvar/Hold | `EStrategyOrderType` + order executors | Scaffold started |
 | March Column F6 | `UFormationComponent` / formation executor | Planned |
 | Line/Square | Formation component + animation/slot generation | Planned |
@@ -23,7 +24,7 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 | Casualties/morale | Unit combat state/data | Planned |
 | Under-fire reaction F26 | AI/reaction component | Planned |
 | Infantry Square F29 | Formation + anti-cavalry reaction | Planned |
-| Cavalry core F30 | `ACavalryUnit` | Scaffold started |
+| Cavalry core F30 | `ACavalryUnit` | Scaffold builds |
 | Cavalry AI F30C+ | Cavalry AIController/behaviour logic | Planned |
 | Dynamic task attachment | Command-parent state/data | Planned |
 | Dragon mounted/dismounted | Cavalry specialization | Planned |
