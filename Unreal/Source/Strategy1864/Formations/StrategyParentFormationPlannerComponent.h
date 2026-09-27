@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "StrategyFormationTypes.h"
+#include "../Orders/StrategyOrderTypes.h"
 #include "StrategyParentFormationPlannerComponent.generated.h"
 
 class AStrategyUnit;
@@ -34,7 +35,8 @@ public:
     bool IssueCompanySlots(
         const FVector& ObjectiveCenter,
         float FacingYaw,
-        bool bDefensiveMission);
+        bool bDefensiveMission,
+        EStrategyOrderAuthority Authority);
 
 private:
     TArray<AStrategyUnit*> GetCommandedCompanies() const;
