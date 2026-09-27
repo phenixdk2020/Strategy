@@ -61,14 +61,14 @@
 
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
-| UE-P030 | P0 | Base tactical unit state | `Regiment.cs` family | `AStrategyUnit` | SCAFFOLD | Stable ID, side, echelon, name, strength, state and selection are authoritative. |
-| UE-P031 | P0 | Company entity | Company baseline | Infantry company actor/data | BACKLOG | Company exists independently with current/initial strength and command parent. |
-| UE-P032 | P0 | Battalion/Major entity | F27 | HQ actor + hierarchy component | BACKLOG | Major owns correct company set and can receive player/AI mission. |
-| UE-P033 | P0 | Regiment entity/HQ | F27/F28 | HQ actor + hierarchy component | BACKLOG | Regiment owns Major A/B and physical regimental HQ. |
-| UE-P034 | P0 | Brigade entity/HQ | F30B | Higher HQ actor | BACKLOG | Brigade exists physically and in hierarchy. |
-| UE-P035 | P0 | Division entity/HQ | F30B | Higher HQ actor | BACKLOG | Division exists physically and in hierarchy. |
-| UE-P036 | P0 | OrganicParent | F30M | Command relationship state | BACKLOG | Permanent OOB ownership survives temporary tasking. |
-| UE-P037 | P0 | CurrentCommandParent | F30M | Command relationship state | BACKLOG | Tactical parent can differ from OrganicParent and be restored. |
+| UE-P030 | P0 | Base tactical unit state | `Regiment.cs` family | `AStrategyUnit` | IMPLEMENTED | Stable ID, side, echelon, name, strength, state and selection are authoritative. |
+| UE-P031 | P0 | Company entity | Company baseline | Infantry company actor/data | IMPLEMENTED | Company exists independently with current/initial strength and command parent. |
+| UE-P032 | P0 | Battalion/Major entity | F27 | HQ actor + hierarchy component | SCAFFOLD | Major owns correct company set and can receive player/AI mission. |
+| UE-P033 | P0 | Regiment entity/HQ | F27/F28 | HQ actor + hierarchy component | SCAFFOLD | Regiment owns Major A/B and physical regimental HQ. |
+| UE-P034 | P0 | Brigade entity/HQ | F30B | Higher HQ actor | SCAFFOLD | Brigade exists physically and in hierarchy. |
+| UE-P035 | P0 | Division entity/HQ | F30B | Higher HQ actor | SCAFFOLD | Division exists physically and in hierarchy. |
+| UE-P036 | P0 | OrganicParent | F30M | Command relationship state | IMPLEMENTED | Permanent OOB ownership survives temporary tasking. |
+| UE-P037 | P0 | CurrentCommandParent | F30M | Command relationship state | IMPLEMENTED | Tactical parent can differ from OrganicParent and be restored. |
 | UE-P038 | P1 | Command relationship lines | F27/F29D | Presentation component | BACKLOG | Selected formations show correct parent/subordinate connections. |
 | UE-P039 | P1 | Stable entity IDs | Design B-131 | Data model | BACKLOG | OOB entities persist through save/transfer without duplicate identity. |
 | UE-P040 | P1 | OOB aggregate status | F29Q/F30D | UMG OOB model | BACKLOG | Parent rows calculate correct subordinate strength/status. |
