@@ -133,11 +133,7 @@ bool AStrategyUnit::IsCombatEffective() const
 
 void AStrategyUnit::SetSemanticZoomState(EStrategySemanticZoomState NewState)
 {
-    if (SemanticZoomState == NewState)
-    {
-        return;
-    }
-
+    const bool bChanged = SemanticZoomState != NewState;
     SemanticZoomState = NewState;
 
     const bool bStrategic =
@@ -157,19 +153,25 @@ void AStrategyUnit::SetSemanticZoomState(EStrategySemanticZoomState NewState)
 
     if (DebugLabel)
     {
-        const bool bShowLabel =
-            bSelected ||
+        const bool bHQ =
             Echelon == EStrategyEchelon::Battalion ||
             Echelon == EStrategyEchelon::Regiment ||
             Echelon == EStrategyEchelon::Brigade ||
-            Echelon == EStrategyEchelon::Division ||
+            Echelon == EStrategyEchelon::Division;
+
+        const bool bShowLabel =
+            bSelected ||
+            (SemanticZoomState == EStrategySemanticZoomState::Medium && bHQ) ||
             SemanticZoomState == EStrategySemanticZoomState::Operational ||
             bStrategic;
 
         DebugLabel->SetVisibility(bShowLabel);
     }
 
-    OnSemanticZoomChanged(SemanticZoomState);
+    if (bChanged)
+    {
+        OnSemanticZoomChanged(SemanticZoomState);
+    }
 }
 
 FString AStrategyUnit::GetNATOEchelonSymbol() const
