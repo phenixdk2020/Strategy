@@ -49,6 +49,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Strategy|Movement")
     FVector GetMovementGoal() const { return MovementGoal; }
 
+    UFUNCTION(BlueprintPure, Category="Strategy|Movement")
+    TArray<FVector> GetRoutePoints() const { return RoutePoints; }
+
 private:
     UFUNCTION()
     void HandleOrderChanged(const FStrategyOrder& NewOrder);
