@@ -97,17 +97,17 @@
 
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
-| UE-P070 | P0 | Formation component | F6+ | `UFormationComponent` | BACKLOG | Formation owns slot geometry separate from command/order state. |
-| UE-P071 | P0 | Three-rank Line | Infantry baseline | Formation generator | BACKLOG | Full company forms documented three-rank line geometry. |
-| UE-P072 | P0 | March Column | F6/F30K | Formation generator | BACKLOG | Long movement selects march column without parent tug-of-war. |
+| UE-P070 | P0 | Formation component | F6+ | `UFormationComponent` | IMPLEMENTED | Formation owns slot geometry separate from command/order state. |
+| UE-P071 | P0 | Three-rank Line | Infantry baseline | Formation generator | IMPLEMENTED CORE | Full company forms documented three-rank line geometry. |
+| UE-P072 | P0 | March Column | F6/F30K | Formation generator | IMPLEMENTED CORE | Long movement selects march column without parent tug-of-war. |
 | UE-P073 | P0 | Physical reform | Formation baseline | Formation movement | BACKLOG | Soldiers/slots move into new geometry rather than teleporting. |
 | UE-P074 | P0 | Auto Line before combat | F30X | Formation policy | BACKLOG | Approaching enemy triggers physical Line reform before fire envelope. |
 | UE-P075 | P0 | Deploy threshold | F30X | Formation policy | BACKLOG | `max(own range, enemy range)+35m` policy is reproduced/tunable. |
-| UE-P076 | P0 | Company nominal spacing | F30X | Parent formation planner | BACKLOG | Full-company centres use ~72 m nominal spacing in current QA baseline. |
-| UE-P077 | P0 | Reserved minimum spacing | F30X | Slot deconfliction | BACKLOG | ~68 m minimum reservation prevents company overlap at oblique facings. |
+| UE-P076 | P0 | Company nominal spacing | F30X | Parent formation planner | IMPLEMENTED | Full-company centres use ~72 m nominal spacing in current QA baseline. |
+| UE-P077 | P0 | Reserved minimum spacing | F30X | Slot deconfliction | IMPLEMENTED BASELINE | ~68 m minimum reservation prevents company overlap at oblique facings. |
 | UE-P078 | P0 | Final-slot authority | F30V | Movement completion service | BACKLOG | One 0.50 m company final-slot completion rule owns mission arrival. |
 | UE-P079 | P0 | No premature stop | F30V | Movement completion | BACKLOG | Company cannot be marked arrived while still visibly short of slot. |
-| UE-P080 | P1 | Formation facing completion | F30S/P | FormationMotion equivalent | BACKLOG | Final visual turn completes without per-frame facing tug-of-war. |
+| UE-P080 | P1 | Formation facing completion | F30S/P | FormationMotion equivalent | SCAFFOLD | Final visual turn completes without per-frame facing tug-of-war. |
 | UE-P081 | P1 | Parent mission reassert | F27/F30X | Mission executor | BACKLOG | Temporary interruption resumes same mission without forcing wrong formation. |
 | UE-P082 | P1 | Full 190-man footprint | Infantry baseline | Formation data | BACKLOG | Formation width/spacing is compatible with ~48 m current full-strength frontage. |
 | UE-P083 | P1 | Local sidestep/deconfliction | F29P | Formation movement | BACKLOG | Adjacent formations avoid standing through each other. |
@@ -339,3 +339,19 @@ Current U03 executor baseline:
 8. A new DirectPlayer order supersedes the previous executing DirectPlayer order cleanly.
 9. Lower OfficerAI/InheritedAI authority cannot replace an active DirectPlayer order.
 10. ANGRIB HER and FORSVAR HER currently share the finite physical movement executor; their formation/subordinate geometry remains U04/U03-planner work and must not yet be marked parity verified.
+
+
+## U04 formation-planning baseline QA
+
+Current U04 geometry baseline:
+
+1. Every strategy unit owns a `UStrategyFormationComponent`.
+2. Company Line uses three ranks by default.
+3. 190-man Line geometry uses 3 ranks and 0.75 m lateral slot spacing, producing roughly the documented Unity frontage scale.
+4. March Column uses a 4-wide baseline and longitudinal row spacing.
+5. Major/Battalion ANGRIB HER and FORSVAR HER decompose into company missions.
+6. Company slot order is deterministic by `CompanyNumber`.
+7. Company centres use 72 m nominal spacing and never less than the 68 m reserved baseline.
+8. The committed parent facing is copied into company slot missions before movement starts.
+9. DirectPlayer authority on the parent mission is preserved on generated company missions.
+10. This block does not yet implement enemy-range-driven early deployment, physical individual-soldier reform, or Regiment/Brigade/Division multi-level slot planning.
