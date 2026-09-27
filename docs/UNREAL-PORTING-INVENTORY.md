@@ -17,11 +17,11 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 | March Column F6 | `UFormationComponent` / formation executor | **Formation geometry core implemented** |
 | Line/Square | Formation component + animation/slot generation | **Line slot core implemented; Square pending** |
 | Company slot deconfliction | Formation planner | **72m/68m Major company-slot baseline implemented** |
-| Final-slot arrival F30V | Shared movement completion authority | Planned |
-| Navigation V3 | Navigation/path execution service | Planned |
+| Final-slot arrival F30V | Shared movement completion authority | **50 cm final-arrival core implemented** |
+| Navigation V3 | Navigation/path execution service | **NavMesh waypoint route core implemented** |
 | River/bridge routing | Route planner + bridge transaction | Planned |
-| Fire ranges/cones | Combat/visibility components + debug draw | Planned |
-| LOS/contact | Visibility/contact subsystem | Planned |
+| Fire ranges/cones | Combat/visibility components + debug draw | **Range/cone + QA drawing core implemented** |
+| LOS/contact | Visibility/contact subsystem | **LOS eligibility core implemented; contact/FOW pending** |
 | Volley/reload | Combat state machine | Planned |
 | Casualties/morale | Unit combat state/data | Planned |
 | Under-fire reaction F26 | AI/reaction component | Planned |
