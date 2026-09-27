@@ -63,10 +63,10 @@
 |---|---:|---|---|---|---|---|
 | UE-P030 | P0 | Base tactical unit state | `Regiment.cs` family | `AStrategyUnit` | IMPLEMENTED | Stable ID, side, echelon, name, strength, state and selection are authoritative. |
 | UE-P031 | P0 | Company entity | Company baseline | Infantry company actor/data | IMPLEMENTED | Company exists independently with current/initial strength and command parent. |
-| UE-P032 | P0 | Battalion/Major entity | F27 | HQ actor + hierarchy component | SCAFFOLD | Major owns correct company set and can receive player/AI mission. |
-| UE-P033 | P0 | Regiment entity/HQ | F27/F28 | HQ actor + hierarchy component | SCAFFOLD | Regiment owns Major A/B and physical regimental HQ. |
-| UE-P034 | P0 | Brigade entity/HQ | F30B | Higher HQ actor | SCAFFOLD | Brigade exists physically and in hierarchy. |
-| UE-P035 | P0 | Division entity/HQ | F30B | Higher HQ actor | SCAFFOLD | Division exists physically and in hierarchy. |
+| UE-P032 | P0 | Battalion/Major entity | F27 | HQ actor + hierarchy component | IMPLEMENTED | Major owns correct company set and can receive player/AI mission. |
+| UE-P033 | P0 | Regiment entity/HQ | F27/F28 | HQ actor + hierarchy component | IMPLEMENTED | Regiment owns Major A/B and physical regimental HQ. |
+| UE-P034 | P0 | Brigade entity/HQ | F30B | Higher HQ actor | IMPLEMENTED | Brigade exists physically and in hierarchy. |
+| UE-P035 | P0 | Division entity/HQ | F30B | Higher HQ actor | IMPLEMENTED | Division exists physically and in hierarchy. |
 | UE-P036 | P0 | OrganicParent | F30M | Command relationship state | IMPLEMENTED | Permanent OOB ownership survives temporary tasking. |
 | UE-P037 | P0 | CurrentCommandParent | F30M | Command relationship state | IMPLEMENTED | Tactical parent can differ from OrganicParent and be restored. |
 | UE-P038 | P1 | Command relationship lines | F27/F29D | Presentation component | BACKLOG | Selected formations show correct parent/subordinate connections. |
@@ -305,3 +305,21 @@ The Unreal port reaches tactical parity only when:
 - no Unreal system silently simplifies established command authority, formations, navigation, LOS/fire eligibility, cavalry behaviour, OOB semantics or execution completion.
 
 After that gate, Unreal may become the active tactical implementation and Unity can move from behavioural reference to archived/reference status.
+
+
+## U02 runtime assembly QA
+
+The current Unreal test GameMode can auto-spawn a Danish command hierarchy for U02 validation:
+
+`Division -> Brigade -> Regiment -> Major A/B -> 4 companies each`.
+
+Expected runtime checks:
+
+1. Exactly 13 strategy entities spawn: 1 Division HQ, 1 Brigade HQ, 1 Regiment HQ, 2 Major HQs and 8 Companies.
+2. Every entity has a non-empty stable ID and readable debug label.
+3. Major A/B report Regiment as both OrganicParent and CurrentCommandParent.
+4. Companies 1-4 report Major A; Companies 5-8 report Major B.
+5. Parent `OrganicSubordinates` and `CurrentSubordinates` counts match the hierarchy.
+6. `RestoreOrganicCommandParent()` can restore a temporarily retasked unit without changing OrganicParent.
+7. All placeholder actors can be selected through the Visibility trace collider.
+8. No C++/UHT/editor build errors.
