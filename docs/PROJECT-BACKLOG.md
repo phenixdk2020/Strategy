@@ -4,6 +4,8 @@
 
 Dette dokument er projektets centrale intake-log for beslutninger og idéer, der ikke nødvendigvis implementeres i den aktive prototype med det samme. Formålet er at sikre, at gameplay-idéer og designbeslutninger fra projektarbejdet ikke kun findes i chatten.
 
+**Unreal-migration:** Feature-for-feature parity mod den eksisterende Unity battle-prototype spores separat i [UNREAL-PARITY-BACKLOG.md](UNREAL-PARITY-BACKLOG.md). Denne hovedbacklog beholder langsigtet game-design scope; Unreal parity-backloggen bruges til selve engine-migreringen.
+
 ## Statusdefinitioner
 
 - **AKTIV** — implementeres/testes i den aktuelle build.
