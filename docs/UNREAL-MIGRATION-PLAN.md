@@ -69,14 +69,14 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Placeholder units have visibility-trace selection colliders and debug labels so hierarchy and U01 selection can be tested together.
 - U02 remains BUILD+QA PENDING until UE 5.8.3 confirms the spawn counts, parent/subordinate links and selection behaviour.
 
-### U03 — Orders and authority
-- MOVE.
-- ANGRIB HER.
-- FORSVAR HER.
-- HOLD.
-- Facing placement.
-- Direct player authority vs inherited Officer AI authority.
-- Physical execution state separated from standing intent.
+### U03 — Orders and authority — CORE STATE IMPLEMENTED / EXECUTORS PENDING
+- Order type set includes MOVE, ANGRIB HER, FORSVAR HER, HOLD, RYK FREM, TILBAGETRÆK, SAML, SPEJD HER and CHARGE.
+- Every order carries explicit authority: inherited AI, Officer AI or Direct Player.
+- Lower authority cannot replace a higher-authority current order.
+- Standing intent and physical execution are separate states.
+- Execution lifecycle supports Idle, PendingTarget, Pending, Executing, Completed, Failed and Superseded.
+- New accepted orders receive a serial and can supersede an executing order cleanly.
+- MOVE/ANGRIB/FORSVAR/HOLD physical executors and facing placement remain to be implemented before U03 PASS.
 
 ### U04 — Infantry movement/formations
 - Line.
