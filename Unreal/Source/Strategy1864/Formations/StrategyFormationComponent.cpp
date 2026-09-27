@@ -34,9 +34,20 @@ TArray<FStrategyFormationSlot> UStrategyFormationComponent::GenerateSoldierSlots
     const FVector Forward = FacingRotation.Vector();
     const FVector Right = FRotationMatrix(FacingRotation).GetScaledAxis(EAxis::Y);
 
-    if (CurrentFormation == EStrategyFormationType::MarchColumn)
+    if (CurrentFormation == EStrategyFormationType::MarchColumn ||
+        CurrentFormation == EStrategyFormationType::CavalryColumn ||
+        CurrentFormation == EStrategyFormationType::DefileColumn)
     {
-        const int32 EffectiveColumnWidth = FMath::Max(1, ColumnWidth);
+        int32 EffectiveColumnWidth = FMath::Max(1, ColumnWidth);
+
+        if (CurrentFormation == EStrategyFormationType::CavalryColumn)
+        {
+            EffectiveColumnWidth = 4;
+        }
+        else if (CurrentFormation == EStrategyFormationType::DefileColumn)
+        {
+            EffectiveColumnWidth = 2;
+        }
         const int32 RowCount = FMath::CeilToInt(static_cast<float>(Strength) / EffectiveColumnWidth);
 
         for (int32 Index = 0; Index < Strength; ++Index)
@@ -59,7 +70,63 @@ TArray<FStrategyFormationSlot> UStrategyFormationComponent::GenerateSoldierSlots
         return Result;
     }
 
-    const int32 EffectiveRanks = FMath::Max(1, RankCount);
+    if (CurrentFormation == EStrategyFormationType::Square)
+    {
+        const int32 SideCount = 4;
+        const int32 PerSide = FMath::Max(1, FMath::CeilToInt(static_cast<float>(Strength) / SideCount));
+        const float HalfExtent = FMath::Max(300.0f, (PerSide - 1) * SoldierLateralSpacingCm * 0.5f);
+
+        for (int32 Index = 0; Index < Strength; ++Index)
+        {
+            const int32 Side = FMath::Min(3, Index / PerSide);
+            const int32 Along = Index % PerSide;
+            const float Alpha =
+                PerSide <= 1
+                ? 0.5f
+                : static_cast<float>(Along) / static_cast<float>(PerSide - 1);
+            const float Offset = FMath::Lerp(-HalfExtent, HalfExtent, Alpha);
+
+            FVector LocalOffset = FVector::ZeroVector;
+            float SlotYaw = FacingYaw;
+
+            switch (Side)
+            {
+                case 0:
+                    LocalOffset = Forward * HalfExtent + Right * Offset;
+                    SlotYaw = FacingYaw;
+                    break;
+
+                case 1:
+                    LocalOffset = Right * HalfExtent - Forward * Offset;
+                    SlotYaw = FacingYaw + 90.0f;
+                    break;
+
+                case 2:
+                    LocalOffset = -Forward * HalfExtent - Right * Offset;
+                    SlotYaw = FacingYaw + 180.0f;
+                    break;
+
+                case 3:
+                default:
+                    LocalOffset = -Right * HalfExtent + Forward * Offset;
+                    SlotYaw = FacingYaw - 90.0f;
+                    break;
+            }
+
+            FStrategyFormationSlot Slot;
+            Slot.WorldLocation = FormationCenter + LocalOffset;
+            Slot.FacingYaw = SlotYaw;
+            Slot.SlotIndex = Index;
+            Result.Add(Slot);
+        }
+
+        return Result;
+    }
+
+    const int32 EffectiveRanks =
+        CurrentFormation == EStrategyFormationType::CavalryLine
+        ? 4
+        : FMath::Max(1, RankCount);
     const int32 Files = FMath::CeilToInt(static_cast<float>(Strength) / EffectiveRanks);
 
     for (int32 Index = 0; Index < Strength; ++Index)
@@ -89,12 +156,32 @@ float UStrategyFormationComponent::EstimateFrontageCm(int32 Strength) const
         return 0.0f;
     }
 
-    if (CurrentFormation == EStrategyFormationType::MarchColumn)
+    if (CurrentFormation == EStrategyFormationType::MarchColumn ||
+        CurrentFormation == EStrategyFormationType::CavalryColumn ||
+        CurrentFormation == EStrategyFormationType::DefileColumn)
     {
-        return FMath::Max(1, ColumnWidth) * SoldierLateralSpacingCm;
+        int32 Width = FMath::Max(1, ColumnWidth);
+        if (CurrentFormation == EStrategyFormationType::CavalryColumn)
+        {
+            Width = 4;
+        }
+        else if (CurrentFormation == EStrategyFormationType::DefileColumn)
+        {
+            Width = 2;
+        }
+        return Width * SoldierLateralSpacingCm;
     }
 
-    const int32 EffectiveRanks = FMath::Max(1, RankCount);
+    if (CurrentFormation == EStrategyFormationType::Square)
+    {
+        const int32 PerSide = FMath::Max(1, FMath::CeilToInt(static_cast<float>(Strength) / 4.0f));
+        return FMath::Max(0, PerSide - 1) * SoldierLateralSpacingCm;
+    }
+
+    const int32 EffectiveRanks =
+        CurrentFormation == EStrategyFormationType::CavalryLine
+        ? 4
+        : FMath::Max(1, RankCount);
     const int32 Files = FMath::CeilToInt(static_cast<float>(Strength) / EffectiveRanks);
     return FMath::Max(0, Files - 1) * SoldierLateralSpacingCm;
 }
