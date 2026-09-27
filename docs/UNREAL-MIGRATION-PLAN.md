@@ -123,25 +123,29 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Square target eligibility uses four 90-degree fire sectors.
 - Smoke/Niagara, detailed casualty categories, routed thresholds and full Square-vs-CAV reaction remain pending.
 
-### U07 — Officer AI
-- Captain/company AI.
-- Major/battalion AI.
-- Regiment AI.
-- Brigade/division delegation.
-- Command zones.
-- HQ follow/rear depth.
-- Mission completion.
+### U07 — Officer AI — DELEGATION/HQ CORE IMPLEMENTED / RUNTIME QA PENDING
+- One shared Officer AI component is attached to every strategy unit and uses the same order-authority model for player-delegated and enemy units.
+- AI ON/OFF can cascade recursively through the live command hierarchy.
+- Inherited non-Attack/Defend missions are accepted only when no protected DirectPlayer authority is active.
+- Finite higher-authority orders stop blocking lower delegated AI after physical completion; standing HOLD/FORSVAR remains protected.
+- HQ follow is implemented as background movement derived from subordinate centroid and committed mission facing, not as a competing order/HqGoal writer.
+- Current follow baselines preserve the F30P direction: Battalion 65 m rear; Regiment 90 m rear; Brigade 120 m rear +65 m lateral; Division 145 m rear -75 m lateral.
+- Direct player MOVE owns HQ position while executing and suppresses follow.
+- Selected HQs draw the documented inner/outer command zones for QA.
+- Parent mission completion already waits on live subordinate execution.
+- Tactical decision quality, officer personality/stats and command-delay gameplay effects remain later work.
 
-### U08 — Cavalry
-- Mounted cavalry movement.
-- 4-rank Line/Charge.
-- 4-abreast normal Column.
-- 2-abreast bridge/defile approach only near the bridge.
-- Charge/contact rules.
-- Dynamic task attachment to Major A/B.
-- Return to previous command parent.
-- SPEJD HER reconnaissance order.
-- Horse + rider as separate skeletal meshes/animation graphs.
+### U08 — Cavalry — FORMATION/BRIDGE/TASKING CORE IMPLEMENTED / CHARGE+DRAGOON WORK PENDING
+- Cavalry base actor, separate horse/rider skeletal components and formation state are present.
+- 4-rank Line/Charge geometry, 4-abreast normal Column and 2-abreast Defile geometry are implemented at core level.
+- Bridge route metadata activates Defile only near the approach/inside crossing and restores the pre-defile formation afterwards.
+- Higher ANGRIB HER can temporarily task-attach available cavalry to Major A/B through CurrentCommandParent without changing OrganicParent.
+- Two-cavalry/two-Major allocation compares direct vs crossed total travel cost.
+- Executing DirectPlayer cavalry orders are protected from automatic retasking.
+- Attack completion restores the previous command parent and issues a background reserve move.
+- FORSVAR HER assigns cavalry reserve positions behind/lateral to paired Majors while retaining higher ownership.
+- Runtime QA scenario now includes two Danish cavalry under Division.
+- Charge/contact collision, physical rider reform, Dragon dismount/remount and SPEJD HER remain pending.
 
 ### U09 — OOB/HUD/semantic zoom
 - OOB panel.
