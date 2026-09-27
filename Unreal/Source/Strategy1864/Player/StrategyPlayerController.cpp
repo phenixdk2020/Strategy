@@ -154,7 +154,7 @@ void AStrategyPlayerController::SelectUnitsInScreenRectangle(const FVector2D& St
         }
 
         FVector2D ScreenPoint;
-        if (!ProjectWorldLocationToScreen(Unit->GetActorLocation(), ScreenPoint, true))
+        if (!ProjectWorldLocationToScreen(Unit->GetActorLocation(), ScreenPoint, false))
         {
             continue;
         }
