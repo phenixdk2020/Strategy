@@ -40,8 +40,14 @@ public:
     int32 CurrentStrength = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Selection")
+    bool bPlayerControllable = true;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Selection")
     bool bSelected = false;
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Selection")
     virtual void SetSelected(bool bNewSelected);
+
+    UFUNCTION(BlueprintImplementableEvent, Category="Strategy|Selection")
+    void OnSelectionChanged(bool bNewSelected);
 };
