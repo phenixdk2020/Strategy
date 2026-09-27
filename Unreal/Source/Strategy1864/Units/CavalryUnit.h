@@ -6,6 +6,8 @@
 #include "CavalryUnit.generated.h"
 
 class USkeletalMeshComponent;
+class UStrategyCavalryChargeComponent;
+class UStrategyDragoonComponent;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API ACavalryUnit : public AStrategyUnit
@@ -24,6 +26,12 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Cavalry")
     TObjectPtr<USkeletalMeshComponent> RiderMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Cavalry")
+    TObjectPtr<UStrategyCavalryChargeComponent> ChargeComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Cavalry")
+    TObjectPtr<UStrategyDragoonComponent> DragoonComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Cavalry")
     FName RiderSocketName = TEXT("RiderSocket");
