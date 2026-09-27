@@ -145,7 +145,7 @@
 | UE-P121 | P1 | 0-hit volley | B-002/current design | Combat state | IMPLEMENTED CORE | Valid volley may resolve zero hits without false strength loss. |
 | UE-P122 | P1 | Smoke feedback | F29X/Z | Niagara/combat events | BACKLOG | Smoke corresponds to real firing event; no fake smoke on formation changes. |
 | UE-P123 | P1 | Morale/cohesion | battle baseline | Unit combat state | IMPLEMENTED CORE | Morale/cohesion are separate authoritative values and affect behaviour. |
-| UE-P124 | P1 | Routed state | battle baseline | Unit combat state | BACKLOG | Routed unit leaves normal command/fire behaviour and presentation updates. |
+| UE-P124 | P1 | Routed state | battle baseline | Unit combat state | IMPLEMENTED CORE | Routed unit leaves normal command/fire behaviour and presentation updates. |
 | UE-P125 | P1 | Under-fire reaction | F26/F30V | Reaction component | IMPLEMENTED CORE | Temporary reaction may pause movement but cannot complete parent mission. |
 | UE-P126 | P2 | Representative casualties | v00.00.08 | Visual subsystem | BACKLOG | Visual casualty feedback does not become authoritative casualty state. |
 
@@ -157,7 +157,7 @@
 | UE-P131 | P1 | Four square fire sectors | F29V/X/Z | Combat geometry | IMPLEMENTED CORE | Square fires only from eligible face/sector. |
 | UE-P132 | P1 | Square visual ownership | F29X | Presentation | BACKLOG | Square outline replaces incompatible Line/Column footprint/fans. |
 | UE-P133 | P1 | No formation phantom volley | F29X | Fire state machine | BACKLOG | Entering/readying Square does not produce smoke/0-hit volley. |
-| UE-P134 | P1 | LOS-gated cavalry threat | F30S | Reaction AI | BACKLOG | Square/anti-CAV reaction requires actual LOS. |
+| UE-P134 | P1 | LOS-gated cavalry threat | F30S | Reaction AI | IMPLEMENTED CORE | Square/anti-CAV reaction requires actual LOS. |
 | UE-P135 | P1 | Range/cone-gated CAV fire | F30S | Combat eligibility | IMPLEMENTED CORE | Cavalry must be inside LOS + selected range + valid sector/cone. |
 | UE-P136 | P1 | Directional square smoke | F29Z | Niagara | BACKLOG | Smoke originates from the firing square face only. |
 
@@ -165,18 +165,18 @@
 
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
-| UE-P150 | P0 | Company/Captain AI | Officer AI baseline | AI controller/component | BACKLOG | Company executes delegated mission locally without overriding direct player authority. |
-| UE-P151 | P0 | Major/Battalion AI | F27 | AI controller/component | BACKLOG | Major coordinates subordinate company slots/mission. |
-| UE-P152 | P0 | Regiment AI | F28+ | AI controller/component | BACKLOG | Regiment delegates coherently to both battalions. |
-| UE-P153 | P0 | Brigade AI | F30B/M | Higher AI | BACKLOG | Brigade delegates through Regiment. |
-| UE-P154 | P0 | Division AI | F30B/M | Higher AI | BACKLOG | Division delegates through Brigade/Regiment/Majors. |
-| UE-P155 | P0 | AI cascade ON | F30M | Command AI state | BACKLOG | Higher AI ON cascades to intended subordinate command chain. |
+| UE-P150 | P0 | Company/Captain AI | Officer AI baseline | AI controller/component | IMPLEMENTED CORE | Company executes delegated mission locally without overriding direct player authority. |
+| UE-P151 | P0 | Major/Battalion AI | F27 | AI controller/component | IMPLEMENTED CORE | Major coordinates subordinate company slots/mission. |
+| UE-P152 | P0 | Regiment AI | F28+ | AI controller/component | IMPLEMENTED CORE | Regiment delegates coherently to both battalions. |
+| UE-P153 | P0 | Brigade AI | F30B/M | Higher AI | IMPLEMENTED CORE | Brigade delegates through Regiment. |
+| UE-P154 | P0 | Division AI | F30B/M | Higher AI | IMPLEMENTED CORE | Division delegates through Brigade/Regiment/Majors. |
+| UE-P155 | P0 | AI cascade ON | F30M | Command AI state | IMPLEMENTED CORE | Higher AI ON cascades to intended subordinate command chain. |
 | UE-P156 | P0 | Direct order precedence | F18/F30M | Authority model | BACKLOG | Direct player mission beats inherited AI task. |
 | UE-P157 | P1 | AI ON/OFF uniform state | F30W | OOB/AI state | BACKLOG | Division→Company+CAV all display only ON/OFF consistently. |
-| UE-P158 | P1 | Mission completion | F30S/V/W | AI/order integration | BACKLOG | AI no longer chases/rearms after finite mission physically completes. |
-| UE-P159 | P1 | HQ follow | F30P | HQ movement | BACKLOG | Major/Regiment/Brigade/Division HQs follow documented rear geometry. |
-| UE-P160 | P1 | HQ depth conflict prevention | F30U | HQ goal authority | BACKLOG | Defend mission owner prevents competing HQ-depth goal writers. |
-| UE-P161 | P1 | Command zones | F30P | Command visualization/component | BACKLOG | Selected HQ shows correct inner/outer command bands. |
+| UE-P158 | P1 | Mission completion | F30S/V/W | AI/order integration | IMPLEMENTED CORE | AI no longer chases/rearms after finite mission physically completes. |
+| UE-P159 | P1 | HQ follow | F30P | HQ movement | IMPLEMENTED CORE | Major/Regiment/Brigade/Division HQs follow documented rear geometry. |
+| UE-P160 | P1 | HQ depth conflict prevention | F30U | HQ goal authority | IMPLEMENTED ARCHITECTURE CORE | Defend mission owner prevents competing HQ-depth goal writers. |
+| UE-P161 | P1 | Command zones | F30P | Command visualization/component | IMPLEMENTED QA CORE | Selected HQ shows correct inner/outer command bands. |
 | UE-P162 | P2 | Command-zone gameplay effects | design B-061/F30P | Command simulation | DEFERRED | Order delay/coordination effects implemented after parity presentation. |
 | UE-P163 | P2 | Officer stats/personality | B-170/B-190 | AI decision data | BACKLOG | Shared player-delegated/enemy AI decision core uses officer data. |
 
@@ -194,10 +194,10 @@
 | UE-P187 | P1 | Restore pre-bridge formation | F30H/X | Crossing state | DEFILE RESTORE CORE IMPLEMENTED | Formation used before narrow mode is restored after exit clearance. |
 | UE-P188 | P1 | Physical cavalry reform | F30H | Formation movement | BACKLOG | Riders physically reform; charge speed respects incomplete reform. |
 | UE-P189 | P1 | Cavalry charge/contact | F30/F30N | Cavalry combat | BACKLOG | Charge executes to valid contact without passing through enemy formation. |
-| UE-P190 | P1 | Defensive cavalry reserve | F30S | Higher mission planner | BACKLOG | Attached CAV stays behind/outside supported battalion (~150m rear/~45m lateral QA baseline). |
-| UE-P191 | P1 | Temporary attack attachment | F30M | Command-parent state | BACKLOG | Available CAV task-attaches to attacking Major A/B without changing OrganicParent. |
-| UE-P192 | P1 | Travel-cost pairing | F30M | Task allocator | BACKLOG | Two-CAV/two-battalion allocation minimises crossing/travel cost. |
-| UE-P193 | P1 | Return to prior command parent | F30M | Command-parent state | BACKLOG | CAV returns to previous parent/reserve after attack mission ends. |
+| UE-P190 | P1 | Defensive cavalry reserve | F30S | Higher mission planner | IMPLEMENTED CORE | Attached CAV stays behind/outside supported battalion (~150m rear/~45m lateral QA baseline). |
+| UE-P191 | P1 | Temporary attack attachment | F30M | Command-parent state | IMPLEMENTED CORE | Available CAV task-attaches to attacking Major A/B without changing OrganicParent. |
+| UE-P192 | P1 | Travel-cost pairing | F30M | Task allocator | IMPLEMENTED CORE | Two-CAV/two-battalion allocation minimises crossing/travel cost. |
+| UE-P193 | P1 | Return to prior command parent | F30M | Command-parent state | IMPLEMENTED CORE | CAV returns to previous parent/reserve after attack mission ends. |
 | UE-P194 | P2 | Cavalry screen/opportunity AI | F30N | Cavalry AI | BACKLOG | CAV screens/repositions without unjustified autonomous charge. |
 | UE-P195 | P2 | SPEJD HER | F30Q | Recon order | DEFERRED | Enabled only after true FOG/contact subsystem exists. |
 | UE-P196 | P2 | Dragon dismount | F30J/S | Cavalry specialization | BACKLOG | Mounted Dragon splits into combat group + horse park/holders. |
@@ -315,7 +315,7 @@ The current Unreal test GameMode can auto-spawn a Danish command hierarchy for U
 
 Expected runtime checks:
 
-1. Exactly 13 strategy entities spawn: 1 Division HQ, 1 Brigade HQ, 1 Regiment HQ, 2 Major HQs and 8 Companies.
+1. Core OOB spawns 13 Danish command/infantry entities: 1 Division HQ, 1 Brigade HQ, 1 Regiment HQ, 2 Major HQs and 8 Companies. With current default QA toggles, 2 Danish cavalry and 2 Prussian companies are added for 17 strategy entities total.
 2. Every entity has a non-empty stable ID and readable debug label.
 3. Major A/B report Regiment as both OrganicParent and CurrentCommandParent.
 4. Companies 1-4 report Major A; Companies 5-8 report Major B.
@@ -409,3 +409,24 @@ Still pending before parity:
 - Square target eligibility now uses four 90-degree faces instead of the normal forward ±35-degree cone.
 
 All items remain build/runtime QA pending until UE 5.8.3 validates this checkpoint.
+
+
+## U07-U08 officer AI / cavalry tasking checkpoint
+
+- Every strategy unit now owns one shared `UStrategyOfficerAIComponent`; player-delegated and enemy-side units use the same authority machinery.
+- AI ON/OFF can cascade recursively through `CurrentSubordinates`.
+- Non-Attack/Defend parent missions can be inherited by subordinate AI only when no protected DirectPlayer authority is active.
+- Finite DirectPlayer authority is released after physical completion; standing DirectPlayer HOLD/FORSVAR remains protected until replaced.
+- HQ follow is a background movement layer, not an order writer. It derives position from subordinate centroid plus mission-facing rear/lateral offsets.
+- Current QA follow defaults: Battalion 65 m rear; Regiment 90 m rear; Brigade 120 m rear +65 m lateral; Division 145 m rear -75 m lateral.
+- A directly executing player MOVE temporarily owns HQ position and suppresses background follow.
+- Selected HQs draw their existing inner/outer command-zone radii; only selection controls the QA visualization.
+- Rout thresholds are now authoritative: morale <=20 or cohesion <=10 sets Routed, stops movement, sets HOLD FIRE and fails current physical execution.
+- Infantry company anti-cavalry reaction requires actual LOS and a configurable mounted-threat distance; it enters Square, preserves the previous formation and can restore it after the threat has been absent for a delay.
+- Higher-HQ infantry slot planning explicitly excludes cavalry.
+- On higher ANGRIB HER, available directly attached cavalry can be temporarily task-attached to commanded Major/Battalion HQs using `CurrentCommandParent` only; `OrganicParent` is unchanged.
+- With two cavalry and two Majors, the direct vs crossed pairings are compared and the lower total squared travel cost is chosen.
+- Cavalry with a currently executing DirectPlayer order is protected from automatic task attachment.
+- When the higher attack execution completes/fails/is superseded, temporary cavalry attachments restore the previous command parent and receive a reserve move that does not re-open the higher tactical execution state.
+- FORSVAR HER keeps cavalry under its higher parent but gives separated reserve moves behind paired Majors using the ~150 m rear / ~45 m lateral QA baseline.
+- Runtime test OOB can now spawn two Danish cavalry directly under Division plus two non-player-controllable Prussian QA companies.
