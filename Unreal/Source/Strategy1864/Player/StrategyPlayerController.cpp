@@ -23,6 +23,26 @@ void AStrategyPlayerController::SetupInputComponent()
     check(InputComponent);
     InputComponent->BindAction(TEXT("Select"), IE_Pressed, this, &AStrategyPlayerController::SelectionPressed);
     InputComponent->BindAction(TEXT("Select"), IE_Released, this, &AStrategyPlayerController::SelectionReleased);
+
+    FInputActionBinding& PauseBinding =
+        InputComponent->BindAction(
+            TEXT("PauseSimulation"),
+            IE_Pressed,
+            this,
+            &AStrategyPlayerController::TogglePauseSimulation);
+    PauseBinding.bExecuteWhenPaused = true;
+
+    FInputActionBinding& Speed1Binding =
+        InputComponent->BindAction(TEXT("Time1x"), IE_Pressed, this, &AStrategyPlayerController::SetSpeed1x);
+    Speed1Binding.bExecuteWhenPaused = true;
+
+    FInputActionBinding& Speed2Binding =
+        InputComponent->BindAction(TEXT("Time2x"), IE_Pressed, this, &AStrategyPlayerController::SetSpeed2x);
+    Speed2Binding.bExecuteWhenPaused = true;
+
+    FInputActionBinding& Speed3Binding =
+        InputComponent->BindAction(TEXT("Time3x"), IE_Pressed, this, &AStrategyPlayerController::SetSpeed3x);
+    Speed3Binding.bExecuteWhenPaused = true;
 }
 
 void AStrategyPlayerController::PlayerTick(float DeltaTime)
@@ -405,4 +425,41 @@ void AStrategyPlayerController::SelectUnitFromOOB(
             CameraPawn->FocusOnWorldLocation(Unit->GetActorLocation());
         }
     }
+}
+
+
+void AStrategyPlayerController::TogglePauseSimulation()
+{
+    const bool bNewPaused = !IsPaused();
+    SetPause(bNewPaused);
+}
+
+void AStrategyPlayerController::SetSimulationSpeed(float NewSpeed)
+{
+    SimulationSpeed = FMath::Clamp(NewSpeed, 1.0f, 3.0f);
+
+    if (UWorld* World = GetWorld())
+    {
+        World->GetWorldSettings()->SetTimeDilation(SimulationSpeed);
+    }
+
+    if (IsPaused())
+    {
+        SetPause(false);
+    }
+}
+
+void AStrategyPlayerController::SetSpeed1x()
+{
+    SetSimulationSpeed(1.0f);
+}
+
+void AStrategyPlayerController::SetSpeed2x()
+{
+    SetSimulationSpeed(2.0f);
+}
+
+void AStrategyPlayerController::SetSpeed3x()
+{
+    SetSimulationSpeed(3.0f);
 }
