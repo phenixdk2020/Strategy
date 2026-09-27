@@ -1,0 +1,13 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "",
+  "Category": "Games",
+  "Description": "PROJECT 1864 Unreal Engine port",
+  "Modules": [
+    {
+      "Name": "Strategy1864",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}
