@@ -195,7 +195,8 @@ TArray<AStrategyUnit*> UStrategyParentFormationPlannerComponent::GetDirectComman
 
     for (AStrategyUnit* Subordinate : OwnerUnit->CommandComponent->CurrentSubordinates)
     {
-        if (IsValid(Subordinate))
+        if (IsValid(Subordinate) &&
+            Subordinate->Echelon != EStrategyEchelon::Cavalry)
         {
             Result.Add(Subordinate);
         }
