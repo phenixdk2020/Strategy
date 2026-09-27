@@ -92,23 +92,27 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Parent committed facing is applied before company slots are generated.
 - Current Unity F30X company spacing baseline is preserved: 72 m nominal / 68 m reserved minimum.
 - Parent order authority is preserved in generated child missions.
-- Early deployment before enemy fire range, physical soldier reform, deeper Regiment/Brigade/Division slot planning and final runtime deconfliction remain pending.
+- F30X early deployment is now implemented at formation-state level using max(own/enemy maximum fire range)+35 m.
+- Long movement can select March Column automatically and switch back to Line at the deployment threshold.
+- Attack/Defend planning now cascades Division → Brigade → Regiment → Battalion/Major → Company with committed facing preserved.
+- Parent mission completion waits on immediate subordinate execution, allowing completion to cascade back up the hierarchy.
+- Physical 1:1 soldier reform and final runtime deconfliction remain pending.
 
-### U05 — Terrain/navigation
-- Hard-blocking river/water.
-- Bridge-only crossing where a true bank change is required.
-- Same-bank river routing without bridge round-trip.
-- Building/fence obstacle handling.
-- Formation-aware bridge/defile movement.
+### U05 — Terrain/navigation — NAVMESH CORE IMPLEMENTED / RIVER-BRIDGE RULES PENDING
+- Formation-level route planner now requests Unreal NavMesh paths and returns ordered waypoints.
+- Movement executor follows route waypoints while preserving one authoritative final goal.
+- The 50 cm final-arrival rule applies only to the real mission destination; intermediate waypoint tolerance cannot complete the mission.
+- NavMesh provides the initial obstacle/building-avoidance foundation.
+- Hard-blocking water classification, true-bank-change detection, same-bank bank-follow routing and persistent bridge transaction remain pending.
 
-### U06 — Combat/visibility
-- Close / Medium / Long fire policies.
-- LOS.
-- ±35 degree fire arc.
-- Test/QA threat cones.
-- Volley/reload/casualties.
-- Under-fire reactions.
-- Square vs cavalry.
+### U06 — Combat/visibility — ELIGIBILITY CORE IMPLEMENTED / FIRE EXECUTION PENDING
+- Shared fire-control state implements HOLD, CLOSE, MEDIUM and LONG policies.
+- Shared visibility component performs line-of-sight traces.
+- Fire eligibility requires enemy side, combat-effective state, active range, ±35° cone and actual LOS.
+- QA Close/Medium/Long cone drawing is separate from fire authority.
+- Prussian QA cones can be visible from battle startup without granting target knowledge or firing permission.
+- Runtime QA scenario now includes optional Prussian company targets.
+- Volley/reload/ammunition/casualties, under-fire reactions and Square-vs-CAV execution remain pending.
 
 ### U07 — Officer AI
 - Captain/company AI.
