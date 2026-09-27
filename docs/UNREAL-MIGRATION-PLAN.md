@@ -76,7 +76,12 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Standing intent and physical execution are separate states.
 - Execution lifecycle supports Idle, PendingTarget, Pending, Executing, Completed, Failed and Superseded.
 - New accepted orders receive a serial and can supersede an executing order cleanly.
-- MOVE/ANGRIB/FORSVAR/HOLD physical executors and facing placement remain to be implemented before U03 PASS.
+- Shared physical movement executor is now implemented for MOVE and as the physical core for ANGRIB HER/FORSVAR HER/RYK FREM/TILBAGETRÆK/SAML/SPEJD HER.
+- HOLD immediately stops movement and completes physical execution while remaining standing intent.
+- PlayerController can issue DirectPlayer orders to the current selection without clearing it.
+- Pending-order placement can commit a ground target under the cursor while preserving selection.
+- Arrival tolerance is currently 50 cm, aligned with the Unity F30V final-slot authority scale.
+- ANGRIB HER/FORSVAR HER still need U04 formation/subordinate slot planning; click-drag facing still needs its final interaction pass before U03 PASS.
 
 ### U04 — Infantry movement/formations
 - Line.
