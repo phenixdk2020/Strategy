@@ -8,6 +8,7 @@
 #include "../Formations/StrategyFormationComponent.h"
 #include "../Formations/StrategyFormationPolicyComponent.h"
 #include "../Orders/StrategyParentExecutionComponent.h"
+#include "../Navigation/StrategyRoutePlannerComponent.h"
 
 AStrategyUnit::AStrategyUnit()
 {
@@ -36,6 +37,7 @@ AStrategyUnit::AStrategyUnit()
     FormationComponent = CreateDefaultSubobject<UStrategyFormationComponent>(TEXT("FormationComponent"));
     FormationPolicy = CreateDefaultSubobject<UStrategyFormationPolicyComponent>(TEXT("FormationPolicy"));
     ParentExecution = CreateDefaultSubobject<UStrategyParentExecutionComponent>(TEXT("ParentExecution"));
+    RoutePlanner = CreateDefaultSubobject<UStrategyRoutePlannerComponent>(TEXT("RoutePlanner"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
