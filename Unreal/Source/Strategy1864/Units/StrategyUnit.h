@@ -5,6 +5,8 @@
 #include "StrategyUnit.generated.h"
 
 class USceneComponent;
+class USphereComponent;
+class UTextRenderComponent;
 class UStrategyOrderComponent;
 class UStrategyCommandComponent;
 
@@ -55,6 +57,12 @@ public:
     TObjectPtr<USceneComponent> SceneRoot;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<USphereComponent> SelectionCollider;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UTextRenderComponent> DebugLabel;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyOrderComponent> OrderComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
@@ -95,6 +103,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Unit")
     void SetUnitState(EStrategyUnitState NewState);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Identity")
+    void RefreshDebugLabel();
 
     UFUNCTION(BlueprintPure, Category="Strategy|Unit")
     bool IsCombatEffective() const;
