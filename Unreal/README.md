@@ -23,9 +23,9 @@ Not yet implemented:
 
 ## Open locally
 
-Open `Strategy1864.uproject` with an installed Unreal Engine 5 version. The project deliberately has no fixed EngineAssociation yet; the first local open/build establishes the concrete editor baseline.
+Open `Strategy1864.uproject` with Unreal Engine **5.8**. UE 5.8 is the project's current Unreal editor baseline.
 
-If Unreal asks to generate project files or compile the C++ module, allow it. Record the exact Unreal Editor version before subsequent engine-specific work.
+If Unreal asks to generate project files or compile the C++ module, allow it.
 
 ## First gate
 
