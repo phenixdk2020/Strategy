@@ -206,20 +206,22 @@ void AStrategyPlayerController::ClearSelection()
     }
 
     SelectedUnitObjects.Reset();
-    SelectedUnits.Reset();
 }
 
-const TArray<AStrategyUnit*>& AStrategyPlayerController::GetSelectedUnits() const
+TArray<AStrategyUnit*> AStrategyPlayerController::GetSelectedUnits() const
 {
-    SelectedUnits.Reset(SelectedUnitObjects.Num());
+    TArray<AStrategyUnit*> Result;
+    Result.Reserve(SelectedUnitObjects.Num());
+
     for (AStrategyUnit* Unit : SelectedUnitObjects)
     {
         if (IsValid(Unit))
         {
-            SelectedUnits.Add(Unit);
+            Result.Add(Unit);
         }
     }
-    return SelectedUnits;
+
+    return Result;
 }
 
 AStrategyHUD* AStrategyPlayerController::GetStrategyHUD() const
