@@ -82,11 +82,11 @@
 | UE-P052 | P0 | ANGRIB HER | F18/F29E/F30S | Attack executor | SCAFFOLD / PHYSICAL CORE IMPLEMENTED | Finite attack mission reaches assigned attack slots and does not chase forever. |
 | UE-P053 | P0 | FORSVAR HER | F29Y/F30U | Defend executor | SCAFFOLD / PHYSICAL CORE IMPLEMENTED | Defensive mission owns formation/HQ geometry until replaced. |
 | UE-P054 | P0 | HOLD/STOP | Command HUD baseline | Hold executor | IMPLEMENTED | Movement cancels/stops without corrupting standing state. |
-| UE-P055 | P0 | Click-drag facing | F30P | Order target/facing data | SCAFFOLD | Player-committed facing is mission data before slot generation. |
+| UE-P055 | P0 | Click-drag facing | F30P | Order target/facing data | IMPLEMENTED CORE | Player-committed facing is mission data before slot generation. |
 | UE-P056 | P0 | Direct player authority | F18 | Authority model | IMPLEMENTED | Direct order overrides inherited officer AI for its scope. |
-| UE-P057 | P0 | Standing intent vs execution | F30S/W | Order state model | IMPLEMENTED | Persistent intent and physical execution are independent states. |
+| UE-P057 | P0 | Standing intent vs execution | F30S/W | Order state model | IMPLEMENTED CORE + PARENT COMPLETION | Persistent intent and physical execution are independent states. |
 | UE-P058 | P0 | Active order colour lifecycle | F30Q/S/W | UMG command state | BACKLOG | Red=no active execution, blue=pending/executing, green=toggle/state. |
-| UE-P059 | P0 | Higher order propagation | F27/F30M | Command planner | BACKLOG | Division/Brigade/Regiment/Major correctly generate subordinate missions. |
+| UE-P059 | P0 | Higher order propagation | F27/F30M | Command planner | IMPLEMENTED CORE | Division/Brigade/Regiment/Major correctly generate subordinate missions. |
 | UE-P060 | P0 | Re-issue/supersede | F30V/U | Order lifecycle | IMPLEMENTED CORE | New mission cleanly replaces previous destinations and stale executors. |
 | UE-P061 | P1 | RYK FREM | F30Q | Order executor | BACKLOG | Movement active only while executors remain. |
 | UE-P062 | P1 | TILBAGETRÆK | F30Q | Order executor | BACKLOG | Coordinated withdrawal maintains command ownership. |
@@ -101,12 +101,12 @@
 | UE-P071 | P0 | Three-rank Line | Infantry baseline | Formation generator | IMPLEMENTED CORE | Full company forms documented three-rank line geometry. |
 | UE-P072 | P0 | March Column | F6/F30K | Formation generator | IMPLEMENTED CORE | Long movement selects march column without parent tug-of-war. |
 | UE-P073 | P0 | Physical reform | Formation baseline | Formation movement | BACKLOG | Soldiers/slots move into new geometry rather than teleporting. |
-| UE-P074 | P0 | Auto Line before combat | F30X | Formation policy | BACKLOG | Approaching enemy triggers physical Line reform before fire envelope. |
-| UE-P075 | P0 | Deploy threshold | F30X | Formation policy | BACKLOG | `max(own range, enemy range)+35m` policy is reproduced/tunable. |
+| UE-P074 | P0 | Auto Line before combat | F30X | Formation policy | IMPLEMENTED CORE | Approaching enemy triggers physical Line reform before fire envelope. |
+| UE-P075 | P0 | Deploy threshold | F30X | Formation policy | IMPLEMENTED | `max(own range, enemy range)+35m` policy is reproduced/tunable. |
 | UE-P076 | P0 | Company nominal spacing | F30X | Parent formation planner | IMPLEMENTED | Full-company centres use ~72 m nominal spacing in current QA baseline. |
 | UE-P077 | P0 | Reserved minimum spacing | F30X | Slot deconfliction | IMPLEMENTED BASELINE | ~68 m minimum reservation prevents company overlap at oblique facings. |
-| UE-P078 | P0 | Final-slot authority | F30V | Movement completion service | BACKLOG | One 0.50 m company final-slot completion rule owns mission arrival. |
-| UE-P079 | P0 | No premature stop | F30V | Movement completion | BACKLOG | Company cannot be marked arrived while still visibly short of slot. |
+| UE-P078 | P0 | Final-slot authority | F30V | Movement completion service | IMPLEMENTED CORE | One 0.50 m company final-slot completion rule owns mission arrival. |
+| UE-P079 | P0 | No premature stop | F30V | Movement completion | IMPLEMENTED CORE | Company cannot be marked arrived while still visibly short of slot. |
 | UE-P080 | P1 | Formation facing completion | F30S/P | FormationMotion equivalent | SCAFFOLD | Final visual turn completes without per-frame facing tug-of-war. |
 | UE-P081 | P1 | Parent mission reassert | F27/F30X | Mission executor | BACKLOG | Temporary interruption resumes same mission without forcing wrong formation. |
 | UE-P082 | P1 | Full 190-man footprint | Infantry baseline | Formation data | BACKLOG | Formation width/spacing is compatible with ~48 m current full-strength frontage. |
@@ -116,13 +116,13 @@
 
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
-| UE-P090 | P0 | Formation-level navigation | Navigation V3 | Navigation service | BACKLOG | Formation path is authoritative; individual soldiers do not independently choose strategic paths. |
+| UE-P090 | P0 | Formation-level navigation | Navigation V3 | Navigation service | IMPLEMENTED CORE | Formation path is authoritative; individual soldiers do not independently choose strategic paths. |
 | UE-P091 | P0 | Hard water blocking | River baseline | Nav/terrain tags | BACKLOG | Units cannot walk through river except legal crossings. |
 | UE-P092 | P0 | True bank-change detection | F30W | River route planner | BACKLOG | Bridge route is required only when destination changes river bank. |
 | UE-P093 | P0 | Same-bank bank-follow | F30W | River route planner | BACKLOG | Straight chord crossing a river bend does not cause cross-and-return bridge trip. |
 | UE-P094 | P0 | Bridge transaction | F9/F30H | Crossing state machine | BACKLOG | NearBank→FarBank→ExitBank→Direct persists until crossing completes. |
 | UE-P095 | P0 | Goal changes during bridge | F30H | Crossing state machine | BACKLOG | New goal updates final destination but does not cancel active bridge transaction. |
-| UE-P096 | P1 | Building avoidance | Navigation baseline | Nav obstacles | BACKLOG | Formations route around blocking buildings. |
+| UE-P096 | P1 | Building avoidance | Navigation baseline | Nav obstacles | SCAFFOLD VIA NAVMESH | Formations route around blocking buildings. |
 | UE-P097 | P1 | Fence/obstacle handling | F29P/design | Nav/formation avoidance | BACKLOG | Obstacles affect movement without destroying formation authority. |
 | UE-P098 | P1 | Bridge congestion/defile | F30H/X | Formation path policy | BACKLOG | Narrow crossing uses controlled narrow geometry and restores normal formation after exit. |
 | UE-P099 | P2 | Expanded battlefield/hills | B-290 | Unreal Landscape | BACKLOG | Tactical QA map includes usable elevation/LOS test terrain. |
@@ -131,15 +131,15 @@
 
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
-| UE-P110 | P0 | LOS query | F30S + combat baseline | Visibility subsystem | BACKLOG | Terrain/objects gate target awareness and firing. |
-| UE-P111 | P0 | Fire cone | F8/F30S | Combat geometry | BACKLOG | Infantry firing eligibility respects ±35° forward cone where applicable. |
-| UE-P112 | P0 | Close range policy | Fire baseline | Fire-control state | BACKLOG | Close policy selects/uses correct range. |
-| UE-P113 | P0 | Medium range policy | Fire baseline | Fire-control state | BACKLOG | Medium policy selects/uses correct range. |
-| UE-P114 | P0 | Long range policy | Fire baseline | Fire-control state | BACKLOG | Long policy selects/uses correct range. |
-| UE-P115 | P0 | HOLD FIRE | Fire baseline/F29X | Fire-control state | BACKLOG | No volley is produced while hold fire owns firing authority. |
-| UE-P116 | P0 | Active-range visual language | F30S/T/W | Debug/presentation | BACKLOG | Active band strong; other physical bands faint references. |
-| UE-P117 | P0 | Enemy TEST cones from startup | F30W/X | QA overlay | BACKLOG | Living Prussian infantry cones visible immediately in TEST. |
-| UE-P118 | P0 | QA cone != knowledge | F30W/S | Visibility/fire authority | BACKLOG | Debug cone never grants LOS, contact or firing authority. |
+| UE-P110 | P0 | LOS query | F30S + combat baseline | Visibility subsystem | IMPLEMENTED CORE | Terrain/objects gate target awareness and firing. |
+| UE-P111 | P0 | Fire cone | F8/F30S | Combat geometry | IMPLEMENTED CORE | Infantry firing eligibility respects ±35° forward cone where applicable. |
+| UE-P112 | P0 | Close range policy | Fire baseline | Fire-control state | IMPLEMENTED CORE | Close policy selects/uses correct range. |
+| UE-P113 | P0 | Medium range policy | Fire baseline | Fire-control state | IMPLEMENTED CORE | Medium policy selects/uses correct range. |
+| UE-P114 | P0 | Long range policy | Fire baseline | Fire-control state | IMPLEMENTED CORE | Long policy selects/uses correct range. |
+| UE-P115 | P0 | HOLD FIRE | Fire baseline/F29X | Fire-control state | IMPLEMENTED CORE | No volley is produced while hold fire owns firing authority. |
+| UE-P116 | P0 | Active-range visual language | F30S/T/W | Debug/presentation | IMPLEMENTED QA CORE | Active band strong; other physical bands faint references. |
+| UE-P117 | P0 | Enemy TEST cones from startup | F30W/X | QA overlay | IMPLEMENTED QA CORE | Living Prussian infantry cones visible immediately in TEST. |
+| UE-P118 | P0 | QA cone != knowledge | F30W/S | Visibility/fire authority | IMPLEMENTED CORE | Debug cone never grants LOS, contact or firing authority. |
 | UE-P119 | P0 | Volley/reload cycle | pre-F29 combat | Combat component | BACKLOG | Valid target triggers fire/reload cadence without phantom volleys. |
 | UE-P120 | P0 | Hit/casualty resolution | battle baseline | Combat state | BACKLOG | Strength changes only from valid resolved combat. |
 | UE-P121 | P1 | 0-hit volley | B-002/current design | Combat state | BACKLOG | Valid volley may resolve zero hits without false strength loss. |
@@ -355,3 +355,29 @@ Current U04 geometry baseline:
 8. The committed parent facing is copied into company slot missions before movement starts.
 9. DirectPlayer authority on the parent mission is preserved on generated company missions.
 10. This block does not yet implement enemy-range-driven early deployment, physical individual-soldier reform, or Regiment/Brigade/Division multi-level slot planning.
+
+
+## Combined U04-U06 implementation checkpoint
+
+Additional implementation in this checkpoint:
+
+- Click-drag order placement now derives committed facing from the target-to-drag vector while preserving selection.
+- Attack/Defend orders now cascade recursively through Division -> Brigade -> Regiment -> Battalion/Major -> Company.
+- Command-parent HQ actors no longer move directly onto Attack/Defend objectives; they retain mission authority while subordinates execute.
+- Parent execution completion polls immediate subordinates, allowing completion to propagate upward only after child execution ends.
+- Long company moves can enter March Column automatically.
+- F30X early-deploy policy uses `max(own MaximumFireRange, nearest enemy MaximumFireRange) + 35m` and switches March Column -> Line when the threshold is reached.
+- Movement now follows formation-level Unreal NavMesh waypoints when a valid nav path exists, with direct fallback only when no path is available.
+- Final target completion remains 50 cm; intermediate waypoint tolerance is separate and does not complete the mission.
+- A shared LOS component performs Visibility-channel traces.
+- A shared fire-control component owns Hold/Close/Medium/Long policy, active range, ±35 degree cone and LOS/range/cone target eligibility.
+- QA range cones are presentation only. Target eligibility still calls the LOS/fire-control authority independently.
+- Prussian QA companies can spawn in the runtime test scenario, and their Close/Medium/Long range cones are drawn from startup for test visibility.
+
+Still pending before parity:
+- runtime UE 5.8.3 build/QA for this checkpoint;
+- physical 1:1 soldier reform into generated slots;
+- river-bank classification and bridge transaction;
+- actual volley/reload/ammunition/casualty execution;
+- final command-HQ rear/follow geometry;
+- UMG active-order colour presentation.
