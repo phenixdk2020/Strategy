@@ -25,6 +25,16 @@ PROJECT 1864 udvikles nu i to uafhængige spor, så tactical stabilization ikke 
 - Fokus: campaign scene/map, strategic formations, movement/time, battle trigger, tactical handoff og state return.
 - Campaign-kode/scener skal så vidt muligt ligge separat fra tactical navigation/combat-filer for at minimere merge-konflikter.
 
+## Track C — Unreal Port
+
+- Branch: `unreal-port`
+- Unreal project root inside repository: `/Unreal`
+- Reference baseline: current `channel-test` Unity tactical implementation.
+- Fokus: engine-port med feature parity før ny feature-udvikling.
+- Unity-koden beholdes som reference under porten; eksisterende designregler, OOB, AI authority, formationsdoktrin, cavalry, river/bridge rules og QA-kriterier må ikke forsimples lydløst.
+- Port-status og rækkefølge dokumenteres i [UNREAL-MIGRATION-PLAN.md](UNREAL-MIGRATION-PLAN.md) og [UNREAL-PORTING-INVENTORY.md](UNREAL-PORTING-INVENTORY.md).
+- Første Unreal-scaffold indeholder projekt/module, grund-unit, order component og separat horse/rider cavalry-actor.
+
 ## Stable
 
 - Branch: `main`
