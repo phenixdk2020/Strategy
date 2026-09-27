@@ -54,6 +54,8 @@ private:
     TObjectPtr<AStrategyUnit> OwnerUnit;
 
     FVector MovementGoal = FVector::ZeroVector;
+    TArray<FVector> RoutePoints;
+    int32 RoutePointIndex = 0;
     float GoalFacingYaw = 0.0f;
     bool bHasMovementGoal = false;
     bool bApplyGoalFacing = false;
