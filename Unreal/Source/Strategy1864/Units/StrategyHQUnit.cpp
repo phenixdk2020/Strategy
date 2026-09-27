@@ -2,11 +2,15 @@
 
 #include "../Formations/StrategyParentFormationPlannerComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
+#include "../AI/StrategyHQFollowComponent.h"
+#include "../AI/StrategyCommandZoneComponent.h"
 
 AStrategyHQUnit::AStrategyHQUnit()
 {
     Echelon = EStrategyEchelon::Headquarters;
     FormationPlanner = CreateDefaultSubobject<UStrategyParentFormationPlannerComponent>(TEXT("FormationPlanner"));
+    HQFollowComponent = CreateDefaultSubobject<UStrategyHQFollowComponent>(TEXT("HQFollowComponent"));
+    CommandZoneComponent = CreateDefaultSubobject<UStrategyCommandZoneComponent>(TEXT("CommandZoneComponent"));
     ApplyHQLevelDefaults();
 }
 
