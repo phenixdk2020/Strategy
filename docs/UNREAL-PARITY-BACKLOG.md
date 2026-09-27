@@ -118,13 +118,13 @@
 |---|---:|---|---|---|---|---|
 | UE-P090 | P0 | Formation-level navigation | Navigation V3 | Navigation service | IMPLEMENTED CORE | Formation path is authoritative; individual soldiers do not independently choose strategic paths. |
 | UE-P091 | P0 | Hard water blocking | River baseline | Nav/terrain tags | BACKLOG | Units cannot walk through river except legal crossings. |
-| UE-P092 | P0 | True bank-change detection | F30W | River route planner | BACKLOG | Bridge route is required only when destination changes river bank. |
-| UE-P093 | P0 | Same-bank bank-follow | F30W | River route planner | BACKLOG | Straight chord crossing a river bend does not cause cross-and-return bridge trip. |
-| UE-P094 | P0 | Bridge transaction | F9/F30H | Crossing state machine | BACKLOG | NearBank→FarBank→ExitBank→Direct persists until crossing completes. |
-| UE-P095 | P0 | Goal changes during bridge | F30H | Crossing state machine | BACKLOG | New goal updates final destination but does not cancel active bridge transaction. |
+| UE-P092 | P0 | True bank-change detection | F30W | River route planner | IMPLEMENTED CORE | Bridge route is required only when destination changes river bank. |
+| UE-P093 | P0 | Same-bank bank-follow | F30W | River route planner | IMPLEMENTED CORE | Straight chord crossing a river bend does not cause cross-and-return bridge trip. |
+| UE-P094 | P0 | Bridge transaction | F9/F30H | Crossing state machine | IMPLEMENTED CORE | NearBank→FarBank→ExitBank→Direct persists until crossing completes. |
+| UE-P095 | P0 | Goal changes during bridge | F30H | Crossing state machine | SCAFFOLD VIA ROUTE PLAN | New goal updates final destination but does not cancel active bridge transaction. |
 | UE-P096 | P1 | Building avoidance | Navigation baseline | Nav obstacles | SCAFFOLD VIA NAVMESH | Formations route around blocking buildings. |
 | UE-P097 | P1 | Fence/obstacle handling | F29P/design | Nav/formation avoidance | BACKLOG | Obstacles affect movement without destroying formation authority. |
-| UE-P098 | P1 | Bridge congestion/defile | F30H/X | Formation path policy | BACKLOG | Narrow crossing uses controlled narrow geometry and restores normal formation after exit. |
+| UE-P098 | P1 | Bridge congestion/defile | F30H/X | Formation path policy | IMPLEMENTED CAVALRY CORE | Narrow crossing uses controlled narrow geometry and restores normal formation after exit. |
 | UE-P099 | P2 | Expanded battlefield/hills | B-290 | Unreal Landscape | BACKLOG | Tactical QA map includes usable elevation/LOS test terrain. |
 
 # 7. Fire control, LOS, combat and casualties — U06
@@ -140,13 +140,13 @@
 | UE-P116 | P0 | Active-range visual language | F30S/T/W | Debug/presentation | IMPLEMENTED QA CORE | Active band strong; other physical bands faint references. |
 | UE-P117 | P0 | Enemy TEST cones from startup | F30W/X | QA overlay | IMPLEMENTED QA CORE | Living Prussian infantry cones visible immediately in TEST. |
 | UE-P118 | P0 | QA cone != knowledge | F30W/S | Visibility/fire authority | IMPLEMENTED CORE | Debug cone never grants LOS, contact or firing authority. |
-| UE-P119 | P0 | Volley/reload cycle | pre-F29 combat | Combat component | BACKLOG | Valid target triggers fire/reload cadence without phantom volleys. |
-| UE-P120 | P0 | Hit/casualty resolution | battle baseline | Combat state | BACKLOG | Strength changes only from valid resolved combat. |
-| UE-P121 | P1 | 0-hit volley | B-002/current design | Combat state | BACKLOG | Valid volley may resolve zero hits without false strength loss. |
+| UE-P119 | P0 | Volley/reload cycle | pre-F29 combat | Combat component | IMPLEMENTED CORE | Valid target triggers fire/reload cadence without phantom volleys. |
+| UE-P120 | P0 | Hit/casualty resolution | battle baseline | Combat state | IMPLEMENTED CORE | Strength changes only from valid resolved combat. |
+| UE-P121 | P1 | 0-hit volley | B-002/current design | Combat state | IMPLEMENTED CORE | Valid volley may resolve zero hits without false strength loss. |
 | UE-P122 | P1 | Smoke feedback | F29X/Z | Niagara/combat events | BACKLOG | Smoke corresponds to real firing event; no fake smoke on formation changes. |
-| UE-P123 | P1 | Morale/cohesion | battle baseline | Unit combat state | BACKLOG | Morale/cohesion are separate authoritative values and affect behaviour. |
+| UE-P123 | P1 | Morale/cohesion | battle baseline | Unit combat state | IMPLEMENTED CORE | Morale/cohesion are separate authoritative values and affect behaviour. |
 | UE-P124 | P1 | Routed state | battle baseline | Unit combat state | BACKLOG | Routed unit leaves normal command/fire behaviour and presentation updates. |
-| UE-P125 | P1 | Under-fire reaction | F26/F30V | Reaction component | BACKLOG | Temporary reaction may pause movement but cannot complete parent mission. |
+| UE-P125 | P1 | Under-fire reaction | F26/F30V | Reaction component | IMPLEMENTED CORE | Temporary reaction may pause movement but cannot complete parent mission. |
 | UE-P126 | P2 | Representative casualties | v00.00.08 | Visual subsystem | BACKLOG | Visual casualty feedback does not become authoritative casualty state. |
 
 # 8. Infantry Square and anti-cavalry — U06
@@ -154,11 +154,11 @@
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
 | UE-P130 | P1 | Square formation geometry | F29 | Formation component | IMPLEMENTED CORE | Infantry physically reforms to square. |
-| UE-P131 | P1 | Four square fire sectors | F29V/X/Z | Combat geometry | BACKLOG | Square fires only from eligible face/sector. |
+| UE-P131 | P1 | Four square fire sectors | F29V/X/Z | Combat geometry | IMPLEMENTED CORE | Square fires only from eligible face/sector. |
 | UE-P132 | P1 | Square visual ownership | F29X | Presentation | BACKLOG | Square outline replaces incompatible Line/Column footprint/fans. |
 | UE-P133 | P1 | No formation phantom volley | F29X | Fire state machine | BACKLOG | Entering/readying Square does not produce smoke/0-hit volley. |
 | UE-P134 | P1 | LOS-gated cavalry threat | F30S | Reaction AI | BACKLOG | Square/anti-CAV reaction requires actual LOS. |
-| UE-P135 | P1 | Range/cone-gated CAV fire | F30S | Combat eligibility | BACKLOG | Cavalry must be inside LOS + selected range + valid sector/cone. |
+| UE-P135 | P1 | Range/cone-gated CAV fire | F30S | Combat eligibility | IMPLEMENTED CORE | Cavalry must be inside LOS + selected range + valid sector/cone. |
 | UE-P136 | P1 | Directional square smoke | F29Z | Niagara | BACKLOG | Smoke originates from the firing square face only. |
 
 # 9. Officer AI and command hierarchy — U07
@@ -190,7 +190,7 @@
 | UE-P183 | P1 | 4-rank Charge | F30H | Formation generator | GEOMETRY CORE VIA CAVALRY LINE | Charge line uses four ranks. |
 | UE-P184 | P1 | 4-abreast Column | F30H | Formation generator | IMPLEMENTED CORE | Normal mounted march column is four abreast. |
 | UE-P185 | P1 | 2-abreast bridge/defile | F30H/X | Formation policy | GEOMETRY CORE IMPLEMENTED | Narrow two-abreast geometry exists only near/on crossing. |
-| UE-P186 | P1 | 36 m narrow-mode approach | F30X | Bridge formation policy | BACKLOG | Opposite-bank mission does not trigger two-abreast hundreds of metres early. |
+| UE-P186 | P1 | 36 m narrow-mode approach | F30X | Bridge formation policy | IMPLEMENTED CORE | Opposite-bank mission does not trigger two-abreast hundreds of metres early. |
 | UE-P187 | P1 | Restore pre-bridge formation | F30H/X | Crossing state | DEFILE RESTORE CORE IMPLEMENTED | Formation used before narrow mode is restored after exit clearance. |
 | UE-P188 | P1 | Physical cavalry reform | F30H | Formation movement | BACKLOG | Riders physically reform; charge speed respects incomplete reform. |
 | UE-P189 | P1 | Cavalry charge/contact | F30/F30N | Cavalry combat | BACKLOG | Charge executes to valid contact without passing through enemy formation. |
@@ -391,3 +391,21 @@ Still pending before parity:
 - Defile Column uses two abreast.
 - `ACavalryUnit::SetDefileMode()` stores the pre-defile formation and restores it when narrow mode ends.
 - These are geometry/state cores only. Bridge-distance activation, cavalry physical rider reform, Square fire-sector authority and charge-contact logic still require their later systems.
+
+
+## U05-U06 river/combat execution checkpoint
+
+- `AStrategyRiverBarrier` defines a river axis, half-width, bridge approaches and exit clearance.
+- Route planning distinguishes opposite-bank missions from same-bank chords that intersect the river.
+- Opposite-bank routes receive an explicit bridge transaction with enter/exit indices.
+- Same-bank missions detour along the same bank instead of crossing and returning.
+- Cavalry switches to two-abreast Defile only when within ~36 m of the bridge approach or inside the active bridge transaction, then restores its stored pre-defile formation after exit.
+- Runtime QA scenario can spawn a configurable river/bridge barrier.
+- `UStrategyCombatComponent` now executes volleys with ammunition consumption, reload time, deterministic per-unit random stream and range-adjusted hit chance.
+- Zero-hit volleys are valid firing events and do not reduce target strength.
+- Positive hits apply authoritative strength loss; strength zero sets Destroyed.
+- Incoming volleys apply shock to separate Morale and Cohesion values.
+- Under-fire reaction can temporarily pause a moving unit without completing or replacing its parent mission; movement resumes from the same route.
+- Square target eligibility now uses four 90-degree faces instead of the normal forward ±35-degree cone.
+
+All items remain build/runtime QA pending until UE 5.8.3 validates this checkpoint.
