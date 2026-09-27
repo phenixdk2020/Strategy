@@ -37,6 +37,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="Strategy|Movement")
     void StopMovement();
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|Movement")
+    void PauseMovementForSeconds(float DurationSeconds);
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Movement")
+    bool IsTemporarilyPaused() const { return PauseRemainingSeconds > 0.0f; }
+
     UFUNCTION(BlueprintPure, Category="Strategy|Movement")
     bool HasMovementGoal() const { return bHasMovementGoal; }
 
@@ -63,6 +69,7 @@ private:
     bool bApplyGoalFacing = false;
     int32 ExecutingOrderSerial = 0;
     bool bCavalryDefileActive = false;
+    float PauseRemainingSeconds = 0.0f;
 
     void UpdateBridgeFormationState(const FVector& CurrentLocation);
 };
