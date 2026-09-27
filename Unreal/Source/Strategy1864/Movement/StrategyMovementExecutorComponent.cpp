@@ -1,6 +1,7 @@
 #include "StrategyMovementExecutorComponent.h"
 
 #include "../Orders/StrategyOrderComponent.h"
+#include "../Command/StrategyCommandComponent.h"
 #include "../Units/StrategyUnit.h"
 
 UStrategyMovementExecutorComponent::UStrategyMovementExecutorComponent()
@@ -44,6 +45,20 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
         StopMovement();
         OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
         OwnerUnit->OrderComponent->CompleteExecution();
+        return;
+    }
+
+    const bool bCommandParentMission =
+        OwnerUnit->CommandComponent &&
+        OwnerUnit->CommandComponent->CurrentSubordinates.Num() > 0 &&
+        (NewOrder.Type == EStrategyOrderType::AttackHere ||
+         NewOrder.Type == EStrategyOrderType::DefendHere);
+
+    if (bCommandParentMission)
+    {
+        StopMovement();
+        OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+        OwnerUnit->OrderComponent->BeginExecution();
         return;
     }
 
