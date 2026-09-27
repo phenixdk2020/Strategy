@@ -4,6 +4,7 @@
 #include "../Command/StrategyCommandComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "../Navigation/StrategyRoutePlannerComponent.h"
+#include "../Units/CavalryUnit.h"
 
 UStrategyMovementExecutorComponent::UStrategyMovementExecutorComponent()
 {
@@ -72,14 +73,17 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
 void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOrder& Order)
 {
     MovementGoal = Order.TargetLocation;
+    ActiveRoutePlan = FStrategyRoutePlan();
     RoutePoints.Reset();
     RoutePointIndex = 0;
+    bCavalryDefileActive = false;
 
     if (OwnerUnit && OwnerUnit->RoutePlanner)
     {
-        RoutePoints = OwnerUnit->RoutePlanner->BuildRoute(
+        ActiveRoutePlan = OwnerUnit->RoutePlanner->BuildRoutePlan(
             OwnerUnit->GetActorLocation(),
             MovementGoal);
+        RoutePoints = ActiveRoutePlan.Points;
     }
 
     if (RoutePoints.Num() == 0)
@@ -126,6 +130,7 @@ void UStrategyMovementExecutorComponent::TickComponent(
     }
 
     const FVector CurrentLocation = OwnerUnit->GetActorLocation();
+    UpdateBridgeFormationState(CurrentLocation);
 
     if (!RoutePoints.IsValidIndex(RoutePointIndex))
     {
@@ -204,11 +209,57 @@ void UStrategyMovementExecutorComponent::FinishMovement()
 
 void UStrategyMovementExecutorComponent::StopMovement()
 {
+    if (bCavalryDefileActive)
+    {
+        if (ACavalryUnit* Cavalry = Cast<ACavalryUnit>(OwnerUnit))
+        {
+            Cavalry->SetDefileMode(false);
+        }
+    }
+
+    bCavalryDefileActive = false;
     bHasMovementGoal = false;
     ExecutingOrderSerial = 0;
+    ActiveRoutePlan = FStrategyRoutePlan();
     RoutePoints.Reset();
     RoutePointIndex = 0;
     SetComponentTickEnabled(false);
+}
+
+void UStrategyMovementExecutorComponent::UpdateBridgeFormationState(const FVector& CurrentLocation)
+{
+    ACavalryUnit* Cavalry = Cast<ACavalryUnit>(OwnerUnit);
+    if (!Cavalry || !ActiveRoutePlan.bUsesBridge)
+    {
+        return;
+    }
+
+    const bool bAtOrInsideBridgeTransaction =
+        ActiveRoutePlan.BridgeEnterPointIndex != INDEX_NONE &&
+        ActiveRoutePlan.BridgeExitPointIndex != INDEX_NONE &&
+        RoutePointIndex >= ActiveRoutePlan.BridgeEnterPointIndex &&
+        RoutePointIndex <= ActiveRoutePlan.BridgeExitPointIndex;
+
+    bool bNearBridgeApproach = false;
+
+    if (RoutePoints.IsValidIndex(ActiveRoutePlan.BridgeEnterPointIndex) &&
+        RoutePointIndex <= ActiveRoutePlan.BridgeEnterPointIndex)
+    {
+        const float DistanceToApproach = FVector::Dist2D(
+            CurrentLocation,
+            RoutePoints[ActiveRoutePlan.BridgeEnterPointIndex]);
+
+        bNearBridgeApproach = DistanceToApproach <= 3600.0f;
+    }
+
+    const bool bShouldUseDefile =
+        bAtOrInsideBridgeTransaction || bNearBridgeApproach;
+
+    if (bShouldUseDefile != bCavalryDefileActive)
+    {
+        Cavalry->SetDefileMode(bShouldUseDefile);
+        bCavalryDefileActive = bShouldUseDefile;
+    }
 }
 
 bool UStrategyMovementExecutorComponent::IsMovementOrder(EStrategyOrderType Type) const
