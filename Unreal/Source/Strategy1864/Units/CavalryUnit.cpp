@@ -1,6 +1,9 @@
 #include "CavalryUnit.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "../Formations/StrategyFormationComponent.h"
+#include "../Movement/StrategyMovementExecutorComponent.h"
+#include "../Combat/StrategyCavalryChargeComponent.h"
+#include "StrategyDragoonComponent.h"
 
 ACavalryUnit::ACavalryUnit()
 {
@@ -12,6 +15,17 @@ ACavalryUnit::ACavalryUnit()
         FormationComponent->ColumnWidth = 4;
         FormationComponent->CurrentFormation = EStrategyFormationType::CavalryLine;
     }
+
+    if (MovementExecutor)
+    {
+        MovementExecutor->MoveSpeedCmPerSecond = 900.0f;
+    }
+
+    ChargeComponent =
+        CreateDefaultSubobject<UStrategyCavalryChargeComponent>(TEXT("ChargeComponent"));
+
+    DragoonComponent =
+        CreateDefaultSubobject<UStrategyDragoonComponent>(TEXT("DragoonComponent"));
 
     HorseMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HorseMesh"));
     HorseMesh->SetupAttachment(SceneRoot);
