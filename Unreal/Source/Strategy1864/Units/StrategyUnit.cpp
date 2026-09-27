@@ -4,6 +4,7 @@
 #include "Components/TextRenderComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Command/StrategyCommandComponent.h"
+#include "../Movement/StrategyMovementExecutorComponent.h"
 
 AStrategyUnit::AStrategyUnit()
 {
@@ -28,6 +29,7 @@ AStrategyUnit::AStrategyUnit()
 
     OrderComponent = CreateDefaultSubobject<UStrategyOrderComponent>(TEXT("OrderComponent"));
     CommandComponent = CreateDefaultSubobject<UStrategyCommandComponent>(TEXT("CommandComponent"));
+    MovementExecutor = CreateDefaultSubobject<UStrategyMovementExecutorComponent>(TEXT("MovementExecutor"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
