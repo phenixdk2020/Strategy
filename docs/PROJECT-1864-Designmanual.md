@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.43**  
+**Aktuel designbaseline: v00.02.44**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
@@ -10,6 +10,8 @@ Projektets centrale intake-log for besluttede men endnu ikke implementerede funk
 ## Engine-port beslutning — Unreal Engine
 
 Projektet har fra 2026-09-27 et parallelt Unreal Engine-portspor på branchen `unreal-port`. Unity `channel-test` forbliver den operative reference for den eksisterende battle-prototype, indtil Unreal-versionen har opnået dokumenteret feature/QA-paritet. Porten er en implementeringsændring, ikke et redesign: eksisterende command hierarchy, order authority, formationsregler, LOS/range/cones, river/bridge-routing, cavalry behaviour, OOB/HUD-semantik og historiske data skal bevares. Permanent Unreal-kode skal bruge stabile domænenavne frem for Unity-prototypens revisionssuffixer. Se [UNREAL-MIGRATION-PLAN.md](UNREAL-MIGRATION-PLAN.md) og [UNREAL-PORTING-INVENTORY.md](UNREAL-PORTING-INVENTORY.md).
+
+**Unreal U01 — Camera & Selection (v00.02.44):** Den første interaktive Unreal-kontrolkerne er nu implementeret på `unreal-port` og afventer lokal UE 5.8.3 build/QA. `AStrategyCameraPawn` leverer WASD-pan, Q/E rotation og mouse-wheel zoom. `AStrategyPlayerController` leverer plain click, box selection, Shift-add og Ctrl-remove. Box selection følger den fastlagte RTS-regel om unit-centret inde i markeringen. `AStrategyUnit` bærer persistent selection state og udsender `OnSelectionChanged` til Blueprint-visuals. Selection må ikke nulstilles af efterfølgende order placement; order-input implementeres separat i U03.
 
 Horse/rider-arkitekturen fastlåses som to separate rigs: hesten er et quadruped Skeletal Mesh med eget Skeleton/Animation Blueprint; rytteren er et separat human Skeletal Mesh, der attach'es til et `RiderSocket`/saddle-point på hesten og synkroniseres gennem cavalry animation state. Dette gør hest, rytter, dismount, death/fall og unit-varianter genbrugelige uafhængigt.
 
