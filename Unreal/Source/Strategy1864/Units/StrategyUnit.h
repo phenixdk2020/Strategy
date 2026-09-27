@@ -121,6 +121,18 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
     float MaximumFireRangeCm = 10000.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    float Morale = 100.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    float Cohesion = 100.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    float Fatigue = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    float Experience = 0.0f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Unit")
     EStrategyUnitState UnitState = EStrategyUnitState::Ready;
 
