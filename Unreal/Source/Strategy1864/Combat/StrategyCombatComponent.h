@@ -56,6 +56,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Combat")
     float UnderFireRemainingSeconds = 0.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    float RoutMoraleThreshold = 20.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    float RoutCohesionThreshold = 10.0f;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Combat")
     bool TryFireAt(AStrategyUnit* Target);
 
@@ -68,6 +74,7 @@ public:
 private:
     AStrategyUnit* FindBestTarget() const;
     int32 ResolveHits(int32 ShotCount, float DistanceCm);
+    void EvaluateRoutState();
 
     UPROPERTY()
     TObjectPtr<AStrategyUnit> OwnerUnit;
