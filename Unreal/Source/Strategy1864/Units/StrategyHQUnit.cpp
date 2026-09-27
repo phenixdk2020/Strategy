@@ -57,7 +57,7 @@ void AStrategyHQUnit::ApplyHQLevelDefaults()
 
 void AStrategyHQUnit::HandleHQOrderChanged(const FStrategyOrder& NewOrder)
 {
-    if (!FormationPlanner || HQLevel != EStrategyHQLevel::Battalion)
+    if (!FormationPlanner)
     {
         return;
     }
@@ -73,9 +73,40 @@ void AStrategyHQUnit::HandleHQOrderChanged(const FStrategyOrder& NewOrder)
         ? NewOrder.FacingYaw
         : GetActorRotation().Yaw;
 
-    FormationPlanner->IssueCompanySlots(
+    if (HQLevel == EStrategyHQLevel::Battalion)
+    {
+        FormationPlanner->IssueCompanySlots(
+            NewOrder.TargetLocation,
+            FacingYaw,
+            NewOrder.Type == EStrategyOrderType::DefendHere,
+            NewOrder.Authority);
+        return;
+    }
+
+    float ChildSpacingCm = FormationPlanner->RegimentChildSpacingCm;
+
+    switch (HQLevel)
+    {
+        case EStrategyHQLevel::Regiment:
+            ChildSpacingCm = FormationPlanner->RegimentChildSpacingCm;
+            break;
+
+        case EStrategyHQLevel::Brigade:
+            ChildSpacingCm = FormationPlanner->BrigadeChildSpacingCm;
+            break;
+
+        case EStrategyHQLevel::Division:
+            ChildSpacingCm = FormationPlanner->DivisionChildSpacingCm;
+            break;
+
+        default:
+            break;
+    }
+
+    FormationPlanner->IssueDirectSubordinateSlots(
         NewOrder.TargetLocation,
         FacingYaw,
-        NewOrder.Type == EStrategyOrderType::DefendHere,
-        NewOrder.Authority);
+        NewOrder.Type,
+        NewOrder.Authority,
+        ChildSpacingCm);
 }
