@@ -14,5 +14,11 @@ AStrategyUnit::AStrategyUnit()
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
 {
+    if (bSelected == bNewSelected)
+    {
+        return;
+    }
+
     bSelected = bNewSelected;
+    OnSelectionChanged(bSelected);
 }
