@@ -36,7 +36,7 @@ public:
     void ClearSpawnedUnits();
 
     UFUNCTION(BlueprintPure, Category="Strategy|Test")
-    const TArray<AStrategyUnit*>& GetSpawnedUnits() const { return SpawnedUnits; }
+    TArray<AStrategyUnit*> GetSpawnedUnits() const;
 
 private:
     AStrategyHQUnit* SpawnHQ(
@@ -56,5 +56,4 @@ private:
     UPROPERTY()
     TArray<TObjectPtr<AStrategyUnit>> SpawnedUnitObjects;
 
-    mutable TArray<AStrategyUnit*> SpawnedUnits;
 };
