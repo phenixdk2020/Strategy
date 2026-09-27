@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.48**  
+**Aktuel designbaseline: v00.02.49**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
@@ -10,6 +10,8 @@ Projektets centrale intake-log for besluttede men endnu ikke implementerede funk
 ## Engine-port beslutning — Unreal Engine
 
 Projektet har fra 2026-09-27 et parallelt Unreal Engine-portspor på branchen `unreal-port`. Unity `channel-test` forbliver den operative reference for den eksisterende battle-prototype, indtil Unreal-versionen har opnået dokumenteret feature/QA-paritet. Porten er en implementeringsændring, ikke et redesign: eksisterende command hierarchy, order authority, formationsregler, LOS/range/cones, river/bridge-routing, cavalry behaviour, OOB/HUD-semantik og historiske data skal bevares. Permanent Unreal-kode skal bruge stabile domænenavne frem for Unity-prototypens revisionssuffixer. Se [UNREAL-MIGRATION-PLAN.md](UNREAL-MIGRATION-PLAN.md) og [UNREAL-PORTING-INVENTORY.md](UNREAL-PORTING-INVENTORY.md).
+
+**Unreal U03 physical executors (v00.02.49):** Alle `AStrategyUnit`-enheder har nu en fælles `UStrategyMovementExecutorComponent`. MOVE udfører fysisk bevægelse mod target; HOLD stopper straks bevægelse og afslutter fysisk execution uden at slette standing intent. ANGRIB HER, FORSVAR HER, RYK FREM, TILBAGETRÆK, SAML og SPEJD HER bruger samme finite fysiske movement-kerne, mens deres endelige subordinate-/formationsgeometri fortsat hører til U04/U03-planner. PlayerController kan afgive DirectPlayer-ordrer til den aktuelle selection og pending target placement committer uden at rydde selection. Arrival tolerance er 50 cm som Unreal-modstykke til F30V-reglen.
 
 **Unreal U03 order-state foundation (v00.02.48):** `UStrategyOrderComponent` adskiller nu standing intent fra fysisk execution. Ordrer har eksplicit authority (`InheritedAI`, `OfficerAI`, `DirectPlayer`) og execution-state (`Idle`, `PendingTarget`, `Pending`, `Executing`, `Completed`, `Failed`, `Superseded`). Lavere authority kan ikke overskrive en højere aktiv ordre, og re-issue kan supersede en igangværende executor uden at slette selve command-state modellen. MOVE/ANGRIB/FORSVAR/HOLD executors bygges oven på denne kerne.
 
