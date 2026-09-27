@@ -29,6 +29,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     float CompanySpacing = 1400.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnEnemyQAUnits = true;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Test")
     void BuildTestOOB();
 
@@ -51,7 +54,8 @@ private:
         const FString& Name,
         int32 CompanyNumber,
         const FVector& Location,
-        AStrategyUnit* OrganicParent);
+        AStrategyUnit* OrganicParent,
+        uint8 SideValue);
 
     UPROPERTY()
     TArray<TObjectPtr<AStrategyUnit>> SpawnedUnitObjects;
