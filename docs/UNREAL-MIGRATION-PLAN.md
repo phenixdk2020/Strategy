@@ -64,7 +64,10 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - `UStrategyCommandComponent` separates `OrganicParent` from `CurrentCommandParent`.
 - Organic/current subordinate lists update when command parent changes.
 - `RestoreOrganicCommandParent()` is available for later temporary cavalry task attachment/release.
-- Division → Brigade → Regiment → Battalion/Major → Company runtime assembly still needs a test scenario/data builder before U02 can be marked PASS.
+- Runtime OOB test assembly is now implemented and auto-spawnable from `AStrategyGameMode`.
+- Current U02 test hierarchy: 1 Division → 1 Brigade → 1 Regiment → Major A/B → 4 companies each.
+- Placeholder units have visibility-trace selection colliders and debug labels so hierarchy and U01 selection can be tested together.
+- U02 remains BUILD+QA PENDING until UE 5.8.3 confirms the spawn counts, parent/subordinate links and selection behaviour.
 
 ### U03 — Orders and authority
 - MOVE.
