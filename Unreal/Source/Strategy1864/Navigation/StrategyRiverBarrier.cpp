@@ -1,8 +1,12 @@
 #include "StrategyRiverBarrier.h"
+#include "Components/SceneComponent.h"
 #include "../Units/StrategyUnit.h"
 
 AStrategyRiverBarrier::AStrategyRiverBarrier()
 {
+    USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    SetRootComponent(Root);
+
     PrimaryActorTick.bCanEverTick = false;
 }
 
