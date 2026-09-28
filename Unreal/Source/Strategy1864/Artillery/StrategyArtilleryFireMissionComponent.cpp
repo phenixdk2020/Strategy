@@ -76,10 +76,9 @@ void UStrategyArtilleryFireMissionComponent::TickComponent(
 
     if (!IsValid(Target) || !Target->IsCombatEffective())
     {
-        if (FireMode == EStrategyArtilleryFireMode::ManualTarget &&
-            IsValid(ManualTarget))
+        if (FireMode == EStrategyArtilleryFireMode::ManualTarget)
         {
-            CompleteManualMission(false);
+            CompleteManualMission(!IsValid(Target));
         }
         return;
     }
@@ -167,10 +166,26 @@ void UStrategyArtilleryFireMissionComponent::SetHoldFire(bool bHold)
         }
 
         FireMode = EStrategyArtilleryFireMode::HoldFire;
+
+        if (OwnerBattery &&
+            OwnerBattery->OrderComponent &&
+            OwnerBattery->OrderComponent->GetCurrentOrder().Type ==
+                EStrategyOrderType::ArtilleryFireMission)
+        {
+            OwnerBattery->OrderComponent->CompleteExecution();
+        }
     }
     else if (FireMode == EStrategyArtilleryFireMode::HoldFire)
     {
         FireMode = PreviousNonHoldMode;
+
+        if (OwnerBattery &&
+            OwnerBattery->OrderComponent &&
+            OwnerBattery->OrderComponent->GetCurrentOrder().Type ==
+                EStrategyOrderType::ArtilleryFireMission)
+        {
+            OwnerBattery->OrderComponent->BeginExecution();
+        }
     }
 }
 
