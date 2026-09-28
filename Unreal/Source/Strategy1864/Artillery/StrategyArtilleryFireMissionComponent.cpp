@@ -15,6 +15,7 @@
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "../Logistics/StrategySupplyWagonUnit.h"
+#include "../Terrain/StrategyTerrainAwarenessComponent.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 
@@ -791,6 +792,13 @@ int32 UStrategyArtilleryFireMissionComponent::ResolveCasualties(
     {
         HitChance *=
             Target->SkirmisherComponent->GetIncomingHitMultiplier();
+    }
+
+    if (Target->TerrainAwarenessComponent)
+    {
+        HitChance *=
+            Target->TerrainAwarenessComponent->GetIncomingHitMultiplierFrom(
+                OwnerBattery->GetActorLocation());
     }
 
     if (OwnerBattery->VisibilityComponent)
