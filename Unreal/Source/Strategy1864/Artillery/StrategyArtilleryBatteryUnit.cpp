@@ -6,6 +6,8 @@
 #include "StrategyArtilleryDamageComponent.h"
 #include "StrategyArtilleryCaptureComponent.h"
 #include "StrategyArtilleryTraverseComponent.h"
+#include "StrategyArtilleryRepairComponent.h"
+#include "../Orders/StrategyOrderComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Combat/StrategyFireControlComponent.h"
 #include "../Combat/StrategyCombatComponent.h"
@@ -38,6 +40,10 @@ AStrategyArtilleryBatteryUnit::AStrategyArtilleryBatteryUnit()
     ArtilleryTraverseComponent =
         CreateDefaultSubobject<UStrategyArtilleryTraverseComponent>(
             TEXT("ArtilleryTraverseComponent"));
+
+    ArtilleryRepairComponent =
+        CreateDefaultSubobject<UStrategyArtilleryRepairComponent>(
+            TEXT("ArtilleryRepairComponent"));
 }
 
 void AStrategyArtilleryBatteryUnit::BeginPlay()
@@ -149,6 +155,45 @@ bool AStrategyArtilleryBatteryUnit::CanFireBattery() const
         DeploymentComponent &&
         DeploymentComponent->IsDeployed() &&
         GetOperationalGunCount() > 0;
+}
+
+bool AStrategyArtilleryBatteryUnit::AbandonBattery()
+{
+    if (OwnershipState != EStrategyArtilleryOwnershipState::Operational ||
+        UnitState == EStrategyUnitState::Destroyed ||
+        UnitState == EStrategyUnitState::Abandoned)
+    {
+        return false;
+    }
+
+    PersonnelEvacuatedOnAbandon =
+        FMath::Max(0, CrewStrength + DriverStrength);
+
+    CrewStrength = 0;
+    DriverStrength = 0;
+    CurrentStrength = 0;
+
+    OwnershipState = EStrategyArtilleryOwnershipState::Abandoned;
+
+    if (DeploymentComponent)
+    {
+        DeploymentComponent->MobilityState =
+            EStrategyArtilleryMobilityState::Abandoned;
+    }
+
+    if (MovementExecutor)
+    {
+        MovementExecutor->StopMovement();
+    }
+
+    if (OrderComponent)
+    {
+        OrderComponent->ClearOrder();
+    }
+
+    SetUnitState(EStrategyUnitState::Abandoned);
+    RefreshDebugLabel();
+    return true;
 }
 
 void AStrategyArtilleryBatteryUnit::ApplyBatteryDamage(
