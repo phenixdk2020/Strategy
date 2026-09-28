@@ -14,6 +14,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 
 **Unreal gameplay checkpoint v00.02.60:** Artilleri er udvidet med visible ground/area fire, salvo-/tidsbegrænsede fire missions, target priority, auto ammo selection, reserve-conservation, deploy-slope, firing/manhandling fatigue, disabled-gun repair og emergency abandonment. Første fysiske supply-wagon/caisson er implementeret med separate small-arms/artillery cargo stores, drivers, horses, wagon condition, mobility, damage, abandonment/capture, proximity/state-gated transfer og artillery ammunition-family compatibility. QA bruger nu et ammo-lavt dansk batteri + fysisk ammunitionsvogn; Divisionens generiske 50k ammo-pulje er slået fra, når wagon-fixturen er aktiv. UE 5.8.3 build/runtime QA udestår.
 
+**Unreal gameplay checkpoint v00.02.61:** Tactical terrain authority er implementeret som gameplay core: Hill/Ridge/Depression features, physical+analytic effective elevation, shared slope, crest/dead-ground, reverse slope/high-ground awareness, terrain-aware unit/ground LOS, elevation observation, terrain fire masking, route projection/sampling, shared artillery deploy slope og terrain-aware artillery position scoring/candidate search. QA har battery hill + central ridge + depression, units projiceres til terrain-Z, og regressionen kræver både dead-ground lane, clear lane, crest detection og gyldig artillery direct-fire position. Fysisk/visuel battlefield expansion er stadig separat; UE 5.8.3 build/runtime QA udestår.
+
 ## Statusdefinitioner
 
 - **AKTIV** — implementeres/testes i den aktuelle build.
@@ -256,8 +258,8 @@ Når en ny idé opstår:
 
 ## B-290 — Battlefield Expansion + Hills before Artillery
 
-**Status:** BESLUTTET / NÆSTE TERRAIN-SPOR  
-**Prioritet:** Høj før første fulde Artillery Core
+**Status:** DELVIST IMPLEMENTERET CORE / UE QA + FYSISK MAP-EXPANSION PENDING  
+**Prioritet:** Høj terrain authority er implementeret; fysisk/visuel battlefield expansion følger senere
 
 ### Beslutning
 Før artilleri udbygges til fuld gameplay-test skal tactical battlefield udvides og have tydelige højdedrag/bakker, så kanoner kan testes fra højere stillinger og med reelle skudfelter.
@@ -271,10 +273,13 @@ Før artilleri udbygges til fuld gameplay-test skal tactical battlefield udvides
 - senere terrain/LOS-pass skal håndtere crest, dead ground, slope og deployability;
 - artilleri må senere ikke deployere på for stejle skråninger eller i ulovligt terrain.
 
-### Foreslået sekvens
-1. Battlefield Expansion / Hills.
-2. Terrain + LOS baseline.
-3. First Artillery Core.
+### Implementeringsstatus v00.02.61
+- Terrain + LOS gameplay baseline: **IMPLEMENTERET CORE**.
+- Crest/dead ground/reverse slope/high-ground observation: **IMPLEMENTERET CORE**.
+- Artillery deployability + position scoring på terrain: **IMPLEMENTERET CORE**.
+- QA-hill/ridge/depression fixtures: **IMPLEMENTERET QA CORE**.
+- Større fysisk battlefield, endelige hills/landscape assets, roads/fields/forest visual pass: **PENDING**.
+- Lokal UE 5.8.3 compile/runtime test: **PENDING**.
 
 
 ## B-300 — Infantry Visual Fidelity + Soldier Silhouette Polish
