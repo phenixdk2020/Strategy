@@ -8,7 +8,7 @@
 
 AStrategyCameraPawn::AStrategyCameraPawn()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     SetRootComponent(SceneRoot);
@@ -31,6 +31,72 @@ AStrategyCameraPawn::AStrategyCameraPawn()
     MovementComponent->Deceleration = 10000.0f;
 }
 
+void AStrategyCameraPawn::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    if (!bFollowingProjectile)
+    {
+        return;
+    }
+
+    if (ProjectileFollowTarget.IsValid())
+    {
+        LastProjectileLocation =
+            ProjectileFollowTarget->GetActorLocation();
+
+        FVector Desired = GetActorLocation();
+        Desired.X = LastProjectileLocation.X;
+        Desired.Y = LastProjectileLocation.Y;
+        Desired.Z = LastProjectileLocation.Z + 220.0f;
+
+        SetActorLocation(
+            FMath::VInterpTo(
+                GetActorLocation(),
+                Desired,
+                DeltaTime,
+                ProjectileFollowSmoothing));
+
+        if (SpringArm)
+        {
+            SpringArm->TargetArmLength =
+                FMath::FInterpTo(
+                    SpringArm->TargetArmLength,
+                    ProjectileFollowArmLength,
+                    DeltaTime,
+                    ProjectileFollowSmoothing);
+        }
+
+        ImpactHoldRemainingSeconds =
+            ProjectileImpactHoldSeconds;
+
+        return;
+    }
+
+    if (ImpactHoldRemainingSeconds > 0.0f)
+    {
+        ImpactHoldRemainingSeconds =
+            FMath::Max(
+                0.0f,
+                ImpactHoldRemainingSeconds - DeltaTime);
+
+        FVector Desired = GetActorLocation();
+        Desired.X = LastProjectileLocation.X;
+        Desired.Y = LastProjectileLocation.Y;
+
+        SetActorLocation(
+            FMath::VInterpTo(
+                GetActorLocation(),
+                Desired,
+                DeltaTime,
+                ProjectileFollowSmoothing));
+
+        return;
+    }
+
+    StopProjectileFollow(true);
+}
+
 void AStrategyCameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -45,6 +111,11 @@ void AStrategyCameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 void AStrategyCameraPawn::MoveForward(float Value)
 {
+    if (!FMath::IsNearlyZero(Value) && bFollowingProjectile)
+    {
+        StopProjectileFollow(true);
+    }
+
     if (FMath::IsNearlyZero(Value))
     {
         return;
@@ -58,6 +129,11 @@ void AStrategyCameraPawn::MoveForward(float Value)
 
 void AStrategyCameraPawn::MoveRight(float Value)
 {
+    if (!FMath::IsNearlyZero(Value) && bFollowingProjectile)
+    {
+        StopProjectileFollow(true);
+    }
+
     if (FMath::IsNearlyZero(Value))
     {
         return;
@@ -71,6 +147,11 @@ void AStrategyCameraPawn::MoveRight(float Value)
 
 void AStrategyCameraPawn::ZoomCamera(float Value)
 {
+    if (!FMath::IsNearlyZero(Value) && bFollowingProjectile)
+    {
+        StopProjectileFollow(true);
+    }
+
     if (!SpringArm || FMath::IsNearlyZero(Value))
     {
         return;
@@ -99,4 +180,44 @@ void AStrategyCameraPawn::FocusOnWorldLocation(const FVector& WorldLocation)
     NewLocation.X = WorldLocation.X;
     NewLocation.Y = WorldLocation.Y;
     SetActorLocation(NewLocation);
+}
+
+
+void AStrategyCameraPawn::BeginProjectileFollow(AActor* ProjectileActor)
+{
+    if (!IsValid(ProjectileActor))
+    {
+        return;
+    }
+
+    if (!bFollowingProjectile)
+    {
+        PreFollowLocation = GetActorLocation();
+        PreFollowArmLength =
+            SpringArm ? SpringArm->TargetArmLength : 2600.0f;
+    }
+
+    ProjectileFollowTarget = ProjectileActor;
+    LastProjectileLocation = ProjectileActor->GetActorLocation();
+    ImpactHoldRemainingSeconds = ProjectileImpactHoldSeconds;
+    bFollowingProjectile = true;
+}
+
+void AStrategyCameraPawn::StopProjectileFollow(
+    bool bRestorePreviousView)
+{
+    ProjectileFollowTarget.Reset();
+    ImpactHoldRemainingSeconds = 0.0f;
+
+    if (bFollowingProjectile && bRestorePreviousView)
+    {
+        SetActorLocation(PreFollowLocation);
+
+        if (SpringArm)
+        {
+            SpringArm->TargetArmLength = PreFollowArmLength;
+        }
+    }
+
+    bFollowingProjectile = false;
 }
