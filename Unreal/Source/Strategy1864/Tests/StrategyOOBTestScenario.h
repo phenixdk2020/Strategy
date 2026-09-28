@@ -55,6 +55,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="Strategy|Test")
     bool ValidateStableIdsAndHierarchy(TArray<FString>& OutErrors) const;
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|Test")
+    bool RunRegressionChecklist(TArray<FString>& OutFailures) const;
+
     UFUNCTION(BlueprintPure, Category="Strategy|Test")
     TArray<AStrategyUnit*> GetSpawnedUnits() const;
 
