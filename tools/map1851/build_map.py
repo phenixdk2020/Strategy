@@ -94,6 +94,27 @@ ROAD_CELL_KM = 0.5
 ROAD_NEIGHBOURS = 3
 ROAD_MAX_KM = 70.0
 
+# Railways of the monarchy and its neighbours c. 1851 (opened, or being built): towns in order, with
+# [lon, lat, name] for stations that are not map towns. "begun" marks a line still under construction.
+RAILWAYS_1851 = [
+    {"name": "Københavns–Roskilde Jernbane", "via": ["København", "Roskilde"], "opened": "1847-06-27"},
+    {"name": "Christian VIII's Østersø-Jernbane", "via": ["Altona", [9.652, 53.754, "Elmshorn"], "Neumünster", "Kiel"], "opened": "1844-09-18"},
+    {"name": "Glückstadt–Elmshorn Jernbane", "via": [[9.652, 53.754, "Elmshorn"], "Glückstadt"], "opened": "1845-07-20"},
+    {"name": "Rendsborg–Neumünster Jernbane", "via": ["Neumünster", "Rendsborg"], "opened": "1845-09-18"},
+    {"name": "Berlin–Hamborg Jernbane", "via": ["Hamborg", [10.215, 53.487, "Bergedorf"], [10.480, 53.505, "Schwarzenbek"],
+                                                [10.617, 53.479, "Büchen"], [10.727, 53.381, "Boizenburg"]], "opened": "1846-12-15"},
+    {"name": "Lübeck–Büchen Jernbane", "via": ["Lübeck", "Ratzeburg", [10.690, 53.628, "Mölln"], [10.617, 53.479, "Büchen"]],
+     "begun": "1850-06-01", "opened": "1851-10-15"},
+]
+# Main roads that were already paved chausséer ("Kunststraßen") by 1851, as town pairs (approximate).
+CHAUSSEES_1851 = [
+    ("København", "Roskilde"), ("København", "Helsingør"), ("København", "Køge"), ("Roskilde", "Slagelse"), ("Roskilde", "Køge"),
+    ("Roskilde", "Holbæk"), ("Køge", "Næstved"), ("Næstved", "Vordingborg"), ("Nyborg", "Odense"),
+    ("Odense", "Middelfart"), ("Kolding", "Haderslev"), ("Haderslev", "Aabenraa"), ("Aabenraa", "Flensborg"),
+    ("Flensborg", "Slesvig"), ("Slesvig", "Rendsborg"), ("Rendsborg", "Neumünster"), ("Neumünster", "Altona"),
+    ("Neumünster", "Kiel"), ("Kiel", "Rendsborg"), ("Altona", "Itzehoe"),
+]
+
 # Bornholm is drawn as an inset in Unity; it gets its own small texture.
 BORNHOLM = (14.60, 15.25, 54.95, 55.35)
 
@@ -446,7 +467,7 @@ def route_roads(raster, monarchy, all_land, forest, height, cities, ferries):
         thin = [np.vstack([r, run_end[-1:]]) if len(r) and not np.allclose(r[-1], run_end[-1]) else r for r, run_end in zip(thin, runs)]
         return [r for r in thin if len(r) >= 2], crossings
 
-    roads, used_ferries, extra_ferries, seen_crossings = [], set(), [], set()
+    roads, used_ferries, extra_ferries, seen_crossings, links = [], set(), [], set(), []
     for i, j in sorted(pairs):
         pred, node, path = preds[i], nodes[j], []
         while node >= 0 and node != nodes[i]:
@@ -471,6 +492,8 @@ def route_roads(raster, monarchy, all_land, forest, height, cities, ferries):
                 run.append(node_km(b))
         run[-1] = km[j]
         runs.append(run)
+        # The link as a whole (for the game's network): land stretches smoothed, water stretches straight.
+        link_pts, road_km, gaps = [], 0.0, []
         for r in runs:
             # The routing grid can bridge a narrow strait (Lillebælt at Snoghøj); on the full-resolution
             # map such a stretch is water, so it becomes a ferry crossing instead of a road.
@@ -479,13 +502,44 @@ def route_roads(raster, monarchy, all_land, forest, height, cities, ferries):
                 if len(pts) > 3:
                     pts = np.vstack([pts[0], pts[1:-1:2], pts[-1]])
                 if len(pts) >= 2:
-                    roads.append({"kind": "main", "km": np.round(chaikin(pts), 3).tolist()})
+                    smooth = np.round(chaikin(pts), 3)
+                    roads.append({"kind": "main", "km": smooth.tolist()})
+                    if link_pts:
+                        gaps.append((link_pts[-1], smooth[0]))
+                    link_pts += list(smooth)
+                    road_km += float(np.hypot(*np.diff(smooth, axis=0).T).sum())
             for a_km, b_km in crossings:
                 mid = (a_km + b_km) / 2
                 key = (round(mid[0]), round(mid[1]))
                 if key not in seen_crossings:
                     seen_crossings.add(key)
                     extra_ferries.append((a_km, b_km))
+        ferry_names = [ferries[k]["name"] for fk, (k, _, _) in ferry_nodes.items()
+                       if any(fk == (min(a, b), max(a, b)) for a, b in zip(path[:-1], path[1:]))]
+        # A water gap is a ferry if the route took a listed ferry or the gap lies at one (the grid can
+        # bridge a narrow sound such as the Limfjord at Aalborg); other short gaps are brooks and lakes.
+        ferry_km = 0.0
+        for g0, g1 in gaps:
+            mid = (np.asarray(g0) + np.asarray(g1)) / 2
+            near = None
+            for fy in ferries:  # the gap lies on a listed crossing: between its landings, close to the line
+                fa, fb = np.array(project(*fy["a"])), np.array(project(*fy["b"]))
+                d = fb - fa
+                t = float(np.dot(mid - fa, d) / max(np.dot(d, d), 1e-9))
+                if -0.5 < t < 1.5 and abs(float(np.cross(d, mid - fa))) / max(np.hypot(*d), 1e-6) < 2.5:
+                    near = fy["name"]
+            at_town = min(np.hypot(*(np.asarray(g) - km[t])) for g in (g0, g1) for t in (i, j)) < 0.05  # a shore town
+            if not at_town and (near or np.hypot(*(np.asarray(g1) - np.asarray(g0))) > 1.0):
+                ferry_km += float(np.hypot(*(np.asarray(g1) - np.asarray(g0))))
+                if near and near not in ferry_names:
+                    ferry_names.insert(0, near)
+            else:
+                road_km += float(np.hypot(*(np.asarray(g1) - np.asarray(g0))))
+        link = {"a": names[i], "b": names[j], "roadKm": round(road_km, 1), "ferryKm": round(ferry_km, 1),
+                "km": np.round(np.array(link_pts), 2).tolist()}
+        if ferry_km > 0.0:
+            link["ferry"] = ferry_names[0] if ferry_names else "Overfart"
+        links.append(link)
     for k in sorted(used_ferries):
         fy = ferries[k]
         roads.append({"kind": "ferry", "name": fy["name"],
@@ -501,7 +555,131 @@ def route_roads(raster, monarchy, all_land, forest, height, cities, ferries):
             named_extra.add(k)
         roads.append({"kind": "ferry", "name": ferries[k]["name"] if dist < 6.0 else "Overfart",
                       "km": np.round(np.array([a_km, b_km]), 3).tolist()})
-    return roads
+    return roads, links
+
+
+def route_railways(raster, all_land, forest, height, cities, ferries, links):
+    """Railway alignments: the lines of 1851 (RAILWAYS_1851) and, for every land-only road link,
+    the line a railway between the two towns would take. Railways keep to low gradients far more
+    than roads (the routing cost weighs slope ~4x) and never cross water. Sets link["rail"],
+    link["railKm"] and link["chaussee"]; returns the 1851 lines with their stations.
+    """
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import dijkstra
+
+    f = max(1, int(round(ROAD_CELL_KM / raster.km_per_px)))
+    h, w = all_land.shape[0] // f, all_land.shape[1] // f
+
+    def block(a):
+        return a[:h * f, :w * f].astype(np.float32).reshape(h, f, w, f).mean(axis=(1, 3))
+
+    land = block(all_land) > 0.75
+    rr, cc = np.mgrid[0:h, 0:w]
+    cell_x = (raster.x_max - raster.x_min) / raster.w * f
+    cell_y = (raster.y_max - raster.y_min) / raster.h * f
+    cx = raster.x_min + (cc + 0.5) * cell_x
+    cy = raster.y_max - (rr + 0.5) * cell_y
+    for fy in ferries:  # no railway across a ferry strait
+        a_km, b_km = np.array(project(*fy["a"])), np.array(project(*fy["b"]))
+        d = b_km - a_km
+        length = max(np.hypot(*d), 1e-6)
+        along = ((cx - a_km[0]) * d[0] + (cy - a_km[1]) * d[1]) / length ** 2
+        across = np.abs((cx - a_km[0]) * d[1] - (cy - a_km[1]) * d[0]) / length
+        land &= ~((along > -0.2) & (along < 1.2) & (across < 2.0))
+    gy, gx = np.gradient(block(height))
+    cost = 1.0 + 1.5 * block(forest) + 160.0 * np.hypot(gx, gy)
+    idx = np.arange(h * w).reshape(h, w)
+    _, (near_r, near_c) = ndimage.distance_transform_edt(~land, return_indices=True)
+
+    def node_at(km_xy):
+        r = min(h - 1, max(0, int((raster.y_max - km_xy[1]) / cell_y)))
+        c = min(w - 1, max(0, int((km_xy[0] - raster.x_min) / cell_x)))
+        return int(idx[near_r[r, c], near_c[r, c]])
+
+    def node_km(n):
+        r, c = divmod(n, w)
+        return np.array([raster.x_min + (c + 0.5) * cell_x, raster.y_max - (r + 0.5) * cell_y])
+
+    rows, cols, wts = [], [], []
+    for dy, dx in ((0, 1), (1, 0), (1, 1), (1, -1)):
+        src = (slice(0, h - dy), slice(max(0, -dx), w - max(0, dx)))
+        dst = (slice(dy, h), slice(max(0, dx), w - max(0, -dx)))
+        ok = land[src] & land[dst]
+        step = math.hypot(dx * cell_x, dy * cell_y)
+        rows.append(idx[src][ok])
+        cols.append(idx[dst][ok])
+        wts.append((step * 0.5 * (cost[src] + cost[dst]))[ok])
+    graph = coo_matrix((np.concatenate(wts), (np.concatenate(rows), np.concatenate(cols))), shape=(h * w, h * w)).tocsr()
+
+    def is_land(p):
+        r = int((raster.y_max - p[1]) / (raster.y_max - raster.y_min) * raster.h)
+        c = int((p[0] - raster.x_min) / (raster.x_max - raster.x_min) * raster.w)
+        return 0 <= r < raster.h and 0 <= c < raster.w and bool(all_land[r, c])
+
+    def smooth(p, rounds=4):
+        for _ in range(rounds):
+            q = [p[0]]
+            for a, b in zip(p[:-1], p[1:]):
+                q += [0.75 * a + 0.25 * b, 0.25 * a + 0.75 * b]
+            q.append(p[-1])
+            p = np.array(q)
+        return p
+
+    cache = {}
+
+    def leg(a_km, b_km):
+        """Smoothed rail alignment from a to b, or None if it cannot be laid over land."""
+        a, b = node_at(a_km), node_at(b_km)
+        if a not in cache:
+            cache[a] = dijkstra(graph, directed=False, indices=a, return_predecessors=True, limit=ROAD_MAX_KM * 6)[1]
+        pred, path, node = cache[a], [], b
+        while node >= 0 and node != a:
+            path.append(node)
+            node = pred[node]
+        if node != a:
+            return None
+        path.append(a)
+        path.reverse()
+        pts = np.array([a_km] + [node_km(n) for n in path[1:-1]] + [b_km])
+        # Straighten (every 3rd grid node), then round the corners into long curves.
+        if len(pts) > 4:
+            pts = np.vstack([pts[0], pts[1:-1:3], pts[-1]])
+        pts = smooth(pts)
+        wet = 0.0
+        for p0, p1 in zip(pts[:-1], pts[1:]):
+            n = max(1, int(np.ceil(np.hypot(*(p1 - p0)) / 0.1)))
+            wet += sum(np.hypot(*(p1 - p0)) / n for k in range(1, n + 1) if not is_land(p0 + (p1 - p0) * (k / n)))
+        return pts if wet < 0.4 else None
+
+    town_km = {c["name"]: np.array(project(c["lon"], c["lat"])) for c in cities["cities"] + cities["foreign"]}
+    for l in links:
+        l["chaussee"] = (l["a"], l["b"]) in CHAUSSEES_1851 or (l["b"], l["a"]) in CHAUSSEES_1851
+        if "ferry" in l:
+            continue
+        pts = leg(town_km[l["a"]], town_km[l["b"]])
+        if pts is not None:
+            l["rail"] = np.round(pts, 2).tolist()
+            l["railKm"] = round(float(np.hypot(*np.diff(pts, axis=0).T).sum()), 1)
+
+    lines = []
+    for r in RAILWAYS_1851:
+        stops = [(v, town_km[v]) if isinstance(v, str) else (v[2], np.array(project(v[0], v[1]))) for v in r["via"]]
+        pts = [stops[0][1]]
+        for (_, a_km), (_, b_km) in zip(stops[:-1], stops[1:]):
+            p = leg(a_km, b_km)
+            if p is None:
+                print(f"  railway {r['name']}: no land route {a_km} -> {b_km}; drawn straight")
+                p = np.array([a_km, b_km])
+            pts += list(p[1:])
+        pts = np.array(pts)
+        line = {"name": r["name"], "opened": r["opened"], "stations": [n for n, _ in stops],
+                "towns": [n for n, _ in stops if n in town_km],
+                "lengthKm": round(float(np.hypot(*np.diff(pts, axis=0).T).sum()), 1),
+                "km": np.round(pts, 2).tolist()}
+        if "begun" in r:
+            line["begun"] = r["begun"]
+        lines.append(line)
+    return lines
 
 
 def amter_raster(raster, regions, land, amter):
@@ -887,7 +1065,8 @@ def main():
             {"text": "Mecklenburg", "lat": 53.75, "lon": 11.6, "kind": "foreign"}
         ]
     }
-    meta["roads"] = route_roads(main_r, land & (regions != REGION_FOREIGN), land, forest, height, cities["cities"], admin["ferries"])
+    meta["roads"], meta["links"] = route_roads(main_r, land & (regions != REGION_FOREIGN), land, forest, height, cities["cities"], admin["ferries"])
+    meta["railways"] = route_railways(main_r, land, forest, height, cities, admin["ferries"], meta["links"])
 
     # Amter: index i + 1 in Denmark1851_Amter.png; label at the amt pixel nearest its centre of mass.
     km_x, km_y = main_r.xy_grids()
@@ -899,6 +1078,8 @@ def main():
     if preview:
         Image.fromarray(colour).resize((WIDTH_PX // 4, HEIGHT_PX // 4), Image.LANCZOS).save(os.path.join(HERE, "preview.png"))
     print(f"roads: {sum(r['kind'] == 'main' for r in meta['roads'])} road runs, {sum(r['kind'] == 'ferry' for r in meta['roads'])} ferries; amter: {len(meta['amter'])}")
+    print(f"links: {len(meta['links'])} ({sum('ferry' in l for l in meta['links'])} with a ferry, {sum('rail' in l for l in meta['links'])} can take a railway, "
+          f"{sum(bool(l.get('chaussee')) for l in meta['links'])} chausseer); railways 1851: " + ", ".join(f"{r['name']} {r['lengthKm']:.0f} km" for r in meta["railways"]))
     print("  " + ", ".join(f"{a['name']} {a['areaKm2']}" for a in meta["amter"]))
     print(f"map {REGION}: {WIDTH_PX}x{HEIGHT_PX} px, {width_km:.0f}x{height_km:.0f} km (LAEA), {height_km / HEIGHT_PX * 1000:.0f} m/px")
 
