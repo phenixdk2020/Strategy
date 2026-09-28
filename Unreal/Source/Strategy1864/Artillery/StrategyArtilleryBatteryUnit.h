@@ -10,6 +10,7 @@ class UStrategyArtilleryAmmunitionComponent;
 class UStrategyArtilleryFireMissionComponent;
 class UStrategyArtilleryDamageComponent;
 class UStrategyArtilleryCaptureComponent;
+class UStrategyArtilleryTraverseComponent;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API AStrategyArtilleryBatteryUnit : public AStrategyUnit
@@ -65,6 +66,12 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
     TObjectPtr<UStrategyArtilleryCaptureComponent> ArtilleryCaptureComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    TObjectPtr<UStrategyArtilleryTraverseComponent> ArtilleryTraverseComponent;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
+    int32 GetPhysicallyAvailableGunCount() const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
     int32 GetCrewLimitedGunCount() const;
