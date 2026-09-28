@@ -58,3 +58,35 @@ A system is not marked **Ported** merely because an Unreal class exists. It beco
 - Routed fallback + rally recovery.
 - Ammunition exhaustion/resupply.
 - Expanded gameplay regression fixture.
+
+
+## v00.02.58 combat and AI additions
+
+- Fire discipline: HoldFire / FireAtWill / Volley / Independent.
+- Ammunition conservation.
+- Standing/Prone stance effects.
+- Directional building/fence/fieldwork cover.
+- Hasty fieldworks construction.
+- Black-powder smoke LOS/accuracy simulation.
+- Skirmisher detachment, five roles, combat density and recall/reform.
+- Tactical ammunition supply sources and resupply requests.
+- Doctrine + commander aggression.
+- Strict/Normal/Independent autonomy.
+- No-cheat Easy/Normal/Hard AI decision layer.
+- AI-DIAG task/reason telemetry.
+- Expanded officer stats feeding command/stress/rally.
+- Mission constraints.
+
+### Next inventory target: artillery battery
+
+Planned functional artillery core:
+- battery tactical unit;
+- gun count and crew state;
+- gun calibre/type data;
+- deployed / limbered state;
+- facing and traverse arc;
+- artillery range/fire mission;
+- ammunition state and resupply;
+- movement only when limbered;
+- same command/OOB authority model;
+- later limber horses, gun meshes, crews and firing VFX.
