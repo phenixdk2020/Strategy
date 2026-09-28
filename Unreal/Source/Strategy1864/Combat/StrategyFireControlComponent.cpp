@@ -3,6 +3,7 @@
 #include "StrategyVisibilityComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "../Formations/StrategyFormationComponent.h"
+#include "StrategyContactComponent.h"
 #include "DrawDebugHelpers.h"
 
 UStrategyFireControlComponent::UStrategyFireControlComponent()
@@ -144,6 +145,13 @@ bool UStrategyFireControlComponent::CanEngageTarget(const AStrategyUnit* Target)
         Target->GetActorLocation());
 
     if (DistanceCm > GetActiveRangeCm() || !IsInsideFireCone(Target))
+    {
+        return false;
+    }
+
+    if (bRequireCurrentContact &&
+        (!Unit->ContactComponent ||
+         !Unit->ContactComponent->HasCurrentContact(Target)))
     {
         return false;
     }
