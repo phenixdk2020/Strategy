@@ -11,6 +11,7 @@
 #include "../Artillery/StrategyArtilleryDeploymentComponent.h"
 #include "../Artillery/StrategyArtilleryAmmunitionComponent.h"
 #include "../Artillery/StrategyArtilleryFireMissionComponent.h"
+#include "../Artillery/StrategyArtilleryProjectilePresentationComponent.h"
 #include "../Logistics/StrategySupplyWagonUnit.h"
 #include "../Logistics/StrategySupplyCargoComponent.h"
 #include "../Terrain/StrategyTerrainAwarenessComponent.h"
@@ -158,6 +159,28 @@ UStrategyPresentationSnapshotComponent::BuildSnapshot() const
                     ->GetNameStringByValue(
                         static_cast<int64>(
                             Battery->ArtilleryFireMissionComponent->FireMode));
+        }
+
+        if (Battery->ProjectilePresentationComponent)
+        {
+            Snapshot.ActiveProjectilePresentations =
+                Battery->ProjectilePresentationComponent
+                    ->GetActiveProjectileCount();
+
+            Snapshot.ProjectileHistoryCount =
+                Battery->ProjectilePresentationComponent
+                    ->RecentHistory.Num();
+
+            if (Battery->ProjectilePresentationComponent
+                    ->RecentHistory.Num() > 0)
+            {
+                const FStrategyArtilleryProjectileHistoryRecord& Last =
+                    Battery->ProjectilePresentationComponent
+                        ->RecentHistory.Last();
+
+                Snapshot.LastProjectileShotSerial = Last.ShotSerial;
+                Snapshot.LastProjectileImpact = Last.ImpactLocation;
+            }
         }
 
         if (Battery->ArtilleryAmmunitionComponent)
