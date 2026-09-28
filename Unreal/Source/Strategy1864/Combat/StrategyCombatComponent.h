@@ -71,6 +71,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Strategy|Combat")
     bool IsReloading() const { return ReloadRemainingSeconds > 0.0f; }
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|QA")
+    void SetDeterministicRandomSeed(int32 Seed);
+
 private:
     AStrategyUnit* FindBestTarget() const;
     int32 ResolveHits(int32 ShotCount, float DistanceCm);
