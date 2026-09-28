@@ -16,6 +16,11 @@ class STRATEGY1864_API UStrategyOrderComponent : public UActorComponent
 public:
     UStrategyOrderComponent();
 
+    virtual void TickComponent(
+        float DeltaTime,
+        ELevelTick TickType,
+        FActorComponentTickFunction* ThisTickFunction) override;
+
     UPROPERTY(BlueprintAssignable, Category="Strategy|Orders")
     FStrategyOrderChanged OnOrderChanged;
 
@@ -24,6 +29,12 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
     bool SetOrder(const FStrategyOrder& NewOrder);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
+    bool QueueDelayedOrder(const FStrategyOrder& NewOrder, float DelaySeconds);
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Orders")
+    bool HasDelayedOrder() const { return bHasDelayedOrder; }
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
     void ClearOrder();
@@ -67,4 +78,13 @@ private:
 
     UPROPERTY(VisibleInstanceOnly, Category="Strategy|Orders")
     int32 NextOrderSerial = 1;
+
+    UPROPERTY(VisibleInstanceOnly, Category="Strategy|Orders")
+    FStrategyOrder DelayedOrder;
+
+    UPROPERTY(VisibleInstanceOnly, Category="Strategy|Orders")
+    float DelayedOrderRemainingSeconds = 0.0f;
+
+    UPROPERTY(VisibleInstanceOnly, Category="Strategy|Orders")
+    bool bHasDelayedOrder = false;
 };
