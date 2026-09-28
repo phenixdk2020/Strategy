@@ -21,6 +21,8 @@
 #include "../UI/StrategyPresentationSnapshotComponent.h"
 #include "../Movement/StrategyLocalDeconflictionComponent.h"
 #include "../Orders/StrategyMissionAnchorComponent.h"
+#include "../AI/StrategyOfficerProfileComponent.h"
+#include "../AI/StrategyCommandDelayComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -67,6 +69,10 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyLocalDeconflictionComponent>(TEXT("LocalDeconflictionComponent"));
     MissionAnchorComponent =
         CreateDefaultSubobject<UStrategyMissionAnchorComponent>(TEXT("MissionAnchorComponent"));
+    OfficerProfileComponent =
+        CreateDefaultSubobject<UStrategyOfficerProfileComponent>(TEXT("OfficerProfileComponent"));
+    CommandDelayComponent =
+        CreateDefaultSubobject<UStrategyCommandDelayComponent>(TEXT("CommandDelayComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
