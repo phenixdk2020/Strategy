@@ -40,11 +40,16 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
 
     if (!NewOrder.IsValidOrder())
     {
+        const bool bWasRouted =
+            OwnerUnit->UnitState == EStrategyUnitState::Routed;
+
         StopMovement();
-        if (!bPreserveRoutedState)
-    {
-        OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
-    }
+
+        if (!bWasRouted)
+        {
+            OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+        }
+
         return;
     }
 
@@ -86,6 +91,9 @@ void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOr
 {
     ReleaseBridgeSlot();
 
+    bPreserveRoutedState =
+        OwnerUnit && OwnerUnit->UnitState == EStrategyUnitState::Routed;
+
     MovementGoal = Order.TargetLocation;
     ActiveRoutePlan = FStrategyRoutePlan();
     RoutePoints.Reset();
@@ -109,7 +117,11 @@ void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOr
                 *OwnerUnit->StableUnitId.ToString(),
                 *ActiveRoutePlan.FailureReason);
 
-            OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+            if (!bPreserveRoutedState)
+            {
+                OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+            }
+
             OwnerUnit->OrderComponent->FailExecution();
             bHasMovementGoal = false;
             SetComponentTickEnabled(false);
@@ -128,8 +140,6 @@ void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOr
     bApplyGoalFacing = Order.bHasFacing;
     ExecutingOrderSerial = Order.OrderSerial;
     bHasMovementGoal = true;
-    bPreserveRoutedState =
-        OwnerUnit && OwnerUnit->UnitState == EStrategyUnitState::Routed;
 
     if (OwnerUnit && !bPreserveRoutedState)
     {
@@ -329,7 +339,14 @@ void UStrategyMovementExecutorComponent::FinishMovement()
         return;
     }
 
-    OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+    if (!bPreserveRoutedState)
+    {
+        OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+    }
+    else
+    {
+        OwnerUnit->SetUnitState(EStrategyUnitState::Routed);
+    }
 
     if (OwnerUnit->OrderComponent)
     {
