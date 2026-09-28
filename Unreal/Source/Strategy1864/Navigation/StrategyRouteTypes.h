@@ -9,6 +9,12 @@ struct FStrategyRoutePlan
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
+    bool bValid = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
+    FString FailureReason;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
     TArray<FVector> Points;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
