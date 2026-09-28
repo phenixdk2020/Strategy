@@ -3,6 +3,7 @@
 #include "StrategyVisibilityComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "StrategySkirmisherComponent.h"
+#include "../Terrain/StrategyTerrainAwarenessComponent.h"
 #include "EngineUtils.h"
 
 UStrategyContactComponent::UStrategyContactComponent()
@@ -65,10 +66,19 @@ void UStrategyContactComponent::RefreshContacts(float ElapsedSeconds)
                 OwnerUnit->GetActorLocation(),
                 Candidate->GetActorLocation());
 
-        const float AwarenessMultiplier =
+        const float SkirmisherMultiplier =
             OwnerUnit->SkirmisherComponent
             ? OwnerUnit->SkirmisherComponent->GetAwarenessRangeMultiplier()
             : 1.0f;
+
+        const float TerrainMultiplier =
+            OwnerUnit->TerrainAwarenessComponent
+            ? OwnerUnit->TerrainAwarenessComponent
+                ->GetObservationRangeMultiplierTo(Candidate)
+            : 1.0f;
+
+        const float AwarenessMultiplier =
+            SkirmisherMultiplier * TerrainMultiplier;
 
         if (DistanceCm > MaximumAwarenessRangeCm * AwarenessMultiplier ||
             !OwnerUnit->VisibilityComponent->HasLineOfSightTo(Candidate))
