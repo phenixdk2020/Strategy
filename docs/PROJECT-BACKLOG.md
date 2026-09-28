@@ -8,6 +8,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 
 **Unreal gameplay checkpoint v00.02.57:** Grafik/asset-passet er bevidst udskudt. Den aktive Unreal-port har nu funktionel mission-anchor for Attack/Defend, explicit obstacles + slope/elevation movement, officer stats + command delay, fatigue/experience gameplay, contact memory/FOG-fire authority, SPEJD HER recon state machine, cavalry screen/reform-gated charge, OOB tactical attachment API, bridge queue, autonom opposition company AI, routed fallback/rally og ammunition exhaustion/resupply. Næste gate er lokal UE 5.8.3 compile/runtime QA og fejlrettelser før flere visuelle systemer.
 
+**Unreal gameplay checkpoint v00.02.58:** Fire discipline/conservation, stance, directional cover, hasty fieldworks, black-powder smoke simulation, skirmishers, ammunition supply, doctrine/OrderAgg, autonomy, no-cheat AI difficulty, AI-DIAG telemetry, expanded officer model og mission constraints er implementeret som code core. Grafik er fortsat bevidst udskudt. Næste funktionelle hovedmål er artilleribatteriet ovenfor.
+
 ## Statusdefinitioner
 
 - **AKTIV** — implementeres/testes i den aktuelle build.
@@ -52,11 +54,11 @@ v00.00.09 skal mindst bevise:
 | B-010 | BESLUTTET | Ammunition som konkret beholdning | Enheder har faktisk ammunition pr. kompatibel våbenprofil; skydning forbruger ammunition og supply kan genforsyne. |
 | B-011 | BESLUTTET | Unit-status | Battle UI skal kunne vise fx `566 mænd | Tab 30 (8 dræbte / 22 sårede) | Ammunition 18.420` samt morale/cohesion/fatigue/experience. |
 | B-012 | BESLUTTET | Casualty pipeline | Hits splittes senere i killed, wounded, missing/captured m.m.; `Ramte N` er ikke lig med dræbte. |
-| B-013 | BESLUTTET | Fire discipline | Hold Fire, Fire at Will, volley/independent fire og ammunition conservation skal være separate ordrer/states. |
-| B-014 | BESLUTTET | Directional cover | Hegn, mure, grøfter, bygninger, skovkanter, terrænfolder og fieldworks beskytter kun fra relevante retninger. |
-| B-015 | BESLUTTET | Stance | Mindst standing og prone. Prone reducerer target profile, men påvirker movement/cohesion og reload afhængigt af loading method. |
-| B-016 | BESLUTTET | Hasty fieldworks | Almindeligt infanteri kan etablere simple skyttehuller/jordvolde/barrikader; ingeniører gør det hurtigere og bedre. |
-| B-017 | BESLUTTET | LOS og sortkrudtsrøg | Røg er simulation og skal påvirke LOS/accuracy; terræn/objekter må blokere ild. |
+| B-013 | IMPLEMENTERET CORE / UE QA PENDING | Fire discipline | Hold Fire, Fire at Will, volley/independent fire og ammunition conservation skal være separate ordrer/states. |
+| B-014 | IMPLEMENTERET CORE / UE QA PENDING | Directional cover | Hegn, mure, grøfter, bygninger, skovkanter, terrænfolder og fieldworks beskytter kun fra relevante retninger. |
+| B-015 | IMPLEMENTERET CORE / UE QA PENDING | Stance | Mindst standing og prone. Prone reducerer target profile, men påvirker movement/cohesion og reload afhængigt af loading method. |
+| B-016 | IMPLEMENTERET CORE / UE QA PENDING | Hasty fieldworks | Almindeligt infanteri kan etablere simple skyttehuller/jordvolde/barrikader; ingeniører gør det hurtigere og bedre. |
+| B-017 | IMPLEMENTERET CORE / UE QA PENDING | LOS og sortkrudtsrøg | Røg er simulation og skal påvirke LOS/accuracy; terræn/objekter må blokere ild. |
 | B-018 | BESLUTTET | Formation-level pathfinding | Regimenter/bataljoner skal gå rundt om obstacles og bevare en brugbar formation uden individuel NavMesh-agent pr. soldat. |
 | B-019 | BESLUTTET | Avanceret casualty visual senere | Den simple v00.00.08-figur udvides senere til flere repræsentative casualties og killed/wounded/medical collection, men authoritative casualty-state forbliver separat fra grafikken. |
 
@@ -64,14 +66,17 @@ v00.00.09 skal mindst bevise:
 
 | ID | Status | Emne | Beslutning / note |
 | --- | --- | --- | --- |
-| B-020 | BESLUTTET | Deploy skirmishers | Infanteri skal kunne sende en del af styrken frem i løs skyttekæde foran eller på flanken af hovedformationen. |
-| B-021 | BESLUTTET | Skirmisher-roller | Screen, reconnaissance, harassment, contest cover, beskytte advance/retreat og skabe contact før hovedformationen. |
-| B-022 | BESLUTTET | Skirmisher combat model | Lavere formation density gør dem sværere at ramme; de har lavere samlet volley density, mere autonomi og højere afhængighed af cover/terrain. |
-| B-023 | BESLUTTET | Reform | Skirmishers skal kunne kaldes tilbage og reformere i moderformationen med tids-/cohesion-konsekvens. |
+| B-020 | IMPLEMENTERET CORE / UE QA PENDING | Deploy skirmishers | Infanteri skal kunne sende en del af styrken frem i løs skyttekæde foran eller på flanken af hovedformationen. |
+| B-021 | IMPLEMENTERET CORE / UE QA PENDING | Skirmisher-roller | Screen, reconnaissance, harassment, contest cover, beskytte advance/retreat og skabe contact før hovedformationen. |
+| B-022 | IMPLEMENTERET CORE / UE QA PENDING | Skirmisher combat model | Lavere formation density gør dem sværere at ramme; de har lavere samlet volley density, mere autonomi og højere afhængighed af cover/terrain. |
+| B-023 | IMPLEMENTERET CORE / UE QA PENDING | Reform | Skirmishers skal kunne kaldes tilbage og reformere i moderformationen med tids-/cohesion-konsekvens. |
 | B-024 | RESEARCH | Skarpskytter/marksmen | Udvalgte gode skytter kan være en mindre specialty/ability eller subunit; de skal ikke modelleres som moderne sniper teams uden historisk dokumentation. |
 | B-025 | RESEARCH | Dansk organisation/terminologi | Fastlæg konkrete danske 1864-termer, andele og hvilke regimenter/jægertraditioner der havde særlige skirmisher-egenskaber. |
 
 ## Artilleri
+
+> **UNREAL NÆSTE PRIORITET:** Før næste større grafikpass implementeres et funktionelt artilleribatteri som rigtig taktisk enhed. Første slice skal mindst have battery actor, gun count, crew strength, ammunition, gun/calibre data, deployed/limbered state, movement gate, facing/traverse arc, manuel target/fire mission, Hold Fire, LOS/range og supply/resupply. Derefter udvides med manhandling, horse teams/caissons, ammunitionstyper, damage/capture og auto-target AI.
+
 
 | ID | Status | Emne | Beslutning / note |
 | --- | --- | --- | --- |
@@ -110,11 +115,11 @@ v00.00.09 skal mindst bevise:
 | ID | Status | Emne | Beslutning / note |
 | --- | --- | --- | --- |
 | B-060 | BESLUTTET | Bataljoner som underformationer | Regimenter skal senere kunne bestå af operative bataljoner/underformationer. |
-| B-061 | BESLUTTET | Order delay | Ordrer har transmission, delivery og acknowledgement; ingen telepatisk kontrol. |
-| B-062 | BESLUTTET | Commander AI | Officer skill, personality, initiative og commander intent påvirker lokal udførelse. |
+| B-061 | IMPLEMENTERET CORE / UE QA PENDING | Order delay | Ordrer har transmission, delivery og acknowledgement; ingen telepatisk kontrol. |
+| B-062 | IMPLEMENTERET CORE / UE QA PENDING | Commander AI | Officer skill, personality, initiative og commander intent påvirker lokal udførelse. |
 | B-063 | BESLUTTET | Persistent officers | Officerer har historik, performance, casualties, succession og reputation. |
-| B-064 | BESLUTTET | Training/readiness/experience adskilt | Experience, training, morale, cohesion, fatigue og readiness må ikke være én samlet magisk stat. |
-| B-065 | BESLUTTET | Commander autonomy | Strict/Normal/Independent autonomy påvirker, hvor meget en underordnet officer må ændre lokal udførelse inden for intent. |
+| B-064 | DELVIST IMPLEMENTERET / UE QA PENDING | Training/readiness/experience adskilt | Experience, training, morale, cohesion, fatigue og readiness må ikke være én samlet magisk stat. |
+| B-065 | IMPLEMENTERET CORE / UE QA PENDING | Commander autonomy | Strict/Normal/Independent autonomy påvirker, hvor meget en underordnet officer må ændre lokal udførelse inden for intent. |
 | B-066 | BESLUTTET | Order lifecycle | Drafted → Sent → In transit → Delivered → Acknowledged → Executing → Superseded/Failed er eksplicit state. |
 | B-067 | BESLUTTET | HQ-perspektiv | Spilleren ser i høj realisme det, eget HQ ved; “ordre sendt” er ikke det samme som “ordre forstået”. Assistanceindstillinger kan reducere friktion. |
 
