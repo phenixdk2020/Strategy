@@ -2,6 +2,7 @@
 
 #include "../Command/StrategyCommandComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
+#include "../AI/StrategyCommandDelayComponent.h"
 #include "../Units/StrategyCompanyUnit.h"
 #include "../Units/StrategyUnit.h"
 
@@ -109,7 +110,12 @@ bool UStrategyParentFormationPlannerComponent::IssueCompanySlotsForOrder(
         ChildOrder.bHasFacing = true;
         ChildOrder.Authority = Authority;
 
-        if (Company->OrderComponent->SetOrder(ChildOrder))
+        const float Delay =
+            Company->CommandDelayComponent
+            ? Company->CommandDelayComponent->CalculateDelayFromCurrentParent()
+            : 0.0f;
+
+        if (Company->OrderComponent->QueueDelayedOrder(ChildOrder, Delay))
         {
             bIssuedAny = true;
         }
@@ -190,7 +196,12 @@ bool UStrategyParentFormationPlannerComponent::IssueDirectSubordinateSlots(
         ChildOrder.bHasFacing = true;
         ChildOrder.Authority = Authority;
 
-        if (Subordinate->OrderComponent->SetOrder(ChildOrder))
+        const float Delay =
+            Subordinate->CommandDelayComponent
+            ? Subordinate->CommandDelayComponent->CalculateDelayFromCurrentParent()
+            : 0.0f;
+
+        if (Subordinate->OrderComponent->QueueDelayedOrder(ChildOrder, Delay))
         {
             bIssuedAny = true;
         }
