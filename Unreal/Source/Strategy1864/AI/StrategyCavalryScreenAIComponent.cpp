@@ -148,6 +148,10 @@ bool UStrategyCavalryScreenAIComponent::HasProtectedMission() const
         return true;
     }
 
-    return Current.Authority == EStrategyOrderAuthority::DirectPlayer &&
-        OwnerCavalry->OrderComponent->IsPhysicallyExecuting();
+    if (OwnerCavalry->OrderComponent->IsPhysicallyExecuting())
+    {
+        return true;
+    }
+
+    return Current.IsStandingIntent();
 }
