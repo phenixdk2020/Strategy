@@ -52,6 +52,8 @@ bool UStrategySkirmisherComponent::DeploySkirmishers(
             TransitionRemainingSeconds);
     }
 
+    OwnerUnit->SetUnitState(EStrategyUnitState::Reforming);
+
     SetComponentTickEnabled(true);
     return true;
 }
@@ -74,6 +76,8 @@ bool UStrategySkirmisherComponent::RecallSkirmishers()
         OwnerUnit->MovementExecutor->PauseMovementForSeconds(
             TransitionRemainingSeconds);
     }
+
+    OwnerUnit->SetUnitState(EStrategyUnitState::Reforming);
 
     SetComponentTickEnabled(true);
     return true;
@@ -126,6 +130,18 @@ void UStrategySkirmisherComponent::CompleteDeploy()
 {
     State = EStrategySkirmisherState::Deployed;
     UpdateScreenAnchor();
+
+    if (OwnerUnit)
+    {
+        const bool bMoving =
+            OwnerUnit->MovementExecutor &&
+            OwnerUnit->MovementExecutor->HasMovementGoal();
+
+        OwnerUnit->SetUnitState(
+            bMoving
+            ? EStrategyUnitState::Moving
+            : EStrategyUnitState::Ready);
+    }
 }
 
 void UStrategySkirmisherComponent::CompleteRecall()
@@ -139,6 +155,15 @@ void UStrategySkirmisherComponent::CompleteRecall()
     {
         OwnerUnit->Cohesion =
             FMath::Clamp(OwnerUnit->Cohesion - 2.0f, 0.0f, 100.0f);
+
+        const bool bMoving =
+            OwnerUnit->MovementExecutor &&
+            OwnerUnit->MovementExecutor->HasMovementGoal();
+
+        OwnerUnit->SetUnitState(
+            bMoving
+            ? EStrategyUnitState::Moving
+            : EStrategyUnitState::Ready);
     }
 
     SetComponentTickEnabled(false);
