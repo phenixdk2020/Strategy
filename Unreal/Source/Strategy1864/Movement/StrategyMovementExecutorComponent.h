@@ -34,6 +34,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Movement")
     float TurnSpeedDegreesPerSecond = 120.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Movement")
+    float FinalFacingToleranceDegrees = 2.0f;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Movement")
     void StopMovement();
 
@@ -72,6 +75,7 @@ private:
     bool bApplyGoalFacing = false;
     int32 ExecutingOrderSerial = 0;
     bool bCavalryDefileActive = false;
+    bool bTurningToGoalFacing = false;
     float PauseRemainingSeconds = 0.0f;
 
     void UpdateBridgeFormationState(const FVector& CurrentLocation);
