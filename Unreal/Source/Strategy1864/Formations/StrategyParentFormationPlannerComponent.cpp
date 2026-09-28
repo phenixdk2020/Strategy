@@ -50,8 +50,26 @@ bool UStrategyParentFormationPlannerComponent::IssueCompanySlots(
     bool bDefensiveMission,
     EStrategyOrderAuthority Authority)
 {
+    return IssueCompanySlotsForOrder(
+        ObjectiveCenter,
+        FacingYaw,
+        bDefensiveMission
+            ? EStrategyOrderType::DefendHere
+            : EStrategyOrderType::AttackHere,
+        Authority);
+}
+
+bool UStrategyParentFormationPlannerComponent::IssueCompanySlotsForOrder(
+    const FVector& ObjectiveCenter,
+    float FacingYaw,
+    EStrategyOrderType OrderType,
+    EStrategyOrderAuthority Authority)
+{
     AStrategyUnit* OwnerUnit = Cast<AStrategyUnit>(GetOwner());
-    if (!OwnerUnit)
+    if (!OwnerUnit ||
+        OrderType == EStrategyOrderType::None ||
+        OrderType == EStrategyOrderType::Hold ||
+        OrderType == EStrategyOrderType::Charge)
     {
         return false;
     }
@@ -85,10 +103,7 @@ bool UStrategyParentFormationPlannerComponent::IssueCompanySlots(
         }
 
         FStrategyOrder ChildOrder;
-        ChildOrder.Type =
-            bDefensiveMission
-            ? EStrategyOrderType::DefendHere
-            : EStrategyOrderType::AttackHere;
+        ChildOrder.Type = OrderType;
         ChildOrder.TargetLocation = Slots[Index].WorldLocation;
         ChildOrder.FacingYaw = Slots[Index].FacingYaw;
         ChildOrder.bHasFacing = true;
@@ -132,8 +147,9 @@ bool UStrategyParentFormationPlannerComponent::IssueDirectSubordinateSlots(
     EStrategyOrderAuthority Authority,
     float SpacingCm)
 {
-    if (OrderType != EStrategyOrderType::AttackHere &&
-        OrderType != EStrategyOrderType::DefendHere)
+    if (OrderType == EStrategyOrderType::None ||
+        OrderType == EStrategyOrderType::Hold ||
+        OrderType == EStrategyOrderType::Charge)
     {
         return false;
     }
