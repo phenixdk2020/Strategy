@@ -922,6 +922,10 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
     int32 DanishSupplyWagonCount = 0;
     bool bFoundDragoon = false;
 
+    const AStrategyArtilleryBatteryUnit* QABattery = nullptr;
+    const AStrategyUnit* QADeadGroundEnemy = nullptr;
+    const AStrategyUnit* QAClearEnemy = nullptr;
+
     for (AStrategyUnit* Unit : SpawnedUnitObjects)
     {
         if (!IsValid(Unit))
@@ -930,6 +934,19 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
         }
 
         ++ValidCount;
+
+        if (Unit->StableUnitId == FName(TEXT("DK-ART-BAT-1")))
+        {
+            QABattery = Cast<AStrategyArtilleryBatteryUnit>(Unit);
+        }
+        else if (Unit->StableUnitId == FName(TEXT("PR-QA-C1")))
+        {
+            QADeadGroundEnemy = Unit;
+        }
+        else if (Unit->StableUnitId == FName(TEXT("PR-QA-C2")))
+        {
+            QAClearEnemy = Unit;
+        }
 
         if (Unit->Side == EStrategySide::Prussia &&
             Unit->bPlayerControllable)
@@ -966,12 +983,30 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
             !Unit->AutonomyComponent ||
             !Unit->AIDifficultyComponent ||
             !Unit->AITelemetryComponent ||
-            !Unit->MissionConstraintsComponent)
+            !Unit->MissionConstraintsComponent ||
+            !Unit->TerrainAwarenessComponent)
         {
             OutFailures.Add(
                 FString::Printf(
                     TEXT("%s is missing one or more gameplay-core components."),
                     *Unit->StableUnitId.ToString()));
+        }
+
+        const float ExpectedTerrainZ =
+            UStrategyTerrainQueryLibrary::GetEffectiveGroundZ(
+                this,
+                Unit->GetActorLocation());
+
+        if (FMath::Abs(
+                Unit->GetActorLocation().Z -
+                ExpectedTerrainZ) > 5.0f)
+        {
+            OutFailures.Add(
+                FString::Printf(
+                    TEXT("%s is not projected onto tactical terrain (actorZ=%.1f terrainZ=%.1f)."),
+                    *Unit->StableUnitId.ToString(),
+                    Unit->GetActorLocation().Z,
+                    ExpectedTerrainZ));
         }
 
         if (Unit->CommandDelayComponent &&
@@ -1007,7 +1042,8 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                 !Battery->ArtilleryDamageComponent ||
                 !Battery->ArtilleryCaptureComponent ||
                 !Battery->ArtilleryTraverseComponent ||
-                !Battery->ArtilleryRepairComponent)
+                !Battery->ArtilleryRepairComponent ||
+                !Battery->ArtilleryPositioningComponent)
             {
                 OutFailures.Add(
                     TEXT("Artillery QA battery is missing one or more artillery-core components."));
@@ -1144,6 +1180,126 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
             FString::Printf(
                 TEXT("Expected 1 Danish supply wagon, found %d."),
                 DanishSupplyWagonCount));
+    }
+
+    if (bSpawnTerrainQA)
+    {
+        if (SpawnedTerrainFeatures.Num() != 3)
+        {
+            OutFailures.Add(
+                FString::Printf(
+                    TEXT("Expected 3 tactical terrain QA features, found %d."),
+                    SpawnedTerrainFeatures.Num()));
+        }
+
+        const float BatteryHillOffset =
+            UStrategyTerrainQueryLibrary::GetFeatureElevationOffset(
+                this,
+                Origin + FVector(1800.0f, 7200.0f, 0.0f));
+
+        if (BatteryHillOffset < 500.0f)
+        {
+            OutFailures.Add(
+                TEXT("Battery hill QA feature does not provide expected elevation."));
+        }
+
+        if (bSpawnArtilleryQA &&
+            bSpawnEnemyQAUnits &&
+            IsValid(QABattery) &&
+            IsValid(QADeadGroundEnemy) &&
+            IsValid(QAClearEnemy))
+        {
+            const bool bDeadGround =
+                UStrategyTerrainQueryLibrary::IsPointInDeadGroundFrom(
+                    this,
+                    QABattery->GetActorLocation(),
+                    QADeadGroundEnemy->GetActorLocation(),
+                    160.0f,
+                    120.0f);
+
+            if (!bDeadGround)
+            {
+                OutFailures.Add(
+                    TEXT("Central ridge did not create expected artillery dead ground for PR-QA-C1."));
+            }
+
+            const bool bClearLaneDeadGround =
+                UStrategyTerrainQueryLibrary::IsPointInDeadGroundFrom(
+                    this,
+                    QABattery->GetActorLocation(),
+                    QAClearEnemy->GetActorLocation(),
+                    160.0f,
+                    120.0f);
+
+            if (bClearLaneDeadGround)
+            {
+                OutFailures.Add(
+                    TEXT("PR-QA-C2 should provide the clear artillery terrain lane but is classified dead ground."));
+            }
+
+            FVector Start =
+                UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+                    this,
+                    QABattery->GetActorLocation());
+
+            FVector End =
+                UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+                    this,
+                    QADeadGroundEnemy->GetActorLocation());
+
+            Start.Z += 160.0f;
+            End.Z += 120.0f;
+
+            FVector CrestPoint;
+            float CrestExcessCm = 0.0f;
+
+            if (!UStrategyTerrainQueryLibrary::FindCrestPoint(
+                    this,
+                    Start,
+                    End,
+                    CrestPoint,
+                    CrestExcessCm,
+                    40))
+            {
+                OutFailures.Add(
+                    TEXT("Central ridge failed explicit crest detection."));
+            }
+
+            if (QABattery->TerrainAwarenessComponent &&
+                QABattery->TerrainAwarenessComponent
+                    ->GetObservationRangeMultiplierTo(QAClearEnemy) <= 1.0f)
+            {
+                OutFailures.Add(
+                    TEXT("Battery high-ground QA position did not produce an observation-range advantage."));
+            }
+
+            if (QABattery->ArtilleryPositioningComponent)
+            {
+                FVector BestPosition;
+                FStrategyTerrainPositionAssessment Assessment;
+
+                if (!QABattery->ArtilleryPositioningComponent
+                        ->FindBestDirectFirePosition(
+                            QAClearEnemy->GetActorLocation(),
+                            5000.0f,
+                            18,
+                            BestPosition,
+                            Assessment))
+                {
+                    OutFailures.Add(
+                        TEXT("Artillery positioning QA found no valid direct-fire candidate."));
+                }
+                else if (!Assessment.bHasDirectLOS ||
+                         Assessment.bInDeadGroundFromThreat ||
+                         Assessment.LocalSlopeDegrees >
+                            QABattery->ArtilleryPositioningComponent
+                                ->MaximumDirectFireSlopeDegrees)
+                {
+                    OutFailures.Add(
+                        TEXT("Artillery positioning QA returned an invalid best position."));
+                }
+            }
+        }
     }
 
     if (bSpawnRiverQA && !IsValid(SpawnedRiverBarrier))
