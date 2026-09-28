@@ -426,7 +426,11 @@ bool UStrategyMovementExecutorComponent::TryRetargetDuringBridge(
     RoutePoints = PreservedPoints;
     RoutePointIndex = 0;
 
-    ActiveRoutePlan.BridgeEnterPointIndex = 0;
+    ActiveRoutePlan.BridgeEnterPointIndex =
+        FMath::Max(
+            0,
+            ActiveRoutePlan.BridgeEnterPointIndex - OriginalRoutePointIndex);
+
     ActiveRoutePlan.BridgeExitPointIndex =
         FMath::Max(
             0,
