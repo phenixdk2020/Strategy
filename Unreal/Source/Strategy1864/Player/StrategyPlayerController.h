@@ -68,6 +68,7 @@ private:
     void SetSpeed1x();
     void SetSpeed2x();
     void SetSpeed3x();
+    void ResetQAScenario();
     void SelectSingleUnderCursor();
     void SelectUnitsInScreenRectangle(const FVector2D& Start, const FVector2D& End);
     void ApplySelection(AStrategyUnit* Unit, bool bAdd, bool bRemove);
