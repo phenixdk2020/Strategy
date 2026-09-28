@@ -23,6 +23,7 @@ class UStrategyThreatReactionComponent;
 class UStrategyOOBStatusComponent;
 class UStrategySemanticZoomComponent;
 class UStrategyWorldDebugComponent;
+class UStrategyPresentationSnapshotComponent;
 
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
@@ -120,6 +121,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyWorldDebugComponent> WorldDebugComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyPresentationSnapshotComponent> PresentationSnapshotComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
