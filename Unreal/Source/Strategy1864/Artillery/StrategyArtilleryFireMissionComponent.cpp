@@ -14,6 +14,7 @@
 #include "../Combat/StrategySmokeField.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "../Logistics/StrategySupplyWagonUnit.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 
@@ -677,6 +678,21 @@ bool UStrategyArtilleryFireMissionComponent::FireAt(
                 ->ApplyIncomingHits(Casualties, bExplosive);
         }
     }
+    else if (AStrategySupplyWagonUnit* SupplyTarget =
+        Cast<AStrategySupplyWagonUnit>(Target))
+    {
+        if (Casualties > 0)
+        {
+            SupplyTarget->ApplySupplyDamage(
+                FMath::Max(0, FMath::RoundToInt(Casualties * 0.35f)),
+                FMath::Max(0, FMath::RoundToInt(Casualties * 0.30f)),
+                static_cast<float>(Casualties) * 3.0f,
+                FMath::Clamp(
+                    static_cast<float>(Casualties) * 0.006f,
+                    0.0f,
+                    0.35f));
+        }
+    }
     else if (Casualties > 0)
     {
         Target->ApplyStrengthLoss(Casualties);
@@ -953,6 +969,18 @@ bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
                 TargetBattery->ArtilleryDamageComponent
                     ->ApplyIncomingHits(Casualties, bExplosive);
             }
+        }
+        else if (AStrategySupplyWagonUnit* SupplyTarget =
+            Cast<AStrategySupplyWagonUnit>(Target))
+        {
+            SupplyTarget->ApplySupplyDamage(
+                FMath::Max(0, FMath::RoundToInt(Casualties * 0.35f)),
+                FMath::Max(0, FMath::RoundToInt(Casualties * 0.30f)),
+                static_cast<float>(Casualties) * 3.0f,
+                FMath::Clamp(
+                    static_cast<float>(Casualties) * 0.006f,
+                    0.0f,
+                    0.35f));
         }
         else
         {
