@@ -33,6 +33,16 @@ enum class EStrategyArtilleryAmmoType : uint8
 };
 
 UENUM(BlueprintType)
+enum class EStrategyArtilleryTargetPriority : uint8
+{
+    Balanced,
+    CounterBattery,
+    Infantry,
+    ClosestThreat,
+    ConserveAmmo
+};
+
+UENUM(BlueprintType)
 enum class EStrategyArtilleryOwnershipState : uint8
 {
     Operational,
@@ -50,6 +60,9 @@ struct FStrategyArtilleryGunProfile
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float CalibreMm = 90.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FName AmmunitionFamilyTag = TEXT("FIELD_ARTILLERY_GENERIC");
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float MinimumRangeCm = 5000.0f;
