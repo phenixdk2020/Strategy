@@ -16,6 +16,7 @@
 #include "../AI/StrategyOfficerProfileComponent.h"
 #include "../Artillery/StrategyArtilleryBatteryUnit.h"
 #include "../Artillery/StrategyArtilleryDamageComponent.h"
+#include "../Logistics/StrategySupplyWagonUnit.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -166,6 +167,24 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
                     Hits,
                     false);
             }
+        }
+        else if (AStrategySupplyWagonUnit* SupplyTarget =
+            Cast<AStrategySupplyWagonUnit>(Target))
+        {
+            const int32 DriverLoss =
+                FMath::Max(0, FMath::RoundToInt(Hits * 0.45f));
+
+            const int32 HorseLoss =
+                FMath::Max(0, FMath::RoundToInt(Hits * 0.35f));
+
+            SupplyTarget->ApplySupplyDamage(
+                DriverLoss,
+                HorseLoss,
+                static_cast<float>(Hits) * 1.5f,
+                FMath::Clamp(
+                    static_cast<float>(Hits) * 0.0025f,
+                    0.0f,
+                    0.12f));
         }
         else
         {
