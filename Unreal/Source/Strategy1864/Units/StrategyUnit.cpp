@@ -272,6 +272,9 @@ FString AStrategyUnit::GetNATOEchelonSymbol() const
         case EStrategyEchelon::Artillery:
             return TEXT("I ART");
 
+        case EStrategyEchelon::Supply:
+            return TEXT("LOG");
+
         case EStrategyEchelon::Headquarters:
         default:
             return TEXT("HQ");
