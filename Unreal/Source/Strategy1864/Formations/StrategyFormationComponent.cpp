@@ -185,3 +185,12 @@ float UStrategyFormationComponent::EstimateFrontageCm(int32 Strength) const
     const int32 Files = FMath::CeilToInt(static_cast<float>(Strength) / EffectiveRanks);
     return FMath::Max(0, Files - 1) * SoldierLateralSpacingCm;
 }
+
+
+bool UStrategyFormationComponent::IsFullCompanyFrontageWithinBaseline(
+    int32 Strength) const
+{
+    const float FrontageCm = EstimateFrontageCm(Strength);
+    return FMath::Abs(FrontageCm - FullCompanyTargetFrontageCm) <=
+        FullCompanyFrontageToleranceCm;
+}
