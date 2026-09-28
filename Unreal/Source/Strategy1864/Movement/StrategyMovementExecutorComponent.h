@@ -41,6 +41,9 @@ public:
     void StopMovement();
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Movement")
+    void RestartCurrentOrderExecution();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Movement")
     void PauseMovementForSeconds(float DurationSeconds);
 
     UFUNCTION(BlueprintPure, Category="Strategy|Movement")
