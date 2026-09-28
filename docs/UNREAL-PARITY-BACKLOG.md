@@ -605,3 +605,43 @@ Functionality-first work added fire discipline/ammunition conservation, Standing
 - Captured wagons may provide compatible cargo in place but remain immobile until a future re-crewing/re-horsing mechanic.
 - Battlefield salvage/aftermath recovery and final historical ammunition compatibility tables remain later work.
 - All UE-P320..339 remain **UE 5.8.3 build/runtime QA pending**.
+
+
+# 17. Tactical terrain, crest/dead-ground and artillery positioning — v00.02.61
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P340 | P0 | Tactical terrain feature model | Hill / Ridge / Depression gameplay actors | IMPLEMENTED CORE |
+| UE-P341 | P0 | Effective terrain elevation | Physical ground + analytic tactical elevation query | IMPLEMENTED CORE |
+| UE-P342 | P0 | Local terrain slope | Shared slope sampling for movement/deployment | IMPLEMENTED CORE |
+| UE-P343 | P0 | Terrain profile occlusion | Sampled sight-line terrain blocking | IMPLEMENTED CORE |
+| UE-P344 | P0 | Crest / dead-ground query | Crest point + dead-ground classification | IMPLEMENTED CORE |
+| UE-P345 | P0 | Unit terrain awareness | High-ground, reverse-slope and crest awareness component | IMPLEMENTED CORE |
+| UE-P346 | P0 | Terrain-aware unit LOS | Direct LOS uses physical collision + tactical terrain profile | IMPLEMENTED CORE |
+| UE-P347 | P0 | Terrain-aware location LOS | Visible ground/area points use same terrain truth | IMPLEMENTED CORE |
+| UE-P348 | P1 | Elevation observation advantage | Contact awareness range scales with relative height | IMPLEMENTED CORE |
+| UE-P349 | P1 | Crest/reverse-slope fire masking | Terrain exposure modifies infantry and artillery hit resolution | IMPLEMENTED CORE |
+| UE-P350 | P0 | Route elevation projection | Waypoints are projected onto tactical terrain height | IMPLEMENTED CORE |
+| UE-P351 | P0 | Terrain route sampling | Long routes are subdivided even without NavMesh before slope validation | IMPLEMENTED CORE |
+| UE-P352 | P0 | Shared artillery deploy slope | Battery deployability uses tactical terrain slope | IMPLEMENTED CORE |
+| UE-P353 | P1 | Artillery position assessment | LOS/slope/elevation/crest/dead-ground/move-cost score | IMPLEMENTED CORE |
+| UE-P354 | P1 | Artillery candidate generation | Ring-based projected candidate positions | IMPLEMENTED CORE |
+| UE-P355 | P1 | Best direct-fire position search | Filters dead-ground/LOS/slope and returns highest score | IMPLEMENTED CORE |
+| UE-P356 | P0 | Terrain QA fixtures | Battery hill + central ridge + depression actors | IMPLEMENTED QA CORE |
+| UE-P357 | P0 | Spawn projection | QA units spawn on effective tactical terrain Z | IMPLEMENTED QA CORE |
+| UE-P358 | P0 | Artillery area-fire terrain authority | Area fire consumes shared terrain-aware location LOS | IMPLEMENTED CORE |
+| UE-P359 | P0 | Terrain diagnostics/regression | Snapshot ground/slope/feature offset + dead-ground/crest/position QA | IMPLEMENTED QA CORE |
+
+### v00.02.61 authority notes
+
+- The gameplay terrain layer may combine real WorldStatic ground with analytic tactical features. Analytic features exist so LOS, slopes and artillery positioning can be tested before final landscape art.
+- Terrain occlusion is authoritative for direct fire. Dead ground is not a visual effect.
+- A reverse-slope target with terrain between shooter and target cannot be directly engaged merely because its actor exists.
+- Partial crest masking can reduce target exposure before complete occlusion.
+- Relative elevation modifies observation range, but it never bypasses LOS.
+- Skirmisher observation and high-ground observation multiply through the same contact authority rather than separate omniscient logic.
+- Route segments are sampled through terrain even if no NavMesh path exists, preventing long straight routes from skipping an intermediate hill.
+- Artillery deployability, artillery area fire and artillery candidate scoring all consume the same terrain query layer.
+- QA intentionally creates one blocked artillery lane and one clear lane across the ridge.
+- Physical battlefield expansion/finished hills art is still separate from this gameplay terrain authority.
+- All UE-P340..359 remain **UE 5.8.3 build/runtime QA pending**.
