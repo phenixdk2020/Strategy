@@ -71,11 +71,6 @@ void UStrategyMissionAnchorComponent::TickComponent(
         return;
     }
 
-    FStrategyOrder Reassert = OwnerUnit->OrderComponent->GetCurrentOrder();
-    Reassert.TargetLocation = MissionAnchor;
-    Reassert.FacingYaw = MissionFacingYaw;
-    Reassert.bHasFacing = bHasMissionFacing;
-
     // Same standing mission is physically reasserted without changing authority.
     OwnerUnit->OrderComponent->BeginExecution();
 
