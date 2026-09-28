@@ -4,13 +4,15 @@
 #include "StrategySmokeField.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
+#include "../Terrain/StrategyTerrainQueryLibrary.h"
 
 UStrategyVisibilityComponent::UStrategyVisibilityComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
 }
 
-bool UStrategyVisibilityComponent::HasLineOfSightTo(const AStrategyUnit* Target) const
+bool UStrategyVisibilityComponent::HasLineOfSightTo(
+    const AStrategyUnit* Target) const
 {
     const AActor* OwnerActor = GetOwner();
     if (!OwnerActor || !IsValid(Target) || !GetWorld())
@@ -18,10 +20,18 @@ bool UStrategyVisibilityComponent::HasLineOfSightTo(const AStrategyUnit* Target)
         return false;
     }
 
-    const FVector Start =
-        OwnerActor->GetActorLocation() + FVector(0.0f, 0.0f, EyeHeightCm);
-    const FVector End =
-        Target->GetActorLocation() + FVector(0.0f, 0.0f, TargetHeightCm);
+    FVector Start =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            OwnerActor,
+            OwnerActor->GetActorLocation());
+
+    FVector End =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            OwnerActor,
+            Target->GetActorLocation());
+
+    Start.Z += EyeHeightCm;
+    End.Z += TargetHeightCm;
 
     FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(StrategyLOS), true);
     QueryParams.AddIgnoredActor(OwnerActor);
@@ -34,16 +44,76 @@ bool UStrategyVisibilityComponent::HasLineOfSightTo(const AStrategyUnit* Target)
         ECC_Visibility,
         QueryParams);
 
-    const bool bTerrainLOS =
+    const bool bPhysicalLOS =
         !bBlocked || Hit.GetActor() == Target;
 
-    if (!bTerrainLOS)
+    if (!bPhysicalLOS)
+    {
+        return false;
+    }
+
+    if (UStrategyTerrainQueryLibrary::IsTerrainProfileOccluded(
+        OwnerActor,
+        Start,
+        End,
+        15.0f,
+        40))
     {
         return false;
     }
 
     return GetSmokeTransmissionTo(Target) >=
         MinimumSmokeTransmissionForLOS;
+}
+
+bool UStrategyVisibilityComponent::HasLineOfSightToLocation(
+    const FVector& TargetLocation,
+    float LocationTargetHeightCm) const
+{
+    const AActor* OwnerActor = GetOwner();
+    if (!OwnerActor || !GetWorld())
+    {
+        return false;
+    }
+
+    FVector Start =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            OwnerActor,
+            OwnerActor->GetActorLocation());
+
+    FVector End =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            OwnerActor,
+            TargetLocation);
+
+    Start.Z += EyeHeightCm;
+    End.Z += FMath::Max(0.0f, LocationTargetHeightCm);
+
+    FCollisionQueryParams QueryParams(
+        SCENE_QUERY_STAT(StrategyLocationLOS),
+        true);
+    QueryParams.AddIgnoredActor(OwnerActor);
+
+    FHitResult Hit;
+    const bool bBlocked =
+        GetWorld()->LineTraceSingleByChannel(
+            Hit,
+            Start,
+            End,
+            ECC_Visibility,
+            QueryParams);
+
+    if (bBlocked)
+    {
+        return false;
+    }
+
+    return !UStrategyTerrainQueryLibrary::IsTerrainProfileOccluded(
+        OwnerActor,
+        Start,
+        End,
+        15.0f,
+        40);
 }
 
 
@@ -56,10 +126,17 @@ float UStrategyVisibilityComponent::GetSmokeTransmissionTo(
         return 0.0f;
     }
 
-    const FVector Start =
-        OwnerActor->GetActorLocation() + FVector(0.0f, 0.0f, EyeHeightCm);
-    const FVector End =
-        Target->GetActorLocation() + FVector(0.0f, 0.0f, TargetHeightCm);
+    FVector Start =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            OwnerActor,
+            OwnerActor->GetActorLocation());
+    FVector End =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            OwnerActor,
+            Target->GetActorLocation());
+
+    Start.Z += EyeHeightCm;
+    End.Z += TargetHeightCm;
 
     float Transmission = 1.0f;
 
