@@ -80,6 +80,7 @@ void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOr
     RoutePoints.Reset();
     RoutePointIndex = 0;
     bCavalryDefileActive = false;
+    bTurningToGoalFacing = false;
 
     if (OwnerUnit && OwnerUnit->RoutePlanner)
     {
@@ -148,6 +149,35 @@ void UStrategyMovementExecutorComponent::TickComponent(
     const FVector CurrentLocation = OwnerUnit->GetActorLocation();
     UpdateBridgeFormationState(CurrentLocation);
 
+    if (bTurningToGoalFacing && bApplyGoalFacing)
+    {
+        const FRotator CurrentRotation = OwnerUnit->GetActorRotation();
+        FRotator DesiredRotation = CurrentRotation;
+        DesiredRotation.Yaw = GoalFacingYaw;
+
+        const float RemainingYaw =
+            FMath::Abs(
+                FMath::FindDeltaAngleDegrees(
+                    CurrentRotation.Yaw,
+                    GoalFacingYaw));
+
+        if (RemainingYaw <= FinalFacingToleranceDegrees)
+        {
+            OwnerUnit->SetActorRotation(DesiredRotation);
+            bTurningToGoalFacing = false;
+            FinishMovement();
+            return;
+        }
+
+        OwnerUnit->SetActorRotation(
+            FMath::RInterpConstantTo(
+                CurrentRotation,
+                DesiredRotation,
+                DeltaTime,
+                TurnSpeedDegreesPerSecond));
+        return;
+    }
+
     if (!RoutePoints.IsValidIndex(RoutePointIndex))
     {
         FinishMovement();
@@ -172,13 +202,23 @@ void UStrategyMovementExecutorComponent::TickComponent(
             return;
         }
 
-        OwnerUnit->SetActorLocation(FVector(MovementGoal.X, MovementGoal.Y, CurrentLocation.Z));
+        OwnerUnit->SetActorLocation(
+            FVector(MovementGoal.X, MovementGoal.Y, CurrentLocation.Z));
 
         if (bApplyGoalFacing)
         {
-            FRotator Rotation = OwnerUnit->GetActorRotation();
-            Rotation.Yaw = GoalFacingYaw;
-            OwnerUnit->SetActorRotation(Rotation);
+            const float RemainingYaw =
+                FMath::Abs(
+                    FMath::FindDeltaAngleDegrees(
+                        OwnerUnit->GetActorRotation().Yaw,
+                        GoalFacingYaw));
+
+            if (RemainingYaw > FinalFacingToleranceDegrees)
+            {
+                bTurningToGoalFacing = true;
+                OwnerUnit->SetUnitState(EStrategyUnitState::Reforming);
+                return;
+            }
         }
 
         FinishMovement();
@@ -234,6 +274,7 @@ void UStrategyMovementExecutorComponent::StopMovement()
     }
 
     bCavalryDefileActive = false;
+    bTurningToGoalFacing = false;
     PauseRemainingSeconds = 0.0f;
     bHasMovementGoal = false;
     ExecutingOrderSerial = 0;
