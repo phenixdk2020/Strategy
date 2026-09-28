@@ -2,6 +2,7 @@
 
 #include "../Combat/StrategyContactComponent.h"
 #include "../Combat/StrategyFireControlComponent.h"
+#include "../Command/StrategyCommandComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "EngineUtils.h"
@@ -42,7 +43,10 @@ void UStrategyAutonomousBattleAIComponent::TickComponent(
 
     EvaluationAccumulator = 0.0f;
 
-    if (OwnerUnit->OrderComponent->IsPhysicallyExecuting())
+    if (OwnerUnit->OrderComponent->IsPhysicallyExecuting() ||
+        OwnerUnit->OrderComponent->HasStandingIntent() ||
+        (OwnerUnit->CommandComponent &&
+         IsValid(OwnerUnit->CommandComponent->CurrentCommandParent)))
     {
         return;
     }
