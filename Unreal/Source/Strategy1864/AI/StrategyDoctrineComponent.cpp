@@ -12,7 +12,11 @@ float UStrategyDoctrineComponent::GetEffectiveAggression(
 {
     const float OfficerAggression =
         OfficerProfile
-        ? OfficerProfile->Aggression
+        ? FMath::Clamp(
+            OfficerProfile->Aggression * 0.80f +
+            (100.0f - OfficerProfile->Caution) * 0.20f,
+            0.0f,
+            100.0f)
         : 50.0f;
 
     float Result =
