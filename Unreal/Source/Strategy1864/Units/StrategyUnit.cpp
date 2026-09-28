@@ -32,6 +32,7 @@
 #include "../Combat/StrategyStanceComponent.h"
 #include "../Combat/StrategyDirectionalCoverComponent.h"
 #include "../Combat/StrategyFieldworksComponent.h"
+#include "../Combat/StrategySkirmisherComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -100,6 +101,8 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyDirectionalCoverComponent>(TEXT("DirectionalCoverComponent"));
     FieldworksComponent =
         CreateDefaultSubobject<UStrategyFieldworksComponent>(TEXT("FieldworksComponent"));
+    SkirmisherComponent =
+        CreateDefaultSubobject<UStrategySkirmisherComponent>(TEXT("SkirmisherComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
