@@ -4,6 +4,7 @@
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "StrategyCommandDelayComponent.h"
+#include "StrategyAITelemetryComponent.h"
 
 UStrategyOfficerAIComponent::UStrategyOfficerAIComponent()
 {
@@ -124,6 +125,15 @@ void UStrategyOfficerAIComponent::EvaluateInheritedMission()
     if (OwnerUnit->OrderComponent->QueueDelayedOrder(InheritedOrder, Delay))
     {
         LastInheritedParentOrderSerial = ParentOrder.OrderSerial;
+
+        if (OwnerUnit->AITelemetryComponent)
+        {
+            OwnerUnit->AITelemetryComponent->SetDecision(
+                TEXT("Inherited mission"),
+                FString::Printf(
+                    TEXT("Parent order queued with %.2fs command delay"),
+                    Delay));
+        }
     }
 }
 
