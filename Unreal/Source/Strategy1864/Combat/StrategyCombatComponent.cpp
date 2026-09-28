@@ -6,6 +6,7 @@
 #include "../Units/StrategyUnit.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Formations/StrategyFormationComponent.h"
+#include "StrategyConditionComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -223,8 +224,16 @@ int32 UStrategyCombatComponent::ResolveHits(int32 ShotCount, float DistanceCm)
     const float RangeFactor =
         FMath::Clamp(1.0f - (DistanceCm / ActiveRangeCm) * 0.55f, 0.25f, 1.0f);
 
+    const float ConditionMultiplier =
+        OwnerUnit->ConditionComponent
+        ? OwnerUnit->ConditionComponent->GetAccuracyMultiplier()
+        : 1.0f;
+
     const float HitChance =
-        FMath::Clamp(BaseHitChance * RangeFactor, 0.0f, 1.0f);
+        FMath::Clamp(
+            BaseHitChance * RangeFactor * ConditionMultiplier,
+            0.0f,
+            1.0f);
 
     int32 Hits = 0;
 
@@ -251,10 +260,17 @@ void UStrategyCombatComponent::NotifyIncomingVolley(int32 Hits)
         UnderFireRemainingSeconds,
         UnderFireDurationSeconds);
 
-    const float Shock =
+    const float BaseShock =
         Hits > 0
         ? FMath::Clamp(static_cast<float>(Hits) * 0.35f, 0.5f, 8.0f)
         : 0.25f;
+
+    const float ShockMultiplier =
+        OwnerUnit->ConditionComponent
+        ? OwnerUnit->ConditionComponent->GetMoraleShockMultiplier()
+        : 1.0f;
+
+    const float Shock = BaseShock * ShockMultiplier;
 
     OwnerUnit->Morale = FMath::Clamp(
         OwnerUnit->Morale - Shock,
