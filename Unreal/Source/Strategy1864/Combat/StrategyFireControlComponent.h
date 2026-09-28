@@ -40,6 +40,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Fire")
     float FireConeHalfAngleDegrees = 35.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Fire")
+    bool bRequireCurrentContact = true;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
     bool bDrawQARangeCones = true;
 
