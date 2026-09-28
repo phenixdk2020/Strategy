@@ -11,6 +11,7 @@ class UStrategyArtilleryFireMissionComponent;
 class UStrategyArtilleryDamageComponent;
 class UStrategyArtilleryCaptureComponent;
 class UStrategyArtilleryTraverseComponent;
+class UStrategyArtilleryRepairComponent;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API AStrategyArtilleryBatteryUnit : public AStrategyUnit
@@ -73,6 +74,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
     TObjectPtr<UStrategyArtilleryTraverseComponent> ArtilleryTraverseComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    TObjectPtr<UStrategyArtilleryRepairComponent> ArtilleryRepairComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    int32 PersonnelEvacuatedOnAbandon = 0;
+
     UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
     int32 GetPhysicallyAvailableGunCount() const;
 
@@ -93,6 +100,9 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
     bool CanFireBattery() const;
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
+    bool AbandonBattery();
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
     void ApplyBatteryDamage(
