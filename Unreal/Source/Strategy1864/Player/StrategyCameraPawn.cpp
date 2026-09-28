@@ -165,6 +165,11 @@ void AStrategyCameraPawn::ZoomCamera(float Value)
 
 void AStrategyCameraPawn::RotateCamera(float Value)
 {
+    if (!FMath::IsNearlyZero(Value) && bFollowingProjectile)
+    {
+        StopProjectileFollow(true);
+    }
+
     if (FMath::IsNearlyZero(Value))
     {
         return;
