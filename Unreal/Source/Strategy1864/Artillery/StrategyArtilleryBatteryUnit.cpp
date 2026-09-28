@@ -8,6 +8,7 @@
 #include "StrategyArtilleryTraverseComponent.h"
 #include "StrategyArtilleryRepairComponent.h"
 #include "StrategyArtilleryPositioningComponent.h"
+#include "StrategyArtilleryProjectilePresentationComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Combat/StrategyFireControlComponent.h"
@@ -49,6 +50,10 @@ AStrategyArtilleryBatteryUnit::AStrategyArtilleryBatteryUnit()
     ArtilleryPositioningComponent =
         CreateDefaultSubobject<UStrategyArtilleryPositioningComponent>(
             TEXT("ArtilleryPositioningComponent"));
+
+    ProjectilePresentationComponent =
+        CreateDefaultSubobject<UStrategyArtilleryProjectilePresentationComponent>(
+            TEXT("ProjectilePresentationComponent"));
 }
 
 void AStrategyArtilleryBatteryUnit::BeginPlay()
