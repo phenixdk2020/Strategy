@@ -6,6 +6,7 @@
 #include "../Navigation/StrategyRoutePlannerComponent.h"
 #include "../Units/CavalryUnit.h"
 #include "../Combat/StrategyConditionComponent.h"
+#include "../Combat/StrategyStanceComponent.h"
 #include "../AI/StrategyReconComponent.h"
 #include "../Navigation/StrategyRiverBarrier.h"
 
@@ -306,10 +307,16 @@ void UStrategyMovementExecutorComponent::TickComponent(
         SlopeMultiplier = DownhillSpeedMultiplier;
     }
 
+    const float StanceMultiplier =
+        OwnerUnit->StanceComponent
+        ? OwnerUnit->StanceComponent->GetMovementMultiplier()
+        : 1.0f;
+
     const float Step =
         MoveSpeedCmPerSecond *
         ConditionMultiplier *
         SlopeMultiplier *
+        StanceMultiplier *
         DeltaTime;
     const float AppliedStep =
         FMath::Min(Step, FlatDelta.Size());
