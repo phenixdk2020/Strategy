@@ -16,6 +16,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 
 **Unreal gameplay checkpoint v00.02.61:** Tactical terrain authority er implementeret som gameplay core: Hill/Ridge/Depression features, physical+analytic effective elevation, shared slope, crest/dead-ground, reverse slope/high-ground awareness, terrain-aware unit/ground LOS, elevation observation, terrain fire masking, route projection/sampling, shared artillery deploy slope og terrain-aware artillery position scoring/candidate search. QA har battery hill + central ridge + depression, units projiceres til terrain-Z, og regressionen kræver både dead-ground lane, clear lane, crest detection og gyldig artillery direct-fire position. Fysisk/visuel battlefield expansion er stadig separat; UE 5.8.3 build/runtime QA udestår.
 
+**Unreal gameplay checkpoint v00.02.62:** Artillery projectile presentation er nu bundet til fire-missionens resolvede per-gun impactpunkter: ammo-specifik trajectory, Round Shot ricochet, Shell/Shrapnel/Canister presentation, virtual muzzle origins, bounded shot history, Follow Shot camera, impact hold/restore, P follow-toggle og F9 trajectory-debug. Projectile actors er presentation-only og kan aldrig skabe skade selv. QA validerer Round Shot/Shell arcs, ricochet og projectile component. Derudover er campaign→battlefield data-kontrakten etableret som foundation til senere generering fra campaign map.
+
 ## Statusdefinitioner
 
 - **AKTIV** — implementeres/testes i den aktuelle build.
@@ -280,6 +282,50 @@ Før artilleri udbygges til fuld gameplay-test skal tactical battlefield udvides
 - QA-hill/ridge/depression fixtures: **IMPLEMENTERET QA CORE**.
 - Større fysisk battlefield, endelige hills/landscape assets, roads/fields/forest visual pass: **PENDING**.
 - Lokal UE 5.8.3 compile/runtime test: **PENDING**.
+
+
+## B-291 — Campaign Map → Generated Tactical Battlefield
+
+**Status:** BESLUTTET / DATA-KONTRAKT IMPLEMENTERET / GENERATOR PENDING  
+**Prioritet:** Høj før campaign→battle vertical slice
+
+### Beslutning
+Et tactical battlefield skal senere **genereres ud fra det sted på campaign map, hvor slaget opstår**. Tactical map må ikke være et løsrevet tilfældigt level, hvis campaign map allerede indeholder relevant geografi.
+
+### Campaign-data der skal kunne føres ind
+- battle center / campaign koordinat;
+- deterministic generation seed;
+- attacker approach direction;
+- defender approach direction;
+- campaign height/elevation;
+- hills, ridges og depressions;
+- rivers/water;
+- roads;
+- bridges;
+- settlements/byer;
+- forest;
+- fields/agricultural land;
+- marsh/wet ground;
+- feature importance/scale;
+- source feature IDs, så tactical features kan spores tilbage til campaign map.
+
+### Genereringsregler
+- tactical battlefield skal være et lokalt udsnit omkring battle center;
+- overordnet højdeprofil og større terrænformer skal bevares;
+- en campaign-flod skal fortsætte som samme topologiske barriere i tactical battle;
+- campaign-veje og broer skal lande på meningsfulde tactical forbindelser;
+- større byer/landsbyer skal placeres i korrekt relativ retning og afstand;
+- attacker/defender deployment edges skal afspejle deres campaign approach;
+- samme battle request + seed skal generere samme gameplay-terrain;
+- tactical simplification er tilladt, men må ikke vende eller flytte afgørende geografi vilkårligt;
+- den eksisterende tactical terrain authority (v00.02.61) skal være output-/runtime-laget for generated terrain;
+- final landscape/meshes/materialer skal være presentation oven på samme generated gameplay data.
+
+### Foundation v00.02.62
+`StrategyBattlefieldGenerationTypes.h` definerer nu request/result + source-feature dataformat for HeightSample/Hill/Ridge/Depression/River/Road/Bridge/Settlement/Forest/Field/Marsh/Water. **Selve generatoren er ikke implementeret endnu.**
+
+### Exit-kriterium
+Et slag, som opstår ved samme position på campaign map, skal deterministisk kunne starte et tactical battlefield med genkendelig lokal topografi, veje, vandløb, broer, land cover og korrekte attacker/defender approach-retninger.
 
 
 ## B-300 — Infantry Visual Fidelity + Soldier Silhouette Polish
