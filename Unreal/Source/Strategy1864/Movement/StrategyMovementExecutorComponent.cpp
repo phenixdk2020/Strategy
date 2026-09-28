@@ -41,7 +41,10 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
     if (!NewOrder.IsValidOrder())
     {
         StopMovement();
+        if (!bPreserveRoutedState)
+    {
         OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+    }
         return;
     }
 
@@ -125,8 +128,10 @@ void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOr
     bApplyGoalFacing = Order.bHasFacing;
     ExecutingOrderSerial = Order.OrderSerial;
     bHasMovementGoal = true;
+    bPreserveRoutedState =
+        OwnerUnit && OwnerUnit->UnitState == EStrategyUnitState::Routed;
 
-    if (OwnerUnit)
+    if (OwnerUnit && !bPreserveRoutedState)
     {
         OwnerUnit->SetUnitState(EStrategyUnitState::Moving);
     }
@@ -249,7 +254,10 @@ void UStrategyMovementExecutorComponent::TickComponent(
             if (RemainingYaw > FinalFacingToleranceDegrees)
             {
                 bTurningToGoalFacing = true;
-                OwnerUnit->SetUnitState(EStrategyUnitState::Reforming);
+                if (!bPreserveRoutedState)
+                {
+                    OwnerUnit->SetUnitState(EStrategyUnitState::Reforming);
+                }
                 return;
             }
         }
@@ -353,6 +361,7 @@ void UStrategyMovementExecutorComponent::StopMovement()
     bCavalryDefileActive = false;
     bTurningToGoalFacing = false;
     bWaitingForBridge = false;
+    bPreserveRoutedState = false;
     PauseRemainingSeconds = 0.0f;
     bHasMovementGoal = false;
     ExecutingOrderSerial = 0;
