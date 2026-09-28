@@ -37,6 +37,10 @@
 #include "../Artillery/StrategyArtilleryDamageComponent.h"
 #include "../Artillery/StrategyArtilleryCaptureComponent.h"
 #include "../Artillery/StrategyArtilleryTraverseComponent.h"
+#include "../Artillery/StrategyArtilleryRepairComponent.h"
+#include "../Logistics/StrategySupplyWagonUnit.h"
+#include "../Logistics/StrategySupplyCargoComponent.h"
+#include "../Logistics/StrategySupplyCaptureComponent.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -67,9 +71,15 @@ void AStrategyOOBTestScenario::BuildTestOOB()
 
     if (Division && Division->SupplyComponent)
     {
-        Division->SupplyComponent->bActsAsSupplySource = true;
-        Division->SupplyComponent->StoredAmmunitionRounds = 50000;
-        Division->SupplyComponent->MaxStoredAmmunitionRounds = 50000;
+        Division->SupplyComponent->bActsAsSupplySource =
+            !bSpawnSupplyWagonQA;
+
+        Division->SupplyComponent->StoredAmmunitionRounds =
+            bSpawnSupplyWagonQA ? 0 : 50000;
+
+        Division->SupplyComponent->MaxStoredAmmunitionRounds =
+            bSpawnSupplyWagonQA ? 0 : 50000;
+
         Division->SupplyComponent->ResupplyRadiusCm = 30000.0f;
     }
 
@@ -129,6 +139,15 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             TEXT("DK-ART-BAT-1"),
             TEXT("Artilleribatteri QA"),
             Origin + FVector(1500.0f, 7800.0f, 0.0f),
+            Division);
+    }
+
+    if (bSpawnSupplyWagonQA)
+    {
+        SpawnSupplyWagon(
+            TEXT("DK-SUP-WAGON-1"),
+            TEXT("Ammunitionsvogn QA"),
+            Origin + FVector(1500.0f, 5600.0f, 0.0f),
             Division);
     }
 
@@ -577,6 +596,23 @@ AStrategyArtilleryBatteryUnit* AStrategyOOBTestScenario::SpawnArtilleryBattery(
     {
         Battery->ArtilleryFireMissionComponent->SetHoldFire(false);
         Battery->ArtilleryFireMissionComponent->SetAutoTargetEnabled(false);
+        Battery->ArtilleryFireMissionComponent->SetMissionLimits(4, 90.0f);
+        Battery->ArtilleryFireMissionComponent->SetConserveAmmunition(
+            true,
+            0.20f);
+    }
+
+    if (Battery->ArtilleryAmmunitionComponent)
+    {
+        Battery->ArtilleryAmmunitionComponent->RoundShotRounds = 15;
+        Battery->ArtilleryAmmunitionComponent->ShellRounds = 15;
+        Battery->ArtilleryAmmunitionComponent->ShrapnelRounds = 10;
+        Battery->ArtilleryAmmunitionComponent->CanisterRounds = 10;
+    }
+
+    if (Battery->SupplyComponent)
+    {
+        Battery->SupplyComponent->RequestResupply();
     }
 
     if (Battery->CommandComponent)
@@ -587,6 +623,66 @@ AStrategyArtilleryBatteryUnit* AStrategyOOBTestScenario::SpawnArtilleryBattery(
     Battery->RefreshDebugLabel();
     SpawnedUnitObjects.Add(Battery);
     return Battery;
+}
+
+AStrategySupplyWagonUnit* AStrategyOOBTestScenario::SpawnSupplyWagon(
+    const FName StableId,
+    const FString& Name,
+    const FVector& Location,
+    AStrategyUnit* OrganicParent)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    AStrategySupplyWagonUnit* Wagon =
+        World->SpawnActor<AStrategySupplyWagonUnit>(
+            AStrategySupplyWagonUnit::StaticClass(),
+            Location,
+            FRotator::ZeroRotator);
+
+    if (!Wagon)
+    {
+        return nullptr;
+    }
+
+    Wagon->StableUnitId = StableId;
+    Wagon->DisplayName = FText::FromString(Name);
+    Wagon->Side = EStrategySide::Denmark;
+    Wagon->bPlayerControllable = true;
+    Wagon->DriverStrength = 4;
+    Wagon->HorseStrength = 12;
+    Wagon->DriversRequiredForFullMobility = 2;
+    Wagon->HorsesRequiredForFullMobility = 8;
+    Wagon->WagonCondition = 100.0f;
+    Wagon->InitialStrength = 4;
+    Wagon->CurrentStrength = 4;
+
+    if (Wagon->CargoComponent)
+    {
+        Wagon->CargoComponent->SmallArmsRounds = 8000;
+        Wagon->CargoComponent->ArtilleryRounds = 420;
+        Wagon->CargoComponent->ArtilleryAmmunitionFamilyTag =
+            TEXT("FIELD_ARTILLERY_GENERIC");
+    }
+
+    if (Wagon->SupplyComponent)
+    {
+        Wagon->SupplyComponent->bActsAsSupplySource = true;
+        Wagon->SupplyComponent->ResupplyRadiusCm = 3000.0f;
+        Wagon->SupplyComponent->TransferRoundsPerSecond = 90.0f;
+    }
+
+    if (Wagon->CommandComponent)
+    {
+        Wagon->CommandComponent->SetOrganicParent(OrganicParent);
+    }
+
+    Wagon->RefreshDebugLabel();
+    SpawnedUnitObjects.Add(Wagon);
+    return Wagon;
 }
 
 TArray<AStrategyUnit*> AStrategyOOBTestScenario::GetSpawnedUnits() const
@@ -719,12 +815,14 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
         13 +
         (bSpawnCavalryQA ? 2 : 0) +
         (bSpawnEnemyQAUnits ? 2 : 0) +
-        (bSpawnArtilleryQA ? 1 : 0);
+        (bSpawnArtilleryQA ? 1 : 0) +
+        (bSpawnSupplyWagonQA ? 1 : 0);
 
     int32 ValidCount = 0;
     int32 EnemySelectableCount = 0;
     int32 DanishCavalryCount = 0;
     int32 DanishArtilleryCount = 0;
+    int32 DanishSupplyWagonCount = 0;
     bool bFoundDragoon = false;
 
     for (AStrategyUnit* Unit : SpawnedUnitObjects)
@@ -811,7 +909,8 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                 !Battery->ArtilleryFireMissionComponent ||
                 !Battery->ArtilleryDamageComponent ||
                 !Battery->ArtilleryCaptureComponent ||
-                !Battery->ArtilleryTraverseComponent)
+                !Battery->ArtilleryTraverseComponent ||
+                !Battery->ArtilleryRepairComponent)
             {
                 OutFailures.Add(
                     TEXT("Artillery QA battery is missing one or more artillery-core components."));
@@ -835,6 +934,47 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                 if (!Battery->DeploymentComponent->IsDeployed())
                 {
                     OutFailures.Add(TEXT("Artillery QA battery did not start deployed."));
+                }
+            }
+        }
+
+        if (Unit->Side == EStrategySide::Denmark &&
+            Unit->Echelon == EStrategyEchelon::Supply)
+        {
+            ++DanishSupplyWagonCount;
+
+            const AStrategySupplyWagonUnit* Wagon =
+                Cast<AStrategySupplyWagonUnit>(Unit);
+
+            if (!Wagon ||
+                !Wagon->CargoComponent ||
+                !Wagon->SupplyCaptureComponent ||
+                !Wagon->SupplyComponent)
+            {
+                OutFailures.Add(
+                    TEXT("Supply wagon QA entity is missing logistics-core components."));
+            }
+            else
+            {
+                if (!Wagon->SupplyComponent->bActsAsSupplySource ||
+                    Wagon->CargoComponent->SmallArmsRounds <= 0 ||
+                    Wagon->CargoComponent->ArtilleryRounds <= 0)
+                {
+                    OutFailures.Add(
+                        TEXT("Supply wagon QA cargo/source state is invalid."));
+                }
+
+                if (!Wagon->CanMoveSupplyWagon())
+                {
+                    OutFailures.Add(
+                        TEXT("Supply wagon QA mobility state is invalid."));
+                }
+
+                if (Wagon->CargoComponent->ArtilleryAmmunitionFamilyTag !=
+                    FName(TEXT("FIELD_ARTILLERY_GENERIC")))
+                {
+                    OutFailures.Add(
+                        TEXT("Supply wagon QA artillery compatibility tag is invalid."));
                 }
             }
         }
@@ -901,6 +1041,14 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                 DanishArtilleryCount));
     }
 
+    if (bSpawnSupplyWagonQA && DanishSupplyWagonCount != 1)
+    {
+        OutFailures.Add(
+            FString::Printf(
+                TEXT("Expected 1 Danish supply wagon, found %d."),
+                DanishSupplyWagonCount));
+    }
+
     if (bSpawnRiverQA && !IsValid(SpawnedRiverBarrier))
     {
         OutFailures.Add(TEXT("River QA barrier was not spawned."));
@@ -911,17 +1059,39 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
         OutFailures.Add(TEXT("Navigation obstacle QA actor was not spawned."));
     }
 
-    const AStrategyUnit* SupplySource =
-        SpawnedUnitObjects.Num() > 0
-        ? SpawnedUnitObjects[0]
-        : nullptr;
+    bool bFoundConfiguredSupplySource = false;
 
-    if (!IsValid(SupplySource) ||
-        !SupplySource->SupplyComponent ||
-        !SupplySource->SupplyComponent->bActsAsSupplySource ||
-        SupplySource->SupplyComponent->StoredAmmunitionRounds <= 0)
+    for (const AStrategyUnit* Unit : SpawnedUnitObjects)
     {
-        OutFailures.Add(TEXT("Division QA ammunition supply source is not configured."));
+        if (!IsValid(Unit) ||
+            !Unit->SupplyComponent ||
+            !Unit->SupplyComponent->bActsAsSupplySource)
+        {
+            continue;
+        }
+
+        if (const AStrategySupplyWagonUnit* Wagon =
+            Cast<AStrategySupplyWagonUnit>(Unit))
+        {
+            bFoundConfiguredSupplySource =
+                Wagon->CargoComponent &&
+                Wagon->CargoComponent->GetTotalAmmunitionRounds() > 0;
+        }
+        else
+        {
+            bFoundConfiguredSupplySource =
+                Unit->SupplyComponent->StoredAmmunitionRounds > 0;
+        }
+
+        if (bFoundConfiguredSupplySource)
+        {
+            break;
+        }
+    }
+
+    if (!bFoundConfiguredSupplySource)
+    {
+        OutFailures.Add(TEXT("No configured tactical ammunition supply source was found."));
     }
 
     return OutFailures.Num() == 0;
