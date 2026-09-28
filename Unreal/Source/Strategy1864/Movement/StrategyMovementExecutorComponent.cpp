@@ -5,6 +5,7 @@
 #include "../Units/StrategyUnit.h"
 #include "../Navigation/StrategyRoutePlannerComponent.h"
 #include "../Units/CavalryUnit.h"
+#include "../Combat/StrategyConditionComponent.h"
 
 UStrategyMovementExecutorComponent::UStrategyMovementExecutorComponent()
 {
@@ -246,7 +247,12 @@ void UStrategyMovementExecutorComponent::TickComponent(
     }
 
     const FVector Direction = FlatDelta.GetSafeNormal();
-    const float Step = MoveSpeedCmPerSecond * DeltaTime;
+    const float ConditionMultiplier =
+        OwnerUnit->ConditionComponent
+        ? OwnerUnit->ConditionComponent->GetMovementSpeedMultiplier()
+        : 1.0f;
+    const float Step =
+        MoveSpeedCmPerSecond * ConditionMultiplier * DeltaTime;
     const FVector NewLocation =
         CurrentLocation + Direction * FMath::Min(Step, FlatDelta.Size());
 
