@@ -41,6 +41,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Supply", meta=(ClampMin="0.0", ClampMax="1.0"))
     float AutomaticRequestThresholdFraction = 0.25f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Supply")
+    bool bPauseTransferWhileMoving = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Supply")
+    bool bPauseTransferUnderFire = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Supply")
+    bool bRequireCompatibleArtilleryFamily = true;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Supply")
     bool bRequestingResupply = false;
 
@@ -62,6 +71,14 @@ public:
 private:
     AStrategyUnit* FindBestReceiver() const;
     void TransferTo(AStrategyUnit* Receiver, float DeltaTime);
+    float GetReceiverAmmoFraction(const AStrategyUnit* Receiver) const;
+    bool CanSupplyReceiver(const AStrategyUnit* Receiver) const;
+    bool IsTransferStateBlocked(const AStrategyUnit* Unit) const;
+    bool IsArtilleryCompatible(const AStrategyUnit* Receiver) const;
+    int32 GetSourceAvailableRoundsForReceiver(const AStrategyUnit* Receiver) const;
+    int32 ConsumeSourceRoundsForReceiver(
+        const AStrategyUnit* Receiver,
+        int32 RequestedRounds);
 
     UPROPERTY()
     TObjectPtr<AStrategyUnit> OwnerUnit;
