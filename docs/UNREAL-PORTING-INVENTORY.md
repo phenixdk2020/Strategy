@@ -90,3 +90,23 @@ Planned functional artillery core:
 - movement only when limbered;
 - same command/OOB authority model;
 - later limber horses, gun meshes, crews and firing VFX.
+
+
+## v00.02.59 artillery functional inventory
+
+- Artillery echelon + battery actor.
+- Configurable gun profile/count, crew, drivers, horses.
+- Timed Limbered/Deploying/Deployed/Limbering/Manhandling state.
+- Horse/driver-limited towing and short crew manhandling.
+- Round shot, shell, shrapnel and canister stores.
+- Manual target default, optional auto target and Hold Fire override.
+- Traverse, min/max range, current-contact and LOS eligibility.
+- Operational-gun fire resolution and reload state.
+- Ammo-specific prototype range/effect curves.
+- Artillery black-powder smoke feeds existing LOS simulation.
+- Tactical artillery resupply from shared supply source.
+- Crew/horse/gun-specific incoming damage.
+- Disabled vs abandoned materiel state.
+- Physical capture and controlled captured-gun reuse.
+- OOB/snapshot/outcome/regression integration.
+- QA fixture: one Danish six-gun battery under Division.
