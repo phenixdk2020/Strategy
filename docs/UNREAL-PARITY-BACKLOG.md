@@ -645,3 +645,42 @@ Functionality-first work added fire discipline/ammunition conservation, Standing
 - QA intentionally creates one blocked artillery lane and one clear lane across the ridge.
 - Physical battlefield expansion/finished hills art is still separate from this gameplay terrain authority.
 - All UE-P340..359 remain **UE 5.8.3 build/runtime QA pending**.
+
+
+# 18. Artillery projectile presentation + follow camera — v00.02.62
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P360 | P0 | Resolved projectile data | Per-gun shot/impact/hit/casualty presentation records | IMPLEMENTED CORE |
+| UE-P361 | P0 | Ammo-specific ballistic path | Round Shot / Shell / Shrapnel / Canister trajectory styles | IMPLEMENTED CORE |
+| UE-P362 | P0 | Terrain-aware projectile path | Trajectory samples consume shared tactical ground elevation | IMPLEMENTED CORE |
+| UE-P363 | P1 | Round Shot ricochet | Two diminishing post-impact bounces in presentation path | IMPLEMENTED CORE |
+| UE-P364 | P0 | Projectile presentation actor | In-flight world actor follows precomputed trajectory | IMPLEMENTED CORE |
+| UE-P365 | P1 | Trajectory debug line | Optional full ballistic QA path | IMPLEMENTED CORE |
+| UE-P366 | P1 | Canister presentation | Short cone/pellet-ray presentation; not follow-camera eligible | IMPLEMENTED CORE |
+| UE-P367 | P1 | Shell impact presentation | Impact sphere placeholder for later explosion VFX | IMPLEMENTED CORE |
+| UE-P368 | P1 | Shrapnel burst presentation | Forward fragment-ray burst placeholder | IMPLEMENTED CORE |
+| UE-P369 | P0 | Salvo presentation manager | Caps visible projectiles and spawns per resolved gun | IMPLEMENTED CORE |
+| UE-P370 | P1 | Virtual per-gun muzzle origins | Battery-facing lateral gun positions + muzzle height | IMPLEMENTED CORE |
+| UE-P371 | P1 | Projectile history/telemetry | Bounded shot serial/aim/impact/hit/casualty history | IMPLEMENTED CORE |
+| UE-P372 | P0 | Battery projectile integration | Projectile presentation component on artillery battery | IMPLEMENTED CORE |
+| UE-P373 | P0 | Direct-fire resolved impacts | Existing authoritative hit rolls now also emit per-gun impact points | IMPLEMENTED CORE |
+| UE-P374 | P0 | Area-fire resolved impacts | Existing area salvo impact distribution feeds presentation exactly | IMPLEMENTED CORE |
+| UE-P375 | P0 | Follow Shot camera | Camera follows latest live projectile in world space | IMPLEMENTED CORE |
+| UE-P376 | P0 | Impact hold + camera restore | Camera holds at last impact then returns; manual camera input cancels cleanly | IMPLEMENTED CORE |
+| UE-P377 | P1 | Follow Shot input | P toggles latest followable projectile | IMPLEMENTED QA CORE |
+| UE-P378 | P1 | Projectile QA/debug integration | F9 trajectory toggle + snapshot/history + trajectory regression | IMPLEMENTED QA CORE |
+| UE-P379 | P1 | Campaign→battlefield contract | Deterministic data contract for campaign terrain/features into future tactical generation | FOUNDATION IMPLEMENTED |
+
+### v00.02.62 authority rules
+
+- Projectile actors are **presentation only**. They never apply collision damage and never become a second combat authority.
+- Direct and area fire first resolve their normal deterministic combat outcome; the same resolved per-gun impact points are then supplied to the presentation layer.
+- A visible miss is therefore a resolved miss; the visual projectile does not independently decide whether it hit.
+- Round Shot may continue visually through ricochets after its primary resolved impact. Those bounces are currently presentation only.
+- Shell/Shrapnel/Canister use temporary debug-style presentation until final meshes/Niagara/audio are added.
+- P follows the newest live non-canister projectile. WASD, camera rotation or zoom cancel Follow Shot and restore the pre-follow view.
+- F9 shows/hides the full ballistic trajectory for QA.
+- Projectile history is bounded and available through the shared presentation snapshot.
+- The campaign→battlefield header is a **contract only**, not a generator. It already reserves campaign coordinates, deterministic seed, attacker/defender approaches and source features for height, hills, ridges, depressions, rivers, roads, bridges, settlements, forest, fields, marsh and water.
+- All UE-P360..379 remain **UE 5.8.3 build/runtime QA pending**.
