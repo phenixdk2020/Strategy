@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "../Orders/StrategyOrderTypes.h"
 #include "StrategyReconComponent.generated.h"
 
 class AStrategyUnit;
