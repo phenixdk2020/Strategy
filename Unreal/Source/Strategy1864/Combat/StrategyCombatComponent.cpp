@@ -138,7 +138,32 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
                 OwnerUnit->FormationComponent->EstimateFrontageCm(
                     FMath::Max(1, OwnerUnit->CurrentStrength)) * 0.5f);
 
-        VisualOrigin += FireDirection * HalfExtent;
+        const FRotator SquareRotation(
+            0.0f,
+            OwnerUnit->GetActorRotation().Yaw,
+            0.0f);
+
+        const FVector Forward = SquareRotation.Vector();
+        const FVector Right =
+            FRotationMatrix(SquareRotation).GetScaledAxis(EAxis::Y);
+
+        const float ForwardDot =
+            FVector::DotProduct(FireDirection, Forward);
+        const float RightDot =
+            FVector::DotProduct(FireDirection, Right);
+
+        if (FMath::Abs(ForwardDot) >= FMath::Abs(RightDot))
+        {
+            VisualOrigin +=
+                Forward *
+                (ForwardDot >= 0.0f ? HalfExtent : -HalfExtent);
+        }
+        else
+        {
+            VisualOrigin +=
+                Right *
+                (RightDot >= 0.0f ? HalfExtent : -HalfExtent);
+        }
     }
 
     OnVolleyVisualEvent.Broadcast(
