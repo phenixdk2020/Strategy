@@ -7,6 +7,7 @@
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Formations/StrategyFormationComponent.h"
 #include "StrategyConditionComponent.h"
+#include "StrategyFireDisciplineComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -74,7 +75,9 @@ void UStrategyCombatComponent::TickComponent(
 
     bOutOfAmmo = false;
 
-    if (OwnerUnit->UnitState == EStrategyUnitState::Reforming)
+    if (OwnerUnit->UnitState == EStrategyUnitState::Reforming ||
+        (OwnerUnit->FireDisciplineComponent &&
+         !OwnerUnit->FireDisciplineComponent->AllowsAutomaticFire()))
     {
         return;
     }
@@ -98,10 +101,27 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         return false;
     }
 
-    const int32 ShotCount = FMath::Min3(
-        FMath::Max(0, OwnerUnit->CurrentStrength),
-        MaxShotsPerVolley,
-        AmmunitionRounds);
+    const float DistanceCm = FVector::Dist2D(
+        OwnerUnit->GetActorLocation(),
+        Target->GetActorLocation());
+
+    const float ActiveRangeCm =
+        OwnerUnit->FireControlComponent
+        ? OwnerUnit->FireControlComponent->GetActiveRangeCm()
+        : 1.0f;
+
+    const int32 ShotCount =
+        OwnerUnit->FireDisciplineComponent
+        ? OwnerUnit->FireDisciplineComponent->CalculateShotBudget(
+            FMath::Max(0, OwnerUnit->CurrentStrength),
+            MaxShotsPerVolley,
+            AmmunitionRounds,
+            DistanceCm,
+            ActiveRangeCm)
+        : FMath::Min3(
+            FMath::Max(0, OwnerUnit->CurrentStrength),
+            MaxShotsPerVolley,
+            AmmunitionRounds);
 
     if (ShotCount <= 0)
     {
@@ -110,10 +130,6 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
 
     AmmunitionRounds -= ShotCount;
     bOutOfAmmo = AmmunitionRounds <= 0;
-
-    const float DistanceCm = FVector::Dist2D(
-        OwnerUnit->GetActorLocation(),
-        Target->GetActorLocation());
 
     const int32 Hits = ResolveHits(ShotCount, DistanceCm);
 
@@ -127,7 +143,12 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         Target->CombatComponent->NotifyIncomingVolley(Hits);
     }
 
-    ReloadRemainingSeconds = ReloadSeconds;
+    const float ReloadMultiplier =
+        OwnerUnit->FireDisciplineComponent
+        ? OwnerUnit->FireDisciplineComponent->GetReloadMultiplier()
+        : 1.0f;
+
+    ReloadRemainingSeconds = ReloadSeconds * ReloadMultiplier;
     OnVolleyResolved.Broadcast(Target, ShotCount, Hits);
 
     FVector FireDirection =
