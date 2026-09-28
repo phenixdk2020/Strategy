@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "StrategyArtilleryTypes.h"
+#include "../Orders/StrategyOrderTypes.h"
 #include "StrategyArtilleryDeploymentComponent.generated.h"
 
 class AStrategyArtilleryBatteryUnit;
