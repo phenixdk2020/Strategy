@@ -15,6 +15,17 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(
     int32,
     Hits);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
+    FStrategyVolleyVisualEvent,
+    FVector,
+    Origin,
+    FVector,
+    Direction,
+    int32,
+    Shots,
+    int32,
+    Hits);
+
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
 class STRATEGY1864_API UStrategyCombatComponent : public UActorComponent
 {
@@ -34,6 +45,9 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="Strategy|Combat")
     FStrategyVolleyResolved OnVolleyResolved;
+
+    UPROPERTY(BlueprintAssignable, Category="Strategy|Presentation")
+    FStrategyVolleyVisualEvent OnVolleyVisualEvent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
     int32 AmmunitionRounds = 1900;
