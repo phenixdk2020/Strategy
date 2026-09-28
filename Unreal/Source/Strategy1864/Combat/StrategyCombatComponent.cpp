@@ -12,6 +12,7 @@
 #include "StrategyDirectionalCoverComponent.h"
 #include "StrategySmokeField.h"
 #include "StrategyVisibilityComponent.h"
+#include "StrategySkirmisherComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -114,7 +115,7 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         ? OwnerUnit->FireControlComponent->GetActiveRangeCm()
         : 1.0f;
 
-    const int32 ShotCount =
+    int32 ShotCount =
         OwnerUnit->FireDisciplineComponent
         ? OwnerUnit->FireDisciplineComponent->CalculateShotBudget(
             FMath::Max(0, OwnerUnit->CurrentStrength),
@@ -126,6 +127,17 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
             FMath::Max(0, OwnerUnit->CurrentStrength),
             MaxShotsPerVolley,
             AmmunitionRounds);
+
+    if (OwnerUnit->SkirmisherComponent)
+    {
+        ShotCount =
+            FMath::Clamp(
+                FMath::RoundToInt(
+                    static_cast<float>(ShotCount) *
+                    OwnerUnit->SkirmisherComponent->GetVolleyDensityMultiplier()),
+                0,
+                AmmunitionRounds);
+    }
 
     if (ShotCount <= 0)
     {
@@ -309,6 +321,11 @@ int32 UStrategyCombatComponent::ResolveHits(
             OwnerUnit->GetActorLocation())
         : 1.0f;
 
+    const float SkirmisherTargetMultiplier =
+        IsValid(Target) && Target->SkirmisherComponent
+        ? Target->SkirmisherComponent->GetIncomingHitMultiplier()
+        : 1.0f;
+
     const float SmokeTransmission =
         OwnerUnit->VisibilityComponent && IsValid(Target)
         ? OwnerUnit->VisibilityComponent->GetSmokeTransmissionTo(Target)
@@ -321,6 +338,7 @@ int32 UStrategyCombatComponent::ResolveHits(
             ConditionMultiplier *
             StanceTargetMultiplier *
             CoverMultiplier *
+            SkirmisherTargetMultiplier *
             SmokeTransmission,
             0.0f,
             1.0f);
