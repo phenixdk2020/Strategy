@@ -165,3 +165,21 @@ Planned functional artillery core:
 - P follow-shot and F9 trajectory QA inputs.
 - Projectile activity/last impact in shared snapshot.
 - Campaign→generated-battlefield data contract (future generator input only).
+
+
+## v00.02.63 shared visual architecture additions
+
+- Shared human skeleton/animation-set profile IDs.
+- Reusable human animation action/locomotion state.
+- Canonical animation manifests for human, mounted, horse and artillery crew.
+- Uniform colour zones, presets and runtime overrides.
+- Dynamic material parameter application.
+- Equipment socket mapping.
+- Shared rig/animation-set compatibility validation.
+- Horse gait state and rider/horse animation synchronization.
+- Dragoon Mount/Dismount animation intents.
+- Artillery crew roles/stations.
+- Artillery reload drill phase mapping.
+- Push/traverse/limber/unlimber/repair crew work intents.
+- Visual state exposed through OOB/presentation snapshot.
+- QA validation for rig, manifests, colour overrides, cavalry sync and artillery crew.
