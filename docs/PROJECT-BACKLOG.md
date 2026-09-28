@@ -18,6 +18,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 
 **Unreal gameplay checkpoint v00.02.62:** Artillery projectile presentation er nu bundet til fire-missionens resolvede per-gun impactpunkter: ammo-specifik trajectory, Round Shot ricochet, Shell/Shrapnel/Canister presentation, virtual muzzle origins, bounded shot history, Follow Shot camera, impact hold/restore, P follow-toggle og F9 trajectory-debug. Projectile actors er presentation-only og kan aldrig skabe skade selv. QA validerer Round Shot/Shell arcs, ricochet og projectile component. Derudover er campaign→battlefield data-kontrakten etableret som foundation til senere generering fra campaign map.
 
+**Unreal gameplay checkpoint v00.02.63:** Shared human visual architecture er implementeret som code core: fælles skeleton/animation-set contract, human animation intents, canonical animation manifests, uniform colour zones/presets/runtime overrides, dynamic material parameters, equipment sockets, rig compatibility, horse gait + rider sync, Dragoon Mount/Dismount intents samt artillery crew roles/stations og reload/push/traverse/limber/unlimber/repair animation states. QA validerer rig, manifests, farveoverride, cavalry sync og artillery crew stations. Final meshes/AnimBP/montages/material assets er fortsat senere grafikarbejde. Git sync-værktøjet er samtidig opdateret til v1.0.2 uden falsk NativeCommandError.
+
 ## Statusdefinitioner
 
 - **AKTIV** — implementeres/testes i den aktuelle build.
@@ -352,7 +354,7 @@ Ved normal tactical zoom skal en enkelt figur tydeligt læses som en bevæbnet i
 
 ## B-292 — Uniform colour customization
 
-**Status:** BESLUTTET / VISUAL IMPLEMENTATION PENDING  
+**Status:** IMPLEMENTERET DATA/MATERIAL CORE / FINAL MATERIAL ASSETS PENDING  
 **Prioritet:** Høj når soldier visual pipeline bygges
 
 ### Krav
@@ -368,3 +370,25 @@ Ved normal tactical zoom skal en enkelt figur tydeligt læses som en bevæbnet i
 - Historical presets kan begrænse eller låse farvevalg pr. nation/regiment.
 - Samme soldier mesh kan genbruges med flere farvevarianter uden at duplikere animation blueprint eller animation clips.
 - Future regiment/unit data skal kunne pege på et uniform preset og overrides.
+
+
+## B-293 — Shared human animation architecture
+
+**Status:** IMPLEMENTERET CORE / FINAL ANIMATION ASSETS PENDING  
+**Prioritet:** Høj ved næste character graphics pass
+
+### Fast arkitektur
+- Kompatible menneskelige modeller bruger samme `SK_Human_1864` skeleton.
+- Fælles animation set/Animation Blueprint contract er `ABP_Human_1864`.
+- Walk/Run/Aim/Fire/Reload/Die/Mount/Dismount og øvrige human animations laves én gang og genbruges på tværs af uniformer/nationer.
+- Uniform mesh/materiale må ikke eje gameplay animation authority.
+- Rifle, bayonet, sabre, artillery tools og øvrigt udstyr placeres via fælles sockets.
+- Cavalry rider og horse er separate skeletal meshes; rider gait synkroniseres til horse gait.
+- Artillery crew bruger samme human skeleton, men har specialiserede crew-role montages.
+- Battery gameplay state driver Push/Traverse/Reload/Limber/Unlimber/Repair animation intent.
+- Animation må aldrig selv afgøre, om gameplay-state er loaded/deployed/fired/mounted.
+- Rig compatibility valideres mod shared skeleton + animation set.
+- Canonical animation manifest findes i `StrategyAnimationManifestLibrary`.
+
+### Exit-kriterium for asset-pass
+Mindst én dansk og én preussisk human mesh samt artillery crew og cavalry rider skal kunne skifte mesh/uniformpreset uden at duplikere locomotion/fire/reload animationer.
