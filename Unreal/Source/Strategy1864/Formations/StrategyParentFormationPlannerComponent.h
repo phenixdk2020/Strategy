@@ -48,6 +48,13 @@ public:
         EStrategyOrderAuthority Authority);
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Formation")
+    bool IssueCompanySlotsForOrder(
+        const FVector& ObjectiveCenter,
+        float FacingYaw,
+        EStrategyOrderType OrderType,
+        EStrategyOrderAuthority Authority);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Formation")
     bool IssueDirectSubordinateSlots(
         const FVector& ObjectiveCenter,
         float FacingYaw,
