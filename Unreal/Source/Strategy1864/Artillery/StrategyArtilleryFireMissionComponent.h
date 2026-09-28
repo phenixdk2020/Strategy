@@ -149,7 +149,10 @@ private:
     int32 ResolveCasualties(
         AStrategyUnit* Target,
         int32 GunsFired,
-        float DistanceCm);
+        float DistanceCm,
+        TArray<FVector>& OutImpactLocations,
+        TArray<uint8>& OutHitFlags,
+        TArray<int32>& OutCasualtiesPerProjectile);
     float CalculateTargetScore(const AStrategyUnit* Target) const;
     float GetBaseGunHitChance(
         EStrategyArtilleryAmmoType AmmoType) const;
