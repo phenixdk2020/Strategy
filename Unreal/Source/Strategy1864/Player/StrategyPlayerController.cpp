@@ -7,6 +7,9 @@
 #include "InputCoreTypes.h"
 #include "Kismet/GameplayStatics.h"
 #include "../Units/StrategyUnit.h"
+#include "../Units/CavalryUnit.h"
+#include "../Units/StrategyHQUnit.h"
+#include "../Command/StrategyCommandComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 
 AStrategyPlayerController::AStrategyPlayerController()
@@ -476,4 +479,50 @@ void AStrategyPlayerController::ResetQAScenario()
     {
         StrategyGameMode->ResetQAScenario();
     }
+}
+
+
+bool AStrategyPlayerController::RequestTacticalAttachment(
+    AStrategyUnit* Unit,
+    AStrategyUnit* NewParent)
+{
+    ACavalryUnit* Cavalry = Cast<ACavalryUnit>(Unit);
+    AStrategyHQUnit* ParentHQ = Cast<AStrategyHQUnit>(NewParent);
+
+    if (!IsValid(Cavalry) ||
+        !IsValid(ParentHQ) ||
+        Cavalry == ParentHQ ||
+        Cavalry->Side != ParentHQ->Side ||
+        !Cavalry->CommandComponent ||
+        !Cavalry->OrderComponent)
+    {
+        return false;
+    }
+
+    const FStrategyOrder CurrentOrder =
+        Cavalry->OrderComponent->GetCurrentOrder();
+
+    if (CurrentOrder.IsValidOrder() &&
+        CurrentOrder.Authority == EStrategyOrderAuthority::DirectPlayer &&
+        Cavalry->OrderComponent->IsPhysicallyExecuting())
+    {
+        return false;
+    }
+
+    Cavalry->CommandComponent->SetCurrentCommandParent(ParentHQ);
+    return Cavalry->CommandComponent->CurrentCommandParent == ParentHQ;
+}
+
+bool AStrategyPlayerController::RestoreOrganicAttachment(
+    AStrategyUnit* Unit)
+{
+    if (!IsValid(Unit) || !Unit->CommandComponent)
+    {
+        return false;
+    }
+
+    Unit->CommandComponent->RestoreOrganicCommandParent();
+
+    return Unit->CommandComponent->CurrentCommandParent ==
+        Unit->CommandComponent->OrganicParent;
 }
