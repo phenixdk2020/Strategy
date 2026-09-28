@@ -21,6 +21,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
     float MaxTraversableSlopeDegrees = 28.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
+    float TerrainSampleStepCm = 1000.0f;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Navigation")
     TArray<FVector> BuildRoute(
         const FVector& StartLocation,
