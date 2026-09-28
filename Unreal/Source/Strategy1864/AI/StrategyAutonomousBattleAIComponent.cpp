@@ -5,6 +5,12 @@
 #include "../Command/StrategyCommandComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "StrategyDoctrineComponent.h"
+#include "StrategyAutonomyComponent.h"
+#include "StrategyAIDifficultyComponent.h"
+#include "StrategyAITelemetryComponent.h"
+#include "StrategyMissionConstraintsComponent.h"
+#include "StrategyOfficerProfileComponent.h"
 #include "EngineUtils.h"
 
 UStrategyAutonomousBattleAIComponent::UStrategyAutonomousBattleAIComponent()
@@ -16,6 +22,13 @@ void UStrategyAutonomousBattleAIComponent::BeginPlay()
 {
     Super::BeginPlay();
     OwnerUnit = Cast<AStrategyUnit>(GetOwner());
+
+    const int32 Seed =
+        OwnerUnit
+        ? static_cast<int32>(GetTypeHash(OwnerUnit->StableUnitId)) ^ 0x1864A1
+        : GetUniqueID();
+
+    DecisionRandom.Initialize(Seed);
 }
 
 void UStrategyAutonomousBattleAIComponent::TickComponent(
@@ -35,8 +48,25 @@ void UStrategyAutonomousBattleAIComponent::TickComponent(
         return;
     }
 
+    float ReactionMultiplier = 1.0f;
+
+    if (OwnerUnit->AIDifficultyComponent)
+    {
+        ReactionMultiplier *=
+            OwnerUnit->AIDifficultyComponent->GetReactionTimeMultiplier();
+    }
+
+    if ((OwnerUnit->UnitState == EStrategyUnitState::UnderFire ||
+         OwnerUnit->UnitState == EStrategyUnitState::Engaged) &&
+        OwnerUnit->OfficerProfileComponent)
+    {
+        ReactionMultiplier *=
+            OwnerUnit->OfficerProfileComponent->GetStressReactionMultiplier();
+    }
+
     EvaluationAccumulator += DeltaTime;
-    if (EvaluationAccumulator < EvaluationIntervalSeconds)
+    if (EvaluationAccumulator <
+        EvaluationIntervalSeconds * FMath::Max(0.10f, ReactionMultiplier))
     {
         return;
     }
@@ -44,9 +74,17 @@ void UStrategyAutonomousBattleAIComponent::TickComponent(
     EvaluationAccumulator = 0.0f;
 
     if (OwnerUnit->OrderComponent->IsPhysicallyExecuting() ||
-        OwnerUnit->OrderComponent->HasStandingIntent() ||
-        (OwnerUnit->CommandComponent &&
-         IsValid(OwnerUnit->CommandComponent->CurrentCommandParent)))
+        OwnerUnit->OrderComponent->HasStandingIntent())
+    {
+        return;
+    }
+
+    const bool bHasCommandParent =
+        OwnerUnit->CommandComponent &&
+        IsValid(OwnerUnit->CommandComponent->CurrentCommandParent);
+
+    if (OwnerUnit->AutonomyComponent &&
+        !OwnerUnit->AutonomyComponent->AllowsLocalRetask(bHasCommandParent))
     {
         return;
     }
@@ -54,6 +92,12 @@ void UStrategyAutonomousBattleAIComponent::TickComponent(
     AStrategyUnit* Enemy = FindCurrentVisibleEnemy();
     if (!IsValid(Enemy))
     {
+        if (OwnerUnit->AITelemetryComponent)
+        {
+            OwnerUnit->AITelemetryComponent->SetDecision(
+                TEXT("Holding"),
+                TEXT("No current visible enemy contact"));
+        }
         return;
     }
 
@@ -62,8 +106,35 @@ void UStrategyAutonomousBattleAIComponent::TickComponent(
             1000.0f,
             OwnerUnit->FireControlComponent->GetActiveRangeCm());
 
+    float PreferredFraction =
+        OwnerUnit->DoctrineComponent
+        ? OwnerUnit->DoctrineComponent->GetPreferredEngagementRangeFraction(
+            OwnerUnit->OfficerProfileComponent)
+        : DesiredRangeFraction;
+
+    float NoiseAmplitude =
+        OwnerUnit->AIDifficultyComponent
+        ? OwnerUnit->AIDifficultyComponent->GetDecisionNoiseAmplitude()
+        : 0.08f;
+
+    if (OwnerUnit->OfficerProfileComponent)
+    {
+        NoiseAmplitude *=
+            FMath::Lerp(
+                1.25f,
+                0.65f,
+                OwnerUnit->OfficerProfileComponent->GetDecisionStability());
+    }
+
+    PreferredFraction =
+        FMath::Clamp(
+            PreferredFraction +
+            DecisionRandom.FRandRange(-NoiseAmplitude, NoiseAmplitude),
+            0.25f,
+            0.95f);
+
     const float DesiredDistance =
-        RangeCm * FMath::Clamp(DesiredRangeFraction, 0.25f, 0.95f);
+        RangeCm * PreferredFraction;
 
     const float CurrentDistance =
         FVector::Dist2D(
@@ -72,6 +143,12 @@ void UStrategyAutonomousBattleAIComponent::TickComponent(
 
     if (CurrentDistance <= DesiredDistance)
     {
+        if (OwnerUnit->AITelemetryComponent)
+        {
+            OwnerUnit->AITelemetryComponent->SetDecision(
+                TEXT("Hold engagement range"),
+                TEXT("Preferred engagement range reached"));
+        }
         return;
     }
 
@@ -85,8 +162,14 @@ void UStrategyAutonomousBattleAIComponent::TickComponent(
         FromEnemy = -OwnerUnit->GetActorForwardVector().GetSafeNormal2D();
     }
 
-    const FVector Goal =
+    FVector Goal =
         Enemy->GetActorLocation() + FromEnemy * DesiredDistance;
+
+    if (OwnerUnit->MissionConstraintsComponent)
+    {
+        Goal =
+            OwnerUnit->MissionConstraintsComponent->ClampGoalToMissionArea(Goal);
+    }
 
     FStrategyOrder Order;
     Order.Type = EStrategyOrderType::Advance;
@@ -96,7 +179,13 @@ void UStrategyAutonomousBattleAIComponent::TickComponent(
     Order.bHasFacing = true;
     Order.Authority = EStrategyOrderAuthority::OfficerAI;
 
-    OwnerUnit->OrderComponent->SetOrder(Order);
+    if (OwnerUnit->OrderComponent->SetOrder(Order) &&
+        OwnerUnit->AITelemetryComponent)
+    {
+        OwnerUnit->AITelemetryComponent->SetDecision(
+            TEXT("Advance to engagement range"),
+            TEXT("Closing to doctrine/officer preferred range"));
+    }
 }
 
 AStrategyUnit* UStrategyAutonomousBattleAIComponent::FindCurrentVisibleEnemy() const
@@ -118,7 +207,9 @@ AStrategyUnit* UStrategyAutonomousBattleAIComponent::FindCurrentVisibleEnemy() c
             Candidate->Side == EStrategySide::Neutral ||
             Candidate->Side == OwnerUnit->Side ||
             !Candidate->IsCombatEffective() ||
-            !OwnerUnit->ContactComponent->HasCurrentContact(Candidate))
+            !OwnerUnit->ContactComponent->HasCurrentContact(Candidate) ||
+            (OwnerUnit->MissionConstraintsComponent &&
+             !OwnerUnit->MissionConstraintsComponent->CanPursueTarget(Candidate)))
         {
             continue;
         }
