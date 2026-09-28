@@ -9,6 +9,15 @@
 #include "../Navigation/StrategyRiverBarrier.h"
 #include "../Combat/StrategyCombatComponent.h"
 #include "../Formations/StrategyFormationComponent.h"
+#include "../Navigation/StrategyNavigationObstacle.h"
+#include "../AI/StrategyOfficerProfileComponent.h"
+#include "../AI/StrategyCommandDelayComponent.h"
+#include "../Combat/StrategyConditionComponent.h"
+#include "../Combat/StrategyContactComponent.h"
+#include "../AI/StrategyReconComponent.h"
+#include "../AI/StrategyAutonomousBattleAIComponent.h"
+#include "../AI/StrategyRoutRecoveryComponent.h"
+#include "../AI/StrategyCavalryScreenAIComponent.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -128,6 +137,24 @@ void AStrategyOOBTestScenario::BuildTestOOB()
         }
     }
 
+    if (bSpawnObstacleQA && GetWorld())
+    {
+        SpawnedNavigationObstacle =
+            GetWorld()->SpawnActor<AStrategyNavigationObstacle>(
+                AStrategyNavigationObstacle::StaticClass(),
+                Origin + FVector(9000.0f, -12000.0f, 0.0f),
+                FRotator::ZeroRotator);
+
+        if (SpawnedNavigationObstacle)
+        {
+            SpawnedNavigationObstacle->ObstacleType =
+                EStrategyObstacleType::Fence;
+            SpawnedNavigationObstacle->HalfExtentCm =
+                FVector(1800.0f, 250.0f, 150.0f);
+            SpawnedNavigationObstacle->ClearanceCm = 700.0f;
+        }
+    }
+
     if (bSpawnEnemyQAUnits)
     {
         SpawnCompany(
@@ -233,6 +260,13 @@ void AStrategyOOBTestScenario::ClearSpawnedUnits()
     }
 
     SpawnedRiverBarrier = nullptr;
+
+    if (IsValid(SpawnedNavigationObstacle))
+    {
+        SpawnedNavigationObstacle->Destroy();
+    }
+
+    SpawnedNavigationObstacle = nullptr;
 }
 
 AStrategyHQUnit* AStrategyOOBTestScenario::SpawnHQ(
@@ -519,12 +553,54 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                     *Unit->StableUnitId.ToString()));
         }
 
+        if (!Unit->MissionAnchorComponent ||
+            !Unit->OfficerProfileComponent ||
+            !Unit->CommandDelayComponent ||
+            !Unit->ConditionComponent ||
+            !Unit->ContactComponent ||
+            !Unit->ReconComponent ||
+            !Unit->AutonomousBattleAIComponent ||
+            !Unit->RoutRecoveryComponent)
+        {
+            OutFailures.Add(
+                FString::Printf(
+                    TEXT("%s is missing one or more gameplay-core components."),
+                    *Unit->StableUnitId.ToString()));
+        }
+
+        if (Unit->CommandDelayComponent &&
+            Unit->CommandDelayComponent->CalculateDelayFromCurrentParent() < 0.0f)
+        {
+            OutFailures.Add(
+                FString::Printf(
+                    TEXT("%s produced a negative command delay."),
+                    *Unit->StableUnitId.ToString()));
+        }
+
+        if (Unit->CombatComponent &&
+            Unit->CombatComponent->AmmunitionRounds < 0)
+        {
+            OutFailures.Add(
+                FString::Printf(
+                    TEXT("%s has invalid negative ammunition."),
+                    *Unit->StableUnitId.ToString()));
+        }
+
         if (Unit->Side == EStrategySide::Denmark &&
             Unit->Echelon == EStrategyEchelon::Cavalry)
         {
             ++DanishCavalryCount;
 
             const ACavalryUnit* Cavalry = Cast<ACavalryUnit>(Unit);
+
+            if (Cavalry && !Cavalry->ScreenAIComponent)
+            {
+                OutFailures.Add(
+                    FString::Printf(
+                        TEXT("%s cavalry screen AI component is missing."),
+                        *Unit->StableUnitId.ToString()));
+            }
+
             if (Cavalry &&
                 Cavalry->DragoonComponent &&
                 Cavalry->DragoonComponent->Role == EStrategyCavalryRole::Dragoon)
@@ -567,6 +643,11 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
     if (bSpawnRiverQA && !IsValid(SpawnedRiverBarrier))
     {
         OutFailures.Add(TEXT("River QA barrier was not spawned."));
+    }
+
+    if (bSpawnObstacleQA && !IsValid(SpawnedNavigationObstacle))
+    {
+        OutFailures.Add(TEXT("Navigation obstacle QA actor was not spawned."));
     }
 
     return OutFailures.Num() == 0;
