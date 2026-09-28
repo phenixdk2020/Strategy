@@ -40,4 +40,5 @@ private:
     TObjectPtr<AStrategyUnit> OwnerUnit;
 
     float EvaluationAccumulator = 0.0f;
+    FRandomStream DecisionRandom;
 };
