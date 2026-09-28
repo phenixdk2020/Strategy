@@ -5,6 +5,7 @@
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "CavalryUnit.h"
+#include "../Visual/StrategyHumanAnimationStateComponent.h"
 
 UStrategyDragoonComponent::UStrategyDragoonComponent()
 {
@@ -77,6 +78,14 @@ bool UStrategyDragoonComponent::DismountAtCurrentPosition()
 
     MountedState = EStrategyMountedState::Dismounted;
 
+    if (OwnerCavalry->HumanAnimationStateComponent)
+    {
+        OwnerCavalry->HumanAnimationStateComponent->RequestAction(
+            EStrategyHumanAnimationAction::Dismount,
+            1.25f);
+        OwnerCavalry->HumanAnimationStateComponent->SetMounted(false);
+    }
+
     if (OwnerCavalry->FormationComponent)
     {
         OwnerCavalry->FormationComponent->SetFormation(
@@ -144,6 +153,15 @@ void UStrategyDragoonComponent::CompleteRemount()
     }
 
     MountedState = EStrategyMountedState::Mounted;
+
+    if (OwnerCavalry->HumanAnimationStateComponent)
+    {
+        OwnerCavalry->HumanAnimationStateComponent->RequestAction(
+            EStrategyHumanAnimationAction::Mount,
+            1.25f);
+        OwnerCavalry->HumanAnimationStateComponent->SetMounted(true);
+    }
+
     DismountedCombatStrength = 0;
     HorseHolderStrength = 0;
 
