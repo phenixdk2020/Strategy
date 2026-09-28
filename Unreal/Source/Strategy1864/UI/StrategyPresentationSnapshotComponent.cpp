@@ -7,6 +7,10 @@
 #include "../Units/CavalryUnit.h"
 #include "../Units/StrategyDragoonComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "../Artillery/StrategyArtilleryBatteryUnit.h"
+#include "../Artillery/StrategyArtilleryDeploymentComponent.h"
+#include "../Artillery/StrategyArtilleryAmmunitionComponent.h"
+#include "../Artillery/StrategyArtilleryFireMissionComponent.h"
 
 UStrategyPresentationSnapshotComponent::UStrategyPresentationSnapshotComponent()
 {
@@ -103,6 +107,52 @@ UStrategyPresentationSnapshotComponent::BuildSnapshot() const
     {
         Snapshot.AmmunitionRounds =
             Unit->CombatComponent->AmmunitionRounds;
+    }
+
+    if (const AStrategyArtilleryBatteryUnit* Battery =
+        Cast<AStrategyArtilleryBatteryUnit>(Unit))
+    {
+        Snapshot.ArtilleryGunCount = Battery->GunCount;
+        Snapshot.ArtilleryOperationalGuns =
+            Battery->GetOperationalGunCount();
+        Snapshot.ArtilleryCrew = Battery->CrewStrength;
+        Snapshot.ArtilleryDrivers = Battery->DriverStrength;
+        Snapshot.ArtilleryHorses = Battery->HorseStrength;
+
+        Snapshot.ArtilleryOwnershipState =
+            StaticEnum<EStrategyArtilleryOwnershipState>()
+                ->GetNameStringByValue(
+                    static_cast<int64>(Battery->OwnershipState));
+
+        if (Battery->DeploymentComponent)
+        {
+            Snapshot.ArtilleryMobilityState =
+                StaticEnum<EStrategyArtilleryMobilityState>()
+                    ->GetNameStringByValue(
+                        static_cast<int64>(
+                            Battery->DeploymentComponent->MobilityState));
+        }
+
+        if (Battery->ArtilleryFireMissionComponent)
+        {
+            Snapshot.ArtilleryFireMode =
+                StaticEnum<EStrategyArtilleryFireMode>()
+                    ->GetNameStringByValue(
+                        static_cast<int64>(
+                            Battery->ArtilleryFireMissionComponent->FireMode));
+        }
+
+        if (Battery->ArtilleryAmmunitionComponent)
+        {
+            Snapshot.AmmunitionRounds =
+                Battery->ArtilleryAmmunitionComponent->GetTotalRounds();
+
+            Snapshot.ArtilleryAmmoType =
+                StaticEnum<EStrategyArtilleryAmmoType>()
+                    ->GetNameStringByValue(
+                        static_cast<int64>(
+                            Battery->ArtilleryAmmunitionComponent->SelectedAmmo));
+        }
     }
 
     if (const ACavalryUnit* Cavalry = Cast<ACavalryUnit>(Unit))
