@@ -3,7 +3,17 @@
     Bygger Strategy1864Editor manuelt og udskriver relevante compiler/UHT-fejl.
 
 .VERSION
+    1.1.1
+
+.CHANGELOG
+    1.1.1
+    - Tillader tom List[string] ved engine discovery.
+    - Retter PowerShell parameter-binding fejlen:
+      "Cannot bind argument to parameter 'List' because it is an empty collection."
+
     1.1.0
+    - Udvidet Unreal Engine 5.8 discovery via Epic Launcher, manifests,
+      registry, registrerede builds og almindelige install-paths.
 
 .DESCRIPTION
     - Finder Unreal Engine 5.8 via parameter, miljøvariabel, Epic Launcher,
@@ -109,6 +119,7 @@ function Test-Unreal58Root {
 function Add-EngineCandidate {
     param(
         [Parameter(Mandatory=$true)]
+        [AllowEmptyCollection()]
         [System.Collections.Generic.List[string]]$List,
 
         [string]$Path
@@ -128,6 +139,7 @@ function Add-EngineCandidate {
 function Add-EpicLauncherInstalledCandidates {
     param(
         [Parameter(Mandatory=$true)]
+        [AllowEmptyCollection()]
         [System.Collections.Generic.List[string]]$List
     )
 
@@ -161,6 +173,7 @@ function Add-EpicLauncherInstalledCandidates {
 function Add-EpicManifestCandidates {
     param(
         [Parameter(Mandatory=$true)]
+        [AllowEmptyCollection()]
         [System.Collections.Generic.List[string]]$List
     )
 
@@ -195,6 +208,7 @@ function Add-EpicManifestCandidates {
 function Add-RegistryCandidates {
     param(
         [Parameter(Mandatory=$true)]
+        [AllowEmptyCollection()]
         [System.Collections.Generic.List[string]]$List
     )
 
@@ -251,6 +265,7 @@ function Add-RegistryCandidates {
 function Add-CommonDriveCandidates {
     param(
         [Parameter(Mandatory=$true)]
+        [AllowEmptyCollection()]
         [System.Collections.Generic.List[string]]$List
     )
 
@@ -330,7 +345,7 @@ Clear-Host
 Write-Host ""
 Write-Host "===================================================" -ForegroundColor DarkCyan
 Write-Host " PROJECT 1864 - Unreal Build Diagnostic" -ForegroundColor Cyan
-Write-Host " Version 1.1.0" -ForegroundColor DarkGray
+Write-Host " Version 1.1.1" -ForegroundColor DarkGray
 Write-Host "===================================================" -ForegroundColor DarkCyan
 Write-Host ""
 
