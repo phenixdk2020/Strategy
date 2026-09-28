@@ -88,6 +88,7 @@ private:
     bool bTurningToGoalFacing = false;
     bool bWaitingForBridge = false;
     bool bBridgeSlotAcquired = false;
+    bool bPreserveRoutedState = false;
     float PauseRemainingSeconds = 0.0f;
 
     void UpdateBridgeFormationState(const FVector& CurrentLocation);
