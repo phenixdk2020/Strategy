@@ -85,7 +85,6 @@ struct FStrategyBattlefieldGenerationRequest
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FStrategyCampaignBattlefieldFeatureSeed> SourceFeatures;
 
-    UFUNCTION(BlueprintPure)
     bool IsValidRequest() const
     {
         return BattlefieldSizeMeters.X > 100.0f &&
