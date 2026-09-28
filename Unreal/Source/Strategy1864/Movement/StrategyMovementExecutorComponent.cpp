@@ -455,3 +455,20 @@ bool UStrategyMovementExecutorComponent::TryRetargetDuringBridge(
 
     return true;
 }
+
+
+void UStrategyMovementExecutorComponent::RestartCurrentOrderExecution()
+{
+    if (!OwnerUnit || !OwnerUnit->OrderComponent)
+    {
+        return;
+    }
+
+    const FStrategyOrder CurrentOrder =
+        OwnerUnit->OrderComponent->GetCurrentOrder();
+
+    if (CurrentOrder.IsValidOrder() && IsMovementOrder(CurrentOrder.Type))
+    {
+        BeginMovementForOrder(CurrentOrder);
+    }
+}
