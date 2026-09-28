@@ -14,6 +14,7 @@ class UStrategyArtilleryTraverseComponent;
 class UStrategyArtilleryRepairComponent;
 class UStrategyArtilleryPositioningComponent;
 class UStrategyArtilleryProjectilePresentationComponent;
+class UStrategyArtilleryCrewAnimationComponent;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API AStrategyArtilleryBatteryUnit : public AStrategyUnit
@@ -84,6 +85,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
     TObjectPtr<UStrategyArtilleryProjectilePresentationComponent> ProjectilePresentationComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    TObjectPtr<UStrategyArtilleryCrewAnimationComponent> CrewAnimationComponent;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
     int32 PersonnelEvacuatedOnAbandon = 0;
