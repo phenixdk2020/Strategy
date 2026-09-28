@@ -68,8 +68,14 @@ void AStrategyHQUnit::HandleHQOrderChanged(const FStrategyOrder& NewOrder)
         return;
     }
 
-    if (NewOrder.Type != EStrategyOrderType::AttackHere &&
-        NewOrder.Type != EStrategyOrderType::DefendHere)
+    const bool bFormationMission =
+        NewOrder.Type == EStrategyOrderType::AttackHere ||
+        NewOrder.Type == EStrategyOrderType::DefendHere ||
+        NewOrder.Type == EStrategyOrderType::Advance ||
+        NewOrder.Type == EStrategyOrderType::Withdraw ||
+        NewOrder.Type == EStrategyOrderType::Assemble;
+
+    if (!bFormationMission)
     {
         return;
     }
@@ -81,10 +87,10 @@ void AStrategyHQUnit::HandleHQOrderChanged(const FStrategyOrder& NewOrder)
 
     if (HQLevel == EStrategyHQLevel::Battalion)
     {
-        FormationPlanner->IssueCompanySlots(
+        FormationPlanner->IssueCompanySlotsForOrder(
             NewOrder.TargetLocation,
             FacingYaw,
-            NewOrder.Type == EStrategyOrderType::DefendHere,
+            NewOrder.Type,
             NewOrder.Authority);
         return;
     }
