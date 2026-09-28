@@ -130,7 +130,8 @@ void UStrategyOrderComponent::MarkPendingTarget()
 
 bool UStrategyOrderComponent::IsPhysicallyExecuting() const
 {
-    return ExecutionState == EStrategyOrderExecutionState::PendingTarget ||
+    return bHasDelayedOrder ||
+           ExecutionState == EStrategyOrderExecutionState::PendingTarget ||
            ExecutionState == EStrategyOrderExecutionState::Pending ||
            ExecutionState == EStrategyOrderExecutionState::Executing;
 }
