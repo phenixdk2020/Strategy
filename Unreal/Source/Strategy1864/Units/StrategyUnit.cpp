@@ -28,6 +28,7 @@
 #include "../AI/StrategyReconComponent.h"
 #include "../AI/StrategyAutonomousBattleAIComponent.h"
 #include "../AI/StrategyRoutRecoveryComponent.h"
+#include "../Combat/StrategyFireDisciplineComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -88,6 +89,8 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyAutonomousBattleAIComponent>(TEXT("AutonomousBattleAIComponent"));
     RoutRecoveryComponent =
         CreateDefaultSubobject<UStrategyRoutRecoveryComponent>(TEXT("RoutRecoveryComponent"));
+    FireDisciplineComponent =
+        CreateDefaultSubobject<UStrategyFireDisciplineComponent>(TEXT("FireDisciplineComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
