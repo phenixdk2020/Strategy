@@ -18,6 +18,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
     bool bUseNavigationSystem = true;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
+    float MaxTraversableSlopeDegrees = 28.0f;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Navigation")
     TArray<FVector> BuildRoute(
         const FVector& StartLocation,
@@ -29,6 +32,16 @@ public:
         const FVector& EndLocation) const;
 
 private:
+    void ApplyStaticObstacleDetours(
+        const FVector& StartLocation,
+        const FVector& EndLocation,
+        TArray<FVector>& InOutPoints) const;
+
+    bool ValidateSlopeProfile(
+        const FVector& StartLocation,
+        const TArray<FVector>& Points,
+        FString& OutFailureReason) const;
+
     AStrategyRiverBarrier* FindRelevantRiverBarrier(
         const FVector& StartLocation,
         const FVector& EndLocation) const;
