@@ -2,6 +2,7 @@
 
 #include "StrategyHUD.h"
 #include "StrategyCameraPawn.h"
+#include "StrategyGameMode.h"
 #include "EngineUtils.h"
 #include "InputCoreTypes.h"
 #include "Kismet/GameplayStatics.h"
@@ -44,6 +45,10 @@ void AStrategyPlayerController::SetupInputComponent()
     FInputActionBinding& Speed3Binding =
         InputComponent->BindAction(TEXT("Time3x"), IE_Pressed, this, &AStrategyPlayerController::SetSpeed3x);
     Speed3Binding.bExecuteWhenPaused = true;
+
+    FInputActionBinding& ResetBinding =
+        InputComponent->BindAction(TEXT("ResetQAScenario"), IE_Pressed, this, &AStrategyPlayerController::ResetQAScenario);
+    ResetBinding.bExecuteWhenPaused = true;
 }
 
 void AStrategyPlayerController::PlayerTick(float DeltaTime)
@@ -459,4 +464,16 @@ void AStrategyPlayerController::SetSpeed2x()
 void AStrategyPlayerController::SetSpeed3x()
 {
     SetSimulationSpeed(3.0f);
+}
+
+
+void AStrategyPlayerController::ResetQAScenario()
+{
+    ClearSelection();
+
+    if (AStrategyGameMode* StrategyGameMode =
+        GetWorld() ? GetWorld()->GetAuthGameMode<AStrategyGameMode>() : nullptr)
+    {
+        StrategyGameMode->ResetQAScenario();
+    }
 }
