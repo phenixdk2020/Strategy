@@ -257,3 +257,24 @@ Unreal/
 ```
 
 The port should prefer stable domain names rather than carrying Unity prototype revision suffixes such as `09F30...` into permanent Unreal class names.
+
+
+## v00.02.57 functionality-first checkpoint
+
+The project is intentionally postponing visual/asset work while simulation functionality is completed.
+
+- Attack/Defend now own fixed mission anchors; Defend leaf executors can physically reassert the same standing mission after temporary disruption.
+- Navigation has explicit building/fence/fieldwork obstacle data, deterministic detours, slope rejection and elevation-following movement.
+- Officer profiles and command range now affect actual order-delivery delay. A delayed child order remains part of parent execution authority.
+- Fatigue and experience now influence movement, accuracy and morale shock.
+- Cavalry base gameplay is self-contained; charge is blocked during reform and optional screen AI repositions without autonomous charge.
+- Contact memory separates current visibility from last-known information. Firing requires current contact + LOS/range/cone.
+- SPEJD HER is now an operational recon state machine rather than a MOVE alias.
+- OOB tactical attachment backend can change CurrentCommandParent while preserving OrganicParent.
+- Bridge barriers serialize crossing ownership; waiting units retain their mission.
+- Rootless opposition companies can autonomously close to a finite engagement distance while respecting higher command authority.
+- Routed units perform fallback and can rally only after reaching safer separation and recovery thresholds.
+- Ammunition exhaustion/resupply is authoritative.
+- QA now includes a navigation-obstacle fixture and checks the new gameplay component set.
+
+Remaining emphasis before parity verification is local UE 5.8.3 compilation/runtime QA, followed by defect correction. Visual assets, Niagara/animation and final UMG remain later passes by design.
