@@ -29,6 +29,7 @@ class UStrategyLocalDeconflictionComponent;
 class UStrategyMissionAnchorComponent;
 class UStrategyOfficerProfileComponent;
 class UStrategyCommandDelayComponent;
+class UStrategyConditionComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FStrategyCasualtyVisualEvent,
@@ -151,6 +152,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyCommandDelayComponent> CommandDelayComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyConditionComponent> ConditionComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
