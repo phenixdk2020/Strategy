@@ -2,6 +2,7 @@
 
 #include "StrategyOrderComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
+#include "../Command/StrategyCommandComponent.h"
 #include "../Units/StrategyUnit.h"
 
 UStrategyMissionAnchorComponent::UStrategyMissionAnchorComponent()
@@ -50,7 +51,9 @@ void UStrategyMissionAnchorComponent::TickComponent(
         !OwnerUnit->OrderComponent->HasStandingIntent() ||
         OwnerUnit->OrderComponent->IsPhysicallyExecuting() ||
         OwnerUnit->UnitState == EStrategyUnitState::Routed ||
-        OwnerUnit->UnitState == EStrategyUnitState::Destroyed)
+        OwnerUnit->UnitState == EStrategyUnitState::Destroyed ||
+        (OwnerUnit->CommandComponent &&
+         OwnerUnit->CommandComponent->CurrentSubordinates.Num() > 0))
     {
         return;
     }
