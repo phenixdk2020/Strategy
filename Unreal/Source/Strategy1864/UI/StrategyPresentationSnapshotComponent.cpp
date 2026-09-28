@@ -11,6 +11,8 @@
 #include "../Artillery/StrategyArtilleryDeploymentComponent.h"
 #include "../Artillery/StrategyArtilleryAmmunitionComponent.h"
 #include "../Artillery/StrategyArtilleryFireMissionComponent.h"
+#include "../Logistics/StrategySupplyWagonUnit.h"
+#include "../Logistics/StrategySupplyCargoComponent.h"
 
 UStrategyPresentationSnapshotComponent::UStrategyPresentationSnapshotComponent()
 {
@@ -152,6 +154,28 @@ UStrategyPresentationSnapshotComponent::BuildSnapshot() const
                     ->GetNameStringByValue(
                         static_cast<int64>(
                             Battery->ArtilleryAmmunitionComponent->SelectedAmmo));
+        }
+    }
+
+    if (const AStrategySupplyWagonUnit* Wagon =
+        Cast<AStrategySupplyWagonUnit>(Unit))
+    {
+        Snapshot.SupplyDrivers = Wagon->DriverStrength;
+        Snapshot.SupplyHorses = Wagon->HorseStrength;
+        Snapshot.SupplyWagonCondition = Wagon->WagonCondition;
+
+        Snapshot.SupplyOwnershipState =
+            StaticEnum<EStrategySupplyOwnershipState>()
+                ->GetNameStringByValue(
+                    static_cast<int64>(Wagon->OwnershipState));
+
+        if (Wagon->CargoComponent)
+        {
+            Snapshot.SupplySmallArmsRounds =
+                Wagon->CargoComponent->SmallArmsRounds;
+
+            Snapshot.SupplyArtilleryRounds =
+                Wagon->CargoComponent->ArtilleryRounds;
         }
     }
 
