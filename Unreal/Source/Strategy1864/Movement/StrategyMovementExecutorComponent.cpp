@@ -81,11 +81,12 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
 
 void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOrder& Order)
 {
+    ReleaseBridgeSlot();
+
     MovementGoal = Order.TargetLocation;
     ActiveRoutePlan = FStrategyRoutePlan();
     RoutePoints.Reset();
     RoutePointIndex = 0;
-    ReleaseBridgeSlot();
     bCavalryDefileActive = false;
     bTurningToGoalFacing = false;
     bWaitingForBridge = false;
