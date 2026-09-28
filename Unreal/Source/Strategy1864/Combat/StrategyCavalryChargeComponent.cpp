@@ -1,6 +1,7 @@
 #include "StrategyCavalryChargeComponent.h"
 
 #include "../Formations/StrategyFormationComponent.h"
+#include "../Formations/StrategyFormationTransitionComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/CavalryUnit.h"
@@ -46,6 +47,14 @@ void UStrategyCavalryChargeComponent::BeginCharge()
 {
     if (!OwnerCavalry || !OwnerCavalry->MovementExecutor)
     {
+        return;
+    }
+
+    if (OwnerCavalry->FormationTransition &&
+        OwnerCavalry->FormationTransition->IsReforming())
+    {
+        bChargeActive = false;
+        SetComponentTickEnabled(false);
         return;
     }
 
