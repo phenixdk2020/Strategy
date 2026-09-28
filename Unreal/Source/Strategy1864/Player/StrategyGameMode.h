@@ -5,6 +5,7 @@
 #include "StrategyGameMode.generated.h"
 
 class AStrategyOOBTestScenario;
+class UStrategyScenarioStateComponent;
 
 UCLASS()
 class STRATEGY1864_API AStrategyGameMode : public AGameModeBase
@@ -23,4 +24,13 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     TSubclassOf<AStrategyOOBTestScenario> OOBTestScenarioClass;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Scenario")
+    TObjectPtr<UStrategyScenarioStateComponent> ScenarioStateComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Test")
+    TObjectPtr<AStrategyOOBTestScenario> SpawnedQAScenario;
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Test")
+    void ResetQAScenario();
 };
