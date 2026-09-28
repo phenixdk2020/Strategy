@@ -9,6 +9,7 @@ class AStrategyHQUnit;
 class AStrategyUnit;
 class AStrategyRiverBarrier;
 class ACavalryUnit;
+class AStrategyNavigationObstacle;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API AStrategyOOBTestScenario : public AActor
@@ -39,6 +40,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     bool bSpawnCavalryQA = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnObstacleQA = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     int32 QARandomSeed = 1864;
@@ -88,5 +92,8 @@ private:
 
     UPROPERTY()
     TObjectPtr<AStrategyRiverBarrier> SpawnedRiverBarrier;
+
+    UPROPERTY()
+    TObjectPtr<AStrategyNavigationObstacle> SpawnedNavigationObstacle;
 
 };
