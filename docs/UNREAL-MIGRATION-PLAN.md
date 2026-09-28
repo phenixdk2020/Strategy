@@ -109,7 +109,11 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Long movement can select March Column automatically and switch back to Line at the deployment threshold.
 - Attack/Defend planning now cascades Division → Brigade → Regiment → Battalion/Major → Company with committed facing preserved.
 - Parent mission completion waits on immediate subordinate execution, allowing completion to cascade back up the hierarchy.
-- Physical 1:1 soldier reform and final runtime deconfliction remain pending.
+- Formation changes now own an explicit Reforming transition. Movement pauses and resumes the same route/order rather than replacing the mission.
+- Final slot completion waits for physical committed-facing rotation within a 2° tolerance.
+- Full-strength 190-man Line frontage is regression-checked against the current ~48 m baseline.
+- Moving friendly companies have bounded local sidestep/deconfliction around the 68 m reserved centre spacing.
+- Physical 1:1 soldier-slot interpolation remains pending; the current reform implementation is authoritative transition/state core.
 
 ### U05 — Terrain/navigation — NAVMESH CORE IMPLEMENTED / RIVER-BRIDGE RULES PENDING
 - Formation-level route planner now requests Unreal NavMesh paths and returns ordered waypoints.
@@ -120,7 +124,9 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Opposite-bank routes receive an explicit bridge transaction with approach/exit metadata.
 - Same-bank chord-through-water missions create a same-bank detour instead of a bridge round-trip.
 - Cavalry defile mode activates only near the bridge (~36 m) or during the bridge transaction and restores its previous formation after exit.
-- Hard physical water blocking and final bridge congestion/queueing still require runtime/map integration.
+- Hard-water target authority is now implemented through route validity: start/destination inside river water fails the movement order rather than falling back to a direct water crossing.
+- Goal changes during an active bridge crossing preserve the current bridge transaction through exit and retarget the post-crossing tail.
+- Final map collision/nav-area authoring and multi-unit bridge congestion/queueing still require runtime/map integration.
 
 ### U06 — Combat/visibility — ELIGIBILITY CORE IMPLEMENTED / FIRE EXECUTION PENDING
 - Shared fire-control state implements HOLD, CLOSE, MEDIUM and LONG policies.
@@ -134,7 +140,11 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Morale and Cohesion are separate states; incoming volleys apply shock even when hits are zero.
 - Under-fire can temporarily pause movement without completing the mission, then movement resumes.
 - Square target eligibility uses four 90-degree fire sectors.
-- Smoke/Niagara, detailed casualty categories, routed thresholds and full Square-vs-CAV reaction remain pending.
+- Real volley events now expose presentation-only origin/direction/shots/hits data; no formation transition can generate a volley event.
+- Representative casualty events are emitted only from positive authoritative strength loss.
+- Reforming units cannot fire, closing the F29X phantom-volley path.
+- Square owns its QA outline and Square volley presentation data originates from the selected firing face.
+- Niagara asset binding, detailed casualty categories and final visual effects remain pending.
 
 ### U07 — Officer AI — DELEGATION/HQ CORE IMPLEMENTED / RUNTIME QA PENDING
 - One shared Officer AI component is attached to every strategy unit and uses the same order-authority model for player-delegated and enemy units.
