@@ -44,14 +44,16 @@ void UStrategyFormationTransitionComponent::HandleFormationChanged(
             0.1f,
             BaseReformSeconds + StrengthFactor * SecondsPer100Men);
 
-    OwnerUnit->SetUnitState(EStrategyUnitState::Reforming);
-
     if (OwnerUnit->MovementExecutor &&
         OwnerUnit->MovementExecutor->HasMovementGoal())
     {
         OwnerUnit->MovementExecutor->PauseMovementForSeconds(
             ReformRemainingSeconds);
     }
+
+    // Formation transition owns the visible state even though the same
+    // movement-pause mechanism is reused under the hood.
+    OwnerUnit->SetUnitState(EStrategyUnitState::Reforming);
 
     SetComponentTickEnabled(true);
 }
