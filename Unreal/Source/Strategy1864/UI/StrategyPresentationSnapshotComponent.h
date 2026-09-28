@@ -127,7 +127,7 @@ struct FStrategyUnitPresentationSnapshot
     float TerrainLocalSlopeDegrees = 0.0f;
 
     UPROPERTY(BlueprintReadOnly)
-    bool bTerrainNearCrest = false;
+    float TerrainFeatureElevationOffset = 0.0f;
 };
 
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
