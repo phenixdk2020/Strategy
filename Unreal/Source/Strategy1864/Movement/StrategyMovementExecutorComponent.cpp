@@ -69,7 +69,10 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
 
     if (IsMovementOrder(NewOrder.Type))
     {
-        BeginMovementForOrder(NewOrder);
+        if (!TryRetargetDuringBridge(NewOrder))
+        {
+            BeginMovementForOrder(NewOrder);
+        }
     }
 }
 
@@ -87,6 +90,23 @@ void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOr
         ActiveRoutePlan = OwnerUnit->RoutePlanner->BuildRoutePlan(
             OwnerUnit->GetActorLocation(),
             MovementGoal);
+
+        if (!ActiveRoutePlan.bValid)
+        {
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("PROJECT1864-MOVE: route rejected for %s: %s"),
+                *OwnerUnit->StableUnitId.ToString(),
+                *ActiveRoutePlan.FailureReason);
+
+            OwnerUnit->SetUnitState(EStrategyUnitState::Ready);
+            OwnerUnit->OrderComponent->FailExecution();
+            bHasMovementGoal = false;
+            SetComponentTickEnabled(false);
+            return;
+        }
+
         RoutePoints = ActiveRoutePlan.Points;
     }
 
@@ -353,4 +373,78 @@ void UStrategyMovementExecutorComponent::PauseMovementForSeconds(float DurationS
     // Deliberately do not change OrderComponent execution state or route.
     // The authoritative parent mission remains active and movement resumes.
     SetComponentTickEnabled(true);
+}
+
+
+bool UStrategyMovementExecutorComponent::TryRetargetDuringBridge(
+    const FStrategyOrder& Order)
+{
+    if (!OwnerUnit ||
+        !OwnerUnit->RoutePlanner ||
+        !bHasMovementGoal ||
+        !ActiveRoutePlan.bUsesBridge ||
+        ActiveRoutePlan.BridgeExitPointIndex == INDEX_NONE ||
+        RoutePointIndex > ActiveRoutePlan.BridgeExitPointIndex ||
+        !RoutePoints.IsValidIndex(ActiveRoutePlan.BridgeExitPointIndex))
+    {
+        return false;
+    }
+
+    const FVector PreservedBridgeExit =
+        RoutePoints[ActiveRoutePlan.BridgeExitPointIndex];
+
+    TArray<FVector> PreservedPoints;
+    const int32 KeepThroughIndex =
+        FMath::Clamp(
+            ActiveRoutePlan.BridgeExitPointIndex,
+            RoutePointIndex,
+            RoutePoints.Num() - 1);
+
+    for (int32 Index = RoutePointIndex; Index <= KeepThroughIndex; ++Index)
+    {
+        PreservedPoints.Add(RoutePoints[Index]);
+    }
+
+    const FStrategyRoutePlan TailPlan =
+        OwnerUnit->RoutePlanner->BuildRoutePlan(
+            PreservedBridgeExit,
+            Order.TargetLocation);
+
+    if (!TailPlan.bValid)
+    {
+        return false;
+    }
+
+    for (const FVector& Point : TailPlan.Points)
+    {
+        PreservedPoints.Add(Point);
+    }
+
+    RoutePoints = PreservedPoints;
+    RoutePointIndex = 0;
+
+    ActiveRoutePlan.BridgeEnterPointIndex = 0;
+    ActiveRoutePlan.BridgeExitPointIndex =
+        FMath::Min(
+            KeepThroughIndex,
+            RoutePoints.Num() - 1);
+    ActiveRoutePlan.bUsesBridge = true;
+    ActiveRoutePlan.bValid = true;
+
+    MovementGoal = Order.TargetLocation;
+    GoalFacingYaw = Order.FacingYaw;
+    bApplyGoalFacing = Order.bHasFacing;
+    ExecutingOrderSerial = Order.OrderSerial;
+    bTurningToGoalFacing = false;
+
+    OwnerUnit->OrderComponent->BeginExecution();
+    SetComponentTickEnabled(true);
+
+    UE_LOG(
+        LogTemp,
+        Display,
+        TEXT("PROJECT1864-MOVE: %s retargeted while preserving active bridge transaction."),
+        *OwnerUnit->StableUnitId.ToString());
+
+    return true;
 }
