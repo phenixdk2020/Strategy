@@ -798,6 +798,48 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
         }
 
         if (Unit->Side == EStrategySide::Denmark &&
+            Unit->Echelon == EStrategyEchelon::Artillery)
+        {
+            ++DanishArtilleryCount;
+
+            const AStrategyArtilleryBatteryUnit* Battery =
+                Cast<AStrategyArtilleryBatteryUnit>(Unit);
+
+            if (!Battery ||
+                !Battery->DeploymentComponent ||
+                !Battery->ArtilleryAmmunitionComponent ||
+                !Battery->ArtilleryFireMissionComponent ||
+                !Battery->ArtilleryDamageComponent ||
+                !Battery->ArtilleryCaptureComponent ||
+                !Battery->ArtilleryTraverseComponent)
+            {
+                OutFailures.Add(
+                    TEXT("Artillery QA battery is missing one or more artillery-core components."));
+            }
+            else
+            {
+                if (Battery->GunCount <= 0 ||
+                    Battery->CrewStrength <= 0 ||
+                    Battery->HorseStrength <= 0 ||
+                    Battery->GetOperationalGunCount() <= 0)
+                {
+                    OutFailures.Add(
+                        TEXT("Artillery QA battery has invalid gun/crew/horse operational state."));
+                }
+
+                if (Battery->ArtilleryAmmunitionComponent->GetTotalRounds() <= 0)
+                {
+                    OutFailures.Add(TEXT("Artillery QA battery has no ammunition."));
+                }
+
+                if (!Battery->DeploymentComponent->IsDeployed())
+                {
+                    OutFailures.Add(TEXT("Artillery QA battery did not start deployed."));
+                }
+            }
+        }
+
+        if (Unit->Side == EStrategySide::Denmark &&
             Unit->Echelon == EStrategyEchelon::Cavalry)
         {
             ++DanishCavalryCount;
