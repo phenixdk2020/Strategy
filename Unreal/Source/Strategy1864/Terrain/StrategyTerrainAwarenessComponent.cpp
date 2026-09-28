@@ -119,18 +119,20 @@ bool UStrategyTerrainAwarenessComponent::IsNearCrestRelativeTo(
     FVector CrestPoint;
     float ExcessHeight = 0.0f;
 
-    UStrategyTerrainQueryLibrary::FindCrestPoint(
-        OwnerUnit,
-        ThreatGround,
-        UnitGround,
-        CrestPoint,
-        ExcessHeight,
-        40);
+    const bool bHasCrest =
+        UStrategyTerrainQueryLibrary::FindCrestPoint(
+            OwnerUnit,
+            ThreatGround,
+            UnitGround,
+            CrestPoint,
+            ExcessHeight,
+            40);
 
-    return FVector::Dist2D(
-        CrestPoint,
-        OwnerUnit->GetActorLocation()) <=
-        CrestNearDistanceCm;
+    return bHasCrest &&
+        FVector::Dist2D(
+            CrestPoint,
+            OwnerUnit->GetActorLocation()) <=
+            CrestNearDistanceCm;
 }
 
 bool UStrategyTerrainAwarenessComponent::IsOnReverseSlopeFrom(
