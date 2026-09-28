@@ -41,6 +41,10 @@
 #include "../Logistics/StrategySupplyWagonUnit.h"
 #include "../Logistics/StrategySupplyCargoComponent.h"
 #include "../Logistics/StrategySupplyCaptureComponent.h"
+#include "../Terrain/StrategyTerrainFeature.h"
+#include "../Terrain/StrategyTerrainQueryLibrary.h"
+#include "../Terrain/StrategyTerrainAwarenessComponent.h"
+#include "../Artillery/StrategyArtilleryPositioningComponent.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -61,6 +65,30 @@ void AStrategyOOBTestScenario::BeginPlay()
 void AStrategyOOBTestScenario::BuildTestOOB()
 {
     ClearSpawnedUnits();
+
+    if (bSpawnTerrainQA)
+    {
+        SpawnTerrainFeature(
+            EStrategyTerrainFeatureType::Hill,
+            Origin + FVector(1800.0f, 7200.0f, 0.0f),
+            FVector2D(5200.0f, 4300.0f),
+            750.0f,
+            0.0f);
+
+        SpawnTerrainFeature(
+            EStrategyTerrainFeatureType::Ridge,
+            Origin + FVector(13000.0f, 1500.0f, 0.0f),
+            FVector2D(2200.0f, 3200.0f),
+            1800.0f,
+            0.0f);
+
+        SpawnTerrainFeature(
+            EStrategyTerrainFeatureType::Depression,
+            Origin + FVector(17500.0f, -9000.0f, 0.0f),
+            FVector2D(3500.0f, 2600.0f),
+            550.0f,
+            15.0f);
+    }
 
     AStrategyHQUnit* Division = SpawnHQ(
         TEXT("DK-DIV-1"),
@@ -337,6 +365,16 @@ void AStrategyOOBTestScenario::ClearSpawnedUnits()
     }
 
     SpawnedNavigationObstacle = nullptr;
+
+    for (AStrategyTerrainFeature* Feature : SpawnedTerrainFeatures)
+    {
+        if (IsValid(Feature))
+        {
+            Feature->Destroy();
+        }
+    }
+
+    SpawnedTerrainFeatures.Reset();
 }
 
 AStrategyHQUnit* AStrategyOOBTestScenario::SpawnHQ(
@@ -352,9 +390,14 @@ AStrategyHQUnit* AStrategyOOBTestScenario::SpawnHQ(
         return nullptr;
     }
 
+    const FVector SpawnLocation =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            this,
+            Location);
+
     AStrategyHQUnit* HQ = World->SpawnActor<AStrategyHQUnit>(
         AStrategyHQUnit::StaticClass(),
-        Location,
+        SpawnLocation,
         FRotator::ZeroRotator);
 
     if (!HQ)
@@ -394,9 +437,14 @@ AStrategyCompanyUnit* AStrategyOOBTestScenario::SpawnCompany(
         return nullptr;
     }
 
+    const FVector SpawnLocation =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            this,
+            Location);
+
     AStrategyCompanyUnit* Company = World->SpawnActor<AStrategyCompanyUnit>(
         AStrategyCompanyUnit::StaticClass(),
-        Location,
+        SpawnLocation,
         FRotator::ZeroRotator);
 
     if (!Company)
@@ -521,9 +569,14 @@ ACavalryUnit* AStrategyOOBTestScenario::SpawnCavalry(
         return nullptr;
     }
 
+    const FVector SpawnLocation =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            this,
+            Location);
+
     ACavalryUnit* Cavalry = World->SpawnActor<ACavalryUnit>(
         ACavalryUnit::StaticClass(),
-        Location,
+        SpawnLocation,
         FRotator::ZeroRotator);
 
     if (!Cavalry)
@@ -560,10 +613,15 @@ AStrategyArtilleryBatteryUnit* AStrategyOOBTestScenario::SpawnArtilleryBattery(
         return nullptr;
     }
 
+    const FVector SpawnLocation =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            this,
+            Location);
+
     AStrategyArtilleryBatteryUnit* Battery =
         World->SpawnActor<AStrategyArtilleryBatteryUnit>(
             AStrategyArtilleryBatteryUnit::StaticClass(),
-            Location,
+            SpawnLocation,
             FRotator(0.0f, 0.0f, 0.0f));
 
     if (!Battery)
@@ -637,10 +695,15 @@ AStrategySupplyWagonUnit* AStrategyOOBTestScenario::SpawnSupplyWagon(
         return nullptr;
     }
 
+    const FVector SpawnLocation =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            this,
+            Location);
+
     AStrategySupplyWagonUnit* Wagon =
         World->SpawnActor<AStrategySupplyWagonUnit>(
             AStrategySupplyWagonUnit::StaticClass(),
-            Location,
+            SpawnLocation,
             FRotator::ZeroRotator);
 
     if (!Wagon)
@@ -683,6 +746,40 @@ AStrategySupplyWagonUnit* AStrategyOOBTestScenario::SpawnSupplyWagon(
     Wagon->RefreshDebugLabel();
     SpawnedUnitObjects.Add(Wagon);
     return Wagon;
+}
+
+AStrategyTerrainFeature* AStrategyOOBTestScenario::SpawnTerrainFeature(
+    EStrategyTerrainFeatureType FeatureType,
+    const FVector& Location,
+    const FVector2D& RadiusCm,
+    float PeakHeightCm,
+    float YawDegrees)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    AStrategyTerrainFeature* Feature =
+        World->SpawnActor<AStrategyTerrainFeature>(
+            AStrategyTerrainFeature::StaticClass(),
+            Location,
+            FRotator(0.0f, YawDegrees, 0.0f));
+
+    if (!Feature)
+    {
+        return nullptr;
+    }
+
+    Feature->FeatureType = FeatureType;
+    Feature->RadiusXcm = FMath::Max(100.0f, RadiusCm.X);
+    Feature->RadiusYcm = FMath::Max(100.0f, RadiusCm.Y);
+    Feature->PeakHeightCm = PeakHeightCm;
+    Feature->bAffectsGameplay = true;
+
+    SpawnedTerrainFeatures.Add(Feature);
+    return Feature;
 }
 
 TArray<AStrategyUnit*> AStrategyOOBTestScenario::GetSpawnedUnits() const
