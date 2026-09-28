@@ -15,7 +15,8 @@ enum class EStrategyOrderType : uint8
     Withdraw    UMETA(DisplayName = "Tilbagetræk"),
     Assemble    UMETA(DisplayName = "Saml"),
     ScoutHere   UMETA(DisplayName = "Spejd her"),
-    Charge      UMETA(DisplayName = "Charge")
+    Charge      UMETA(DisplayName = "Charge"),
+    ArtilleryFireMission UMETA(DisplayName = "Artillery fire mission")
 };
 
 UENUM(BlueprintType)
@@ -72,7 +73,8 @@ struct FStrategyOrder
     bool IsStandingIntent() const
     {
         return Type == EStrategyOrderType::DefendHere ||
-               Type == EStrategyOrderType::Hold;
+               Type == EStrategyOrderType::Hold ||
+               Type == EStrategyOrderType::ArtilleryFireMission;
     }
 
     bool IsValidOrder() const
