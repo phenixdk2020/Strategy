@@ -8,6 +8,7 @@
 #include "../Units/StrategyDragoonComponent.h"
 #include "../Navigation/StrategyRiverBarrier.h"
 #include "../Combat/StrategyCombatComponent.h"
+#include "../Formations/StrategyFormationComponent.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -505,6 +506,17 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
             Unit->bPlayerControllable)
         {
             ++EnemySelectableCount;
+        }
+
+        if (Unit->Side == EStrategySide::Denmark &&
+            Unit->Echelon == EStrategyEchelon::Company &&
+            Unit->FormationComponent &&
+            !Unit->FormationComponent->IsFullCompanyFrontageWithinBaseline(190))
+        {
+            OutFailures.Add(
+                FString::Printf(
+                    TEXT("%s full-company frontage is outside the 48m QA baseline."),
+                    *Unit->StableUnitId.ToString()));
         }
 
         if (Unit->Side == EStrategySide::Denmark &&
