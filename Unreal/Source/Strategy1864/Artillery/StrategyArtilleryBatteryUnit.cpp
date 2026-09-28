@@ -160,10 +160,26 @@ void AStrategyArtilleryBatteryUnit::ApplyBatteryDamage(
     CurrentStrength =
         FMath::Max(0, CrewStrength + DriverStrength);
 
-    if (CurrentStrength <= 0 || GetOperationalGunCount() <= 0)
+    if (CurrentStrength <= 0)
     {
         OwnershipState = EStrategyArtilleryOwnershipState::Abandoned;
-        SetUnitState(EStrategyUnitState::Destroyed);
+        SetUnitState(EStrategyUnitState::Abandoned);
+
+        if (DeploymentComponent)
+        {
+            DeploymentComponent->MobilityState =
+                EStrategyArtilleryMobilityState::Abandoned;
+        }
+    }
+    else if (GetOperationalGunCount() <= 0)
+    {
+        SetUnitState(EStrategyUnitState::Disabled);
+
+        if (DeploymentComponent)
+        {
+            DeploymentComponent->MobilityState =
+                EStrategyArtilleryMobilityState::Disabled;
+        }
     }
 
     RefreshDebugLabel();
