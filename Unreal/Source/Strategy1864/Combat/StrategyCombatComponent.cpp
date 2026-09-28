@@ -268,3 +268,9 @@ void UStrategyCombatComponent::EvaluateRoutState()
         OwnerUnit->OrderComponent->FailExecution();
     }
 }
+
+
+void UStrategyCombatComponent::SetDeterministicRandomSeed(int32 Seed)
+{
+    RandomStream.Initialize(Seed);
+}
