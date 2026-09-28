@@ -198,6 +198,8 @@ bool AStrategyUnit::IsCombatEffective() const
 {
     return CurrentStrength > 0 &&
         UnitState != EStrategyUnitState::Routed &&
+        UnitState != EStrategyUnitState::Disabled &&
+        UnitState != EStrategyUnitState::Abandoned &&
         UnitState != EStrategyUnitState::Destroyed;
 }
 
