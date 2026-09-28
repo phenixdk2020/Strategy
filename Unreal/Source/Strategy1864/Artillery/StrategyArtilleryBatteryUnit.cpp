@@ -9,6 +9,7 @@
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Combat/StrategyFireControlComponent.h"
 #include "../Combat/StrategyCombatComponent.h"
+#include "../Combat/StrategyContactComponent.h"
 
 AStrategyArtilleryBatteryUnit::AStrategyArtilleryBatteryUnit()
 {
@@ -54,6 +55,12 @@ void AStrategyArtilleryBatteryUnit::BeginPlay()
     CurrentStrength = InitialStrength;
 
     MaximumFireRangeCm = GunProfile.MaximumRangeCm;
+
+    if (ContactComponent)
+    {
+        ContactComponent->MaximumAwarenessRangeCm =
+            GunProfile.MaximumRangeCm;
+    }
 
     if (MovementExecutor)
     {
