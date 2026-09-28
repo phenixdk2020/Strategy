@@ -2,6 +2,7 @@
 
 #include "../Command/StrategyCommandComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
+#include "../Formations/StrategyFormationComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "DrawDebugHelpers.h"
@@ -43,6 +44,33 @@ void UStrategyWorldDebugComponent::DrawUnitRecursive(
 
     DrawMissionForUnit(Unit);
     DrawRouteForUnit(Unit);
+
+    if (Unit->FormationComponent &&
+        Unit->FormationComponent->UsesSquareVisualOwnership())
+    {
+        const float HalfExtent =
+            FMath::Max(
+                300.0f,
+                Unit->FormationComponent->EstimateFrontageCm(
+                    FMath::Max(1, Unit->CurrentStrength)) * 0.5f);
+
+        const FRotator Rotation(0.0f, Unit->GetActorRotation().Yaw, 0.0f);
+        const FVector Forward = Rotation.Vector();
+        const FVector Right =
+            FRotationMatrix(Rotation).GetScaledAxis(EAxis::Y);
+        const FVector Center =
+            Unit->GetActorLocation() + FVector(0.0f, 0.0f, 25.0f);
+
+        const FVector A = Center + Forward * HalfExtent + Right * HalfExtent;
+        const FVector B = Center + Forward * HalfExtent - Right * HalfExtent;
+        const FVector C = Center - Forward * HalfExtent - Right * HalfExtent;
+        const FVector D = Center - Forward * HalfExtent + Right * HalfExtent;
+
+        DrawDebugLine(GetWorld(), A, B, FColor(255, 220, 80), false, 0.0f, 0, 3.0f);
+        DrawDebugLine(GetWorld(), B, C, FColor(255, 220, 80), false, 0.0f, 0, 3.0f);
+        DrawDebugLine(GetWorld(), C, D, FColor(255, 220, 80), false, 0.0f, 0, 3.0f);
+        DrawDebugLine(GetWorld(), D, A, FColor(255, 220, 80), false, 0.0f, 0, 3.0f);
+    }
 
     if (!bDrawSelectedCommandTree || !Unit->CommandComponent)
     {
