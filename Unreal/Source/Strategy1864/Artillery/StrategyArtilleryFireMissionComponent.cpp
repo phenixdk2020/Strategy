@@ -54,6 +54,21 @@ void UStrategyArtilleryFireMissionComponent::TickComponent(
             FMath::Max(0.0f, ReloadRemainingSeconds - DeltaTime);
     }
 
+    const bool bManualMissionActive =
+        FireMode == EStrategyArtilleryFireMode::ManualTarget &&
+        (IsValid(ManualTarget) || bHasManualAreaTarget);
+
+    if (bManualMissionActive)
+    {
+        MissionElapsedSeconds += DeltaTime;
+
+        if (ShouldStopForMissionLimit())
+        {
+            CompleteManualMission(false);
+            return;
+        }
+    }
+
     EvaluationAccumulator += DeltaTime;
     if (EvaluationAccumulator < EvaluationIntervalSeconds)
     {
@@ -69,6 +84,26 @@ void UStrategyArtilleryFireMissionComponent::TickComponent(
         return;
     }
 
+    if (FireMode == EStrategyArtilleryFireMode::ManualTarget &&
+        bHasManualAreaTarget)
+    {
+        if (OwnerBattery->ArtilleryTraverseComponent &&
+            !OwnerBattery->ArtilleryTraverseComponent
+                ->IsLocationInsideTraverseArc(ManualAreaTarget))
+        {
+            OwnerBattery->ArtilleryTraverseComponent
+                ->RequestTraverseToward(ManualAreaTarget);
+            return;
+        }
+
+        if (CanEngageLocation(ManualAreaTarget))
+        {
+            FireAtLocation(ManualAreaTarget);
+        }
+
+        return;
+    }
+
     AStrategyUnit* Target =
         FireMode == EStrategyArtilleryFireMode::ManualTarget
         ? ManualTarget.Get()
@@ -81,6 +116,12 @@ void UStrategyArtilleryFireMissionComponent::TickComponent(
             CompleteManualMission(!IsValid(Target));
         }
         return;
+    }
+
+    if (FireMode == EStrategyArtilleryFireMode::AutoTarget &&
+        bAutoSelectAmmunition)
+    {
+        SelectBestAmmoForTarget(Target);
     }
 
     if (OwnerBattery->ArtilleryTraverseComponent &&
@@ -113,8 +154,10 @@ bool UStrategyArtilleryFireMissionComponent::SetManualTarget(
     }
 
     ManualTarget = Target;
+    bHasManualAreaTarget = false;
     FireMode = EStrategyArtilleryFireMode::ManualTarget;
     PreviousNonHoldMode = FireMode;
+    ResetMissionCounters();
 
     FStrategyOrder Order;
     Order.Type = EStrategyOrderType::ArtilleryFireMission;
@@ -135,6 +178,44 @@ bool UStrategyArtilleryFireMissionComponent::SetManualTarget(
     return true;
 }
 
+bool UStrategyArtilleryFireMissionComponent::SetManualAreaTarget(
+    const FVector& TargetLocation,
+    float RadiusCm,
+    EStrategyOrderAuthority Authority)
+{
+    if (!OwnerBattery ||
+        !OwnerBattery->OrderComponent ||
+        !CanObserveLocation(TargetLocation))
+    {
+        return false;
+    }
+
+    ManualTarget = nullptr;
+    bHasManualAreaTarget = true;
+    ManualAreaTarget = TargetLocation;
+    ManualAreaRadiusCm = FMath::Clamp(RadiusCm, 200.0f, 10000.0f);
+    FireMode = EStrategyArtilleryFireMode::ManualTarget;
+    PreviousNonHoldMode = FireMode;
+    ResetMissionCounters();
+
+    FStrategyOrder Order;
+    Order.Type = EStrategyOrderType::ArtilleryFireMission;
+    Order.TargetLocation = TargetLocation;
+    Order.FacingYaw =
+        (TargetLocation - OwnerBattery->GetActorLocation()).Rotation().Yaw;
+    Order.bHasFacing = true;
+    Order.Authority = Authority;
+
+    if (!OwnerBattery->OrderComponent->SetOrder(Order))
+    {
+        bHasManualAreaTarget = false;
+        return false;
+    }
+
+    OwnerBattery->OrderComponent->BeginExecution();
+    return true;
+}
+
 void UStrategyArtilleryFireMissionComponent::SetAutoTargetEnabled(
     bool bEnabled)
 {
@@ -148,6 +229,8 @@ void UStrategyArtilleryFireMissionComponent::SetAutoTargetEnabled(
         FireMode = EStrategyArtilleryFireMode::AutoTarget;
         PreviousNonHoldMode = FireMode;
         ManualTarget = nullptr;
+        bHasManualAreaTarget = false;
+        bAutoSelectAmmunition = true;
     }
     else
     {
@@ -192,9 +275,28 @@ void UStrategyArtilleryFireMissionComponent::SetHoldFire(bool bHold)
 bool UStrategyArtilleryFireMissionComponent::SelectAmmo(
     EStrategyArtilleryAmmoType AmmoType)
 {
+    bAutoSelectAmmunition = false;
+
     return OwnerBattery &&
         OwnerBattery->ArtilleryAmmunitionComponent &&
         OwnerBattery->ArtilleryAmmunitionComponent->SelectAmmo(AmmoType);
+}
+
+void UStrategyArtilleryFireMissionComponent::SetMissionLimits(
+    int32 MaxSalvos,
+    float MaxDurationSeconds)
+{
+    MaxSalvosPerMission = FMath::Max(0, MaxSalvos);
+    MaxMissionDurationSeconds = FMath::Max(0.0f, MaxDurationSeconds);
+}
+
+void UStrategyArtilleryFireMissionComponent::SetConserveAmmunition(
+    bool bConserve,
+    float ReserveFraction)
+{
+    bConserveAmmunition = bConserve;
+    MinimumReserveFraction =
+        FMath::Clamp(ReserveFraction, 0.0f, 0.95f);
 }
 
 float UStrategyArtilleryFireMissionComponent::GetMinimumRangeCm(
@@ -261,6 +363,27 @@ bool UStrategyArtilleryFireMissionComponent::CanEngageTarget(
         return false;
     }
 
+    const int32 TotalRounds =
+        OwnerBattery->ArtilleryAmmunitionComponent->GetTotalRounds();
+
+    const int32 MaxRounds =
+        FMath::Max(
+            1,
+            OwnerBattery->ArtilleryAmmunitionComponent->MaximumTotalRounds);
+
+    const float ReserveFraction =
+        TargetPriority == EStrategyArtilleryTargetPriority::ConserveAmmo
+        ? FMath::Max(MinimumReserveFraction, 0.35f)
+        : MinimumReserveFraction;
+
+    if (FireMode == EStrategyArtilleryFireMode::AutoTarget &&
+        bConserveAmmunition &&
+        static_cast<float>(TotalRounds) / static_cast<float>(MaxRounds) <=
+            ReserveFraction)
+    {
+        return false;
+    }
+
     const EStrategyArtilleryAmmoType AmmoType =
         OwnerBattery->ArtilleryAmmunitionComponent->SelectedAmmo;
 
@@ -268,6 +391,34 @@ bool UStrategyArtilleryFireMissionComponent::CanEngageTarget(
         FVector::Dist2D(
             OwnerBattery->GetActorLocation(),
             Target->GetActorLocation());
+
+    return DistanceCm >= GetMinimumRangeCm(AmmoType) &&
+           DistanceCm <= GetMaximumRangeCm(AmmoType);
+}
+
+bool UStrategyArtilleryFireMissionComponent::CanEngageLocation(
+    const FVector& TargetLocation) const
+{
+    if (!OwnerBattery ||
+        !OwnerBattery->CanFireBattery() ||
+        FireMode == EStrategyArtilleryFireMode::HoldFire ||
+        !OwnerBattery->ArtilleryAmmunitionComponent ||
+        OwnerBattery->ArtilleryAmmunitionComponent->GetSelectedRounds() <= 0 ||
+        !OwnerBattery->ArtilleryTraverseComponent ||
+        !OwnerBattery->ArtilleryTraverseComponent
+            ->IsLocationInsideTraverseArc(TargetLocation) ||
+        !CanObserveLocation(TargetLocation))
+    {
+        return false;
+    }
+
+    const EStrategyArtilleryAmmoType AmmoType =
+        OwnerBattery->ArtilleryAmmunitionComponent->SelectedAmmo;
+
+    const float DistanceCm =
+        FVector::Dist2D(
+            OwnerBattery->GetActorLocation(),
+            TargetLocation);
 
     return DistanceCm >= GetMinimumRangeCm(AmmoType) &&
            DistanceCm <= GetMaximumRangeCm(AmmoType);
@@ -286,6 +437,149 @@ bool UStrategyArtilleryFireMissionComponent::CanObserveTarget(
 
     return OwnerBattery->ContactComponent->HasCurrentContact(Target) &&
         OwnerBattery->VisibilityComponent->HasLineOfSightTo(Target);
+}
+
+bool UStrategyArtilleryFireMissionComponent::CanObserveLocation(
+    const FVector& TargetLocation) const
+{
+    if (!OwnerBattery || !GetWorld())
+    {
+        return false;
+    }
+
+    const FVector Start =
+        OwnerBattery->GetActorLocation() + FVector(0.0f, 0.0f, 160.0f);
+    const FVector End =
+        TargetLocation + FVector(0.0f, 0.0f, 50.0f);
+
+    FHitResult Hit;
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(StrategyArtilleryAreaLOS), false);
+    Params.AddIgnoredActor(OwnerBattery);
+
+    const bool bBlocked =
+        GetWorld()->LineTraceSingleByChannel(
+            Hit,
+            Start,
+            End,
+            ECC_Visibility,
+            Params);
+
+    return !bBlocked;
+}
+
+bool UStrategyArtilleryFireMissionComponent::HasUsableAmmoForTarget(
+    const AStrategyUnit* Target) const
+{
+    if (!OwnerBattery ||
+        !OwnerBattery->ArtilleryAmmunitionComponent ||
+        !IsValid(Target))
+    {
+        return false;
+    }
+
+    const float Distance =
+        FVector::Dist2D(
+            OwnerBattery->GetActorLocation(),
+            Target->GetActorLocation());
+
+    const EStrategyArtilleryAmmoType Types[] =
+    {
+        EStrategyArtilleryAmmoType::Canister,
+        EStrategyArtilleryAmmoType::Shrapnel,
+        EStrategyArtilleryAmmoType::Shell,
+        EStrategyArtilleryAmmoType::RoundShot
+    };
+
+    for (EStrategyArtilleryAmmoType Type : Types)
+    {
+        if (OwnerBattery->ArtilleryAmmunitionComponent->GetRounds(Type) > 0 &&
+            Distance >= GetMinimumRangeCm(Type) &&
+            Distance <= GetMaximumRangeCm(Type))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool UStrategyArtilleryFireMissionComponent::SelectBestAmmoForTarget(
+    const AStrategyUnit* Target)
+{
+    if (!OwnerBattery ||
+        !OwnerBattery->ArtilleryAmmunitionComponent ||
+        !IsValid(Target))
+    {
+        return false;
+    }
+
+    const float Distance =
+        FVector::Dist2D(
+            OwnerBattery->GetActorLocation(),
+            Target->GetActorLocation());
+
+    TArray<EStrategyArtilleryAmmoType> Preference;
+
+    if (Distance <= GetMaximumRangeCm(EStrategyArtilleryAmmoType::Canister) &&
+        (Target->Echelon == EStrategyEchelon::Company ||
+         Target->Echelon == EStrategyEchelon::Cavalry))
+    {
+        Preference =
+        {
+            EStrategyArtilleryAmmoType::Canister,
+            EStrategyArtilleryAmmoType::Shrapnel,
+            EStrategyArtilleryAmmoType::Shell,
+            EStrategyArtilleryAmmoType::RoundShot
+        };
+    }
+    else if (Target->Echelon == EStrategyEchelon::Artillery)
+    {
+        Preference =
+        {
+            EStrategyArtilleryAmmoType::Shell,
+            EStrategyArtilleryAmmoType::RoundShot,
+            EStrategyArtilleryAmmoType::Shrapnel,
+            EStrategyArtilleryAmmoType::Canister
+        };
+    }
+    else
+    {
+        Preference =
+        {
+            EStrategyArtilleryAmmoType::Shrapnel,
+            EStrategyArtilleryAmmoType::Shell,
+            EStrategyArtilleryAmmoType::RoundShot,
+            EStrategyArtilleryAmmoType::Canister
+        };
+    }
+
+    for (EStrategyArtilleryAmmoType Type : Preference)
+    {
+        if (OwnerBattery->ArtilleryAmmunitionComponent->GetRounds(Type) > 0 &&
+            Distance >= GetMinimumRangeCm(Type) &&
+            Distance <= GetMaximumRangeCm(Type))
+        {
+            OwnerBattery->ArtilleryAmmunitionComponent->SelectedAmmo = Type;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool UStrategyArtilleryFireMissionComponent::ShouldStopForMissionLimit() const
+{
+    return
+        (MaxSalvosPerMission > 0 &&
+         MissionSalvosFired >= MaxSalvosPerMission) ||
+        (MaxMissionDurationSeconds > 0.0f &&
+         MissionElapsedSeconds >= MaxMissionDurationSeconds);
+}
+
+void UStrategyArtilleryFireMissionComponent::ResetMissionCounters()
+{
+    MissionSalvosFired = 0;
+    MissionElapsedSeconds = 0.0f;
 }
 
 AStrategyUnit* UStrategyArtilleryFireMissionComponent::FindBestAutoTarget() const
@@ -312,21 +606,7 @@ AStrategyUnit* UStrategyArtilleryFireMissionComponent::FindBestAutoTarget() cons
             continue;
         }
 
-        if (!OwnerBattery->ArtilleryAmmunitionComponent)
-        {
-            continue;
-        }
-
-        const EStrategyArtilleryAmmoType AmmoType =
-            OwnerBattery->ArtilleryAmmunitionComponent->SelectedAmmo;
-
-        const float Distance =
-            FVector::Dist2D(
-                OwnerBattery->GetActorLocation(),
-                Candidate->GetActorLocation());
-
-        if (Distance < GetMinimumRangeCm(AmmoType) ||
-            Distance > GetMaximumRangeCm(AmmoType))
+        if (!HasUsableAmmoForTarget(Candidate))
         {
             continue;
         }
@@ -434,6 +714,14 @@ bool UStrategyArtilleryFireMissionComponent::FireAt(
         FatigueFactor *
         CrewFactor;
 
+    ++MissionSalvosFired;
+    OwnerBattery->Fatigue =
+        FMath::Clamp(
+            OwnerBattery->Fatigue +
+            static_cast<float>(Consumed) * FiringFatiguePerGun,
+            0.0f,
+            100.0f);
+
     OnArtilleryShotResolved.Broadcast(
         Target,
         AmmoType,
@@ -531,6 +819,183 @@ int32 UStrategyArtilleryFireMissionComponent::ResolveCasualties(
     return Casualties;
 }
 
+bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
+    const FVector& TargetLocation)
+{
+    if (!CanEngageLocation(TargetLocation) ||
+        !OwnerBattery ||
+        !OwnerBattery->ArtilleryAmmunitionComponent ||
+        !GetWorld())
+    {
+        return false;
+    }
+
+    const int32 OperationalGuns = OwnerBattery->GetOperationalGunCount();
+    const int32 GunsFiring =
+        FMath::Min(
+            OperationalGuns,
+            OwnerBattery->ArtilleryAmmunitionComponent->GetSelectedRounds());
+
+    if (GunsFiring <= 0)
+    {
+        return false;
+    }
+
+    const int32 Consumed =
+        OwnerBattery->ArtilleryAmmunitionComponent
+            ->ConsumeSelectedRounds(GunsFiring);
+
+    if (Consumed <= 0)
+    {
+        return false;
+    }
+
+    const EStrategyArtilleryAmmoType AmmoType =
+        OwnerBattery->ArtilleryAmmunitionComponent->SelectedAmmo;
+
+    const float DistanceCm =
+        FVector::Dist2D(
+            OwnerBattery->GetActorLocation(),
+            TargetLocation);
+
+    const float MaxRange =
+        FMath::Max(1.0f, GetMaximumRangeCm(AmmoType));
+
+    const float RangeFraction =
+        FMath::Clamp(DistanceCm / MaxRange, 0.0f, 1.0f);
+
+    const float DispersionCm =
+        ManualAreaRadiusCm +
+        FMath::Lerp(250.0f, 2200.0f, RangeFraction);
+
+    TMap<AStrategyUnit*, int32> CasualtiesByTarget;
+
+    for (int32 GunIndex = 0; GunIndex < Consumed; ++GunIndex)
+    {
+        const float Angle = RandomStream.FRandRange(0.0f, 2.0f * PI);
+        const float Radius = FMath::Sqrt(RandomStream.FRand()) * DispersionCm;
+
+        const FVector Impact =
+            TargetLocation +
+            FVector(
+                FMath::Cos(Angle) * Radius,
+                FMath::Sin(Angle) * Radius,
+                0.0f);
+
+        AStrategyUnit* BestTarget = nullptr;
+        float BestDistance = ManualAreaRadiusCm;
+
+        for (TActorIterator<AStrategyUnit> It(GetWorld()); It; ++It)
+        {
+            AStrategyUnit* Candidate = *It;
+
+            if (!IsValid(Candidate) ||
+                Candidate == OwnerBattery ||
+                Candidate->Side == EStrategySide::Neutral ||
+                Candidate->Side == OwnerBattery->Side ||
+                !Candidate->IsCombatEffective())
+            {
+                continue;
+            }
+
+            const float ImpactDistance =
+                FVector::Dist2D(
+                    Candidate->GetActorLocation(),
+                    Impact);
+
+            if (ImpactDistance <= BestDistance)
+            {
+                BestDistance = ImpactDistance;
+                BestTarget = Candidate;
+            }
+        }
+
+        if (!IsValid(BestTarget))
+        {
+            continue;
+        }
+
+        float HitChance =
+            GetBaseGunHitChance(AmmoType) *
+            FMath::Lerp(1.0f, 0.45f, RangeFraction);
+
+        if (RandomStream.FRand() <= HitChance)
+        {
+            const FIntPoint Range = GetCasualtyRange(AmmoType);
+            CasualtiesByTarget.FindOrAdd(BestTarget) +=
+                RandomStream.RandRange(Range.X, Range.Y);
+        }
+    }
+
+    int32 TotalCasualties = 0;
+
+    for (TPair<AStrategyUnit*, int32>& Pair : CasualtiesByTarget)
+    {
+        AStrategyUnit* Target = Pair.Key;
+        const int32 Casualties = Pair.Value;
+
+        if (!IsValid(Target) || Casualties <= 0)
+        {
+            continue;
+        }
+
+        TotalCasualties += Casualties;
+
+        if (AStrategyArtilleryBatteryUnit* TargetBattery =
+            Cast<AStrategyArtilleryBatteryUnit>(Target))
+        {
+            if (TargetBattery->ArtilleryDamageComponent)
+            {
+                const bool bExplosive =
+                    AmmoType == EStrategyArtilleryAmmoType::Shell ||
+                    AmmoType == EStrategyArtilleryAmmoType::Shrapnel;
+
+                TargetBattery->ArtilleryDamageComponent
+                    ->ApplyIncomingHits(Casualties, bExplosive);
+            }
+        }
+        else
+        {
+            Target->ApplyStrengthLoss(Casualties);
+        }
+
+        if (Target->CombatComponent)
+        {
+            Target->CombatComponent->NotifyIncomingVolley(Casualties);
+        }
+    }
+
+    const float CrewRatio =
+        OwnerBattery->GunCount > 0
+        ? static_cast<float>(OwnerBattery->GetOperationalGunCount()) /
+          static_cast<float>(OwnerBattery->GunCount)
+        : 0.0f;
+
+    ReloadRemainingSeconds =
+        OwnerBattery->GunProfile.ReloadSeconds *
+        FMath::Lerp(1.35f, 1.0f, FMath::Clamp(CrewRatio, 0.0f, 1.0f)) *
+        FMath::Lerp(
+            1.0f,
+            1.25f,
+            FMath::Clamp(OwnerBattery->Fatigue / 100.0f, 0.0f, 1.0f));
+
+    ++MissionSalvosFired;
+    OwnerBattery->Fatigue =
+        FMath::Clamp(
+            OwnerBattery->Fatigue +
+            static_cast<float>(Consumed) * FiringFatiguePerGun,
+            0.0f,
+            100.0f);
+
+    OnArtilleryShotResolved.Broadcast(
+        nullptr,
+        AmmoType,
+        Consumed,
+        TotalCasualties);
+
+    return true;
+}
+
 float UStrategyArtilleryFireMissionComponent::CalculateTargetScore(
     const AStrategyUnit* Target) const
 {
@@ -548,17 +1013,46 @@ float UStrategyArtilleryFireMissionComponent::CalculateTargetScore(
         static_cast<float>(Target->CurrentStrength) * 0.35f -
         Distance / 1000.0f;
 
-    if (Target->Echelon == EStrategyEchelon::Artillery)
+    switch (TargetPriority)
     {
-        Score += 260.0f;
-    }
-    else if (Target->Echelon == EStrategyEchelon::Company)
-    {
-        Score += 100.0f;
-    }
-    else if (Target->Echelon == EStrategyEchelon::Cavalry)
-    {
-        Score += 80.0f;
+        case EStrategyArtilleryTargetPriority::CounterBattery:
+            Score +=
+                Target->Echelon == EStrategyEchelon::Artillery
+                ? 900.0f
+                : -150.0f;
+            break;
+
+        case EStrategyArtilleryTargetPriority::Infantry:
+            Score +=
+                Target->Echelon == EStrategyEchelon::Company
+                ? 650.0f
+                : 0.0f;
+            break;
+
+        case EStrategyArtilleryTargetPriority::ClosestThreat:
+            Score -= Distance / 250.0f;
+            break;
+
+        case EStrategyArtilleryTargetPriority::ConserveAmmo:
+            Score += static_cast<float>(Target->CurrentStrength) * 0.70f;
+            Score -= Distance / 500.0f;
+            break;
+
+        case EStrategyArtilleryTargetPriority::Balanced:
+        default:
+            if (Target->Echelon == EStrategyEchelon::Artillery)
+            {
+                Score += 260.0f;
+            }
+            else if (Target->Echelon == EStrategyEchelon::Company)
+            {
+                Score += 100.0f;
+            }
+            else if (Target->Echelon == EStrategyEchelon::Cavalry)
+            {
+                Score += 80.0f;
+            }
+            break;
     }
 
     if (Target->UnitState == EStrategyUnitState::Routed)
@@ -607,6 +1101,7 @@ void UStrategyArtilleryFireMissionComponent::CompleteManualMission(
     bool bFailed)
 {
     ManualTarget = nullptr;
+    bHasManualAreaTarget = false;
 
     if (!OwnerBattery || !OwnerBattery->OrderComponent)
     {
