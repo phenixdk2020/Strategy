@@ -46,6 +46,10 @@ class UStrategyAITelemetryComponent;
 class UStrategyAutonomyComponent;
 class UStrategyAIDifficultyComponent;
 class UStrategyTerrainAwarenessComponent;
+class UStrategyUniformAppearanceComponent;
+class UStrategyHumanAnimationStateComponent;
+class UStrategyEquipmentVisualComponent;
+class UStrategyVisualCompatibilityComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FStrategyCasualtyVisualEvent,
@@ -223,6 +227,18 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyTerrainAwarenessComponent> TerrainAwarenessComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyUniformAppearanceComponent> UniformAppearanceComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyHumanAnimationStateComponent> HumanAnimationStateComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyEquipmentVisualComponent> EquipmentVisualComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyVisualCompatibilityComponent> VisualCompatibilityComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
