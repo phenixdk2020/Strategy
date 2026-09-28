@@ -190,7 +190,8 @@ bool UStrategyTerrainQueryLibrary::FindCrestPoint(
     const FVector& End,
     FVector& OutCrestPoint,
     float& OutExcessHeightCm,
-    int32 SampleCount)
+    int32 SampleCount,
+    float CrestToleranceCm)
 {
     const int32 Samples = FMath::Clamp(SampleCount, 6, 128);
     float BestExcess = -TNumericLimits<float>::Max();
@@ -222,7 +223,7 @@ bool UStrategyTerrainQueryLibrary::FindCrestPoint(
     OutCrestPoint = BestPoint;
     OutExcessHeightCm = BestExcess;
 
-    return BestExcess > 0.0f;
+    return BestExcess > -FMath::Abs(CrestToleranceCm);
 }
 
 bool UStrategyTerrainQueryLibrary::IsPointInDeadGroundFrom(
