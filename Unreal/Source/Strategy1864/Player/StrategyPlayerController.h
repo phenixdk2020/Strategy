@@ -75,6 +75,11 @@ private:
     void SetSpeed2x();
     void SetSpeed3x();
     void ResetQAScenario();
+    void ToggleSelectedOfficerAI();
+    void SetEnemyDifficultyEasy();
+    void SetEnemyDifficultyNormal();
+    void SetEnemyDifficultyHard();
+    void SetEnemyDifficultyByValue(uint8 DifficultyValue);
     void SelectSingleUnderCursor();
     void SelectUnitsInScreenRectangle(const FVector2D& Start, const FVector2D& End);
     void ApplySelection(AStrategyUnit* Unit, bool bAdd, bool bRemove);
