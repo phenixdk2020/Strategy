@@ -10,6 +10,8 @@
 #include "StrategyFireDisciplineComponent.h"
 #include "StrategyStanceComponent.h"
 #include "StrategyDirectionalCoverComponent.h"
+#include "StrategySmokeField.h"
+#include "StrategyVisibilityComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -215,6 +217,28 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         ShotCount,
         Hits);
 
+    if (GetWorld())
+    {
+        if (AStrategySmokeField* Smoke =
+            GetWorld()->SpawnActor<AStrategySmokeField>(
+                AStrategySmokeField::StaticClass(),
+                VisualOrigin + FireDirection * 250.0f,
+                FireDirection.Rotation()))
+        {
+            Smoke->InitialDensity =
+                FMath::Clamp(
+                    0.20f + static_cast<float>(ShotCount) / 500.0f,
+                    0.20f,
+                    0.65f);
+
+            Smoke->RadiusCm =
+                FMath::Clamp(
+                    800.0f + static_cast<float>(ShotCount) * 4.0f,
+                    800.0f,
+                    1800.0f);
+        }
+    }
+
     return true;
 }
 
@@ -285,13 +309,19 @@ int32 UStrategyCombatComponent::ResolveHits(
             OwnerUnit->GetActorLocation())
         : 1.0f;
 
+    const float SmokeTransmission =
+        OwnerUnit->VisibilityComponent && IsValid(Target)
+        ? OwnerUnit->VisibilityComponent->GetSmokeTransmissionTo(Target)
+        : 1.0f;
+
     const float HitChance =
         FMath::Clamp(
             BaseHitChance *
             RangeFactor *
             ConditionMultiplier *
             StanceTargetMultiplier *
-            CoverMultiplier,
+            CoverMultiplier *
+            SmokeTransmission,
             0.0f,
             1.0f);
 
