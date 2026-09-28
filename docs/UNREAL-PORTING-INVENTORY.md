@@ -40,3 +40,21 @@ This inventory tracks what exists in the Unity tactical prototype and the intend
 ## Rule
 
 A system is not marked **Ported** merely because an Unreal class exists. It becomes **Parity verified** only when its documented Unity behaviour has passed the corresponding Unreal QA scenario.
+
+
+## v00.02.57 gameplay inventory additions
+
+- Mission anchors: finite Attack + persistent leaf Defend reassert.
+- Navigation obstacles: Building/Fence/Fieldworks/Generic detour actor.
+- Terrain: slope validation, uphill/downhill speed effect and waypoint-Z following.
+- Officer profile + command-delay delivery.
+- Fatigue/experience condition model.
+- Contact memory + current-contact fire authority.
+- Recon: SPEJD HER Seek/Recon/Contact/Screen/Report/LastKnown.
+- Cavalry: finalized base defaults, reform charge gate, non-charging screen AI.
+- OOB attachment backend: CurrentCommandParent tasking with OrganicParent preservation.
+- Bridge occupancy/queue authority.
+- Autonomous opposition company AI.
+- Routed fallback + rally recovery.
+- Ammunition exhaustion/resupply.
+- Expanded gameplay regression fixture.
