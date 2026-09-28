@@ -1,5 +1,9 @@
 {
  "note": "Administrative division of the Danish monarchy c. 1851. Borders are approximated: every land pixel of a region (K kingdom, S Schleswig, H Holstein + Lauenburg) goes to the nearest anchor of an amt in the same region. Anchors are the amt seat plus towns/places known to lie in the amt. Schleswig and Holstein amter are grouped where they were small (e.g. Bredsted + Eiderstedt with Husum, Reinbek/Trittau/Tremsbuettel as Stormarn).",
+ "population1850": {
+  "note": "Rounded census-era totals (c. 1845-1850), game estimates. Towns take their own figures from cities1850.json; the rest is spread over each region's amter by land area.",
+  "K": 1415000, "S": 363000, "H": 520000
+ },
  "amter": [
   {"name": "Hjørring Amt", "seat": "Hjørring", "region": "K", "anchors": [[9.98, 57.46], [10.54, 57.44], [10.59, 57.72], [9.95, 57.27], [10.52, 57.33], [11.00, 57.28], [9.60, 57.37]]},
   {"name": "Thisted Amt", "seat": "Thisted", "region": "K", "anchors": [[8.69, 56.96], [8.86, 56.79], [9.26, 57.09], [8.62, 57.12], [8.55, 56.80], [9.05, 57.05]]},
@@ -19,7 +23,7 @@
   {"name": "Sorø Amt", "seat": "Sorø", "region": "K", "anchors": [[11.56, 55.43], [11.35, 55.40], [11.14, 55.33], [11.79, 55.44], [11.29, 55.25]]},
   {"name": "Præstø Amt", "seat": "Præstø", "region": "K", "anchors": [[12.05, 55.12], [11.76, 55.23], [11.91, 55.01], [12.29, 54.99], [12.45, 54.95], [12.00, 55.30]]},
   {"name": "Maribo Amt", "seat": "Maribo", "region": "K", "anchors": [[11.50, 54.78], [11.14, 54.83], [11.87, 54.77], [11.95, 54.65], [11.30, 54.70]]},
-  {"name": "Bornholms Amt", "seat": "Rønne", "region": "K", "anchors": [[14.70, 55.10], [14.95, 55.12]]},
+  {"name": "Bornholms Amt", "seat": "Rønne", "region": "K", "anchors": [[14.70, 55.10], [14.95, 55.12]], "areaKm2": 588, "population": 27000},
 
   {"name": "Haderslev Amt", "seat": "Haderslev", "region": "S", "anchors": [[9.49, 55.25], [9.48, 55.36], [9.06, 55.37], [9.30, 55.30]]},
   {"name": "Aabenraa Amt", "seat": "Aabenraa", "region": "S", "anchors": [[9.42, 55.04], [9.25, 55.05]]},

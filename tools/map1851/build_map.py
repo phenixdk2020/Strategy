@@ -537,6 +537,71 @@ def paint_amt_borders(colour, amt, regions):
     return out.astype(np.uint8)
 
 
+def amter_population(raster, amt, admin, meta):
+    """Amt entries for the JSON: area, label point, towns and an 1850 population estimate.
+
+    Every monarchy town is assigned to the amt under it (the nearest amt for towns on the shore;
+    Bornholm towns to Bornholms Amt). Town populations come from cities1850.json; each region's
+    remaining population (population1850 minus its towns and any amt with a fixed figure) is
+    spread over its amter by land area.
+    """
+    km_x, km_y = raster.xy_grids()
+    amter = admin["amter"]
+    # Nearest amt of the town's own region, so enclaves such as Ribe (kingdom, inside Schleswig's
+    # approximated borders) and border towns such as Rendsborg land in the right amt.
+    nearest = {}
+    for region in ("K", "S", "H"):
+        ids = np.array([0] + [n + 1 for n, a in enumerate(amter) if a["region"] == region])
+        in_region = np.isin(amt, ids[1:])
+        nearest[region] = ndimage.distance_transform_edt(~in_region, return_indices=True)[1]
+    bornholm_id = next(n + 1 for n, a in enumerate(amter) if a["seat"] == "Rønne")
+    towns = {n + 1: [] for n in range(len(amter))}
+    for c in meta["cities"]:
+        if c.get("bornholm"):
+            aid = bornholm_id
+        else:
+            x, y = project(c["lon"], c["lat"])
+            r = min(raster.h - 1, max(0, int((raster.y_max - y) / (raster.y_max - raster.y_min) * raster.h)))
+            k = min(raster.w - 1, max(0, int((x - raster.x_min) / (raster.x_max - raster.x_min) * raster.w)))
+            near_r, near_c = nearest[c.get("region", "K")]
+            aid = int(amt[near_r[r, k], near_c[r, k]])
+        c["amt"] = aid
+        towns[aid].append(c)
+
+    entries = []
+    for n, a in enumerate(amter):
+        mask = amt == n + 1
+        entry = {"id": n + 1, "name": a["name"], "seat": a["seat"], "region": a["region"],
+                 "areaKm2": a.get("areaKm2", round(float(mask.sum()) * raster.km_per_px ** 2)),
+                 "towns": [c["name"] for c in sorted(towns[n + 1], key=lambda c: -c["pop"])],
+                 "urban": sum(c["pop"] for c in towns[n + 1])}
+        if mask.any():
+            xs, ys = km_x[mask], km_y[mask]
+            k = np.argmin((xs - xs.mean()) ** 2 + (ys - ys.mean()) ** 2)
+            lon, lat = unproject(xs[k], ys[k])
+            entry["lat"], entry["lon"] = round(float(lat), 4), round(float(lon), 4)
+            if a.get("label", True):
+                meta["labels"].append({"text": a["name"], "lat": entry["lat"], "lon": entry["lon"], "kind": "amt"})
+        if "population" in a:
+            entry["population"] = a["population"]
+        entries.append(entry)
+
+    totals = admin["population1850"]
+    for region in ("K", "S", "H"):
+        members = [e for e in entries if e["region"] == region]
+        fixed = sum(e["population"] for e in members if "population" in e)
+        urban = sum(e["urban"] for e in members if "population" not in e)
+        free = [e for e in members if "population" not in e]
+        area = sum(e["areaKm2"] for e in free)
+        rural_pool = max(0, totals[region] - fixed - urban)
+        for e in free:
+            e["rural"] = round(rural_pool * e["areaKm2"] / area / 100) * 100
+            e["population"] = e["urban"] + e["rural"]
+        for e in members:
+            e.setdefault("rural", e["population"] - e["urban"])
+    return entries
+
+
 def lerp(a, b, t):
     t = t[..., None] if np.ndim(t) == 2 else t
     return a + (b - a) * t
@@ -826,19 +891,7 @@ def main():
 
     # Amter: index i + 1 in Denmark1851_Amter.png; label at the amt pixel nearest its centre of mass.
     km_x, km_y = main_r.xy_grids()
-    meta["amter"] = []
-    for n, a in enumerate(admin["amter"]):
-        mask = amt == n + 1
-        entry = {"id": n + 1, "name": a["name"], "seat": a["seat"], "region": a["region"],
-                 "areaKm2": round(float(mask.sum()) * main_r.km_per_px ** 2)}
-        if mask.any():
-            xs, ys = km_x[mask], km_y[mask]
-            k = np.argmin((xs - xs.mean()) ** 2 + (ys - ys.mean()) ** 2)
-            lon, lat = unproject(xs[k], ys[k])
-            entry["lat"], entry["lon"] = round(float(lat), 4), round(float(lon), 4)
-            if a.get("label", True):
-                meta["labels"].append({"text": a["name"], "lat": entry["lat"], "lon": entry["lon"], "kind": "amt"})
-        meta["amter"].append(entry)
+    meta["amter"] = amter_population(main_r, amt, admin, meta)
 
     with open(os.path.join(OUT_DIR, "Denmark1851_Map.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, ensure_ascii=False, indent=1)
