@@ -100,28 +100,28 @@
 | UE-P070 | P0 | Formation component | F6+ | `UFormationComponent` | IMPLEMENTED | Formation owns slot geometry separate from command/order state. |
 | UE-P071 | P0 | Three-rank Line | Infantry baseline | Formation generator | IMPLEMENTED CORE | Full company forms documented three-rank line geometry. |
 | UE-P072 | P0 | March Column | F6/F30K | Formation generator | IMPLEMENTED CORE | Long movement selects march column without parent tug-of-war. |
-| UE-P073 | P0 | Physical reform | Formation baseline | Formation movement | BACKLOG | Soldiers/slots move into new geometry rather than teleporting. |
+| UE-P073 | P0 | Physical reform | Formation baseline | Formation movement | TRANSITION CORE IMPLEMENTED / 1:1 SOLDIER MOTION PENDING | Soldiers/slots move into new geometry rather than teleporting. |
 | UE-P074 | P0 | Auto Line before combat | F30X | Formation policy | IMPLEMENTED CORE | Approaching enemy triggers physical Line reform before fire envelope. |
 | UE-P075 | P0 | Deploy threshold | F30X | Formation policy | IMPLEMENTED | `max(own range, enemy range)+35m` policy is reproduced/tunable. |
 | UE-P076 | P0 | Company nominal spacing | F30X | Parent formation planner | IMPLEMENTED | Full-company centres use ~72 m nominal spacing in current QA baseline. |
 | UE-P077 | P0 | Reserved minimum spacing | F30X | Slot deconfliction | IMPLEMENTED BASELINE | ~68 m minimum reservation prevents company overlap at oblique facings. |
 | UE-P078 | P0 | Final-slot authority | F30V | Movement completion service | IMPLEMENTED CORE | One 0.50 m company final-slot completion rule owns mission arrival. |
 | UE-P079 | P0 | No premature stop | F30V | Movement completion | IMPLEMENTED CORE | Company cannot be marked arrived while still visibly short of slot. |
-| UE-P080 | P1 | Formation facing completion | F30S/P | FormationMotion equivalent | SCAFFOLD | Final visual turn completes without per-frame facing tug-of-war. |
-| UE-P081 | P1 | Parent mission reassert | F27/F30X | Mission executor | BACKLOG | Temporary interruption resumes same mission without forcing wrong formation. |
-| UE-P082 | P1 | Full 190-man footprint | Infantry baseline | Formation data | BACKLOG | Formation width/spacing is compatible with ~48 m current full-strength frontage. |
-| UE-P083 | P1 | Local sidestep/deconfliction | F29P | Formation movement | BACKLOG | Adjacent formations avoid standing through each other. |
+| UE-P080 | P1 | Formation facing completion | F30S/P | FormationMotion equivalent | IMPLEMENTED CORE | Final visual turn completes without per-frame facing tug-of-war. |
+| UE-P081 | P1 | Parent mission reassert | F27/F30X | Mission executor | IMPLEMENTED CORE | Temporary interruption resumes same mission without forcing wrong formation. |
+| UE-P082 | P1 | Full 190-man footprint | Infantry baseline | Formation data | IMPLEMENTED QA BASELINE | Formation width/spacing is compatible with ~48 m current full-strength frontage. |
+| UE-P083 | P1 | Local sidestep/deconfliction | F29P | Formation movement | IMPLEMENTED CORE | Adjacent formations avoid standing through each other. |
 
 # 6. Terrain, pathfinding, river and bridge routing — U05
 
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
 | UE-P090 | P0 | Formation-level navigation | Navigation V3 | Navigation service | IMPLEMENTED CORE | Formation path is authoritative; individual soldiers do not independently choose strategic paths. |
-| UE-P091 | P0 | Hard water blocking | River baseline | Nav/terrain tags | BACKLOG | Units cannot walk through river except legal crossings. |
+| UE-P091 | P0 | Hard water blocking | River baseline | Nav/terrain tags | IMPLEMENTED CORE | Units cannot walk through river except legal crossings. |
 | UE-P092 | P0 | True bank-change detection | F30W | River route planner | IMPLEMENTED CORE | Bridge route is required only when destination changes river bank. |
 | UE-P093 | P0 | Same-bank bank-follow | F30W | River route planner | IMPLEMENTED CORE | Straight chord crossing a river bend does not cause cross-and-return bridge trip. |
 | UE-P094 | P0 | Bridge transaction | F9/F30H | Crossing state machine | IMPLEMENTED CORE | NearBank→FarBank→ExitBank→Direct persists until crossing completes. |
-| UE-P095 | P0 | Goal changes during bridge | F30H | Crossing state machine | SCAFFOLD VIA ROUTE PLAN | New goal updates final destination but does not cancel active bridge transaction. |
+| UE-P095 | P0 | Goal changes during bridge | F30H | Crossing state machine | IMPLEMENTED CORE | New goal updates final destination but does not cancel active bridge transaction. |
 | UE-P096 | P1 | Building avoidance | Navigation baseline | Nav obstacles | SCAFFOLD VIA NAVMESH | Formations route around blocking buildings. |
 | UE-P097 | P1 | Fence/obstacle handling | F29P/design | Nav/formation avoidance | BACKLOG | Obstacles affect movement without destroying formation authority. |
 | UE-P098 | P1 | Bridge congestion/defile | F30H/X | Formation path policy | IMPLEMENTED CAVALRY CORE | Narrow crossing uses controlled narrow geometry and restores normal formation after exit. |
@@ -143,11 +143,11 @@
 | UE-P119 | P0 | Volley/reload cycle | pre-F29 combat | Combat component | IMPLEMENTED CORE | Valid target triggers fire/reload cadence without phantom volleys. |
 | UE-P120 | P0 | Hit/casualty resolution | battle baseline | Combat state | IMPLEMENTED CORE | Strength changes only from valid resolved combat. |
 | UE-P121 | P1 | 0-hit volley | B-002/current design | Combat state | IMPLEMENTED CORE | Valid volley may resolve zero hits without false strength loss. |
-| UE-P122 | P1 | Smoke feedback | F29X/Z | Niagara/combat events | BACKLOG | Smoke corresponds to real firing event; no fake smoke on formation changes. |
+| UE-P122 | P1 | Smoke feedback | F29X/Z | Niagara/combat events | REAL-VOLLEY EVENT CORE / NIAGARA PENDING | Smoke corresponds to real firing event; no fake smoke on formation changes. |
 | UE-P123 | P1 | Morale/cohesion | battle baseline | Unit combat state | IMPLEMENTED CORE | Morale/cohesion are separate authoritative values and affect behaviour. |
 | UE-P124 | P1 | Routed state | battle baseline | Unit combat state | IMPLEMENTED CORE | Routed unit leaves normal command/fire behaviour and presentation updates. |
 | UE-P125 | P1 | Under-fire reaction | F26/F30V | Reaction component | IMPLEMENTED CORE | Temporary reaction may pause movement but cannot complete parent mission. |
-| UE-P126 | P2 | Representative casualties | v00.00.08 | Visual subsystem | BACKLOG | Visual casualty feedback does not become authoritative casualty state. |
+| UE-P126 | P2 | Representative casualties | v00.00.08 | Visual subsystem | AUTHORITATIVE EVENT CORE IMPLEMENTED | Visual casualty feedback does not become authoritative casualty state. |
 
 # 8. Infantry Square and anti-cavalry — U06
 
@@ -155,11 +155,11 @@
 |---|---:|---|---|---|---|---|
 | UE-P130 | P1 | Square formation geometry | F29 | Formation component | IMPLEMENTED CORE | Infantry physically reforms to square. |
 | UE-P131 | P1 | Four square fire sectors | F29V/X/Z | Combat geometry | IMPLEMENTED CORE | Square fires only from eligible face/sector. |
-| UE-P132 | P1 | Square visual ownership | F29X | Presentation | BACKLOG | Square outline replaces incompatible Line/Column footprint/fans. |
-| UE-P133 | P1 | No formation phantom volley | F29X | Fire state machine | BACKLOG | Entering/readying Square does not produce smoke/0-hit volley. |
+| UE-P132 | P1 | Square visual ownership | F29X | Presentation | IMPLEMENTED QA CORE | Square outline replaces incompatible Line/Column footprint/fans. |
+| UE-P133 | P1 | No formation phantom volley | F29X | Fire state machine | IMPLEMENTED CORE | Entering/readying Square does not produce smoke/0-hit volley. |
 | UE-P134 | P1 | LOS-gated cavalry threat | F30S | Reaction AI | IMPLEMENTED CORE | Square/anti-CAV reaction requires actual LOS. |
 | UE-P135 | P1 | Range/cone-gated CAV fire | F30S | Combat eligibility | IMPLEMENTED CORE | Cavalry must be inside LOS + selected range + valid sector/cone. |
-| UE-P136 | P1 | Directional square smoke | F29Z | Niagara | BACKLOG | Smoke originates from the firing square face only. |
+| UE-P136 | P1 | Directional square smoke | F29Z | Niagara | FIRING-FACE EVENT CORE / NIAGARA PENDING | Smoke originates from the firing square face only. |
 
 # 9. Officer AI and command hierarchy — U07
 
@@ -462,3 +462,19 @@ These ten blocks are **code implemented / UE 5.8.3 build+runtime QA pending**. N
 10. **Shared OOB/hover snapshot:** one presentation data source exposes identity, NATO echelon, strength/losses, morale/cohesion/fatigue, state, AI ON/OFF, order/execution, formation, organic/current parent, temporary attachment, ammunition, cavalry role and mounted state.
 
 Coordinated formation missions (Attack/Defend/Advance/Withdraw/Assemble) are owned by the command parent while subordinate formations execute; the parent HQ does not run directly onto the objective. All items remain UE 5.8.3 build/runtime QA pending.
+
+
+## v00.02.56 — formation/navigation/combat parity batch
+
+1. **Formation reform transition:** formation changes now create an explicit Reforming interval derived from base time + current strength. Active movement is paused without clearing route/order authority and resumes the same mission afterwards.
+2. **Final facing completion:** reaching the final XY slot no longer completes the order immediately when facing is committed; the unit rotates physically at the configured turn rate until within a 2° tolerance, then completes.
+3. **Mission reassert after interruption:** reform and under-fire pauses reuse the same movement route/order serial rather than issuing a replacement mission.
+4. **190-man footprint QA:** Line frontage is validated against the current ~48 m full-company baseline; the regression fixture checks every Danish infantry company.
+5. **Local company deconfliction:** moving friendly companies apply bounded local sidestep separation when centres fall below the 68 m reserved baseline.
+6. **Hard-water authority:** route plans now carry validity/failure data. Start/destination positions inside a river barrier are rejected, and the movement executor fails the physical order instead of silently falling back to direct movement through water.
+7. **Bridge-goal persistence:** a new movement goal issued during an active bridge transaction preserves the current crossing through its exit, then appends the new post-crossing route.
+8. **Real-volley visual event:** smoke/Niagara-ready origin/direction/shots/hits data is broadcast only from a successfully resolved real volley.
+9. **Representative casualty event:** presentation receives casualty events only after positive authoritative strength loss; visual casualty representation cannot become the source of truth.
+10. **Square visual/fire ownership:** Square owns its outline presentation; reforming units are ineligible to fire, preventing formation phantom volleys. Square volley visual origin is projected to the actual firing face.
+
+All ten blocks remain UE 5.8.3 build/runtime QA pending. Physical 1:1 soldier movement and Niagara asset binding are intentionally not claimed as complete.
