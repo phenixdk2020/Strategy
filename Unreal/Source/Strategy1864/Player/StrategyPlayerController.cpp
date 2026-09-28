@@ -11,6 +11,8 @@
 #include "../Units/StrategyHQUnit.h"
 #include "../Command/StrategyCommandComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
+#include "../AI/StrategyOfficerAIComponent.h"
+#include "../AI/StrategyAIDifficultyComponent.h"
 
 AStrategyPlayerController::AStrategyPlayerController()
 {
@@ -52,6 +54,30 @@ void AStrategyPlayerController::SetupInputComponent()
     FInputActionBinding& ResetBinding =
         InputComponent->BindAction(TEXT("ResetQAScenario"), IE_Pressed, this, &AStrategyPlayerController::ResetQAScenario);
     ResetBinding.bExecuteWhenPaused = true;
+
+    InputComponent->BindAction(
+        TEXT("ToggleOfficerAI"),
+        IE_Pressed,
+        this,
+        &AStrategyPlayerController::ToggleSelectedOfficerAI);
+
+    InputComponent->BindAction(
+        TEXT("AIDifficultyEasy"),
+        IE_Pressed,
+        this,
+        &AStrategyPlayerController::SetEnemyDifficultyEasy);
+
+    InputComponent->BindAction(
+        TEXT("AIDifficultyNormal"),
+        IE_Pressed,
+        this,
+        &AStrategyPlayerController::SetEnemyDifficultyNormal);
+
+    InputComponent->BindAction(
+        TEXT("AIDifficultyHard"),
+        IE_Pressed,
+        this,
+        &AStrategyPlayerController::SetEnemyDifficultyHard);
 }
 
 void AStrategyPlayerController::PlayerTick(float DeltaTime)
@@ -525,4 +551,75 @@ bool AStrategyPlayerController::RestoreOrganicAttachment(
 
     return Unit->CommandComponent->CurrentCommandParent ==
         Unit->CommandComponent->OrganicParent;
+}
+
+
+void AStrategyPlayerController::ToggleSelectedOfficerAI()
+{
+    for (AStrategyUnit* Unit : SelectedUnitObjects)
+    {
+        if (!IsValid(Unit) ||
+            !Unit->bPlayerControllable ||
+            !Unit->OfficerAIComponent)
+        {
+            continue;
+        }
+
+        Unit->OfficerAIComponent->SetAIEnabled(
+            !Unit->OfficerAIComponent->IsAIEnabled(),
+            true);
+    }
+}
+
+void AStrategyPlayerController::SetEnemyDifficultyEasy()
+{
+    SetEnemyDifficultyByValue(
+        static_cast<uint8>(EStrategyAIDifficulty::Easy));
+}
+
+void AStrategyPlayerController::SetEnemyDifficultyNormal()
+{
+    SetEnemyDifficultyByValue(
+        static_cast<uint8>(EStrategyAIDifficulty::Normal));
+}
+
+void AStrategyPlayerController::SetEnemyDifficultyHard()
+{
+    SetEnemyDifficultyByValue(
+        static_cast<uint8>(EStrategyAIDifficulty::Hard));
+}
+
+void AStrategyPlayerController::SetEnemyDifficultyByValue(
+    uint8 DifficultyValue)
+{
+    if (!GetWorld())
+    {
+        return;
+    }
+
+    const EStrategyAIDifficulty Difficulty =
+        static_cast<EStrategyAIDifficulty>(DifficultyValue);
+
+    for (TActorIterator<AStrategyUnit> It(GetWorld()); It; ++It)
+    {
+        AStrategyUnit* Unit = *It;
+
+        if (!IsValid(Unit) ||
+            !Unit->AIDifficultyComponent ||
+            (Unit->Side != EStrategySide::Prussia &&
+             Unit->Side != EStrategySide::Austria &&
+             Unit->Side != EStrategySide::Enemy))
+        {
+            continue;
+        }
+
+        Unit->AIDifficultyComponent->Difficulty = Difficulty;
+    }
+
+    UE_LOG(
+        LogTemp,
+        Display,
+        TEXT("PROJECT1864-AI: enemy difficulty=%s"),
+        *StaticEnum<EStrategyAIDifficulty>()->GetNameStringByValue(
+            static_cast<int64>(Difficulty)));
 }
