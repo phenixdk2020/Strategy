@@ -149,3 +149,19 @@ Planned functional artillery core:
 - QA battery hill, central ridge and depression.
 - QA units projected to tactical terrain.
 - Shared terrain diagnostics in presentation snapshots.
+
+
+## v00.02.62 projectile presentation additions
+
+- Per-gun resolved artillery impact records.
+- Ammo-specific projectile trajectory solver.
+- Tactical-terrain-aware paths.
+- Round Shot presentation ricochet.
+- In-flight projectile presentation actors.
+- Optional full trajectory debug lines.
+- Canister cone, Shell impact and Shrapnel burst placeholders.
+- Per-battery salvo manager, virtual muzzle origins and bounded history.
+- Follow Shot camera + impact hold + view restore.
+- P follow-shot and F9 trajectory QA inputs.
+- Projectile activity/last impact in shared snapshot.
+- Campaign→generated-battlefield data contract (future generator input only).
