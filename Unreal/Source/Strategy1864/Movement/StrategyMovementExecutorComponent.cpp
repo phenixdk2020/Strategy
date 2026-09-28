@@ -6,6 +6,7 @@
 #include "../Navigation/StrategyRoutePlannerComponent.h"
 #include "../Units/CavalryUnit.h"
 #include "../Combat/StrategyConditionComponent.h"
+#include "../AI/StrategyReconComponent.h"
 
 UStrategyMovementExecutorComponent::UStrategyMovementExecutorComponent()
 {
@@ -285,6 +286,16 @@ void UStrategyMovementExecutorComponent::FinishMovement()
 
     if (OwnerUnit->OrderComponent)
     {
+        const FStrategyOrder CurrentOrder =
+            OwnerUnit->OrderComponent->GetCurrentOrder();
+
+        if (CurrentOrder.Type == EStrategyOrderType::ScoutHere &&
+            OwnerUnit->ReconComponent)
+        {
+            OwnerUnit->ReconComponent->OnScoutDestinationReached();
+            return;
+        }
+
         OwnerUnit->OrderComponent->CompleteExecution();
     }
 }
