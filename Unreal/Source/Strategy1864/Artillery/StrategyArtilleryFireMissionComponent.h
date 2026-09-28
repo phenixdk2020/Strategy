@@ -48,6 +48,43 @@ public:
     TObjectPtr<AStrategyUnit> ManualTarget;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    bool bHasManualAreaTarget = false;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    FVector ManualAreaTarget = FVector::ZeroVector;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    float ManualAreaRadiusCm = 1200.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    EStrategyArtilleryTargetPriority TargetPriority =
+        EStrategyArtilleryTargetPriority::Balanced;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    bool bAutoSelectAmmunition = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    bool bConserveAmmunition = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery", meta=(ClampMin="0.0", ClampMax="0.95"))
+    float MinimumReserveFraction = 0.20f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    int32 MaxSalvosPerMission = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    float MaxMissionDurationSeconds = 0.0f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    int32 MissionSalvosFired = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
+    float MissionElapsedSeconds = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    float FiringFatiguePerGun = 0.20f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
     float ReloadRemainingSeconds = 0.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
@@ -59,6 +96,12 @@ public:
         EStrategyOrderAuthority Authority);
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
+    bool SetManualAreaTarget(
+        const FVector& TargetLocation,
+        float RadiusCm,
+        EStrategyOrderAuthority Authority);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
     void SetAutoTargetEnabled(bool bEnabled);
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
@@ -66,6 +109,18 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
     bool SelectAmmo(EStrategyArtilleryAmmoType AmmoType);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
+    void SetMissionLimits(int32 MaxSalvos, float MaxDurationSeconds);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
+    void SetConserveAmmunition(bool bConserve, float ReserveFraction);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Artillery")
+    void SetTargetPriority(EStrategyArtilleryTargetPriority NewPriority)
+    {
+        TargetPriority = NewPriority;
+    }
 
     UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
     float GetMinimumRangeCm(
@@ -78,10 +133,19 @@ public:
     UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
     bool CanEngageTarget(const AStrategyUnit* Target) const;
 
+    UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
+    bool CanEngageLocation(const FVector& TargetLocation) const;
+
 private:
     bool CanObserveTarget(const AStrategyUnit* Target) const;
+    bool CanObserveLocation(const FVector& TargetLocation) const;
+    bool HasUsableAmmoForTarget(const AStrategyUnit* Target) const;
+    bool SelectBestAmmoForTarget(const AStrategyUnit* Target);
+    bool ShouldStopForMissionLimit() const;
+    void ResetMissionCounters();
     AStrategyUnit* FindBestAutoTarget() const;
     bool FireAt(AStrategyUnit* Target);
+    bool FireAtLocation(const FVector& TargetLocation);
     int32 ResolveCasualties(
         AStrategyUnit* Target,
         int32 GunsFired,
