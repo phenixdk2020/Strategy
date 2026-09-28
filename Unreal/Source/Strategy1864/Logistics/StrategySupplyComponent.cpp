@@ -4,6 +4,8 @@
 #include "../Units/StrategyUnit.h"
 #include "../Artillery/StrategyArtilleryBatteryUnit.h"
 #include "../Artillery/StrategyArtilleryAmmunitionComponent.h"
+#include "StrategySupplyWagonUnit.h"
+#include "StrategySupplyCargoComponent.h"
 #include "EngineUtils.h"
 
 UStrategySupplyComponent::UStrategySupplyComponent()
@@ -102,7 +104,7 @@ int32 UStrategySupplyComponent::AddStoredAmmunition(int32 Rounds)
 
 AStrategyUnit* UStrategySupplyComponent::FindBestReceiver() const
 {
-    if (!OwnerUnit || !GetWorld())
+    if (!OwnerUnit || !GetWorld() || IsTransferStateBlocked(OwnerUnit))
     {
         return nullptr;
     }
@@ -114,12 +116,7 @@ AStrategyUnit* UStrategySupplyComponent::FindBestReceiver() const
     {
         AStrategyUnit* Candidate = *It;
 
-        if (!IsValid(Candidate) ||
-            Candidate == OwnerUnit ||
-            Candidate->Side != OwnerUnit->Side ||
-            !Candidate->SupplyComponent ||
-            !Candidate->SupplyComponent->bRequestingResupply ||
-            Candidate->UnitState == EStrategyUnitState::Destroyed)
+        if (!CanSupplyReceiver(Candidate))
         {
             continue;
         }
@@ -131,43 +128,8 @@ AStrategyUnit* UStrategySupplyComponent::FindBestReceiver() const
             continue;
         }
 
-        float AmmoFraction = 1.0f;
-
-        if (const AStrategyArtilleryBatteryUnit* Battery =
-            Cast<AStrategyArtilleryBatteryUnit>(Candidate))
-        {
-            if (!Battery->ArtilleryAmmunitionComponent)
-            {
-                continue;
-            }
-
-            const int32 MaxAmmo =
-                FMath::Max(
-                    1,
-                    Battery->ArtilleryAmmunitionComponent->MaximumTotalRounds);
-
-            AmmoFraction =
-                static_cast<float>(
-                    Battery->ArtilleryAmmunitionComponent->GetTotalRounds()) /
-                static_cast<float>(MaxAmmo);
-        }
-        else
-        {
-            if (!Candidate->CombatComponent ||
-                Candidate->CombatComponent->MaxAmmunitionRounds <= 0)
-            {
-                continue;
-            }
-
-            const int32 MaxAmmo =
-                FMath::Max(
-                    1,
-                    Candidate->CombatComponent->MaxAmmunitionRounds);
-
-            AmmoFraction =
-                static_cast<float>(Candidate->CombatComponent->AmmunitionRounds) /
-                static_cast<float>(MaxAmmo);
-        }
+        const float AmmoFraction =
+            GetReceiverAmmoFraction(Candidate);
 
         if (AmmoFraction < BestAmmoFraction)
         {
@@ -179,15 +141,22 @@ AStrategyUnit* UStrategySupplyComponent::FindBestReceiver() const
     return Best;
 }
 
+
 void UStrategySupplyComponent::TransferTo(
     AStrategyUnit* Receiver,
     float DeltaTime)
 {
-    if (!IsValid(Receiver) ||
-        StoredAmmunitionRounds <= 0)
+    if (!OwnerUnit ||
+        !IsValid(Receiver) ||
+        StoredAmmunitionRounds < 0 ||
+        IsTransferStateBlocked(OwnerUnit) ||
+        IsTransferStateBlocked(Receiver) ||
+        !CanSupplyReceiver(Receiver))
     {
         return;
     }
+
+    int32 Missing = 0;
 
     if (AStrategyArtilleryBatteryUnit* Battery =
         Cast<AStrategyArtilleryBatteryUnit>(Receiver))
@@ -197,49 +166,23 @@ void UStrategySupplyComponent::TransferTo(
             return;
         }
 
-        const int32 Missing =
+        Missing =
             Battery->ArtilleryAmmunitionComponent->GetMissingRounds();
-
-        if (Missing <= 0)
+    }
+    else
+    {
+        if (!Receiver->CombatComponent ||
+            Receiver->CombatComponent->MaxAmmunitionRounds <= 0)
         {
-            if (Receiver->SupplyComponent)
-            {
-                Receiver->SupplyComponent->bRequestingResupply = false;
-            }
             return;
         }
 
-        const int32 Transfer =
-            FMath::Clamp(
-                FMath::CeilToInt(
-                    FMath::Max(1.0f, TransferRoundsPerSecond) * DeltaTime),
-                1,
-                FMath::Min(Missing, StoredAmmunitionRounds));
-
-        const int32 Added =
-            Battery->ArtilleryAmmunitionComponent->AddCompatibleMixedRounds(
-                Transfer);
-
-        StoredAmmunitionRounds -= Added;
-
-        if (Battery->ArtilleryAmmunitionComponent->GetMissingRounds() <= 0)
-        {
-            Receiver->SupplyComponent->bRequestingResupply = false;
-        }
-
-        return;
+        Missing =
+            FMath::Max(
+                0,
+                Receiver->CombatComponent->MaxAmmunitionRounds -
+                Receiver->CombatComponent->AmmunitionRounds);
     }
-
-    if (!Receiver->CombatComponent)
-    {
-        return;
-    }
-
-    const int32 Missing =
-        FMath::Max(
-            0,
-            Receiver->CombatComponent->MaxAmmunitionRounds -
-            Receiver->CombatComponent->AmmunitionRounds);
 
     if (Missing <= 0)
     {
@@ -250,22 +193,268 @@ void UStrategySupplyComponent::TransferTo(
         return;
     }
 
+    const int32 Available =
+        GetSourceAvailableRoundsForReceiver(Receiver);
+
+    if (Available <= 0)
+    {
+        return;
+    }
+
     const int32 Transfer =
         FMath::Clamp(
             FMath::CeilToInt(
                 FMath::Max(1.0f, TransferRoundsPerSecond) * DeltaTime),
             1,
-            FMath::Min(Missing, StoredAmmunitionRounds));
+            FMath::Min(Missing, Available));
 
-    Receiver->CombatComponent->ResupplyAmmunition(Transfer);
-    StoredAmmunitionRounds -= Transfer;
+    const int32 Consumed =
+        ConsumeSourceRoundsForReceiver(
+            Receiver,
+            Transfer);
 
-    if (Receiver->CombatComponent->AmmunitionRounds >=
-        Receiver->CombatComponent->MaxAmmunitionRounds)
+    if (Consumed <= 0)
     {
-        if (Receiver->SupplyComponent)
+        return;
+    }
+
+    int32 Added = 0;
+
+    if (AStrategyArtilleryBatteryUnit* Battery =
+        Cast<AStrategyArtilleryBatteryUnit>(Receiver))
+    {
+        Added =
+            Battery->ArtilleryAmmunitionComponent
+                ->AddCompatibleMixedRounds(Consumed);
+    }
+    else
+    {
+        const int32 Before =
+            Receiver->CombatComponent->AmmunitionRounds;
+
+        Receiver->CombatComponent->ResupplyAmmunition(Consumed);
+
+        Added =
+            Receiver->CombatComponent->AmmunitionRounds - Before;
+    }
+
+    if (Added < Consumed)
+    {
+        // Capacity should normally be pre-clamped by Missing. If state changed
+        // in the same tick, return generic-source excess only; physical wagon
+        // cargo is intentionally conservative and does not duplicate rounds.
+        if (!Cast<AStrategySupplyWagonUnit>(OwnerUnit))
         {
-            Receiver->SupplyComponent->bRequestingResupply = false;
+            StoredAmmunitionRounds +=
+                FMath::Max(0, Consumed - Added);
         }
     }
+
+    if (GetReceiverAmmoFraction(Receiver) >= 0.90f &&
+        Receiver->SupplyComponent)
+    {
+        Receiver->SupplyComponent->bRequestingResupply = false;
+    }
+}
+
+float UStrategySupplyComponent::GetReceiverAmmoFraction(
+    const AStrategyUnit* Receiver) const
+{
+    if (!IsValid(Receiver))
+    {
+        return 1.0f;
+    }
+
+    if (const AStrategyArtilleryBatteryUnit* Battery =
+        Cast<AStrategyArtilleryBatteryUnit>(Receiver))
+    {
+        if (!Battery->ArtilleryAmmunitionComponent)
+        {
+            return 1.0f;
+        }
+
+        const int32 MaxAmmo =
+            FMath::Max(
+                1,
+                Battery->ArtilleryAmmunitionComponent
+                    ->MaximumTotalRounds);
+
+        return FMath::Clamp(
+            static_cast<float>(
+                Battery->ArtilleryAmmunitionComponent
+                    ->GetTotalRounds()) /
+            static_cast<float>(MaxAmmo),
+            0.0f,
+            1.0f);
+    }
+
+    if (!Receiver->CombatComponent ||
+        Receiver->CombatComponent->MaxAmmunitionRounds <= 0)
+    {
+        return 1.0f;
+    }
+
+    return FMath::Clamp(
+        static_cast<float>(
+            Receiver->CombatComponent->AmmunitionRounds) /
+        static_cast<float>(
+            FMath::Max(
+                1,
+                Receiver->CombatComponent->MaxAmmunitionRounds)),
+        0.0f,
+        1.0f);
+}
+
+bool UStrategySupplyComponent::CanSupplyReceiver(
+    const AStrategyUnit* Receiver) const
+{
+    if (!OwnerUnit ||
+        !IsValid(Receiver) ||
+        Receiver == OwnerUnit ||
+        Receiver->Side != OwnerUnit->Side ||
+        !Receiver->SupplyComponent ||
+        !Receiver->SupplyComponent->bRequestingResupply ||
+        IsTransferStateBlocked(Receiver))
+    {
+        return false;
+    }
+
+    return GetSourceAvailableRoundsForReceiver(Receiver) > 0;
+}
+
+bool UStrategySupplyComponent::IsTransferStateBlocked(
+    const AStrategyUnit* Unit) const
+{
+    if (!IsValid(Unit) ||
+        Unit->UnitState == EStrategyUnitState::Routed ||
+        Unit->UnitState == EStrategyUnitState::Destroyed)
+    {
+        return true;
+    }
+
+    if (bPauseTransferWhileMoving &&
+        (Unit->UnitState == EStrategyUnitState::Moving ||
+         (Unit->MovementExecutor &&
+          Unit->MovementExecutor->HasMovementGoal())))
+    {
+        return true;
+    }
+
+    if (bPauseTransferUnderFire &&
+        (Unit->UnitState == EStrategyUnitState::UnderFire ||
+         Unit->UnitState == EStrategyUnitState::Engaged))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool UStrategySupplyComponent::IsArtilleryCompatible(
+    const AStrategyUnit* Receiver) const
+{
+    const AStrategyArtilleryBatteryUnit* Battery =
+        Cast<AStrategyArtilleryBatteryUnit>(Receiver);
+
+    if (!Battery)
+    {
+        return true;
+    }
+
+    const AStrategySupplyWagonUnit* Wagon =
+        Cast<AStrategySupplyWagonUnit>(OwnerUnit);
+
+    if (!Wagon || !Wagon->CargoComponent)
+    {
+        return true;
+    }
+
+    if (!bRequireCompatibleArtilleryFamily)
+    {
+        return true;
+    }
+
+    const FName SourceFamily =
+        Wagon->CargoComponent->ArtilleryAmmunitionFamilyTag;
+
+    const FName ReceiverFamily =
+        Battery->GunProfile.AmmunitionFamilyTag;
+
+    return SourceFamily.IsNone() ||
+           ReceiverFamily.IsNone() ||
+           SourceFamily == ReceiverFamily;
+}
+
+int32 UStrategySupplyComponent::GetSourceAvailableRoundsForReceiver(
+    const AStrategyUnit* Receiver) const
+{
+    if (!OwnerUnit || !IsValid(Receiver))
+    {
+        return 0;
+    }
+
+    if (const AStrategySupplyWagonUnit* Wagon =
+        Cast<AStrategySupplyWagonUnit>(OwnerUnit))
+    {
+        if (!Wagon->CargoComponent)
+        {
+            return 0;
+        }
+
+        if (Cast<AStrategyArtilleryBatteryUnit>(Receiver))
+        {
+            return IsArtilleryCompatible(Receiver)
+                ? FMath::Max(
+                    0,
+                    Wagon->CargoComponent->ArtilleryRounds)
+                : 0;
+        }
+
+        return FMath::Max(
+            0,
+            Wagon->CargoComponent->SmallArmsRounds);
+    }
+
+    return FMath::Max(0, StoredAmmunitionRounds);
+}
+
+int32 UStrategySupplyComponent::ConsumeSourceRoundsForReceiver(
+    const AStrategyUnit* Receiver,
+    int32 RequestedRounds)
+{
+    if (!OwnerUnit || !IsValid(Receiver) || RequestedRounds <= 0)
+    {
+        return 0;
+    }
+
+    if (AStrategySupplyWagonUnit* Wagon =
+        Cast<AStrategySupplyWagonUnit>(OwnerUnit))
+    {
+        if (!Wagon->CargoComponent)
+        {
+            return 0;
+        }
+
+        if (Cast<AStrategyArtilleryBatteryUnit>(Receiver))
+        {
+            if (!IsArtilleryCompatible(Receiver))
+            {
+                return 0;
+            }
+
+            return Wagon->CargoComponent
+                ->ConsumeArtilleryRounds(RequestedRounds);
+        }
+
+        return Wagon->CargoComponent
+            ->ConsumeSmallArmsRounds(RequestedRounds);
+    }
+
+    const int32 Consumed =
+        FMath::Min(
+            FMath::Max(0, RequestedRounds),
+            FMath::Max(0, StoredAmmunitionRounds));
+
+    StoredAmmunitionRounds -= Consumed;
+    return Consumed;
 }
