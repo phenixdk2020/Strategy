@@ -1,7 +1,11 @@
 #include "StrategyNavigationObstacle.h"
+#include "Components/SceneComponent.h"
 
 AStrategyNavigationObstacle::AStrategyNavigationObstacle()
 {
+    USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    SetRootComponent(Root);
+
     PrimaryActorTick.bCanEverTick = false;
 }
 
