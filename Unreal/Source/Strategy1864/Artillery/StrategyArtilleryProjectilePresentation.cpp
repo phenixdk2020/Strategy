@@ -149,6 +149,48 @@ void AStrategyArtilleryProjectilePresentation::DrawPresentationDebug()
             FColor::Red,
             false,
             0.0f);
+
+        if (Spec.Style == EStrategyProjectilePresentationStyle::Shell)
+        {
+            DrawDebugSphere(
+                GetWorld(),
+                ImpactLocation,
+                180.0f,
+                12,
+                FColor::Orange,
+                false,
+                0.0f,
+                0,
+                2.0f);
+        }
+        else if (Spec.Style == EStrategyProjectilePresentationStyle::Shrapnel)
+        {
+            FVector Forward =
+                ImpactLocation - Spec.LaunchLocation;
+            Forward.Z = 0.0f;
+            Forward = Forward.GetSafeNormal();
+
+            const FVector Right(-Forward.Y, Forward.X, 0.0f);
+
+            for (int32 Index = -4; Index <= 4; ++Index)
+            {
+                FVector FragmentDirection =
+                    (Forward +
+                     Right * (static_cast<float>(Index) * 0.045f) +
+                     FVector(0.0f, 0.0f, -0.10f))
+                    .GetSafeNormal();
+
+                DrawDebugLine(
+                    GetWorld(),
+                    ImpactLocation,
+                    ImpactLocation + FragmentDirection * 900.0f,
+                    FColor::Yellow,
+                    false,
+                    0.0f,
+                    0,
+                    1.0f);
+            }
+        }
     }
 
     if (!bDrawTrajectory || TrajectoryPoints.Num() < 2)
@@ -215,7 +257,7 @@ void AStrategyArtilleryProjectilePresentation::DrawCanisterPresentation()
             GetWorld(),
             Spec.LaunchLocation,
             End,
-            FColor::Silver,
+            FColor(190, 190, 190),
             false,
             0.0f,
             0,
