@@ -12,6 +12,8 @@ class ACavalryUnit;
 class AStrategyNavigationObstacle;
 class AStrategyArtilleryBatteryUnit;
 class AStrategySupplyWagonUnit;
+class AStrategyTerrainFeature;
+enum class EStrategyTerrainFeatureType : uint8;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API AStrategyOOBTestScenario : public AActor
@@ -51,6 +53,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     bool bSpawnSupplyWagonQA = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnTerrainQA = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     int32 QARandomSeed = 1864;
@@ -107,6 +112,13 @@ private:
         const FVector& Location,
         AStrategyUnit* OrganicParent);
 
+    AStrategyTerrainFeature* SpawnTerrainFeature(
+        EStrategyTerrainFeatureType FeatureType,
+        const FVector& Location,
+        const FVector2D& RadiusCm,
+        float PeakHeightCm,
+        float YawDegrees = 0.0f);
+
     UPROPERTY()
     TArray<TObjectPtr<AStrategyUnit>> SpawnedUnitObjects;
 
@@ -115,5 +127,8 @@ private:
 
     UPROPERTY()
     TObjectPtr<AStrategyNavigationObstacle> SpawnedNavigationObstacle;
+
+    UPROPERTY()
+    TArray<TObjectPtr<AStrategyTerrainFeature>> SpawnedTerrainFeatures;
 
 };
