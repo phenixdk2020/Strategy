@@ -32,6 +32,8 @@ class UStrategyCommandDelayComponent;
 class UStrategyConditionComponent;
 class UStrategyContactComponent;
 class UStrategyReconComponent;
+class UStrategyAutonomousBattleAIComponent;
+class UStrategyRoutRecoveryComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FStrategyCasualtyVisualEvent,
@@ -163,6 +165,12 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyReconComponent> ReconComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyAutonomousBattleAIComponent> AutonomousBattleAIComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyRoutRecoveryComponent> RoutRecoveryComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
