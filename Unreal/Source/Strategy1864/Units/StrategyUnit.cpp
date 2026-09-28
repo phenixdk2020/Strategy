@@ -118,6 +118,11 @@ int32 AStrategyUnit::ApplyStrengthLoss(int32 RequestedLoss)
     }
 
     RefreshDebugLabel();
+
+    OnCasualtyVisualEvent.Broadcast(
+        AppliedLoss,
+        GetActorLocation());
+
     return AppliedLoss;
 }
 
