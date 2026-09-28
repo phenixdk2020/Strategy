@@ -86,6 +86,8 @@ enum class EStrategyUnitState : uint8
     Engaged,
     UnderFire,
     Routed,
+    Disabled,
+    Abandoned,
     Destroyed
 };
 
