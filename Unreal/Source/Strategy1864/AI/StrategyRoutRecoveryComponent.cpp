@@ -2,6 +2,7 @@
 
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "StrategyOfficerProfileComponent.h"
 #include "EngineUtils.h"
 
 UStrategyRoutRecoveryComponent::UStrategyRoutRecoveryComponent()
@@ -125,13 +126,30 @@ void UStrategyRoutRecoveryComponent::TryRally(
         return;
     }
 
+    const float InspirationMultiplier =
+        OwnerUnit->OfficerProfileComponent
+        ? FMath::Lerp(
+            0.80f,
+            1.25f,
+            FMath::Clamp(
+                OwnerUnit->OfficerProfileComponent->Inspiration / 100.0f,
+                0.0f,
+                1.0f))
+        : 1.0f;
+
     OwnerUnit->Morale = FMath::Clamp(
-        OwnerUnit->Morale + MoraleRecoveryPerSecond * DeltaTime,
+        OwnerUnit->Morale +
+        MoraleRecoveryPerSecond *
+        InspirationMultiplier *
+        DeltaTime,
         0.0f,
         100.0f);
 
     OwnerUnit->Cohesion = FMath::Clamp(
-        OwnerUnit->Cohesion + CohesionRecoveryPerSecond * DeltaTime,
+        OwnerUnit->Cohesion +
+        CohesionRecoveryPerSecond *
+        InspirationMultiplier *
+        DeltaTime,
         0.0f,
         100.0f);
 
