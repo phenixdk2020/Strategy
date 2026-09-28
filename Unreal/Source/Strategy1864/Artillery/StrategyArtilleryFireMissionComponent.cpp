@@ -444,29 +444,11 @@ bool UStrategyArtilleryFireMissionComponent::CanObserveTarget(
 bool UStrategyArtilleryFireMissionComponent::CanObserveLocation(
     const FVector& TargetLocation) const
 {
-    if (!OwnerBattery || !GetWorld())
-    {
-        return false;
-    }
-
-    const FVector Start =
-        OwnerBattery->GetActorLocation() + FVector(0.0f, 0.0f, 160.0f);
-    const FVector End =
-        TargetLocation + FVector(0.0f, 0.0f, 50.0f);
-
-    FHitResult Hit;
-    FCollisionQueryParams Params(SCENE_QUERY_STAT(StrategyArtilleryAreaLOS), false);
-    Params.AddIgnoredActor(OwnerBattery);
-
-    const bool bBlocked =
-        GetWorld()->LineTraceSingleByChannel(
-            Hit,
-            Start,
-            End,
-            ECC_Visibility,
-            Params);
-
-    return !bBlocked;
+    return OwnerBattery &&
+        OwnerBattery->VisibilityComponent &&
+        OwnerBattery->VisibilityComponent->HasLineOfSightToLocation(
+            TargetLocation,
+            50.0f);
 }
 
 bool UStrategyArtilleryFireMissionComponent::HasUsableAmmoForTarget(
