@@ -46,6 +46,11 @@ FVector AStrategyRiverBarrier::GetBridgeExitForSide(int32 Side) const
     return Approach + Normal * (Side < 0 ? -ExitClearanceCm : ExitClearanceCm);
 }
 
+bool AStrategyRiverBarrier::IsInsideRiver(const FVector& WorldLocation) const
+{
+    return FMath::Abs(SignedBankDistance(WorldLocation)) <= RiverHalfWidthCm;
+}
+
 bool AStrategyRiverBarrier::RequiresBankChange(const FVector& Start, const FVector& End) const
 {
     const int32 StartSide = GetBankSide(Start);
