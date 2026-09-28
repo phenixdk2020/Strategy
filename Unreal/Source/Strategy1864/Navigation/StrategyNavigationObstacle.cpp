@@ -20,17 +20,35 @@ bool AStrategyNavigationObstacle::IntersectsSegment2D(
     const FVector& End) const
 {
     const FBox Bounds = GetExpandedBounds();
+    const FVector Delta = End - Start;
 
-    FVector FlatStart = Start;
-    FVector FlatEnd = End;
-    FlatStart.Z = GetActorLocation().Z;
-    FlatEnd.Z = GetActorLocation().Z;
+    float TMin = 0.0f;
+    float TMax = 1.0f;
 
-    return FMath::LineBoxIntersection(
-        Bounds,
-        FlatStart,
-        FlatEnd,
-        FlatEnd - FlatStart);
+    const auto ClipAxis =
+        [&TMin, &TMax](float StartValue, float DeltaValue, float MinValue, float MaxValue)
+        {
+            if (FMath::Abs(DeltaValue) <= KINDA_SMALL_NUMBER)
+            {
+                return StartValue >= MinValue && StartValue <= MaxValue;
+            }
+
+            const float InvDelta = 1.0f / DeltaValue;
+            float T1 = (MinValue - StartValue) * InvDelta;
+            float T2 = (MaxValue - StartValue) * InvDelta;
+
+            if (T1 > T2)
+            {
+                Swap(T1, T2);
+            }
+
+            TMin = FMath::Max(TMin, T1);
+            TMax = FMath::Min(TMax, T2);
+            return TMin <= TMax;
+        };
+
+    return ClipAxis(Start.X, Delta.X, Bounds.Min.X, Bounds.Max.X) &&
+           ClipAxis(Start.Y, Delta.Y, Bounds.Min.Y, Bounds.Max.Y);
 }
 
 FVector AStrategyNavigationObstacle::BuildDetourPoint(
