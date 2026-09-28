@@ -11,6 +11,7 @@ class AStrategyRiverBarrier;
 class ACavalryUnit;
 class AStrategyNavigationObstacle;
 class AStrategyArtilleryBatteryUnit;
+class AStrategySupplyWagonUnit;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API AStrategyOOBTestScenario : public AActor
@@ -47,6 +48,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     bool bSpawnArtilleryQA = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnSupplyWagonQA = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     int32 QARandomSeed = 1864;
@@ -92,6 +96,12 @@ private:
         AStrategyUnit* OrganicParent);
 
     AStrategyArtilleryBatteryUnit* SpawnArtilleryBattery(
+        const FName StableId,
+        const FString& Name,
+        const FVector& Location,
+        AStrategyUnit* OrganicParent);
+
+    AStrategySupplyWagonUnit* SpawnSupplyWagon(
         const FName StableId,
         const FString& Name,
         const FVector& Location,
