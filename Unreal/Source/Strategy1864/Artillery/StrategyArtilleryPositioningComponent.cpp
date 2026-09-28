@@ -77,17 +77,19 @@ UStrategyArtilleryPositioningComponent::EvaluatePosition(
     FVector CrestPoint;
     float CrestExcess = 0.0f;
 
-    UStrategyTerrainQueryLibrary::FindCrestPoint(
-        OwnerBattery,
-        End,
-        Start,
-        CrestPoint,
-        CrestExcess,
-        40);
+    const bool bHasCrest =
+        UStrategyTerrainQueryLibrary::FindCrestPoint(
+            OwnerBattery,
+            End,
+            Start,
+            CrestPoint,
+            CrestExcess,
+            40);
 
     Assessment.bNearCrest =
+        bHasCrest &&
         FVector::Dist2D(CrestPoint, CandidateGround) <=
-        CrestExposureDistanceCm;
+            CrestExposureDistanceCm;
 
     float Score = 0.0f;
 
