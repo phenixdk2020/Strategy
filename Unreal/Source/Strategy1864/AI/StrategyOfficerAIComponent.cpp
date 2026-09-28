@@ -3,6 +3,7 @@
 #include "../Command/StrategyCommandComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "StrategyCommandDelayComponent.h"
 
 UStrategyOfficerAIComponent::UStrategyOfficerAIComponent()
 {
@@ -115,7 +116,12 @@ void UStrategyOfficerAIComponent::EvaluateInheritedMission()
     InheritedOrder.Authority = EStrategyOrderAuthority::InheritedAI;
     InheritedOrder.OrderSerial = 0;
 
-    if (OwnerUnit->OrderComponent->SetOrder(InheritedOrder))
+    const float Delay =
+        OwnerUnit->CommandDelayComponent
+        ? OwnerUnit->CommandDelayComponent->CalculateDelayFromCurrentParent()
+        : 0.0f;
+
+    if (OwnerUnit->OrderComponent->QueueDelayedOrder(InheritedOrder, Delay))
     {
         LastInheritedParentOrderSerial = ParentOrder.OrderSerial;
     }
