@@ -61,7 +61,8 @@ void UStrategyScenarioStateComponent::EvaluateOutcome()
 
         const bool bBattleEntity =
             Unit->Echelon == EStrategyEchelon::Company ||
-            Unit->Echelon == EStrategyEchelon::Cavalry;
+            Unit->Echelon == EStrategyEchelon::Cavalry ||
+            Unit->Echelon == EStrategyEchelon::Artillery;
 
         if (!bBattleEntity)
         {
