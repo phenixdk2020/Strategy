@@ -5,6 +5,8 @@
 #include "StrategyArtilleryAmmunitionComponent.h"
 #include "StrategyArtilleryTraverseComponent.h"
 #include "StrategyArtilleryDamageComponent.h"
+#include "StrategyArtilleryProjectilePresentationComponent.h"
+#include "../Terrain/StrategyTerrainQueryLibrary.h"
 #include "../Combat/StrategyContactComponent.h"
 #include "../Combat/StrategyVisibilityComponent.h"
 #include "../Combat/StrategyCombatComponent.h"
@@ -643,8 +645,18 @@ bool UStrategyArtilleryFireMissionComponent::FireAt(
             OwnerBattery->GetActorLocation(),
             Target->GetActorLocation());
 
+    TArray<FVector> ImpactLocations;
+    TArray<uint8> HitFlags;
+    TArray<int32> CasualtiesPerProjectile;
+
     const int32 Casualties =
-        ResolveCasualties(Target, Consumed, DistanceCm);
+        ResolveCasualties(
+            Target,
+            Consumed,
+            DistanceCm,
+            ImpactLocations,
+            HitFlags,
+            CasualtiesPerProjectile);
 
     const EStrategyArtilleryAmmoType AmmoType =
         OwnerBattery->ArtilleryAmmunitionComponent->SelectedAmmo;
@@ -728,6 +740,16 @@ bool UStrategyArtilleryFireMissionComponent::FireAt(
         Consumed,
         Casualties);
 
+    if (OwnerBattery->ProjectilePresentationComponent)
+    {
+        OwnerBattery->ProjectilePresentationComponent->PresentResolvedSalvo(
+            AmmoType,
+            Target->GetActorLocation(),
+            ImpactLocations,
+            HitFlags,
+            CasualtiesPerProjectile);
+    }
+
     if (GetWorld())
     {
         FVector Direction =
@@ -754,8 +776,15 @@ bool UStrategyArtilleryFireMissionComponent::FireAt(
 int32 UStrategyArtilleryFireMissionComponent::ResolveCasualties(
     AStrategyUnit* Target,
     int32 GunsFired,
-    float DistanceCm)
+    float DistanceCm,
+    TArray<FVector>& OutImpactLocations,
+    TArray<uint8>& OutHitFlags,
+    TArray<int32>& OutCasualtiesPerProjectile)
 {
+    OutImpactLocations.Reset();
+    OutHitFlags.Reset();
+    OutCasualtiesPerProjectile.Reset();
+
     if (!OwnerBattery ||
         !OwnerBattery->ArtilleryAmmunitionComponent ||
         !IsValid(Target))
@@ -810,21 +839,53 @@ int32 UStrategyArtilleryFireMissionComponent::ResolveCasualties(
     HitChance = FMath::Clamp(HitChance, 0.01f, 0.95f);
 
     const FIntPoint CasualtyRange = GetCasualtyRange(AmmoType);
+
+    const float MissDispersionCm =
+        FMath::Lerp(450.0f, 2800.0f, RangeFraction);
+
     int32 Casualties = 0;
 
     for (int32 GunIndex = 0; GunIndex < GunsFired; ++GunIndex)
     {
-        if (RandomStream.FRand() <= HitChance)
+        const bool bHit = RandomStream.FRand() <= HitChance;
+        const float Angle = RandomStream.FRandRange(0.0f, 2.0f * PI);
+        const float Radius =
+            bHit
+            ? RandomStream.FRandRange(0.0f, 250.0f)
+            : FMath::Sqrt(RandomStream.FRand()) * MissDispersionCm;
+
+        FVector Impact =
+            Target->GetActorLocation() +
+            FVector(
+                FMath::Cos(Angle) * Radius,
+                FMath::Sin(Angle) * Radius,
+                0.0f);
+
+        Impact =
+            UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+                OwnerBattery,
+                Impact);
+
+        int32 ProjectileCasualties = 0;
+
+        if (bHit)
         {
-            Casualties +=
+            ProjectileCasualties =
                 RandomStream.RandRange(
                     CasualtyRange.X,
                     CasualtyRange.Y);
+
+            Casualties += ProjectileCasualties;
         }
+
+        OutImpactLocations.Add(Impact);
+        OutHitFlags.Add(bHit ? 1 : 0);
+        OutCasualtiesPerProjectile.Add(ProjectileCasualties);
     }
 
     return Casualties;
 }
+
 
 bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
     const FVector& TargetLocation)
@@ -876,18 +937,28 @@ bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
         FMath::Lerp(250.0f, 2200.0f, RangeFraction);
 
     TMap<AStrategyUnit*, int32> CasualtiesByTarget;
+    TArray<FVector> ImpactLocations;
+    TArray<uint8> HitFlags;
+    TArray<int32> CasualtiesPerProjectile;
 
     for (int32 GunIndex = 0; GunIndex < Consumed; ++GunIndex)
     {
         const float Angle = RandomStream.FRandRange(0.0f, 2.0f * PI);
         const float Radius = FMath::Sqrt(RandomStream.FRand()) * DispersionCm;
 
-        const FVector Impact =
+        FVector Impact =
             TargetLocation +
             FVector(
                 FMath::Cos(Angle) * Radius,
                 FMath::Sin(Angle) * Radius,
                 0.0f);
+
+        Impact =
+            UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+                OwnerBattery,
+                Impact);
+
+        ImpactLocations.Add(Impact);
 
         AStrategyUnit* BestTarget = nullptr;
         float BestDistance = ManualAreaRadiusCm;
@@ -919,6 +990,8 @@ bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
 
         if (!IsValid(BestTarget))
         {
+            HitFlags.Add(0);
+            CasualtiesPerProjectile.Add(0);
             continue;
         }
 
@@ -929,8 +1002,19 @@ bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
         if (RandomStream.FRand() <= HitChance)
         {
             const FIntPoint Range = GetCasualtyRange(AmmoType);
-            CasualtiesByTarget.FindOrAdd(BestTarget) +=
+            const int32 ProjectileCasualties =
                 RandomStream.RandRange(Range.X, Range.Y);
+
+            CasualtiesByTarget.FindOrAdd(BestTarget) +=
+                ProjectileCasualties;
+
+            HitFlags.Add(1);
+            CasualtiesPerProjectile.Add(ProjectileCasualties);
+        }
+        else
+        {
+            HitFlags.Add(0);
+            CasualtiesPerProjectile.Add(0);
         }
     }
 
@@ -1021,6 +1105,16 @@ bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
         AmmoType,
         Consumed,
         TotalCasualties);
+
+    if (OwnerBattery->ProjectilePresentationComponent)
+    {
+        OwnerBattery->ProjectilePresentationComponent->PresentResolvedSalvo(
+            AmmoType,
+            TargetLocation,
+            ImpactLocations,
+            HitFlags,
+            CasualtiesPerProjectile);
+    }
 
     if (GetWorld())
     {
