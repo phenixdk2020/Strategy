@@ -33,6 +33,12 @@
 #include "../Combat/StrategyDirectionalCoverComponent.h"
 #include "../Combat/StrategyFieldworksComponent.h"
 #include "../Combat/StrategySkirmisherComponent.h"
+#include "../Logistics/StrategySupplyComponent.h"
+#include "../AI/StrategyDoctrineComponent.h"
+#include "../AI/StrategyAutonomyComponent.h"
+#include "../AI/StrategyAIDifficultyComponent.h"
+#include "../AI/StrategyAITelemetryComponent.h"
+#include "../AI/StrategyMissionConstraintsComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -103,6 +109,18 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyFieldworksComponent>(TEXT("FieldworksComponent"));
     SkirmisherComponent =
         CreateDefaultSubobject<UStrategySkirmisherComponent>(TEXT("SkirmisherComponent"));
+    SupplyComponent =
+        CreateDefaultSubobject<UStrategySupplyComponent>(TEXT("SupplyComponent"));
+    DoctrineComponent =
+        CreateDefaultSubobject<UStrategyDoctrineComponent>(TEXT("DoctrineComponent"));
+    AutonomyComponent =
+        CreateDefaultSubobject<UStrategyAutonomyComponent>(TEXT("AutonomyComponent"));
+    AIDifficultyComponent =
+        CreateDefaultSubobject<UStrategyAIDifficultyComponent>(TEXT("AIDifficultyComponent"));
+    AITelemetryComponent =
+        CreateDefaultSubobject<UStrategyAITelemetryComponent>(TEXT("AITelemetryComponent"));
+    MissionConstraintsComponent =
+        CreateDefaultSubobject<UStrategyMissionConstraintsComponent>(TEXT("MissionConstraintsComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
