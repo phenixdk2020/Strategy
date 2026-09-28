@@ -53,6 +53,7 @@ public:
     void RemoveCurrentSubordinate(AStrategyUnit* Unit);
 
 private:
+    bool WouldCreateCommandCycle(AStrategyUnit* NewParent) const;
     static void RemoveFromParentCurrentList(AStrategyUnit* Parent, AStrategyUnit* Child);
     static void AddToParentCurrentList(AStrategyUnit* Parent, AStrategyUnit* Child);
 };
