@@ -74,8 +74,9 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
         Plan.BridgeBarrier = River;
 
         AppendNavSegment(FarExit, EndLocation, Plan.Points);
-        ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
 
+        // Preserve explicit bridge enter/exit indices. The pre/post bridge
+        // segments already use NavMesh; extra static detours are skipped here.
         if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
         {
             Plan.bValid = false;
