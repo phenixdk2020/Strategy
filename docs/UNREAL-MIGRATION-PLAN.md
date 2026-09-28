@@ -334,3 +334,24 @@ A physical `AStrategySupplyWagonUnit` now provides the first tactical logistics 
 The QA OOB contains a deliberately low-ammo Danish artillery battery and a nearby Danish ammunition wagon. When this fixture is active, Division's former generic 50k ammunition source is disabled, forcing the tactical supply chain to be testable.
 
 Remaining gates: local UE 5.8.3 compile/runtime QA, expanded hills/dead-ground battlefield validation, historical artillery profile tuning, and later battlefield-salvage/aftermath logistics.
+
+
+## v00.02.61 tactical terrain and artillery positioning checkpoint
+
+The functionality-first Unreal port now has a shared tactical terrain authority. Gameplay may combine physical WorldStatic ground with analytic Hill/Ridge/Depression features, allowing hills and dead ground to be tested before final visual terrain assets.
+
+Implemented:
+- effective ground elevation and local slope queries;
+- crest and dead-ground detection;
+- unit terrain-awareness state for high ground/reverse slope/crest exposure;
+- terrain-aware unit LOS and arbitrary ground-location LOS;
+- high-ground observation modifiers without LOS bypass;
+- crest/reverse-slope masking in infantry and artillery fire resolution;
+- route waypoint terrain projection and long-segment sampling without NavMesh;
+- artillery deploy slope using the same terrain model;
+- artillery candidate generation/evaluation and best direct-fire position search;
+- QA terrain with a battery hill, central ridge and depression;
+- QA actor spawn projection to tactical terrain Z;
+- regression checks for expected dead ground, clear lane, crest and valid artillery position.
+
+This is gameplay terrain authority, not the final landscape-art pass. UE 5.8.3 compile/runtime validation remains required before parity verification.
