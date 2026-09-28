@@ -17,6 +17,7 @@ class STRATEGY1864_API AStrategyCameraPawn : public APawn
 public:
     AStrategyCameraPawn();
 
+    virtual void Tick(float DeltaTime) override;
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Camera")
@@ -46,9 +47,39 @@ public:
     UFUNCTION(BlueprintCallable, Category="Strategy|Camera")
     void FocusOnWorldLocation(const FVector& WorldLocation);
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Camera|Projectile")
+    float ProjectileFollowArmLength = 850.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Camera|Projectile")
+    float ProjectileFollowSmoothing = 8.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Camera|Projectile")
+    float ProjectileImpactHoldSeconds = 1.5f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Camera|Projectile")
+    bool bFollowingProjectile = false;
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Camera|Projectile")
+    void BeginProjectileFollow(AActor* ProjectileActor);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Camera|Projectile")
+    void StopProjectileFollow(bool bRestorePreviousView = true);
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Camera|Projectile")
+    AActor* GetProjectileFollowTarget() const
+    {
+        return ProjectileFollowTarget.Get();
+    }
+
 private:
     void MoveForward(float Value);
     void MoveRight(float Value);
     void ZoomCamera(float Value);
     void RotateCamera(float Value);
+
+    TWeakObjectPtr<AActor> ProjectileFollowTarget;
+    FVector PreFollowLocation = FVector::ZeroVector;
+    float PreFollowArmLength = 2600.0f;
+    FVector LastProjectileLocation = FVector::ZeroVector;
+    float ImpactHoldRemainingSeconds = 0.0f;
 };
