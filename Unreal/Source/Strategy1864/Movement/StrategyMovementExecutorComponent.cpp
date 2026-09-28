@@ -11,6 +11,7 @@
 #include "../Navigation/StrategyRiverBarrier.h"
 #include "../Artillery/StrategyArtilleryBatteryUnit.h"
 #include "../Artillery/StrategyArtilleryDeploymentComponent.h"
+#include "../Logistics/StrategySupplyWagonUnit.h"
 
 UStrategyMovementExecutorComponent::UStrategyMovementExecutorComponent()
 {
@@ -112,6 +113,26 @@ void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOr
             if (Battery->OrderComponent)
             {
                 Battery->OrderComponent->FailExecution();
+            }
+
+            return;
+        }
+    }
+
+    if (AStrategySupplyWagonUnit* Wagon =
+        Cast<AStrategySupplyWagonUnit>(OwnerUnit))
+    {
+        if (!Wagon->CanMoveSupplyWagon())
+        {
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("PROJECT1864-SUPPLY: movement rejected for %s because wagon mobility is unavailable."),
+                *Wagon->StableUnitId.ToString());
+
+            if (Wagon->OrderComponent)
+            {
+                Wagon->OrderComponent->FailExecution();
             }
 
             return;
@@ -357,12 +378,25 @@ void UStrategyMovementExecutorComponent::TickComponent(
         }
     }
 
+    float SupplyMobilityMultiplier = 1.0f;
+
+    if (const AStrategySupplyWagonUnit* Wagon =
+        Cast<AStrategySupplyWagonUnit>(OwnerUnit))
+    {
+        SupplyMobilityMultiplier =
+            FMath::Clamp(
+                Wagon->GetMobilityFactor(),
+                0.05f,
+                1.0f);
+    }
+
     const float Step =
         MoveSpeedCmPerSecond *
         ConditionMultiplier *
         SlopeMultiplier *
         StanceMultiplier *
         ArtilleryMobilityMultiplier *
+        SupplyMobilityMultiplier *
         DeltaTime;
     const float AppliedStep =
         FMath::Min(Step, FlatDelta.Size());
