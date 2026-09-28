@@ -366,3 +366,14 @@ Each battery owns a projectile presentation component with virtual per-gun muzzl
 A future campaign→battlefield generation contract is also established in `Campaign/StrategyBattlefieldGenerationTypes.h`. It intentionally contains data only: battle id/center/size/seed, attacker and defender approach directions, plus source features for topography, waterways, transport, settlements and land cover. No battlefield generator is implemented yet.
 
 Remaining gate: local UE 5.8.3 compile/runtime QA and later replacement of debug projectile visuals with final cannonball/shell meshes, particles, smoke and audio.
+
+
+## v00.02.63 shared animation/uniform checkpoint
+
+The visual architecture is now prepared for many soldier types without duplicating animation work. Strategy units carry a shared human visual profile targeting `SK_Human_1864` and `ABP_Human_1864`, reusable animation intent state, equipment socket mapping, uniform appearance data and rig compatibility validation.
+
+Uniform appearance supports independent Coat/Trousers/Facings/Headgear/Leather/Accent/Metal material parameters plus editable presets and runtime overrides. Cavalry owns horse-gait state and rider synchronization; Dragoon mount/dismount state emits the shared human Mount/Dismount intent.
+
+Artillery now has visual crew roles/stations and a drill controller driven by the existing authoritative battery state: manhandling, traverse, deploy/limber, repair and post-shot reload phases. No animation controls gameplay state.
+
+QA includes reusable animation manifests, editable side/artillery palettes, runtime colour override validation and shared snapshot diagnostics. Final SkeletalMesh/AnimationBlueprint/Montage/material assets remain a later graphics task.
