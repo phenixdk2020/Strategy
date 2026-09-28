@@ -12,10 +12,19 @@ void UStrategyAITelemetryComponent::SetDecision(
     const FString& Task,
     const FString& Reason)
 {
+    const bool bChanged =
+        CurrentTask != Task ||
+        ReasonCode != Reason;
+
     CurrentTask = Task;
     ReasonCode = Reason;
     LastDecisionWorldSeconds =
         GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
+
+    if (!bChanged)
+    {
+        return;
+    }
 
     const AStrategyUnit* Unit = Cast<AStrategyUnit>(GetOwner());
 
