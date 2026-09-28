@@ -5,6 +5,10 @@
 #include "../Combat/StrategyCavalryChargeComponent.h"
 #include "StrategyDragoonComponent.h"
 #include "../AI/StrategyCavalryScreenAIComponent.h"
+#include "../Visual/StrategyHorseAnimationStateComponent.h"
+#include "../Visual/StrategyMountedAnimationSyncComponent.h"
+#include "../Visual/StrategyUniformAppearanceComponent.h"
+#include "../Visual/StrategyHumanAnimationStateComponent.h"
 
 ACavalryUnit::ACavalryUnit()
 {
@@ -30,6 +34,12 @@ ACavalryUnit::ACavalryUnit()
 
     ScreenAIComponent =
         CreateDefaultSubobject<UStrategyCavalryScreenAIComponent>(TEXT("ScreenAIComponent"));
+
+    HorseAnimationStateComponent =
+        CreateDefaultSubobject<UStrategyHorseAnimationStateComponent>(TEXT("HorseAnimationStateComponent"));
+
+    MountedAnimationSyncComponent =
+        CreateDefaultSubobject<UStrategyMountedAnimationSyncComponent>(TEXT("MountedAnimationSyncComponent"));
 
     HorseMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HorseMesh"));
     HorseMesh->SetupAttachment(SceneRoot);
@@ -61,6 +71,18 @@ void ACavalryUnit::BeginPlay()
             HorseMesh,
             FAttachmentTransformRules::SnapToTargetNotIncludingScale,
             RiderSocketName);
+    }
+
+    if (UniformAppearanceComponent)
+    {
+        UniformAppearanceComponent->TargetMeshComponentNames.Reset();
+        UniformAppearanceComponent->TargetMeshComponentNames.Add(TEXT("RiderMesh"));
+        UniformAppearanceComponent->ApplyAppearance();
+    }
+
+    if (HumanAnimationStateComponent)
+    {
+        HumanAnimationStateComponent->SetMounted(true);
     }
 }
 
