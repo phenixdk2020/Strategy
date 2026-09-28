@@ -27,5 +27,10 @@ public:
     bool HasLineOfSightTo(const AStrategyUnit* Target) const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|Visibility")
+    bool HasLineOfSightToLocation(
+        const FVector& TargetLocation,
+        float LocationTargetHeightCm = 50.0f) const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Visibility")
     float GetSmokeTransmissionTo(const AStrategyUnit* Target) const;
 };
