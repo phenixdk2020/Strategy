@@ -5,6 +5,7 @@
 #include "StrategyArtilleryFireMissionComponent.h"
 #include "StrategyArtilleryDamageComponent.h"
 #include "StrategyArtilleryCaptureComponent.h"
+#include "StrategyArtilleryTraverseComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Combat/StrategyFireControlComponent.h"
 #include "../Combat/StrategyCombatComponent.h"
@@ -32,6 +33,10 @@ AStrategyArtilleryBatteryUnit::AStrategyArtilleryBatteryUnit()
     ArtilleryCaptureComponent =
         CreateDefaultSubobject<UStrategyArtilleryCaptureComponent>(
             TEXT("ArtilleryCaptureComponent"));
+
+    ArtilleryTraverseComponent =
+        CreateDefaultSubobject<UStrategyArtilleryTraverseComponent>(
+            TEXT("ArtilleryTraverseComponent"));
 }
 
 void AStrategyArtilleryBatteryUnit::BeginPlay()
@@ -73,6 +78,13 @@ void AStrategyArtilleryBatteryUnit::BeginPlay()
     RefreshDebugLabel();
 }
 
+int32 AStrategyArtilleryBatteryUnit::GetPhysicallyAvailableGunCount() const
+{
+    return FMath::Max(
+        0,
+        GunCount - DisabledGunCount - DestroyedGunCount);
+}
+
 int32 AStrategyArtilleryBatteryUnit::GetCrewLimitedGunCount() const
 {
     const int32 CrewPerGun = FMath::Max(1, GunProfile.CrewRequiredPerGun);
@@ -81,11 +93,8 @@ int32 AStrategyArtilleryBatteryUnit::GetCrewLimitedGunCount() const
 
 int32 AStrategyArtilleryBatteryUnit::GetOperationalGunCount() const
 {
-    const int32 PhysicallyAvailable =
-        FMath::Max(0, GunCount - DisabledGunCount - DestroyedGunCount);
-
     return FMath::Min(
-        PhysicallyAvailable,
+        GetPhysicallyAvailableGunCount(),
         GetCrewLimitedGunCount());
 }
 
