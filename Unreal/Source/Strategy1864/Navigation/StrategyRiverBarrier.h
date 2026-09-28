@@ -40,6 +40,9 @@ public:
     FVector GetBridgeExitForSide(int32 Side) const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|River")
+    bool IsInsideRiver(const FVector& WorldLocation) const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|River")
     bool RequiresBankChange(const FVector& Start, const FVector& End) const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|River")
