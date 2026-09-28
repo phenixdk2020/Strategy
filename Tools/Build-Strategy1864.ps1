@@ -3,14 +3,26 @@
     Bygger Strategy1864Editor manuelt og udskriver relevante compiler/UHT-fejl.
 
 .VERSION
-    1.0.0
+    1.1.0
 
 .DESCRIPTION
-    - Finder Unreal Engine 5.8 via standard Epic-path eller registry.
+    - Finder Unreal Engine 5.8 via parameter, miljøvariabel, Epic Launcher,
+      manifestfiler, registry, registrerede builds og almindelige install-paths.
+    - Validerer at fundet engine faktisk er UE 5.8 via Engine\Build\Build.version.
     - Kører Engine\Build\BatchFiles\Build.bat.
     - Gemmer komplet build-log under Tools\BuildLogs.
     - Viser relevante compiler/UHT/UBT-fejl til sidst.
+
+.EXAMPLE
+    .\Tools\Build-Strategy1864.ps1
+
+.EXAMPLE
+    .\Tools\Build-Strategy1864.ps1 -EngineRoot "D:\Epic Games\UE_5.8"
 #>
+
+param(
+    [string]$EngineRoot
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -35,29 +47,190 @@ function Write-Status {
     }
 }
 
-function Get-UnrealEngineRoot {
-    $Candidates = New-Object System.Collections.Generic.List[string]
+function Get-UnrealVersionInfo {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Root
+    )
 
-    $DefaultEpic = "C:\Program Files\Epic Games\UE_5.8"
-    if (Test-Path $DefaultEpic) {
-        $Candidates.Add($DefaultEpic)
+    $BuildVersion = Join-Path $Root "Engine\Build\Build.version"
+
+    if (-not (Test-Path $BuildVersion)) {
+        return $null
     }
 
-    $MachineKey = "HKLM:\SOFTWARE\EpicGames\Unreal Engine\5.8"
-    if (Test-Path $MachineKey) {
+    try {
+        return Get-Content -Path $BuildVersion -Raw | ConvertFrom-Json
+    }
+    catch {
+        return $null
+    }
+}
+
+function Test-Unreal58Root {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Root
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Root)) {
+        return $false
+    }
+
+    try {
+        $Resolved = [System.IO.Path]::GetFullPath(
+            [Environment]::ExpandEnvironmentVariables($Root.Trim('"'))
+        )
+    }
+    catch {
+        return $false
+    }
+
+    $BuildBat = Join-Path $Resolved "Engine\Build\BatchFiles\Build.bat"
+
+    if (-not (Test-Path $BuildBat)) {
+        return $false
+    }
+
+    $Version = Get-UnrealVersionInfo -Root $Resolved
+
+    if (-not $Version) {
+        # Build.bat is enough to keep a custom/source build usable,
+        # but version validation is preferred when Build.version exists.
+        return $true
+    }
+
+    return (
+        [int]$Version.MajorVersion -eq 5 -and
+        [int]$Version.MinorVersion -eq 8
+    )
+}
+
+function Add-EngineCandidate {
+    param(
+        [Parameter(Mandatory=$true)]
+        [System.Collections.Generic.List[string]]$List,
+
+        [string]$Path
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return
+    }
+
+    $Expanded = [Environment]::ExpandEnvironmentVariables($Path.Trim('"'))
+
+    if (-not $List.Contains($Expanded)) {
+        $List.Add($Expanded)
+    }
+}
+
+function Add-EpicLauncherInstalledCandidates {
+    param(
+        [Parameter(Mandatory=$true)]
+        [System.Collections.Generic.List[string]]$List
+    )
+
+    $LauncherFiles = @(
+        "C:\ProgramData\Epic\UnrealEngineLauncher\LauncherInstalled.dat"
+    )
+
+    foreach ($LauncherFile in $LauncherFiles) {
+        if (-not (Test-Path $LauncherFile)) {
+            continue
+        }
+
         try {
-            $InstalledDirectory = (Get-ItemProperty $MachineKey).InstalledDirectory
-            if ($InstalledDirectory) {
-                $Candidates.Add([string]$InstalledDirectory)
+            $Data = Get-Content -Path $LauncherFile -Raw | ConvertFrom-Json
+
+            foreach ($Item in @($Data.InstallationList)) {
+                $AppName = [string]$Item.AppName
+                $Location = [string]$Item.InstallLocation
+
+                if ($AppName -like "UE_5.8*" -or $Location -match "UE[_ -]?5\.8") {
+                    Add-EngineCandidate -List $List -Path $Location
+                }
+            }
+        }
+        catch {
+            Write-Status -Message "Kunne ikke læse LauncherInstalled.dat: $($_.Exception.Message)" -Level WARNING
+        }
+    }
+}
+
+function Add-EpicManifestCandidates {
+    param(
+        [Parameter(Mandatory=$true)]
+        [System.Collections.Generic.List[string]]$List
+    )
+
+    $ManifestRoot = "C:\ProgramData\Epic\EpicGamesLauncher\Data\Manifests"
+
+    if (-not (Test-Path $ManifestRoot)) {
+        return
+    }
+
+    foreach ($Manifest in @(Get-ChildItem -Path $ManifestRoot -Filter "*.item" -File -ErrorAction SilentlyContinue)) {
+        try {
+            $Data = Get-Content -Path $Manifest.FullName -Raw | ConvertFrom-Json
+
+            $AppName = [string]$Data.AppName
+            $DisplayName = [string]$Data.DisplayName
+            $Location = [string]$Data.InstallLocation
+
+            if (
+                $AppName -like "UE_5.8*" -or
+                $DisplayName -like "*5.8*" -or
+                $Location -match "UE[_ -]?5\.8"
+            ) {
+                Add-EngineCandidate -List $List -Path $Location
+            }
+        }
+        catch {
+            # Ignore unrelated/corrupt manifest entries.
+        }
+    }
+}
+
+function Add-RegistryCandidates {
+    param(
+        [Parameter(Mandatory=$true)]
+        [System.Collections.Generic.List[string]]$List
+    )
+
+    $EngineKeys = @(
+        "HKLM:\SOFTWARE\EpicGames\Unreal Engine\5.8",
+        "HKLM:\SOFTWARE\WOW6432Node\EpicGames\Unreal Engine\5.8",
+        "HKCU:\SOFTWARE\EpicGames\Unreal Engine\5.8"
+    )
+
+    foreach ($Key in $EngineKeys) {
+        if (-not (Test-Path $Key)) {
+            continue
+        }
+
+        try {
+            $Props = Get-ItemProperty $Key
+
+            if ($Props.InstalledDirectory) {
+                Add-EngineCandidate -List $List -Path ([string]$Props.InstalledDirectory)
             }
         }
         catch {}
     }
 
-    $UserBuildsKey = "HKCU:\SOFTWARE\Epic Games\Unreal Engine\Builds"
-    if (Test-Path $UserBuildsKey) {
+    $RegisteredBuildKeys = @(
+        "HKCU:\SOFTWARE\Epic Games\Unreal Engine\Builds",
+        "HKLM:\SOFTWARE\Epic Games\Unreal Engine\Builds"
+    )
+
+    foreach ($Key in $RegisteredBuildKeys) {
+        if (-not (Test-Path $Key)) {
+            continue
+        }
+
         try {
-            $Props = Get-ItemProperty $UserBuildsKey
+            $Props = Get-ItemProperty $Key
 
             foreach ($Property in $Props.PSObject.Properties) {
                 if ($Property.Name -like "PS*") {
@@ -66,21 +239,87 @@ function Get-UnrealEngineRoot {
 
                 $Value = [string]$Property.Value
 
-                if ($Value -and
-                    ((Split-Path $Value -Leaf) -like "UE_5.8*" -or
-                     $Property.Name -like "*5.8*")) {
-                    $Candidates.Add($Value)
+                if (-not [string]::IsNullOrWhiteSpace($Value)) {
+                    Add-EngineCandidate -List $List -Path $Value
                 }
             }
         }
         catch {}
     }
+}
 
-    foreach ($Candidate in ($Candidates | Select-Object -Unique)) {
-        $BuildBat = Join-Path $Candidate "Engine\Build\BatchFiles\Build.bat"
+function Add-CommonDriveCandidates {
+    param(
+        [Parameter(Mandatory=$true)]
+        [System.Collections.Generic.List[string]]$List
+    )
 
-        if (Test-Path $BuildBat) {
-            return $Candidate
+    foreach ($Drive in @(Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue)) {
+        if (-not $Drive.Root) {
+            continue
+        }
+
+        $Root = $Drive.Root
+
+        $Common = @(
+            (Join-Path $Root "Program Files\Epic Games\UE_5.8"),
+            (Join-Path $Root "Epic Games\UE_5.8"),
+            (Join-Path $Root "EpicGames\UE_5.8"),
+            (Join-Path $Root "Unreal Engine\UE_5.8"),
+            (Join-Path $Root "UnrealEngine\UE_5.8"),
+            (Join-Path $Root "UE_5.8")
+        )
+
+        foreach ($Path in $Common) {
+            Add-EngineCandidate -List $List -Path $Path
+        }
+
+        # Shallow search only in common parent folders. Avoid full-drive recursion.
+        $Parents = @(
+            (Join-Path $Root "Epic Games"),
+            (Join-Path $Root "EpicGames"),
+            (Join-Path $Root "Program Files\Epic Games"),
+            (Join-Path $Root "Unreal Engine"),
+            (Join-Path $Root "UnrealEngine")
+        )
+
+        foreach ($Parent in $Parents) {
+            if (-not (Test-Path $Parent)) {
+                continue
+            }
+
+            foreach ($Folder in @(Get-ChildItem -Path $Parent -Directory -Filter "UE_5.8*" -ErrorAction SilentlyContinue)) {
+                Add-EngineCandidate -List $List -Path $Folder.FullName
+            }
+        }
+    }
+}
+
+function Get-UnrealEngineRoot {
+    param(
+        [string]$ExplicitRoot
+    )
+
+    $Candidates = New-Object System.Collections.Generic.List[string]
+
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitRoot)) {
+        Write-Status -Message "Tester -EngineRoot: $ExplicitRoot" -Level INFO
+        Add-EngineCandidate -List $Candidates -Path $ExplicitRoot
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:UE_ENGINE_ROOT)) {
+        Write-Status -Message "Tester UE_ENGINE_ROOT: $env:UE_ENGINE_ROOT" -Level INFO
+        Add-EngineCandidate -List $Candidates -Path $env:UE_ENGINE_ROOT
+    }
+
+    Add-EpicLauncherInstalledCandidates -List $Candidates
+    Add-EpicManifestCandidates -List $Candidates
+    Add-RegistryCandidates -List $Candidates
+    Add-CommonDriveCandidates -List $Candidates
+
+    foreach ($Candidate in $Candidates) {
+        if (Test-Unreal58Root -Root $Candidate) {
+            return [System.IO.Path]::GetFullPath($Candidate.Trim('"'))
         }
     }
 
@@ -91,6 +330,7 @@ Clear-Host
 Write-Host ""
 Write-Host "===================================================" -ForegroundColor DarkCyan
 Write-Host " PROJECT 1864 - Unreal Build Diagnostic" -ForegroundColor Cyan
+Write-Host " Version 1.1.0" -ForegroundColor DarkGray
 Write-Host "===================================================" -ForegroundColor DarkCyan
 Write-Host ""
 
@@ -101,15 +341,28 @@ try {
 
     Write-Status -Message "Finder Unreal Engine 5.8..." -Level CHECKPOINT
 
-    $EngineRoot = Get-UnrealEngineRoot
+    $ResolvedEngineRoot = Get-UnrealEngineRoot -ExplicitRoot $EngineRoot
 
-    if (-not $EngineRoot) {
-        throw "Kunne ikke finde Unreal Engine 5.8 automatisk. Kontroller Epic installationen."
+    if (-not $ResolvedEngineRoot) {
+        Write-Host ""
+        Write-Host "Engine blev ikke fundet automatisk." -ForegroundColor Yellow
+        Write-Host "Find mappen der indeholder Engine\Build\BatchFiles\Build.bat og kør:" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host '  .\Tools\Build-Strategy1864.ps1 -EngineRoot "D:\sti\til\UE_5.8"' -ForegroundColor Cyan
+        Write-Host ""
+        throw "Kunne ikke finde en gyldig Unreal Engine 5.8 installation."
     }
 
-    $BuildBat = Join-Path $EngineRoot "Engine\Build\BatchFiles\Build.bat"
+    $VersionInfo = Get-UnrealVersionInfo -Root $ResolvedEngineRoot
+    $BuildBat = Join-Path $ResolvedEngineRoot "Engine\Build\BatchFiles\Build.bat"
 
-    Write-Status -Message "Engine: $EngineRoot" -Level OK
+    Write-Status -Message "Engine: $ResolvedEngineRoot" -Level OK
+
+    if ($VersionInfo) {
+        $VersionText = "{0}.{1}.{2}" -f $VersionInfo.MajorVersion, $VersionInfo.MinorVersion, $VersionInfo.PatchVersion
+        Write-Status -Message "Engine version: $VersionText" -Level OK
+    }
+
     Write-Status -Message "Project: $UProject" -Level INFO
 
     if (-not (Test-Path $LogRoot)) {
@@ -203,11 +456,11 @@ try {
     $ErrorLines = @($ErrorLines | Select-Object -Unique)
 
     if ($ErrorLines.Count -eq 0) {
-        Write-Host "Ingen standard error-linjer fundet. Viser de sidste 80 linjer:" -ForegroundColor Yellow
-        $AllLines | Select-Object -Last 80 | ForEach-Object { Write-Host $_ }
+        Write-Host "Ingen standard error-linjer fundet. Viser de sidste 100 linjer:" -ForegroundColor Yellow
+        $AllLines | Select-Object -Last 100 | ForEach-Object { Write-Host $_ }
     }
     else {
-        $ErrorLines | Select-Object -First 80 | ForEach-Object {
+        $ErrorLines | Select-Object -First 120 | ForEach-Object {
             Write-Host $_ -ForegroundColor Red
         }
     }
