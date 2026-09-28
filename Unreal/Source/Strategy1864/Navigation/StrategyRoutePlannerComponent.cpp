@@ -33,6 +33,20 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
         return Plan;
     }
 
+    if (River->IsInsideRiver(StartLocation))
+    {
+        Plan.bValid = false;
+        Plan.FailureReason = TEXT("Start location is inside hard-blocked water.");
+        return Plan;
+    }
+
+    if (River->IsInsideRiver(EndLocation))
+    {
+        Plan.bValid = false;
+        Plan.FailureReason = TEXT("Destination is inside hard-blocked water.");
+        return Plan;
+    }
+
     if (River->RequiresBankChange(StartLocation, EndLocation))
     {
         const int32 StartSide = River->GetBankSide(StartLocation);
