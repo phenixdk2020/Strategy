@@ -27,6 +27,13 @@ class UStrategyWorldDebugComponent;
 class UStrategyPresentationSnapshotComponent;
 class UStrategyLocalDeconflictionComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+    FStrategyCasualtyVisualEvent,
+    int32,
+    AppliedLoss,
+    FVector,
+    WorldLocation);
+
 UENUM(BlueprintType)
 enum class EStrategyEchelon : uint8
 {
@@ -168,6 +175,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Unit")
     EStrategyUnitState UnitState = EStrategyUnitState::Ready;
+
+    UPROPERTY(BlueprintAssignable, Category="Strategy|Presentation")
+    FStrategyCasualtyVisualEvent OnCasualtyVisualEvent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|AI")
     bool bOfficerAIEnabled = true;
