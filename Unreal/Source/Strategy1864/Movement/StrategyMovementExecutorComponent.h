@@ -60,6 +60,7 @@ private:
     void HandleOrderChanged(const FStrategyOrder& NewOrder);
 
     void BeginMovementForOrder(const FStrategyOrder& Order);
+    bool TryRetargetDuringBridge(const FStrategyOrder& Order);
     void FinishMovement();
     bool IsMovementOrder(EStrategyOrderType Type) const;
 
