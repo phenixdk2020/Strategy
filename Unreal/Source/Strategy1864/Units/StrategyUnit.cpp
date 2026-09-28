@@ -7,6 +7,7 @@
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Formations/StrategyFormationComponent.h"
 #include "../Formations/StrategyFormationPolicyComponent.h"
+#include "../Formations/StrategyFormationTransitionComponent.h"
 #include "../Orders/StrategyParentExecutionComponent.h"
 #include "../Navigation/StrategyRoutePlannerComponent.h"
 #include "../Combat/StrategyVisibilityComponent.h"
@@ -46,6 +47,8 @@ AStrategyUnit::AStrategyUnit()
     MovementExecutor = CreateDefaultSubobject<UStrategyMovementExecutorComponent>(TEXT("MovementExecutor"));
     FormationComponent = CreateDefaultSubobject<UStrategyFormationComponent>(TEXT("FormationComponent"));
     FormationPolicy = CreateDefaultSubobject<UStrategyFormationPolicyComponent>(TEXT("FormationPolicy"));
+    FormationTransition =
+        CreateDefaultSubobject<UStrategyFormationTransitionComponent>(TEXT("FormationTransition"));
     ParentExecution = CreateDefaultSubobject<UStrategyParentExecutionComponent>(TEXT("ParentExecution"));
     RoutePlanner = CreateDefaultSubobject<UStrategyRoutePlannerComponent>(TEXT("RoutePlanner"));
     VisibilityComponent = CreateDefaultSubobject<UStrategyVisibilityComponent>(TEXT("VisibilityComponent"));
