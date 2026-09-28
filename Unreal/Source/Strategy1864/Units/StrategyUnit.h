@@ -62,6 +62,7 @@ enum class EStrategyEchelon : uint8
     Brigade,
     Division,
     Cavalry,
+    Artillery,
     Headquarters
 };
 
