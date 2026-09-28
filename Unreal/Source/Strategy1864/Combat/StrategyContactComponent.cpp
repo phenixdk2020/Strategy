@@ -2,6 +2,7 @@
 
 #include "StrategyVisibilityComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "StrategySkirmisherComponent.h"
 #include "EngineUtils.h"
 
 UStrategyContactComponent::UStrategyContactComponent()
@@ -64,7 +65,12 @@ void UStrategyContactComponent::RefreshContacts(float ElapsedSeconds)
                 OwnerUnit->GetActorLocation(),
                 Candidate->GetActorLocation());
 
-        if (DistanceCm > MaximumAwarenessRangeCm ||
+        const float AwarenessMultiplier =
+            OwnerUnit->SkirmisherComponent
+            ? OwnerUnit->SkirmisherComponent->GetAwarenessRangeMultiplier()
+            : 1.0f;
+
+        if (DistanceCm > MaximumAwarenessRangeCm * AwarenessMultiplier ||
             !OwnerUnit->VisibilityComponent->HasLineOfSightTo(Candidate))
         {
             continue;
