@@ -9,6 +9,8 @@ class USkeletalMeshComponent;
 class UStrategyCavalryChargeComponent;
 class UStrategyDragoonComponent;
 class UStrategyCavalryScreenAIComponent;
+class UStrategyHorseAnimationStateComponent;
+class UStrategyMountedAnimationSyncComponent;
 
 UCLASS(Blueprintable)
 class STRATEGY1864_API ACavalryUnit : public AStrategyUnit
@@ -36,6 +38,12 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Cavalry")
     TObjectPtr<UStrategyCavalryScreenAIComponent> ScreenAIComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Cavalry")
+    TObjectPtr<UStrategyHorseAnimationStateComponent> HorseAnimationStateComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Cavalry")
+    TObjectPtr<UStrategyMountedAnimationSyncComponent> MountedAnimationSyncComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Cavalry")
     FName RiderSocketName = TEXT("RiderSocket");
