@@ -516,3 +516,49 @@ Additional fixes in the same pass:
 - autonomous opposition AI cannot override a command parent or standing intent.
 
 All items remain **UE 5.8.3 build/runtime QA pending** until compiled and exercised in editor. 1:1 soldier/rider animation, skeletal assets, Niagara, UMG polish and other graphics remain intentionally deferred.
+
+
+## v00.02.58 — combat/fieldcraft/AI functionality batch
+
+Functionality-first work added fire discipline/ammunition conservation, Standing/Prone stance, directional cover, hasty fieldworks, black-powder smoke LOS simulation, skirmisher detach/roles/reform, tactical ammunition supply, doctrine/OrderAgg, autonomy, no-cheat AI difficulty, AI-DIAG telemetry, expanded officer dimensions and mission constraints. Graphics remain intentionally deferred. All items remain UE 5.8.3 build/runtime QA pending.
+
+
+# 15. Artillery battery functionality — v00.02.59
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P300 | P0 | Artillery echelon/types | Artillery unit identity + mobility/fire/ammo/ownership types | IMPLEMENTED CORE |
+| UE-P301 | P0 | Battery actor | `AStrategyArtilleryBatteryUnit` | IMPLEMENTED CORE |
+| UE-P302 | P0 | Guns/crew/drivers/horses | Battery authoritative personnel/materiel state | IMPLEMENTED CORE |
+| UE-P303 | P0 | Limber/unlimber | Timed deployment state machine | IMPLEMENTED CORE |
+| UE-P304 | P0 | Towed movement gate | Limbered + horse/driver mobility requirement | IMPLEMENTED CORE |
+| UE-P305 | P1 | Manhandling | Short slow movement while unlimbered | IMPLEMENTED CORE |
+| UE-P306 | P0 | Artillery ammunition inventory | Round/Shell/Shrapnel/Canister stores | IMPLEMENTED CORE |
+| UE-P307 | P0 | Manual target fire mission | Manual target is player-controlled default | IMPLEMENTED CORE |
+| UE-P308 | P0 | Hold Fire | Explicit fire-mode override preserving target | IMPLEMENTED CORE |
+| UE-P309 | P0 | Battery traverse | Timed deployed facing/traverse authority | IMPLEMENTED CORE |
+| UE-P310 | P0 | LOS/contact/range gate | Current contact + LOS + ammo-specific min/max range | IMPLEMENTED CORE |
+| UE-P311 | P0 | Reload/fire resolution | Operational-gun volley + crew/fatigue/experience reload | IMPLEMENTED CORE |
+| UE-P312 | P1 | Ammunition effects | Ammo-specific range/hit/casualty prototype effects | IMPLEMENTED CORE / HISTORICAL TUNING PENDING |
+| UE-P313 | P1 | Auto Target | Explicit opt-in visible-contact target scoring | IMPLEMENTED CORE |
+| UE-P314 | P0 | Artillery resupply | Existing tactical supply transfers mixed compatible rounds | IMPLEMENTED CORE |
+| UE-P315 | P0 | Artillery damage | Incoming fire allocates crew/horse/disabled/destroyed gun damage | IMPLEMENTED CORE |
+| UE-P316 | P0 | Disabled/abandoned state | Disabled materiel separated from abandoned battery | IMPLEMENTED CORE |
+| UE-P317 | P1 | Gun capture | Physical nearby enemy control after abandonment | IMPLEMENTED CORE |
+| UE-P318 | P1 | Captured-gun reuse | Qualified crew + compatible ammunition + preparation time | IMPLEMENTED CORE |
+| UE-P319 | P0 | OOB/QA integration | Danish 6-gun QA battery + snapshot/regression/outcome integration | IMPLEMENTED QA CORE |
+
+### Artillery authority rules
+
+- Manual target is the default for player artillery. AUTO TARGET is opt-in.
+- HOLD FIRE overrides both manual and automatic targeting without deleting the stored manual target.
+- Batteries fire only when deployed, operational, crewed, supplied, within ammo-specific range, inside traverse, and with current contact + LOS.
+- Normal movement requires Limbered state plus drivers/horses; deployed batteries can only use bounded slow manhandling.
+- Gun count, crew, drivers, horses, calibre/profile and ammunition stores are data/configurable. The QA six-gun battery is a test fixture, not a historical universal battery size.
+- Infantry fire against artillery is routed into artillery-specific personnel/horse/gun damage instead of treating the battery as an infantry company.
+- Artillery is excluded from higher-HQ infantry slot planning.
+- Abandoned guns remain physical state and can be captured. Reuse requires suitable crew, compatible ammunition and preparation time.
+- Division tactical supply can replenish artillery's separate ammunition inventory.
+- Artillery participates in battle-outcome evaluation and OOB/hover data.
+- Final historical gun profiles, ammunition ballistics, limber drill timings and national battery organisations remain research/data tuning.
+- All UE-P300..319 are **code implemented / UE 5.8.3 build+runtime QA pending**, not parity verified.
