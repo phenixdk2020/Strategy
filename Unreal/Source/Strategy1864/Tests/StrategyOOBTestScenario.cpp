@@ -365,12 +365,22 @@ void AStrategyOOBTestScenario::BuildTestOOB()
     TArray<FString> ValidationErrors;
     const bool bHierarchyValid = ValidateStableIdsAndHierarchy(ValidationErrors);
 
-    UE_LOG(
-        LogTemp,
-        bHierarchyValid ? Display : Error,
-        TEXT("PROJECT1864-QA: StableId/Hierarchy validation %s (%d errors)"),
-        bHierarchyValid ? TEXT("PASS") : TEXT("FAIL"),
-        ValidationErrors.Num());
+    if (bHierarchyValid)
+    {
+        UE_LOG(
+            LogTemp,
+            Display,
+            TEXT("PROJECT1864-QA: StableId/Hierarchy validation PASS (%d errors)"),
+            ValidationErrors.Num());
+    }
+    else
+    {
+        UE_LOG(
+            LogTemp,
+            Error,
+            TEXT("PROJECT1864-QA: StableId/Hierarchy validation FAIL (%d errors)"),
+            ValidationErrors.Num());
+    }
 
     for (const FString& Error : ValidationErrors)
     {
@@ -405,12 +415,22 @@ void AStrategyOOBTestScenario::BuildTestOOB()
     TArray<FString> RegressionFailures;
     const bool bRegressionPass = RunRegressionChecklist(RegressionFailures);
 
-    UE_LOG(
-        LogTemp,
-        bRegressionPass ? Display : Error,
-        TEXT("PROJECT1864-QA: regression checklist %s (%d failures)"),
-        bRegressionPass ? TEXT("PASS") : TEXT("FAIL"),
-        RegressionFailures.Num());
+    if (bRegressionPass)
+    {
+        UE_LOG(
+            LogTemp,
+            Display,
+            TEXT("PROJECT1864-QA: regression checklist PASS (%d failures)"),
+            RegressionFailures.Num());
+    }
+    else
+    {
+        UE_LOG(
+            LogTemp,
+            Error,
+            TEXT("PROJECT1864-QA: regression checklist FAIL (%d failures)"),
+            RegressionFailures.Num());
+    }
 
     for (const FString& Failure : RegressionFailures)
     {
