@@ -4,6 +4,8 @@
 #include "GameFramework/Actor.h"
 #include "StrategyRiverBarrier.generated.h"
 
+class AStrategyUnit;
+
 UCLASS(Blueprintable)
 class STRATEGY1864_API AStrategyRiverBarrier : public AActor
 {
@@ -26,6 +28,18 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|River")
     float ExitClearanceCm = 3600.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|River")
+    int32 MaxConcurrentCrossers = 1;
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|River")
+    bool TryAcquireCrossing(AStrategyUnit* Unit);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|River")
+    void ReleaseCrossing(AStrategyUnit* Unit);
+
+    UFUNCTION(BlueprintPure, Category="Strategy|River")
+    bool IsCrossingOwner(const AStrategyUnit* Unit) const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|River")
     float SignedBankDistance(const FVector& WorldLocation) const;
@@ -50,4 +64,7 @@ public:
 
 private:
     FVector GetAcrossRiverNormal() const;
+
+    UPROPERTY()
+    TArray<TObjectPtr<AStrategyUnit>> ActiveCrossers;
 };
