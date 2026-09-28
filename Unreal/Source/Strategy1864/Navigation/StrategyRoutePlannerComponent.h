@@ -37,6 +37,9 @@ private:
         const FVector& EndLocation,
         TArray<FVector>& InOutPoints) const;
 
+    void ApplyTacticalTerrainElevation(
+        TArray<FVector>& InOutPoints) const;
+
     bool ValidateSlopeProfile(
         const FVector& StartLocation,
         const TArray<FVector>& Points,
