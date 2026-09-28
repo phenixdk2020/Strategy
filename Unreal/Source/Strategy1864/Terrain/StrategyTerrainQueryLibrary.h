@@ -4,6 +4,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "StrategyTerrainQueryLibrary.generated.h"
 
+class UWorld;
+
 UCLASS()
 class STRATEGY1864_API UStrategyTerrainQueryLibrary
     : public UBlueprintFunctionLibrary
@@ -47,7 +49,8 @@ public:
         const FVector& End,
         FVector& OutCrestPoint,
         float& OutExcessHeightCm,
-        int32 SampleCount = 32);
+        int32 SampleCount = 32,
+        float CrestToleranceCm = 120.0f);
 
     UFUNCTION(BlueprintPure, Category="Strategy|Terrain", meta=(WorldContext="WorldContextObject"))
     static bool IsPointInDeadGroundFrom(
