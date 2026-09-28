@@ -2,7 +2,37 @@
 
 UStrategyOrderComponent::UStrategyOrderComponent()
 {
-    PrimaryComponentTick.bCanEverTick = false;
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bStartWithTickEnabled = false;
+}
+
+void UStrategyOrderComponent::TickComponent(
+    float DeltaTime,
+    ELevelTick TickType,
+    FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    if (!bHasDelayedOrder)
+    {
+        SetComponentTickEnabled(false);
+        return;
+    }
+
+    DelayedOrderRemainingSeconds =
+        FMath::Max(0.0f, DelayedOrderRemainingSeconds - DeltaTime);
+
+    if (DelayedOrderRemainingSeconds > 0.0f)
+    {
+        return;
+    }
+
+    const FStrategyOrder OrderToIssue = DelayedOrder;
+    bHasDelayedOrder = false;
+    DelayedOrder = FStrategyOrder();
+    SetComponentTickEnabled(false);
+
+    SetOrder(OrderToIssue);
 }
 
 bool UStrategyOrderComponent::SetOrder(const FStrategyOrder& NewOrder)
@@ -11,6 +41,11 @@ bool UStrategyOrderComponent::SetOrder(const FStrategyOrder& NewOrder)
     {
         return false;
     }
+
+    bHasDelayedOrder = false;
+    DelayedOrder = FStrategyOrder();
+    DelayedOrderRemainingSeconds = 0.0f;
+    SetComponentTickEnabled(false);
 
     if (CurrentOrder.IsValidOrder() && IsPhysicallyExecuting())
     {
@@ -24,8 +59,34 @@ bool UStrategyOrderComponent::SetOrder(const FStrategyOrder& NewOrder)
     return true;
 }
 
+bool UStrategyOrderComponent::QueueDelayedOrder(
+    const FStrategyOrder& NewOrder,
+    float DelaySeconds)
+{
+    if (!NewOrder.IsValidOrder() || !CanReplaceCurrentOrder(NewOrder))
+    {
+        return false;
+    }
+
+    if (DelaySeconds <= KINDA_SMALL_NUMBER)
+    {
+        return SetOrder(NewOrder);
+    }
+
+    DelayedOrder = NewOrder;
+    DelayedOrderRemainingSeconds = DelaySeconds;
+    bHasDelayedOrder = true;
+    SetComponentTickEnabled(true);
+    return true;
+}
+
 void UStrategyOrderComponent::ClearOrder()
 {
+    bHasDelayedOrder = false;
+    DelayedOrder = FStrategyOrder();
+    DelayedOrderRemainingSeconds = 0.0f;
+    SetComponentTickEnabled(false);
+
     CurrentOrder = FStrategyOrder();
     SetExecutionState(EStrategyOrderExecutionState::Idle);
     OnOrderChanged.Broadcast(CurrentOrder);
