@@ -34,6 +34,15 @@ class UStrategyContactComponent;
 class UStrategyReconComponent;
 class UStrategyAutonomousBattleAIComponent;
 class UStrategyRoutRecoveryComponent;
+class UStrategyFireDisciplineComponent;
+class UStrategyStanceComponent;
+class UStrategyDirectionalCoverComponent;
+class UStrategyFieldworksComponent;
+class UStrategySkirmisherComponent;
+class UStrategySupplyComponent;
+class UStrategyDoctrineComponent;
+class UStrategyMissionConstraintsComponent;
+class UStrategyAITelemetryComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FStrategyCasualtyVisualEvent,
@@ -171,6 +180,33 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyRoutRecoveryComponent> RoutRecoveryComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyFireDisciplineComponent> FireDisciplineComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyStanceComponent> StanceComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyDirectionalCoverComponent> DirectionalCoverComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyFieldworksComponent> FieldworksComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategySkirmisherComponent> SkirmisherComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategySupplyComponent> SupplyComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyDoctrineComponent> DoctrineComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyMissionConstraintsComponent> MissionConstraintsComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyAITelemetryComponent> AITelemetryComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
