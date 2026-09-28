@@ -71,6 +71,7 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
         Plan.Points.Add(FarExit);
         Plan.BridgeExitPointIndex = Plan.Points.Num() - 1;
         Plan.bUsesBridge = true;
+        Plan.BridgeBarrier = River;
 
         AppendNavSegment(FarExit, EndLocation, Plan.Points);
         ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
