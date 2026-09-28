@@ -80,6 +80,8 @@ private:
     void SetEnemyDifficultyNormal();
     void SetEnemyDifficultyHard();
     void SetEnemyDifficultyByValue(uint8 DifficultyValue);
+    void ToggleFollowLatestProjectile();
+    void ToggleProjectileTrajectoryDebug();
     void SelectSingleUnderCursor();
     void SelectUnitsInScreenRectangle(const FVector2D& Start, const FVector2D& End);
     void ApplySelection(AStrategyUnit* Unit, bool bAdd, bool bRemove);
