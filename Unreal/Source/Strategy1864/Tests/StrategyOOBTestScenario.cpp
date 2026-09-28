@@ -197,6 +197,21 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             Unit->CommandComponent ? Unit->CommandComponent->OrganicSubordinates.Num() : 0,
             Unit->CommandComponent ? Unit->CommandComponent->CurrentSubordinates.Num() : 0);
     }
+
+    TArray<FString> RegressionFailures;
+    const bool bRegressionPass = RunRegressionChecklist(RegressionFailures);
+
+    UE_LOG(
+        LogTemp,
+        bRegressionPass ? Display : Error,
+        TEXT("PROJECT1864-QA: regression checklist %s (%d failures)"),
+        bRegressionPass ? TEXT("PASS") : TEXT("FAIL"),
+        RegressionFailures.Num());
+
+    for (const FString& Failure : RegressionFailures)
+    {
+        UE_LOG(LogTemp, Error, TEXT("PROJECT1864-QA: %s"), *Failure);
+    }
 }
 
 void AStrategyOOBTestScenario::ClearSpawnedUnits()
@@ -453,4 +468,94 @@ bool AStrategyOOBTestScenario::ValidateStableIdsAndHierarchy(
     }
 
     return OutErrors.Num() == 0;
+}
+
+
+bool AStrategyOOBTestScenario::RunRegressionChecklist(
+    TArray<FString>& OutFailures) const
+{
+    OutFailures.Reset();
+
+    TArray<FString> HierarchyErrors;
+    if (!ValidateStableIdsAndHierarchy(HierarchyErrors))
+    {
+        OutFailures.Append(HierarchyErrors);
+    }
+
+    const int32 ExpectedCount =
+        13 +
+        (bSpawnCavalryQA ? 2 : 0) +
+        (bSpawnEnemyQAUnits ? 2 : 0);
+
+    int32 ValidCount = 0;
+    int32 EnemySelectableCount = 0;
+    int32 DanishCavalryCount = 0;
+    bool bFoundDragoon = false;
+
+    for (AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        if (!IsValid(Unit))
+        {
+            continue;
+        }
+
+        ++ValidCount;
+
+        if (Unit->Side == EStrategySide::Prussia &&
+            Unit->bPlayerControllable)
+        {
+            ++EnemySelectableCount;
+        }
+
+        if (Unit->Side == EStrategySide::Denmark &&
+            Unit->Echelon == EStrategyEchelon::Cavalry)
+        {
+            ++DanishCavalryCount;
+
+            const ACavalryUnit* Cavalry = Cast<ACavalryUnit>(Unit);
+            if (Cavalry &&
+                Cavalry->DragoonComponent &&
+                Cavalry->DragoonComponent->Role == EStrategyCavalryRole::Dragoon)
+            {
+                bFoundDragoon = true;
+            }
+        }
+    }
+
+    if (ValidCount != ExpectedCount)
+    {
+        OutFailures.Add(
+            FString::Printf(
+                TEXT("Expected %d strategy entities, found %d."),
+                ExpectedCount,
+                ValidCount));
+    }
+
+    if (EnemySelectableCount > 0)
+    {
+        OutFailures.Add(
+            FString::Printf(
+                TEXT("%d Prussian QA units are incorrectly player-controllable."),
+                EnemySelectableCount));
+    }
+
+    if (bSpawnCavalryQA && DanishCavalryCount != 2)
+    {
+        OutFailures.Add(
+            FString::Printf(
+                TEXT("Expected 2 Danish cavalry units, found %d."),
+                DanishCavalryCount));
+    }
+
+    if (bSpawnCavalryQA && !bFoundDragoon)
+    {
+        OutFailures.Add(TEXT("Dragoon QA unit was not configured."));
+    }
+
+    if (bSpawnRiverQA && !IsValid(SpawnedRiverBarrier))
+    {
+        OutFailures.Add(TEXT("River QA barrier was not spawned."));
+    }
+
+    return OutFailures.Num() == 0;
 }
