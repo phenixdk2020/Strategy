@@ -20,6 +20,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Visibility")
     float TargetHeightCm = 120.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Visibility")
+    float MinimumSmokeTransmissionForLOS = 0.20f;
+
     UFUNCTION(BlueprintPure, Category="Strategy|Visibility")
     bool HasLineOfSightTo(const AStrategyUnit* Target) const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Visibility")
+    float GetSmokeTransmissionTo(const AStrategyUnit* Target) const;
 };
