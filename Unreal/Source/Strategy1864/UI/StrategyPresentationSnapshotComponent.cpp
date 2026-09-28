@@ -13,6 +13,7 @@
 #include "../Artillery/StrategyArtilleryFireMissionComponent.h"
 #include "../Logistics/StrategySupplyWagonUnit.h"
 #include "../Logistics/StrategySupplyCargoComponent.h"
+#include "../Terrain/StrategyTerrainAwarenessComponent.h"
 
 UStrategyPresentationSnapshotComponent::UStrategyPresentationSnapshotComponent()
 {
@@ -109,6 +110,19 @@ UStrategyPresentationSnapshotComponent::BuildSnapshot() const
     {
         Snapshot.AmmunitionRounds =
             Unit->CombatComponent->AmmunitionRounds;
+    }
+
+    if (Unit->TerrainAwarenessComponent)
+    {
+        Snapshot.TerrainGroundZ =
+            Unit->TerrainAwarenessComponent->GetGroundZ();
+
+        Snapshot.TerrainLocalSlopeDegrees =
+            Unit->TerrainAwarenessComponent->GetLocalSlopeDegrees();
+
+        Snapshot.bTerrainNearCrest =
+            Unit->TerrainAwarenessComponent->IsNearCrestRelativeTo(
+                FVector::ZeroVector);
     }
 
     if (const AStrategyArtilleryBatteryUnit* Battery =
