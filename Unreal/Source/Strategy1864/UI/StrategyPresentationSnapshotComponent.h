@@ -103,6 +103,18 @@ struct FStrategyUnitPresentationSnapshot
     FString ArtilleryOwnershipState;
 
     UPROPERTY(BlueprintReadOnly)
+    int32 ActiveProjectilePresentations = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 ProjectileHistoryCount = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 LastProjectileShotSerial = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    FVector LastProjectileImpact = FVector::ZeroVector;
+
+    UPROPERTY(BlueprintReadOnly)
     int32 SupplySmallArmsRounds = 0;
 
     UPROPERTY(BlueprintReadOnly)
