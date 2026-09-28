@@ -130,3 +130,22 @@ Planned functional artillery core:
 - Artillery ammunition-family compatibility.
 - Shared OOB snapshot fields for supply cargo/mobility.
 - QA chain: low-ammo Danish battery + physical Danish ammo wagon.
+
+
+## v00.02.61 tactical terrain additions
+
+- Analytic tactical Hill/Ridge/Depression feature actors.
+- Combined physical + tactical effective ground elevation.
+- Shared local slope query.
+- Sampled terrain-profile LOS occlusion.
+- Crest and dead-ground detection.
+- Unit high-ground/reverse-slope/crest awareness.
+- Terrain-aware unit and ground-location LOS.
+- Elevation-sensitive contact awareness.
+- Crest/reverse-slope fire masking.
+- Route terrain projection and no-NavMesh terrain sampling.
+- Shared artillery deployment slope.
+- Artillery position evaluation, candidate generation and best-position search.
+- QA battery hill, central ridge and depression.
+- QA units projected to tactical terrain.
+- Shared terrain diagnostics in presentation snapshots.
