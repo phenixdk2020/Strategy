@@ -17,6 +17,7 @@
 #include "../Command/StrategyOOBStatusComponent.h"
 #include "../UI/StrategySemanticZoomComponent.h"
 #include "../UI/StrategyWorldDebugComponent.h"
+#include "../UI/StrategyPresentationSnapshotComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -55,6 +56,8 @@ AStrategyUnit::AStrategyUnit()
     OOBStatusComponent = CreateDefaultSubobject<UStrategyOOBStatusComponent>(TEXT("OOBStatusComponent"));
     SemanticZoomComponent = CreateDefaultSubobject<UStrategySemanticZoomComponent>(TEXT("SemanticZoomComponent"));
     WorldDebugComponent = CreateDefaultSubobject<UStrategyWorldDebugComponent>(TEXT("WorldDebugComponent"));
+    PresentationSnapshotComponent =
+        CreateDefaultSubobject<UStrategyPresentationSnapshotComponent>(TEXT("PresentationSnapshotComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
