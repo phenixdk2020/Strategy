@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.55**  
+**Aktuel designbaseline: v00.02.56**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
@@ -10,6 +10,8 @@ Projektets centrale intake-log for besluttede men endnu ikke implementerede funk
 ## Engine-port beslutning — Unreal Engine
 
 Projektet har fra 2026-09-27 et parallelt Unreal Engine-portspor på branchen `unreal-port`. Unity `channel-test` forbliver den operative reference for den eksisterende battle-prototype, indtil Unreal-versionen har opnået dokumenteret feature/QA-paritet. Porten er en implementeringsændring, ikke et redesign: eksisterende command hierarchy, order authority, formationsregler, LOS/range/cones, river/bridge-routing, cavalry behaviour, OOB/HUD-semantik og historiske data skal bevares. Permanent Unreal-kode skal bruge stabile domænenavne frem for Unity-prototypens revisionssuffixer. Se [UNREAL-MIGRATION-PLAN.md](UNREAL-MIGRATION-PLAN.md) og [UNREAL-PORTING-INVENTORY.md](UNREAL-PORTING-INVENTORY.md).
+
+**Unreal formation/navigation/combat batch (v00.02.56):** Formation changes har nu en eksplicit Reforming-transition, der pauser men ikke erstatter aktiv mission/route; efter reform fortsætter samme ordre. Final-slot completion venter desuden på fysisk committed-facing rotation inden for 2°. 190-mands Line frontage valideres mod ca. 48 m, og moving companies har lokal sidestep/deconfliction omkring 68 m reserved center spacing. River routes har nu autoritativ valid/invalid-state: target/start i hard water afvises, og movement må ikke fallback'e direkte gennem floden. Nyt mål under aktiv bridge transaction bevarer crossing til exit og retargeter først derefter. Combat sender presentation events kun fra rigtige volleys og positive authoritative casualties. Reforming units kan ikke skyde, Square ejer sin outline-visualisering, og Square volley-event kommer fra den faktiske firing face. 1:1 soldier interpolation og Niagara-binding er stadig eksplicit pending. Hele batchen afventer UE 5.8.3 build/runtime QA.
 
 **Unreal næste 10 blokke (v00.02.55):** Command hierarchy er gjort robust mod cycles og organisk re-parenting respekterer temporary tactical attachment. QA-fixturen bruger nu deterministisk combat seed, validerer StableUnitId/backlinks/cycles og kører automatisk regression checklist. Scenario-state kan afgøre DenmarkVictory/OppositionVictory/Draw, og F5 bygger testen deterministisk igen. RYK FREM, TILBAGETRÆK og SAML er nu recursive coordinated formation missions gennem Division → Brigade → Regiment → Major → Company; command-parent HQ bliver bag formationen og løber ikke selv mod objective. Et fælles OOB/hover snapshot eksponerer identity/NATO, strength/loss, morale/cohesion/fatigue, AI, ordre/execution, formation, OrganicParent/CurrentCommandParent, attachment, ammo og cavalry/Dragon mounted state. Hele batchen er code-implemented og afventer samlet UE 5.8.3 build/runtime QA.
 
