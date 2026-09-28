@@ -79,8 +79,8 @@
 |---|---:|---|---|---|---|---|
 | UE-P050 | P0 | Order component/core | F18+ | `UStrategyOrderComponent` | IMPLEMENTED | One authoritative current order + execution state per command entity. |
 | UE-P051 | P0 | MOVE | Unity movement baseline | Order executor | IMPLEMENTED | Selected command entity moves to assigned point. |
-| UE-P052 | P0 | ANGRIB HER | F18/F29E/F30S | Attack executor | SCAFFOLD / PHYSICAL CORE IMPLEMENTED | Finite attack mission reaches assigned attack slots and does not chase forever. |
-| UE-P053 | P0 | FORSVAR HER | F29Y/F30U | Defend executor | SCAFFOLD / PHYSICAL CORE IMPLEMENTED | Defensive mission owns formation/HQ geometry until replaced. |
+| UE-P052 | P0 | ANGRIB HER | F18/F29E/F30S | Attack executor | IMPLEMENTED CORE | Finite attack mission reaches assigned attack slots and does not chase forever. |
+| UE-P053 | P0 | FORSVAR HER | F29Y/F30U | Defend executor | IMPLEMENTED CORE | Defensive mission owns formation/HQ geometry until replaced. |
 | UE-P054 | P0 | HOLD/STOP | Command HUD baseline | Hold executor | IMPLEMENTED | Movement cancels/stops without corrupting standing state. |
 | UE-P055 | P0 | Click-drag facing | F30P | Order target/facing data | IMPLEMENTED CORE | Player-committed facing is mission data before slot generation. |
 | UE-P056 | P0 | Direct player authority | F18 | Authority model | IMPLEMENTED | Direct order overrides inherited officer AI for its scope. |
@@ -122,10 +122,10 @@
 | UE-P093 | P0 | Same-bank bank-follow | F30W | River route planner | IMPLEMENTED CORE | Straight chord crossing a river bend does not cause cross-and-return bridge trip. |
 | UE-P094 | P0 | Bridge transaction | F9/F30H | Crossing state machine | IMPLEMENTED CORE | NearBank→FarBank→ExitBank→Direct persists until crossing completes. |
 | UE-P095 | P0 | Goal changes during bridge | F30H | Crossing state machine | IMPLEMENTED CORE | New goal updates final destination but does not cancel active bridge transaction. |
-| UE-P096 | P1 | Building avoidance | Navigation baseline | Nav obstacles | SCAFFOLD VIA NAVMESH | Formations route around blocking buildings. |
-| UE-P097 | P1 | Fence/obstacle handling | F29P/design | Nav/formation avoidance | BACKLOG | Obstacles affect movement without destroying formation authority. |
+| UE-P096 | P1 | Building avoidance | Navigation baseline | Nav obstacles | IMPLEMENTED CORE | Formations route around blocking buildings. |
+| UE-P097 | P1 | Fence/obstacle handling | F29P/design | Nav/formation avoidance | IMPLEMENTED CORE | Obstacles affect movement without destroying formation authority. |
 | UE-P098 | P1 | Bridge congestion/defile | F30H/X | Formation path policy | IMPLEMENTED CAVALRY CORE | Narrow crossing uses controlled narrow geometry and restores normal formation after exit. |
-| UE-P099 | P2 | Expanded battlefield/hills | B-290 | Unreal Landscape | BACKLOG | Tactical QA map includes usable elevation/LOS test terrain. |
+| UE-P099 | P2 | Expanded battlefield/hills | B-290 | Unreal Landscape | TERRAIN MOVEMENT CORE / LEVEL ASSET PENDING | Tactical QA map includes usable elevation/LOS test terrain. |
 
 # 7. Fire control, LOS, combat and casualties — U06
 
@@ -177,14 +177,14 @@
 | UE-P159 | P1 | HQ follow | F30P | HQ movement | IMPLEMENTED CORE | Major/Regiment/Brigade/Division HQs follow documented rear geometry. |
 | UE-P160 | P1 | HQ depth conflict prevention | F30U | HQ goal authority | IMPLEMENTED ARCHITECTURE CORE | Defend mission owner prevents competing HQ-depth goal writers. |
 | UE-P161 | P1 | Command zones | F30P | Command visualization/component | IMPLEMENTED QA CORE | Selected HQ shows correct inner/outer command bands. |
-| UE-P162 | P2 | Command-zone gameplay effects | design B-061/F30P | Command simulation | DEFERRED | Order delay/coordination effects implemented after parity presentation. |
-| UE-P163 | P2 | Officer stats/personality | B-170/B-190 | AI decision data | BACKLOG | Shared player-delegated/enemy AI decision core uses officer data. |
+| UE-P162 | P2 | Command-zone gameplay effects | design B-061/F30P | Command simulation | IMPLEMENTED CORE | Order delay/coordination effects implemented after parity presentation. |
+| UE-P163 | P2 | Officer stats/personality | B-170/B-190 | AI decision data | IMPLEMENTED DATA CORE | Shared player-delegated/enemy AI decision core uses officer data. |
 
 # 10. Cavalry and dragons — U08
 
 | ID | Pri | Feature | Unity/reference | Unreal target | Status | Exit / parity criterion |
 |---|---:|---|---|---|---|---|
-| UE-P180 | P0 | Cavalry base actor | F30 | `ACavalryUnit` | SCAFFOLD | Mounted tactical entity has strength/order/command state. |
+| UE-P180 | P0 | Cavalry base actor | F30 | `ACavalryUnit` | IMPLEMENTED CORE | Mounted tactical entity has strength/order/command state. |
 | UE-P181 | P1 | Mounted cavalry movement | F30 | Cavalry movement | IMPLEMENTED CORE | Mounted unit moves as formation with appropriate speed/state. |
 | UE-P182 | P1 | 4-rank Line | F30H | Formation generator | IMPLEMENTED CORE | Normal mounted Line physically uses four ranks. |
 | UE-P183 | P1 | 4-rank Charge | F30H | Formation generator | GEOMETRY CORE VIA CAVALRY LINE | Charge line uses four ranks. |
@@ -192,14 +192,14 @@
 | UE-P185 | P1 | 2-abreast bridge/defile | F30H/X | Formation policy | GEOMETRY CORE IMPLEMENTED | Narrow two-abreast geometry exists only near/on crossing. |
 | UE-P186 | P1 | 36 m narrow-mode approach | F30X | Bridge formation policy | IMPLEMENTED CORE | Opposite-bank mission does not trigger two-abreast hundreds of metres early. |
 | UE-P187 | P1 | Restore pre-bridge formation | F30H/X | Crossing state | DEFILE RESTORE CORE IMPLEMENTED | Formation used before narrow mode is restored after exit clearance. |
-| UE-P188 | P1 | Physical cavalry reform | F30H | Formation movement | BACKLOG | Riders physically reform; charge speed respects incomplete reform. |
+| UE-P188 | P1 | Physical cavalry reform | F30H | Formation movement | REFORM/CHARGE-GATE CORE / 1:1 RIDER MOTION PENDING | Riders physically reform; charge speed respects incomplete reform. |
 | UE-P189 | P1 | Cavalry charge/contact | F30/F30N | Cavalry combat | IMPLEMENTED CORE | Charge executes to valid contact without passing through enemy formation. |
 | UE-P190 | P1 | Defensive cavalry reserve | F30S | Higher mission planner | IMPLEMENTED CORE | Attached CAV stays behind/outside supported battalion (~150m rear/~45m lateral QA baseline). |
 | UE-P191 | P1 | Temporary attack attachment | F30M | Command-parent state | IMPLEMENTED CORE | Available CAV task-attaches to attacking Major A/B without changing OrganicParent. |
 | UE-P192 | P1 | Travel-cost pairing | F30M | Task allocator | IMPLEMENTED CORE | Two-CAV/two-battalion allocation minimises crossing/travel cost. |
 | UE-P193 | P1 | Return to prior command parent | F30M | Command-parent state | IMPLEMENTED CORE | CAV returns to previous parent/reserve after attack mission ends. |
-| UE-P194 | P2 | Cavalry screen/opportunity AI | F30N | Cavalry AI | BACKLOG | CAV screens/repositions without unjustified autonomous charge. |
-| UE-P195 | P2 | SPEJD HER | F30Q | Recon order | DEFERRED | Enabled only after true FOG/contact subsystem exists. |
+| UE-P194 | P2 | Cavalry screen/opportunity AI | F30N | Cavalry AI | IMPLEMENTED CORE | CAV screens/repositions without unjustified autonomous charge. |
+| UE-P195 | P2 | SPEJD HER | F30Q | Recon order | IMPLEMENTED CORE | Enabled only after true FOG/contact subsystem exists. |
 | UE-P196 | P2 | Dragon dismount | F30J/S | Cavalry specialization | IMPLEMENTED CORE | Mounted Dragon splits into combat group + horse park/holders. |
 | UE-P197 | P2 | Horse-holder anchor | F30J/S | Dismounted state | IMPLEMENTED DATA CORE | Horse holders/horses stay at dismount anchor while combat group moves. |
 | UE-P198 | P2 | STIG OP return/remount | F30S | Remount task | IMPLEMENTED CORE | Away-from-horses remount becomes return task then auto-remount. |
@@ -220,14 +220,14 @@
 | UE-P227 | P1 | OOB panel | F29Q/F30D | UMG tree/list | DATA/API CORE / UMG PENDING | Full Division→CAV hierarchy is scrollable/selectable. |
 | UE-P228 | P1 | OOB AI status | F30W | UMG | DATA/QA HUD CORE | All echelons show consistent ON/OFF. |
 | UE-P229 | P1 | OOB attachment state | F30D/M | UMG | IMPLEMENTED DATA CORE | Organic/current/task attachment is readable. |
-| UE-P230 | P1 | OOB cavalry drag/drop | F30D | UMG drag/drop | BACKLOG | Valid tactical attachment can be changed via OOB without corrupting OrganicParent. |
+| UE-P230 | P1 | OOB cavalry drag/drop | F30D | UMG drag/drop | ATTACHMENT API CORE / UMG PENDING | Valid tactical attachment can be changed via OOB without corrupting OrganicParent. |
 | UE-P231 | P1 | Semantic zoom states | F29D | Presentation subsystem | IMPLEMENTED CORE | Close/Medium/Operational/Strategic presentation changes without simulation changes. |
 | UE-P232 | P1 | HQ semantic counters | F29D/Q | UMG/world overlay | IMPLEMENTED CORE | Major/Regiment/Brigade/Division counters appear at correct zoom importance. |
 | UE-P233 | P1 | Company semantic counters | F29D | UMG/world overlay | IMPLEMENTED CORE | Operational/strategic view presents company state. |
 | UE-P234 | P1 | Cavalry semantic counters | F30H | UMG/world overlay | IMPLEMENTED CORE | Cavalry gets appropriate counter/name/echelon. |
 | UE-P235 | P1 | NATO echelon symbols | F29D/F30H | Presentation data | IMPLEMENTED CORE | Company I, Battalion II, Regiment III, Brigade X, Division XX. |
 | UE-P236 | P1 | Strategic mesh suppression | F29D | Presentation LOD | IMPLEMENTED CORE | Far zoom hides tactical meshes while simulation/colliders/command state continue. |
-| UE-P237 | P1 | Selected HQ command circles | F30P | World visualization | BACKLOG | Only selected HQ level exposes detailed command range rings. |
+| UE-P237 | P1 | Selected HQ command circles | F30P | World visualization | IMPLEMENTED QA CORE | Only selected HQ level exposes detailed command range rings. |
 | UE-P238 | P1 | Route/destination visuals | F30M/O | World visualization | IMPLEMENTED QA CORE | Higher selection exposes subordinate authoritative routes/slots without duplicate writers. |
 | UE-P239 | P1 | Hover info infantry | battle UI baseline | Hover subsystem | IMPLEMENTED DATA CORE | Unit type/strength/loss/morale/order data appears. |
 | UE-P240 | P1 | Hover info cavalry | F30S | Hover subsystem | IMPLEMENTED DATA CORE | CAV hover includes mounted state, formation, AI/order, parent and Dragon fire data. |
@@ -478,3 +478,41 @@ Coordinated formation missions (Attack/Defend/Advance/Withdraw/Assemble) are own
 10. **Square visual/fire ownership:** Square owns its outline presentation; reforming units are ineligible to fire, preventing formation phantom volleys. Square volley visual origin is projected to the actual firing face.
 
 All ten blocks remain UE 5.8.3 build/runtime QA pending. Physical 1:1 soldier movement and Niagara asset binding are intentionally not claimed as complete.
+
+
+## v00.02.57 — 23-block functionality-first batch
+
+Graphics/assets are deliberately deferred. This batch focuses on gameplay authority and simulation:
+
+1. **Finite Attack anchor:** ANGRIB HER stores a fixed mission anchor/facing and remains finite; no target-actor chasing is introduced.
+2. **Persistent Defend anchor:** leaf executors reassert the same FORSVAR HER anchor/facing after temporary displacement without creating a replacement mission. Higher HQ geometry remains owned by HQ-follow.
+3. **Generic navigation obstacle actor:** buildings, fences, fieldworks and generic hard obstacles have explicit bounds/clearance data.
+4. **Building/fence detour:** route post-processing inserts bounded detour points for explicit static obstacles while keeping formation-level route authority.
+5. **Slope validation:** routes above the configured traversable slope are rejected rather than silently accepted.
+6. **Officer profile data:** Leadership, Initiative, StaffQuality, Aggression and Caution are now shared officer data.
+7. **Command-zone order delay:** subordinate orders can be queued with delay based on inner/outer/outside command range plus parent command efficiency. Delayed child orders count as active execution, so parents cannot complete early.
+8. **Fatigue accumulation/recovery:** movement, reform and combat build fatigue; rest recovers it.
+9. **Experience/fatigue combat effects:** experience/fatigue modify accuracy and morale-shock susceptibility.
+10. **Cavalry base gameplay defaults:** mounted speed, cavalry formation defaults, strength fallback and mounted fire-range baseline are self-contained on ACavalryUnit.
+11. **Cavalry reform charge gate:** CHARGE cannot begin while cavalry formation transition is incomplete.
+12. **Cavalry screen AI:** AI cavalry can screen/reposition relative to parent and visible enemy but never auto-charge and never replaces an active/standing mission.
+13. **Contact memory:** units maintain current-visible and last-known enemy contacts with a configurable forgetting horizon.
+14. **FOG/contact fire gate:** fire eligibility now requires current contact in addition to LOS, range and cone/sector.
+15. **SPEJD HER recon state machine:** ScoutHere now runs Seek -> Recon -> Contact -> Screen -> Report / LastKnown and completes after recon work, not simply on arrival.
+16. **OOB tactical attachment API:** cavalry can be task-attached to a valid same-side HQ through CurrentCommandParent and restored to OrganicParent; active DirectPlayer movement is protected.
+17. **Bridge congestion/queue:** river barriers own crossing occupancy; units wait at the approach when the crossing is occupied and release the slot after exit/abort.
+18. **Autonomous opposition AI:** rootless Prussian/Austrian/enemy companies with AI enabled advance to a finite engagement position based on current contact and selected fire range. It yields to hierarchy and standing intent.
+19. **Routed fallback:** routed units clear normal mission authority and withdraw away from the nearest enemy while remaining Routed.
+20. **Rally recovery:** routed units recover morale/cohesion only when safely separated; Rally thresholds return them to Ready.
+21. **Ammo exhaustion/resupply:** combat exposes authoritative out-of-ammo state and bounded ammunition resupply.
+22. **Terrain movement cost/elevation:** fatigue and uphill/downhill modifiers affect movement speed, and movement now follows waypoint Z instead of remaining flat in XY.
+23. **Expanded regression gate:** QA validates new gameplay-core components, command-delay sanity, ammunition sanity, cavalry screen/Dragoon setup, river fixture and explicit navigation-obstacle fixture.
+
+Additional fixes in the same pass:
+- routed fallback state is preserved through ClearOrder/Withdraw/arrival until rally;
+- bridge ownership is released before route-plan reset;
+- static obstacle post-processing cannot shift explicit bridge transaction indexes;
+- screen AI cannot overwrite active missions;
+- autonomous opposition AI cannot override a command parent or standing intent.
+
+All items remain **UE 5.8.3 build/runtime QA pending** until compiled and exercised in editor. 1:1 soldier/rider animation, skeletal assets, Niagara, UMG polish and other graphics remain intentionally deferred.
