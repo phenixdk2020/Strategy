@@ -37,6 +37,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Movement")
     float FinalFacingToleranceDegrees = 2.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Movement")
+    float MinimumUphillSpeedMultiplier = 0.60f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Movement")
+    float DownhillSpeedMultiplier = 0.90f;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Movement")
     void StopMovement();
 
