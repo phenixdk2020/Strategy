@@ -2,6 +2,8 @@
 
 #include "../Combat/StrategyCombatComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "../Artillery/StrategyArtilleryBatteryUnit.h"
+#include "../Artillery/StrategyArtilleryAmmunitionComponent.h"
 #include "EngineUtils.h"
 
 UStrategySupplyComponent::UStrategySupplyComponent()
@@ -29,13 +31,34 @@ void UStrategySupplyComponent::TickComponent(
 
     if (!bActsAsSupplySource)
     {
-        if (OwnerUnit->CombatComponent &&
-            OwnerUnit->CombatComponent->MaxAmmunitionRounds > 0)
+        float Fraction = 1.0f;
+        bool bHasAmmoStore = false;
+
+        if (const AStrategyArtilleryBatteryUnit* Battery =
+            Cast<AStrategyArtilleryBatteryUnit>(OwnerUnit))
         {
-            const float Fraction =
+            if (Battery->ArtilleryAmmunitionComponent &&
+                Battery->ArtilleryAmmunitionComponent->MaximumTotalRounds > 0)
+            {
+                Fraction =
+                    static_cast<float>(
+                        Battery->ArtilleryAmmunitionComponent->GetTotalRounds()) /
+                    static_cast<float>(
+                        Battery->ArtilleryAmmunitionComponent->MaximumTotalRounds);
+                bHasAmmoStore = true;
+            }
+        }
+        else if (OwnerUnit->CombatComponent &&
+                 OwnerUnit->CombatComponent->MaxAmmunitionRounds > 0)
+        {
+            Fraction =
                 static_cast<float>(OwnerUnit->CombatComponent->AmmunitionRounds) /
                 static_cast<float>(OwnerUnit->CombatComponent->MaxAmmunitionRounds);
+            bHasAmmoStore = true;
+        }
 
+        if (bHasAmmoStore)
+        {
             if (Fraction <= AutomaticRequestThresholdFraction)
             {
                 bRequestingResupply = true;
@@ -96,7 +119,6 @@ AStrategyUnit* UStrategySupplyComponent::FindBestReceiver() const
             Candidate->Side != OwnerUnit->Side ||
             !Candidate->SupplyComponent ||
             !Candidate->SupplyComponent->bRequestingResupply ||
-            !Candidate->CombatComponent ||
             Candidate->UnitState == EStrategyUnitState::Destroyed)
         {
             continue;
@@ -109,12 +131,43 @@ AStrategyUnit* UStrategySupplyComponent::FindBestReceiver() const
             continue;
         }
 
-        const int32 MaxAmmo =
-            FMath::Max(1, Candidate->CombatComponent->MaxAmmunitionRounds);
+        float AmmoFraction = 1.0f;
 
-        const float AmmoFraction =
-            static_cast<float>(Candidate->CombatComponent->AmmunitionRounds) /
-            static_cast<float>(MaxAmmo);
+        if (const AStrategyArtilleryBatteryUnit* Battery =
+            Cast<AStrategyArtilleryBatteryUnit>(Candidate))
+        {
+            if (!Battery->ArtilleryAmmunitionComponent)
+            {
+                continue;
+            }
+
+            const int32 MaxAmmo =
+                FMath::Max(
+                    1,
+                    Battery->ArtilleryAmmunitionComponent->MaximumTotalRounds);
+
+            AmmoFraction =
+                static_cast<float>(
+                    Battery->ArtilleryAmmunitionComponent->GetTotalRounds()) /
+                static_cast<float>(MaxAmmo);
+        }
+        else
+        {
+            if (!Candidate->CombatComponent ||
+                Candidate->CombatComponent->MaxAmmunitionRounds <= 0)
+            {
+                continue;
+            }
+
+            const int32 MaxAmmo =
+                FMath::Max(
+                    1,
+                    Candidate->CombatComponent->MaxAmmunitionRounds);
+
+            AmmoFraction =
+                static_cast<float>(Candidate->CombatComponent->AmmunitionRounds) /
+                static_cast<float>(MaxAmmo);
+        }
 
         if (AmmoFraction < BestAmmoFraction)
         {
@@ -131,8 +184,53 @@ void UStrategySupplyComponent::TransferTo(
     float DeltaTime)
 {
     if (!IsValid(Receiver) ||
-        !Receiver->CombatComponent ||
         StoredAmmunitionRounds <= 0)
+    {
+        return;
+    }
+
+    if (AStrategyArtilleryBatteryUnit* Battery =
+        Cast<AStrategyArtilleryBatteryUnit>(Receiver))
+    {
+        if (!Battery->ArtilleryAmmunitionComponent)
+        {
+            return;
+        }
+
+        const int32 Missing =
+            Battery->ArtilleryAmmunitionComponent->GetMissingRounds();
+
+        if (Missing <= 0)
+        {
+            if (Receiver->SupplyComponent)
+            {
+                Receiver->SupplyComponent->bRequestingResupply = false;
+            }
+            return;
+        }
+
+        const int32 Transfer =
+            FMath::Clamp(
+                FMath::CeilToInt(
+                    FMath::Max(1.0f, TransferRoundsPerSecond) * DeltaTime),
+                1,
+                FMath::Min(Missing, StoredAmmunitionRounds));
+
+        const int32 Added =
+            Battery->ArtilleryAmmunitionComponent->AddCompatibleMixedRounds(
+                Transfer);
+
+        StoredAmmunitionRounds -= Added;
+
+        if (Battery->ArtilleryAmmunitionComponent->GetMissingRounds() <= 0)
+        {
+            Receiver->SupplyComponent->bRequestingResupply = false;
+        }
+
+        return;
+    }
+
+    if (!Receiver->CombatComponent)
     {
         return;
     }
