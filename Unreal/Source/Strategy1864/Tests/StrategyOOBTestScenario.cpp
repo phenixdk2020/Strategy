@@ -48,6 +48,15 @@
 #include "../Artillery/StrategyArtilleryProjectilePresentationComponent.h"
 #include "../Artillery/StrategyArtilleryTrajectoryLibrary.h"
 #include "../Artillery/StrategyArtilleryProjectileTypes.h"
+#include "../Artillery/StrategyArtilleryCrewAnimationComponent.h"
+#include "../Visual/StrategyUniformAppearanceComponent.h"
+#include "../Visual/StrategyUniformPresetLibrary.h"
+#include "../Visual/StrategyHumanAnimationStateComponent.h"
+#include "../Visual/StrategyEquipmentVisualComponent.h"
+#include "../Visual/StrategyVisualCompatibilityComponent.h"
+#include "../Visual/StrategyAnimationManifestLibrary.h"
+#include "../Visual/StrategyHorseAnimationStateComponent.h"
+#include "../Visual/StrategyMountedAnimationSyncComponent.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -258,6 +267,72 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             Origin + FVector(22000.0f, 3500.0f, 0.0f),
             nullptr,
             static_cast<uint8>(EStrategySide::Prussia));
+    }
+
+    for (AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        if (!IsValid(Unit))
+        {
+            continue;
+        }
+
+        if (Unit->UniformAppearanceComponent)
+        {
+            FStrategyUniformPreset Preset =
+                UStrategyUniformPresetLibrary::MakeNeutralQAPreset();
+
+            if (Unit->Echelon == EStrategyEchelon::Artillery)
+            {
+                Preset =
+                    UStrategyUniformPresetLibrary::MakeArtilleryQAPreset();
+            }
+            else if (Unit->Side == EStrategySide::Denmark)
+            {
+                Preset =
+                    UStrategyUniformPresetLibrary::MakeDanishQAPreset();
+            }
+            else if (Unit->Side == EStrategySide::Prussia)
+            {
+                Preset =
+                    UStrategyUniformPresetLibrary::MakePrussianQAPreset();
+            }
+
+            Unit->UniformAppearanceComponent->SetPreset(
+                Preset,
+                true);
+        }
+
+        if (Unit->EquipmentVisualComponent)
+        {
+            if (Unit->Echelon == EStrategyEchelon::Company)
+            {
+                Unit->EquipmentVisualComponent->PrimaryWeaponId =
+                    TEXT("RIFLE_1864");
+            }
+            else if (Unit->Echelon == EStrategyEchelon::Cavalry)
+            {
+                Unit->EquipmentVisualComponent->PrimaryWeaponId =
+                    TEXT("SABRE_1864");
+            }
+            else if (Unit->Echelon == EStrategyEchelon::Artillery)
+            {
+                Unit->EquipmentVisualComponent->PrimaryWeaponId =
+                    TEXT("ARTILLERY_TOOL");
+            }
+        }
+
+        if (Unit->StableUnitId == FName(TEXT("PR-QA-C2")) &&
+            Unit->UniformAppearanceComponent)
+        {
+            FStrategyUniformOverrides Overrides;
+            Overrides.bOverrideAccent = true;
+            Overrides.Accent =
+                FLinearColor(0.15f, 0.65f, 0.85f, 1.0f);
+
+            Unit->UniformAppearanceComponent->SetOverrides(
+                Overrides,
+                true);
+        }
     }
 
     for (AStrategyUnit* Unit : SpawnedUnitObjects)
@@ -987,12 +1062,42 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
             !Unit->AIDifficultyComponent ||
             !Unit->AITelemetryComponent ||
             !Unit->MissionConstraintsComponent ||
-            !Unit->TerrainAwarenessComponent)
+            !Unit->TerrainAwarenessComponent ||
+            !Unit->UniformAppearanceComponent ||
+            !Unit->HumanAnimationStateComponent ||
+            !Unit->EquipmentVisualComponent ||
+            !Unit->VisualCompatibilityComponent)
         {
             OutFailures.Add(
                 FString::Printf(
                     TEXT("%s is missing one or more gameplay-core components."),
                     *Unit->StableUnitId.ToString()));
+        }
+
+        if (Unit->UniformAppearanceComponent &&
+            Unit->VisualCompatibilityComponent)
+        {
+            FString VisualFailure;
+
+            if (!Unit->VisualCompatibilityComponent->ValidateProfile(
+                    Unit->UniformAppearanceComponent->VisualProfile,
+                    VisualFailure))
+            {
+                OutFailures.Add(
+                    FString::Printf(
+                        TEXT("%s visual compatibility failed: %s"),
+                        *Unit->StableUnitId.ToString(),
+                        *VisualFailure));
+            }
+
+            if (Unit->UniformAppearanceComponent
+                    ->BasePreset.PresetId.IsNone())
+            {
+                OutFailures.Add(
+                    FString::Printf(
+                        TEXT("%s has no uniform preset id."),
+                        *Unit->StableUnitId.ToString()));
+            }
         }
 
         const float ExpectedTerrainZ =
@@ -1047,7 +1152,8 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                 !Battery->ArtilleryTraverseComponent ||
                 !Battery->ArtilleryRepairComponent ||
                 !Battery->ArtilleryPositioningComponent ||
-                !Battery->ProjectilePresentationComponent)
+                !Battery->ProjectilePresentationComponent ||
+                !Battery->CrewAnimationComponent)
             {
                 OutFailures.Add(
                     TEXT("Artillery QA battery is missing one or more artillery-core components."));
@@ -1071,6 +1177,14 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                 if (!Battery->DeploymentComponent->IsDeployed())
                 {
                     OutFailures.Add(TEXT("Artillery QA battery did not start deployed."));
+                }
+
+                if (Battery->CrewAnimationComponent &&
+                    Battery->CrewAnimationComponent
+                        ->GetActiveCrewStationCount() <= 0)
+                {
+                    OutFailures.Add(
+                        TEXT("Artillery QA battery has no visual crew stations."));
                 }
             }
         }
@@ -1123,6 +1237,16 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
 
             const ACavalryUnit* Cavalry = Cast<ACavalryUnit>(Unit);
 
+            if (Cavalry &&
+                (!Cavalry->HorseAnimationStateComponent ||
+                 !Cavalry->MountedAnimationSyncComponent))
+            {
+                OutFailures.Add(
+                    FString::Printf(
+                        TEXT("%s cavalry visual horse/rider sync component is missing."),
+                        *Unit->StableUnitId.ToString()));
+            }
+
             if (Cavalry && !Cavalry->ScreenAIComponent)
             {
                 OutFailures.Add(
@@ -1137,6 +1261,44 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
             {
                 bFoundDragoon = true;
             }
+        }
+    }
+
+    const TArray<FName> CoreAnimations =
+        UStrategyAnimationManifestLibrary::GetCoreHumanAnimationNames();
+
+    const TArray<FName> ArtilleryAnimations =
+        UStrategyAnimationManifestLibrary::GetArtilleryCrewAnimationNames();
+
+    if (CoreAnimations.Num() < 30)
+    {
+        OutFailures.Add(
+            TEXT("Core human animation manifest is unexpectedly incomplete."));
+    }
+
+    if (ArtilleryAnimations.Num() < 30)
+    {
+        OutFailures.Add(
+            TEXT("Artillery crew animation manifest is unexpectedly incomplete."));
+    }
+
+    if (IsValid(QAClearEnemy) &&
+        QAClearEnemy->UniformAppearanceComponent)
+    {
+        const FStrategyUniformColors Colors =
+            QAClearEnemy->UniformAppearanceComponent
+                ->GetResolvedColors();
+
+        const FLinearColor ExpectedAccent(
+            0.15f,
+            0.65f,
+            0.85f,
+            1.0f);
+
+        if (!Colors.Accent.Equals(ExpectedAccent, 0.001f))
+        {
+            OutFailures.Add(
+                TEXT("Runtime uniform accent override did not resolve correctly."));
         }
     }
 
