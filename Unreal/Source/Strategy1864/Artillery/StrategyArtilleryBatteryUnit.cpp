@@ -112,13 +112,28 @@ float AStrategyArtilleryBatteryUnit::GetHorseMobilityFactor() const
         1.0f);
 }
 
+float AStrategyArtilleryBatteryUnit::GetTowedMobilityFactor() const
+{
+    const float DriverFactor =
+        DriversRequiredForFullMobility > 0
+        ? FMath::Clamp(
+            static_cast<float>(DriverStrength) /
+            static_cast<float>(DriversRequiredForFullMobility),
+            0.0f,
+            1.0f)
+        : 1.0f;
+
+    return FMath::Min(
+        GetHorseMobilityFactor(),
+        DriverFactor);
+}
+
 bool AStrategyArtilleryBatteryUnit::CanNormalMove() const
 {
     return OwnershipState == EStrategyArtilleryOwnershipState::Operational &&
         DeploymentComponent &&
         DeploymentComponent->IsLimbered() &&
-        GetHorseMobilityFactor() > 0.05f &&
-        DriverStrength > 0;
+        GetTowedMobilityFactor() > 0.05f;
 }
 
 bool AStrategyArtilleryBatteryUnit::CanFireBattery() const
