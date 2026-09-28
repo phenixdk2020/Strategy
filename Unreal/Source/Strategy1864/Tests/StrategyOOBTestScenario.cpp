@@ -18,6 +18,18 @@
 #include "../AI/StrategyAutonomousBattleAIComponent.h"
 #include "../AI/StrategyRoutRecoveryComponent.h"
 #include "../AI/StrategyCavalryScreenAIComponent.h"
+#include "../Combat/StrategyFireControlComponent.h"
+#include "../Combat/StrategyFireDisciplineComponent.h"
+#include "../Combat/StrategyStanceComponent.h"
+#include "../Combat/StrategyDirectionalCoverComponent.h"
+#include "../Combat/StrategyFieldworksComponent.h"
+#include "../Combat/StrategySkirmisherComponent.h"
+#include "../Logistics/StrategySupplyComponent.h"
+#include "../AI/StrategyDoctrineComponent.h"
+#include "../AI/StrategyAutonomyComponent.h"
+#include "../AI/StrategyAIDifficultyComponent.h"
+#include "../AI/StrategyAITelemetryComponent.h"
+#include "../AI/StrategyMissionConstraintsComponent.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -45,6 +57,14 @@ void AStrategyOOBTestScenario::BuildTestOOB()
         static_cast<uint8>(EStrategyHQLevel::Division),
         Origin + FVector(0.0f, 0.0f, 0.0f),
         nullptr);
+
+    if (Division && Division->SupplyComponent)
+    {
+        Division->SupplyComponent->bActsAsSupplySource = true;
+        Division->SupplyComponent->StoredAmmunitionRounds = 50000;
+        Division->SupplyComponent->MaxStoredAmmunitionRounds = 50000;
+        Division->SupplyComponent->ResupplyRadiusCm = 30000.0f;
+    }
 
     AStrategyHQUnit* Brigade = SpawnHQ(
         TEXT("DK-BDE-1"),
@@ -348,6 +368,93 @@ AStrategyCompanyUnit* AStrategyOOBTestScenario::SpawnCompany(
         Company->CommandComponent->SetOrganicParent(OrganicParent);
     }
 
+    const bool bPrussian =
+        Company->Side == EStrategySide::Prussia;
+
+    if (Company->FireControlComponent)
+    {
+        Company->FireControlComponent->SetFirePolicy(
+            EStrategyFirePolicy::Medium);
+    }
+
+    if (Company->FireDisciplineComponent)
+    {
+        Company->FireDisciplineComponent->Discipline =
+            EStrategyFireDiscipline::Volley;
+        Company->FireDisciplineComponent->bConserveAmmunition = false;
+    }
+
+    if (Company->DoctrineComponent)
+    {
+        Company->DoctrineComponent->Doctrine =
+            bPrussian
+            ? EStrategyDoctrine::Offensive
+            : EStrategyDoctrine::Defensive;
+
+        Company->DoctrineComponent->CommanderOrderAggression =
+            bPrussian ? 65.0f : 35.0f;
+    }
+
+    if (Company->AutonomyComponent)
+    {
+        Company->AutonomyComponent->Autonomy =
+            bPrussian
+            ? EStrategyAutonomyLevel::Independent
+            : EStrategyAutonomyLevel::Normal;
+    }
+
+    if (Company->MissionConstraintsComponent)
+    {
+        Company->MissionConstraintsComponent->bDoNotPursue = true;
+        Company->MissionConstraintsComponent->bConserveAmmunition = false;
+    }
+
+    if (Company->OfficerProfileComponent)
+    {
+        if (bPrussian && CompanyNumber == 1)
+        {
+            Company->OfficerProfileComponent->Leadership = 62.0f;
+            Company->OfficerProfileComponent->Inspiration = 55.0f;
+            Company->OfficerProfileComponent->TacticalSkill = 68.0f;
+            Company->OfficerProfileComponent->Initiative = 65.0f;
+            Company->OfficerProfileComponent->StaffQuality = 60.0f;
+            Company->OfficerProfileComponent->Aggression = 72.0f;
+            Company->OfficerProfileComponent->Caution = 28.0f;
+            Company->OfficerProfileComponent->Discipline = 65.0f;
+            Company->OfficerProfileComponent->Composure = 60.0f;
+            Company->OfficerProfileComponent->Experience = 55.0f;
+        }
+        else if (bPrussian)
+        {
+            Company->OfficerProfileComponent->Leadership = 48.0f;
+            Company->OfficerProfileComponent->Inspiration = 44.0f;
+            Company->OfficerProfileComponent->TacticalSkill = 52.0f;
+            Company->OfficerProfileComponent->Initiative = 45.0f;
+            Company->OfficerProfileComponent->StaffQuality = 50.0f;
+            Company->OfficerProfileComponent->Aggression = 58.0f;
+            Company->OfficerProfileComponent->Caution = 42.0f;
+            Company->OfficerProfileComponent->Discipline = 54.0f;
+            Company->OfficerProfileComponent->Composure = 46.0f;
+            Company->OfficerProfileComponent->Experience = 45.0f;
+        }
+        else
+        {
+            const float Variant =
+                static_cast<float>(CompanyNumber % 4) * 3.0f;
+
+            Company->OfficerProfileComponent->Leadership = 55.0f + Variant;
+            Company->OfficerProfileComponent->Inspiration = 52.0f + Variant;
+            Company->OfficerProfileComponent->TacticalSkill = 50.0f + Variant;
+            Company->OfficerProfileComponent->Initiative = 48.0f + Variant;
+            Company->OfficerProfileComponent->StaffQuality = 54.0f + Variant;
+            Company->OfficerProfileComponent->Aggression = 42.0f + Variant;
+            Company->OfficerProfileComponent->Caution = 58.0f - Variant;
+            Company->OfficerProfileComponent->Discipline = 60.0f + Variant;
+            Company->OfficerProfileComponent->Composure = 56.0f + Variant;
+            Company->OfficerProfileComponent->Experience = 50.0f + Variant;
+        }
+    }
+
     SpawnedUnitObjects.Add(Company);
     return Company;
 }
@@ -560,7 +667,18 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
             !Unit->ContactComponent ||
             !Unit->ReconComponent ||
             !Unit->AutonomousBattleAIComponent ||
-            !Unit->RoutRecoveryComponent)
+            !Unit->RoutRecoveryComponent ||
+            !Unit->FireDisciplineComponent ||
+            !Unit->StanceComponent ||
+            !Unit->DirectionalCoverComponent ||
+            !Unit->FieldworksComponent ||
+            !Unit->SkirmisherComponent ||
+            !Unit->SupplyComponent ||
+            !Unit->DoctrineComponent ||
+            !Unit->AutonomyComponent ||
+            !Unit->AIDifficultyComponent ||
+            !Unit->AITelemetryComponent ||
+            !Unit->MissionConstraintsComponent)
         {
             OutFailures.Add(
                 FString::Printf(
@@ -648,6 +766,19 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
     if (bSpawnObstacleQA && !IsValid(SpawnedNavigationObstacle))
     {
         OutFailures.Add(TEXT("Navigation obstacle QA actor was not spawned."));
+    }
+
+    const AStrategyUnit* SupplySource =
+        SpawnedUnitObjects.Num() > 0
+        ? SpawnedUnitObjects[0]
+        : nullptr;
+
+    if (!IsValid(SupplySource) ||
+        !SupplySource->SupplyComponent ||
+        !SupplySource->SupplyComponent->bActsAsSupplySource ||
+        SupplySource->SupplyComponent->StoredAmmunitionRounds <= 0)
+    {
+        OutFailures.Add(TEXT("Division QA ammunition supply source is not configured."));
     }
 
     return OutFailures.Num() == 0;
