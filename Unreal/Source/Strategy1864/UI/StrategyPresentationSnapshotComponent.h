@@ -74,6 +74,33 @@ struct FStrategyUnitPresentationSnapshot
 
     UPROPERTY(BlueprintReadOnly)
     FString MountedState;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 ArtilleryGunCount = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 ArtilleryOperationalGuns = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 ArtilleryCrew = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 ArtilleryDrivers = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 ArtilleryHorses = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    FString ArtilleryMobilityState;
+
+    UPROPERTY(BlueprintReadOnly)
+    FString ArtilleryFireMode;
+
+    UPROPERTY(BlueprintReadOnly)
+    FString ArtilleryAmmoType;
+
+    UPROPERTY(BlueprintReadOnly)
+    FString ArtilleryOwnershipState;
 };
 
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
