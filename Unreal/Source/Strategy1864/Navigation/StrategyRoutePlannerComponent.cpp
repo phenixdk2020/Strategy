@@ -1,6 +1,7 @@
 #include "StrategyRoutePlannerComponent.h"
 
 #include "StrategyRiverBarrier.h"
+#include "StrategyNavigationObstacle.h"
 #include "EngineUtils.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
@@ -30,6 +31,13 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
     if (!River)
     {
         AppendNavSegment(StartLocation, EndLocation, Plan.Points);
+        ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
+
+        if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
+        {
+            Plan.bValid = false;
+        }
+
         return Plan;
     }
 
@@ -65,6 +73,13 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
         Plan.bUsesBridge = true;
 
         AppendNavSegment(FarExit, EndLocation, Plan.Points);
+        ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
+
+        if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
+        {
+            Plan.bValid = false;
+        }
+
         return Plan;
     }
 
@@ -77,10 +92,24 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
         AppendNavSegment(BankWaypoint, EndLocation, Plan.Points);
 
         Plan.bSameBankDetour = true;
+        ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
+
+        if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
+        {
+            Plan.bValid = false;
+        }
+
         return Plan;
     }
 
     AppendNavSegment(StartLocation, EndLocation, Plan.Points);
+    ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
+
+    if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
+    {
+        Plan.bValid = false;
+    }
+
     return Plan;
 }
 
@@ -154,4 +183,97 @@ void UStrategyRoutePlannerComponent::AppendNavSegment(
     {
         InOutPoints.Add(Path->PathPoints[Index]);
     }
+}
+
+
+void UStrategyRoutePlannerComponent::ApplyStaticObstacleDetours(
+    const FVector& StartLocation,
+    const FVector& EndLocation,
+    TArray<FVector>& InOutPoints) const
+{
+    if (!GetWorld() || InOutPoints.Num() == 0)
+    {
+        return;
+    }
+
+    TArray<AStrategyNavigationObstacle*> Obstacles;
+    for (TActorIterator<AStrategyNavigationObstacle> It(GetWorld()); It; ++It)
+    {
+        if (IsValid(*It))
+        {
+            Obstacles.Add(*It);
+        }
+    }
+
+    if (Obstacles.Num() == 0)
+    {
+        return;
+    }
+
+    TArray<FVector> Rebuilt;
+    FVector SegmentStart = StartLocation;
+
+    for (const FVector& SegmentEnd : InOutPoints)
+    {
+        AStrategyNavigationObstacle* BlockingObstacle = nullptr;
+
+        for (AStrategyNavigationObstacle* Obstacle : Obstacles)
+        {
+            if (Obstacle->IntersectsSegment2D(SegmentStart, SegmentEnd))
+            {
+                BlockingObstacle = Obstacle;
+                break;
+            }
+        }
+
+        if (BlockingObstacle)
+        {
+            Rebuilt.Add(
+                BlockingObstacle->BuildDetourPoint(
+                    SegmentStart,
+                    SegmentEnd));
+        }
+
+        Rebuilt.Add(SegmentEnd);
+        SegmentStart = SegmentEnd;
+    }
+
+    InOutPoints = MoveTemp(Rebuilt);
+}
+
+bool UStrategyRoutePlannerComponent::ValidateSlopeProfile(
+    const FVector& StartLocation,
+    const TArray<FVector>& Points,
+    FString& OutFailureReason) const
+{
+    FVector Previous = StartLocation;
+
+    for (const FVector& Point : Points)
+    {
+        const FVector Delta = Point - Previous;
+        const float Horizontal = FVector(Delta.X, Delta.Y, 0.0f).Size();
+
+        if (Horizontal > KINDA_SMALL_NUMBER)
+        {
+            const float SlopeDegrees =
+                FMath::RadiansToDegrees(
+                    FMath::Atan2(
+                        FMath::Abs(Delta.Z),
+                        Horizontal));
+
+            if (SlopeDegrees > MaxTraversableSlopeDegrees)
+            {
+                OutFailureReason =
+                    FString::Printf(
+                        TEXT("Route slope %.1f exceeds %.1f degrees."),
+                        SlopeDegrees,
+                        MaxTraversableSlopeDegrees);
+                return false;
+            }
+        }
+
+        Previous = Point;
+    }
+
+    return true;
 }
