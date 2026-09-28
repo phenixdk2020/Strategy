@@ -114,7 +114,7 @@ bool UStrategyArtilleryCaptureComponent::AttemptReuse(
         !bHasCompatibleAmmunition ||
         !OwnerBattery->ArtilleryAmmunitionComponent ||
         OwnerBattery->ArtilleryAmmunitionComponent->GetTotalRounds() <= 0 ||
-        OwnerBattery->GetOperationalGunCount() <= 0)
+        OwnerBattery->GetPhysicallyAvailableGunCount() <= 0)
     {
         return false;
     }
