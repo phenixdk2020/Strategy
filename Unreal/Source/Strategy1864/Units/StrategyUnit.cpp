@@ -40,6 +40,10 @@
 #include "../AI/StrategyAITelemetryComponent.h"
 #include "../AI/StrategyMissionConstraintsComponent.h"
 #include "../Terrain/StrategyTerrainAwarenessComponent.h"
+#include "../Visual/StrategyUniformAppearanceComponent.h"
+#include "../Visual/StrategyHumanAnimationStateComponent.h"
+#include "../Visual/StrategyEquipmentVisualComponent.h"
+#include "../Visual/StrategyVisualCompatibilityComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -124,6 +128,14 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyMissionConstraintsComponent>(TEXT("MissionConstraintsComponent"));
     TerrainAwarenessComponent =
         CreateDefaultSubobject<UStrategyTerrainAwarenessComponent>(TEXT("TerrainAwarenessComponent"));
+    UniformAppearanceComponent =
+        CreateDefaultSubobject<UStrategyUniformAppearanceComponent>(TEXT("UniformAppearanceComponent"));
+    HumanAnimationStateComponent =
+        CreateDefaultSubobject<UStrategyHumanAnimationStateComponent>(TEXT("HumanAnimationStateComponent"));
+    EquipmentVisualComponent =
+        CreateDefaultSubobject<UStrategyEquipmentVisualComponent>(TEXT("EquipmentVisualComponent"));
+    VisualCompatibilityComponent =
+        CreateDefaultSubobject<UStrategyVisualCompatibilityComponent>(TEXT("VisualCompatibilityComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
