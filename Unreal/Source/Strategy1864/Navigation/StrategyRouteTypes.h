@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "StrategyRouteTypes.generated.h"
 
+class AStrategyRiverBarrier;
+
 USTRUCT(BlueprintType)
 struct FStrategyRoutePlan
 {
@@ -19,6 +21,9 @@ struct FStrategyRoutePlan
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
     bool bUsesBridge = false;
+
+    UPROPERTY()
+    TObjectPtr<AStrategyRiverBarrier> BridgeBarrier;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Navigation")
     int32 BridgeEnterPointIndex = INDEX_NONE;
