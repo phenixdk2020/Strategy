@@ -40,11 +40,20 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     bool bSpawnCavalryQA = true;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    int32 QARandomSeed = 1864;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Test")
     void BuildTestOOB();
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Test")
     void ClearSpawnedUnits();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Test")
+    void ResetScenario();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Test")
+    bool ValidateStableIdsAndHierarchy(TArray<FString>& OutErrors) const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|Test")
     TArray<AStrategyUnit*> GetSpawnedUnits() const;
