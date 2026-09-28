@@ -262,8 +262,36 @@ void UStrategyMovementExecutorComponent::TickComponent(
         OwnerUnit->ConditionComponent
         ? OwnerUnit->ConditionComponent->GetMovementSpeedMultiplier()
         : 1.0f;
+
+    const float HorizontalDistance =
+        FMath::Max(1.0f, FlatDelta.Size());
+
+    const float SignedSlopeDegrees =
+        FMath::RadiansToDegrees(
+            FMath::Atan2(
+                ActiveWaypoint.Z - CurrentLocation.Z,
+                HorizontalDistance));
+
+    float SlopeMultiplier = 1.0f;
+
+    if (SignedSlopeDegrees > 0.0f)
+    {
+        SlopeMultiplier =
+            FMath::Lerp(
+                1.0f,
+                MinimumUphillSpeedMultiplier,
+                FMath::Clamp(SignedSlopeDegrees / 28.0f, 0.0f, 1.0f));
+    }
+    else if (SignedSlopeDegrees < -2.0f)
+    {
+        SlopeMultiplier = DownhillSpeedMultiplier;
+    }
+
     const float Step =
-        MoveSpeedCmPerSecond * ConditionMultiplier * DeltaTime;
+        MoveSpeedCmPerSecond *
+        ConditionMultiplier *
+        SlopeMultiplier *
+        DeltaTime;
     const FVector NewLocation =
         CurrentLocation + Direction * FMath::Min(Step, FlatDelta.Size());
 
