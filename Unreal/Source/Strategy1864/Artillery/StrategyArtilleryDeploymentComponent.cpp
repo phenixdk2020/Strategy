@@ -3,6 +3,7 @@
 #include "StrategyArtilleryBatteryUnit.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
+#include "Engine/World.h"
 
 UStrategyArtilleryDeploymentComponent::UStrategyArtilleryDeploymentComponent()
 {
@@ -42,6 +43,18 @@ void UStrategyArtilleryDeploymentComponent::TickComponent(
 
     if (MobilityState == EStrategyArtilleryMobilityState::Manhandling &&
         OwnerBattery->MovementExecutor &&
+        OwnerBattery->MovementExecutor->HasMovementGoal())
+    {
+        OwnerBattery->Fatigue =
+            FMath::Clamp(
+                OwnerBattery->Fatigue +
+                ManhandlingFatiguePerSecond * DeltaTime,
+                0.0f,
+                100.0f);
+    }
+
+    if (MobilityState == EStrategyArtilleryMobilityState::Manhandling &&
+        OwnerBattery->MovementExecutor &&
         !OwnerBattery->MovementExecutor->HasMovementGoal())
     {
         MobilityState = EStrategyArtilleryMobilityState::Deployed;
@@ -68,6 +81,7 @@ bool UStrategyArtilleryDeploymentComponent::RequestDeploy()
         MobilityState != EStrategyArtilleryMobilityState::Limbered ||
         OwnerBattery->OwnershipState !=
             EStrategyArtilleryOwnershipState::Operational ||
+        !CanDeployAtCurrentLocation() ||
         (OwnerBattery->MovementExecutor &&
          OwnerBattery->MovementExecutor->HasMovementGoal()))
     {
@@ -170,4 +184,76 @@ void UStrategyArtilleryDeploymentComponent::CompleteTransition()
     {
         OwnerBattery->SetUnitState(EStrategyUnitState::Ready);
     }
+}
+
+
+float UStrategyArtilleryDeploymentComponent::GetCurrentGroundSlopeDegrees() const
+{
+    if (!OwnerBattery || !GetWorld())
+    {
+        return 90.0f;
+    }
+
+    const FVector Center = OwnerBattery->GetActorLocation();
+    const float R = FMath::Max(100.0f, DeployTerrainSampleRadiusCm);
+
+    const FVector Samples[4] =
+    {
+        Center + FVector(R, 0.0f, 1500.0f),
+        Center + FVector(-R, 0.0f, 1500.0f),
+        Center + FVector(0.0f, R, 1500.0f),
+        Center + FVector(0.0f, -R, 1500.0f)
+    };
+
+    FVector Ground[4];
+
+    FCollisionQueryParams Params(
+        SCENE_QUERY_STAT(StrategyArtilleryDeploySlope),
+        false);
+    Params.AddIgnoredActor(OwnerBattery);
+
+    for (int32 Index = 0; Index < 4; ++Index)
+    {
+        FHitResult Hit;
+
+        const bool bHit =
+            GetWorld()->LineTraceSingleByChannel(
+                Hit,
+                Samples[Index],
+                Samples[Index] - FVector(0.0f, 0.0f, 4000.0f),
+                ECC_Visibility,
+                Params);
+
+        if (!bHit)
+        {
+            return 90.0f;
+        }
+
+        Ground[Index] = Hit.ImpactPoint;
+    }
+
+    const FVector XSpan = Ground[0] - Ground[1];
+    const FVector YSpan = Ground[2] - Ground[3];
+
+    FVector Normal =
+        FVector::CrossProduct(XSpan, YSpan).GetSafeNormal();
+
+    if (Normal.Z < 0.0f)
+    {
+        Normal *= -1.0f;
+    }
+
+    const float UpDot =
+        FMath::Clamp(
+            FVector::DotProduct(Normal, FVector::UpVector),
+            -1.0f,
+            1.0f);
+
+    return FMath::RadiansToDegrees(FMath::Acos(UpDot));
+}
+
+bool UStrategyArtilleryDeploymentComponent::CanDeployAtCurrentLocation() const
+{
+    return GetCurrentGroundSlopeDegrees() <=
+        FMath::Max(0.0f, MaximumDeploySlopeDegrees);
 }
