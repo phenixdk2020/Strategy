@@ -13,6 +13,7 @@
 #include "StrategySmokeField.h"
 #include "StrategyVisibilityComponent.h"
 #include "StrategySkirmisherComponent.h"
+#include "../AI/StrategyOfficerProfileComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -364,9 +365,17 @@ void UStrategyCombatComponent::NotifyIncomingVolley(int32 Hits)
         return;
     }
 
+    const float StressReactionMultiplier =
+        OwnerUnit->OfficerProfileComponent
+        ? OwnerUnit->OfficerProfileComponent->GetStressReactionMultiplier()
+        : 1.0f;
+
+    const float EffectiveUnderFireDuration =
+        UnderFireDurationSeconds * StressReactionMultiplier;
+
     UnderFireRemainingSeconds = FMath::Max(
         UnderFireRemainingSeconds,
-        UnderFireDurationSeconds);
+        EffectiveUnderFireDuration);
 
     const float BaseShock =
         Hits > 0
@@ -401,7 +410,7 @@ void UStrategyCombatComponent::NotifyIncomingVolley(int32 Hits)
         OwnerUnit->MovementExecutor->HasMovementGoal())
     {
         OwnerUnit->MovementExecutor->PauseMovementForSeconds(
-            UnderFireDurationSeconds);
+            EffectiveUnderFireDuration);
     }
     else
     {
