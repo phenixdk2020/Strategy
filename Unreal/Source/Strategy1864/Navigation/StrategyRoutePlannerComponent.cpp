@@ -5,6 +5,7 @@
 #include "EngineUtils.h"
 #include "NavigationPath.h"
 #include "NavigationSystem.h"
+#include "../Terrain/StrategyTerrainQueryLibrary.h"
 
 UStrategyRoutePlannerComponent::UStrategyRoutePlannerComponent()
 {
@@ -32,6 +33,7 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
     {
         AppendNavSegment(StartLocation, EndLocation, Plan.Points);
         ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
+        ApplyTacticalTerrainElevation(Plan.Points);
 
         if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
         {
@@ -77,6 +79,8 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
 
         // Preserve explicit bridge enter/exit indices. The pre/post bridge
         // segments already use NavMesh; extra static detours are skipped here.
+        ApplyTacticalTerrainElevation(Plan.Points);
+
         if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
         {
             Plan.bValid = false;
@@ -95,6 +99,7 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
 
         Plan.bSameBankDetour = true;
         ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
+        ApplyTacticalTerrainElevation(Plan.Points);
 
         if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
         {
@@ -106,6 +111,7 @@ FStrategyRoutePlan UStrategyRoutePlannerComponent::BuildRoutePlan(
 
     AppendNavSegment(StartLocation, EndLocation, Plan.Points);
     ApplyStaticObstacleDetours(StartLocation, EndLocation, Plan.Points);
+    ApplyTacticalTerrainElevation(Plan.Points);
 
     if (!ValidateSlopeProfile(StartLocation, Plan.Points, Plan.FailureReason))
     {
@@ -243,12 +249,27 @@ void UStrategyRoutePlannerComponent::ApplyStaticObstacleDetours(
     InOutPoints = MoveTemp(Rebuilt);
 }
 
+void UStrategyRoutePlannerComponent::ApplyTacticalTerrainElevation(
+    TArray<FVector>& InOutPoints) const
+{
+    for (FVector& Point : InOutPoints)
+    {
+        Point =
+            UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+                this,
+                Point);
+    }
+}
+
 bool UStrategyRoutePlannerComponent::ValidateSlopeProfile(
     const FVector& StartLocation,
     const TArray<FVector>& Points,
     FString& OutFailureReason) const
 {
-    FVector Previous = StartLocation;
+    FVector Previous =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(
+            this,
+            StartLocation);
 
     for (const FVector& Point : Points)
     {
