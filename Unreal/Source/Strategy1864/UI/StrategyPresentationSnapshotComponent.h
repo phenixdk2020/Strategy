@@ -101,6 +101,24 @@ struct FStrategyUnitPresentationSnapshot
 
     UPROPERTY(BlueprintReadOnly)
     FString ArtilleryOwnershipState;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 SupplySmallArmsRounds = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 SupplyArtilleryRounds = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 SupplyDrivers = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 SupplyHorses = 0;
+
+    UPROPERTY(BlueprintReadOnly)
+    float SupplyWagonCondition = 0.0f;
+
+    UPROPERTY(BlueprintReadOnly)
+    FString SupplyOwnershipState;
 };
 
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
