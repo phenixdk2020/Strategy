@@ -16,6 +16,11 @@
 #include "../Logistics/StrategySupplyCargoComponent.h"
 #include "../Terrain/StrategyTerrainAwarenessComponent.h"
 #include "../Terrain/StrategyTerrainQueryLibrary.h"
+#include "../Visual/StrategyUniformAppearanceComponent.h"
+#include "../Visual/StrategyHumanAnimationStateComponent.h"
+#include "../Visual/StrategyEquipmentVisualComponent.h"
+#include "../Visual/StrategyHorseAnimationStateComponent.h"
+#include "../Artillery/StrategyArtilleryCrewAnimationComponent.h"
 
 UStrategyPresentationSnapshotComponent::UStrategyPresentationSnapshotComponent()
 {
@@ -114,6 +119,43 @@ UStrategyPresentationSnapshotComponent::BuildSnapshot() const
             Unit->CombatComponent->AmmunitionRounds;
     }
 
+    if (Unit->HumanAnimationStateComponent)
+    {
+        Snapshot.HumanAnimationAction =
+            StaticEnum<EStrategyHumanAnimationAction>()
+                ->GetNameStringByValue(
+                    static_cast<int64>(
+                        Unit->HumanAnimationStateComponent->CurrentAction));
+    }
+
+    if (Unit->UniformAppearanceComponent)
+    {
+        Snapshot.SharedSkeletonId =
+            Unit->UniformAppearanceComponent
+                ->VisualProfile.SharedSkeletonId;
+
+        Snapshot.SharedAnimationSetId =
+            Unit->UniformAppearanceComponent
+                ->VisualProfile.SharedAnimationSetId;
+
+        Snapshot.UniformPresetId =
+            Unit->UniformAppearanceComponent
+                ->BasePreset.PresetId;
+
+        const FStrategyUniformColors ResolvedColors =
+            Unit->UniformAppearanceComponent->GetResolvedColors();
+
+        Snapshot.UniformCoatColor = ResolvedColors.Coat;
+        Snapshot.UniformTrouserColor = ResolvedColors.Trousers;
+        Snapshot.UniformFacingColor = ResolvedColors.Facings;
+    }
+
+    if (Unit->EquipmentVisualComponent)
+    {
+        Snapshot.PrimaryWeaponId =
+            Unit->EquipmentVisualComponent->PrimaryWeaponId;
+    }
+
     if (Unit->TerrainAwarenessComponent)
     {
         Snapshot.TerrainGroundZ =
@@ -137,6 +179,20 @@ UStrategyPresentationSnapshotComponent::BuildSnapshot() const
         Snapshot.ArtilleryCrew = Battery->CrewStrength;
         Snapshot.ArtilleryDrivers = Battery->DriverStrength;
         Snapshot.ArtilleryHorses = Battery->HorseStrength;
+
+        if (Battery->CrewAnimationComponent)
+        {
+            Snapshot.ArtilleryCrewActivity =
+                StaticEnum<EStrategyArtilleryCrewActivity>()
+                    ->GetNameStringByValue(
+                        static_cast<int64>(
+                            Battery->CrewAnimationComponent
+                                ->CurrentBatteryActivity));
+
+            Snapshot.ArtilleryVisualCrewStations =
+                Battery->CrewAnimationComponent
+                    ->GetActiveCrewStationCount();
+        }
 
         Snapshot.ArtilleryOwnershipState =
             StaticEnum<EStrategyArtilleryOwnershipState>()
@@ -220,6 +276,16 @@ UStrategyPresentationSnapshotComponent::BuildSnapshot() const
 
     if (const ACavalryUnit* Cavalry = Cast<ACavalryUnit>(Unit))
     {
+        if (Cavalry->HorseAnimationStateComponent)
+        {
+            Snapshot.HorseGait =
+                StaticEnum<EStrategyHorseGait>()
+                    ->GetNameStringByValue(
+                        static_cast<int64>(
+                            Cavalry->HorseAnimationStateComponent
+                                ->CurrentGait));
+        }
+
         if (Cavalry->DragoonComponent)
         {
             Snapshot.CavalryRole =
