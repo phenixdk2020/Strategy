@@ -4,6 +4,7 @@
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Combat/StrategyCavalryChargeComponent.h"
 #include "StrategyDragoonComponent.h"
+#include "../AI/StrategyCavalryScreenAIComponent.h"
 
 ACavalryUnit::ACavalryUnit()
 {
@@ -26,6 +27,9 @@ ACavalryUnit::ACavalryUnit()
 
     DragoonComponent =
         CreateDefaultSubobject<UStrategyDragoonComponent>(TEXT("DragoonComponent"));
+
+    ScreenAIComponent =
+        CreateDefaultSubobject<UStrategyCavalryScreenAIComponent>(TEXT("ScreenAIComponent"));
 
     HorseMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HorseMesh"));
     HorseMesh->SetupAttachment(SceneRoot);
