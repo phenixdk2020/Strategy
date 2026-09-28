@@ -6,6 +6,7 @@
 #include "../Artillery/StrategyArtilleryAmmunitionComponent.h"
 #include "StrategySupplyWagonUnit.h"
 #include "StrategySupplyCargoComponent.h"
+#include "../Movement/StrategyMovementExecutorComponent.h"
 #include "EngineUtils.h"
 
 UStrategySupplyComponent::UStrategySupplyComponent()
@@ -327,6 +328,8 @@ bool UStrategySupplyComponent::IsTransferStateBlocked(
 {
     if (!IsValid(Unit) ||
         Unit->UnitState == EStrategyUnitState::Routed ||
+        Unit->UnitState == EStrategyUnitState::Disabled ||
+        Unit->UnitState == EStrategyUnitState::Abandoned ||
         Unit->UnitState == EStrategyUnitState::Destroyed)
     {
         return true;
