@@ -16,6 +16,7 @@
 #include "../AI/StrategyOfficerProfileComponent.h"
 #include "../Artillery/StrategyArtilleryBatteryUnit.h"
 #include "../Artillery/StrategyArtilleryDamageComponent.h"
+#include "../Terrain/StrategyTerrainAwarenessComponent.h"
 #include "../Logistics/StrategySupplyWagonUnit.h"
 #include "EngineUtils.h"
 
@@ -361,6 +362,12 @@ int32 UStrategyCombatComponent::ResolveHits(
         ? Target->SkirmisherComponent->GetIncomingHitMultiplier()
         : 1.0f;
 
+    const float TerrainExposureMultiplier =
+        IsValid(Target) && Target->TerrainAwarenessComponent
+        ? Target->TerrainAwarenessComponent->GetIncomingHitMultiplierFrom(
+            OwnerUnit->GetActorLocation())
+        : 1.0f;
+
     const float SmokeTransmission =
         OwnerUnit->VisibilityComponent && IsValid(Target)
         ? OwnerUnit->VisibilityComponent->GetSmokeTransmissionTo(Target)
@@ -374,6 +381,7 @@ int32 UStrategyCombatComponent::ResolveHits(
             StanceTargetMultiplier *
             CoverMultiplier *
             SkirmisherTargetMultiplier *
+            TerrainExposureMultiplier *
             SmokeTransmission,
             0.0f,
             1.0f);
