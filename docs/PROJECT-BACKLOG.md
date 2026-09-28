@@ -12,6 +12,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 
 **Unreal gameplay checkpoint v00.02.59:** Første funktionelle artilleribatteri er nu implementeret som rigtig tactical unit: Artillery-echelon, configurable gun/crew/driver/horse state, timed limber/unlimber, horse/driver-limited towing, short manhandling, fire mission/manual target som standard, Hold Fire, optional Auto Target, traverse, LOS/contact/range, reload, fire resolution, Round/Shell/Shrapnel/Canister inventory/effects, shared tactical resupply, artillery-specific incoming damage, disabled/abandoned/capture/reuse samt OOB/outcome/regression integration. QA-fixturen har ét dansk 6-kanoners testbatteri under Division; seks kanoner er kun QA-data, ikke låst historisk organisation. UE 5.8.3 build/runtime QA og historisk ballistik/drill tuning udestår.
 
+**Unreal gameplay checkpoint v00.02.60:** Artilleri er udvidet med visible ground/area fire, salvo-/tidsbegrænsede fire missions, target priority, auto ammo selection, reserve-conservation, deploy-slope, firing/manhandling fatigue, disabled-gun repair og emergency abandonment. Første fysiske supply-wagon/caisson er implementeret med separate small-arms/artillery cargo stores, drivers, horses, wagon condition, mobility, damage, abandonment/capture, proximity/state-gated transfer og artillery ammunition-family compatibility. QA bruger nu et ammo-lavt dansk batteri + fysisk ammunitionsvogn; Divisionens generiske 50k ammo-pulje er slået fra, når wagon-fixturen er aktiv. UE 5.8.3 build/runtime QA udestår.
+
 ## Statusdefinitioner
 
 - **AKTIV** — implementeres/testes i den aktuelle build.
@@ -77,7 +79,7 @@ v00.00.09 skal mindst bevise:
 
 ## Artilleri
 
-> **UNREAL NÆSTE PRIORITET:** Før næste større grafikpass implementeres et funktionelt artilleribatteri som rigtig taktisk enhed. Første slice skal mindst have battery actor, gun count, crew strength, ammunition, gun/calibre data, deployed/limbered state, movement gate, facing/traverse arc, manuel target/fire mission, Hold Fire, LOS/range og supply/resupply. Derefter udvides med manhandling, horse teams/caissons, ammunitionstyper, damage/capture og auto-target AI.
+> **UNREAL STATUS v00.02.60:** Artilleribatteri + første fysiske ammo-wagon/caisson er implementeret som funktionel core. Næste artilleri-gate er UE 5.8.3 runtime QA på udvidet battlefield/hills/dead-ground samt historisk tuning af gun profiles, drill og ammunition.
 
 
 | ID | Status | Emne | Beslutning / note |
@@ -106,11 +108,11 @@ v00.00.09 skal mindst bevise:
 
 | ID | Status | Emne | Beslutning / note |
 | --- | --- | --- | --- |
-| B-050 | BESLUTTET | Supply-vogne | Fysiske enheder med inventory, vogn, trækdyr og crew/driver. Kan bære ammunition, mad og andre forsyninger. |
-| B-051 | BESLUTTET | Capture/destruction | Supply-vogne kan erobres, forlades eller ødelægges; crew/heste og last kan gå tabt helt eller delvist. |
+| B-050 | IMPLEMENTERET CORE / UE QA PENDING | Supply-vogne | Fysiske enheder med inventory, vogn, trækdyr og crew/driver. Kan bære ammunition, mad og andre forsyninger. |
+| B-051 | IMPLEMENTERET CORE / UE QA PENDING | Capture/destruction | Supply-vogne kan erobres, forlades eller ødelægges; crew/heste og last kan gå tabt helt eller delvist. |
 | B-052 | BESLUTTET | Battlefield salvage | Våben og materiel fra overgivne, faldne, forladte guns/limbers og wagons kan indsamles efter slaget. |
-| B-053 | BESLUTTET | Damage/recovery percentage | Ikke alt materiel kan reddes; en dokumenteret andel er ødelagt, mistet eller kræver repair. |
-| B-054 | BESLUTTET | Compatibility | Erobrede våben/ammunition kan kun bruges, hvis ammunition, træning og condition tillader det. |
+| B-053 | DELVIST IMPLEMENTERET / AFTERMATH RECOVERY PENDING | Damage/recovery percentage | Ikke alt materiel kan reddes; en dokumenteret andel er ødelagt, mistet eller kræver repair. |
+| B-054 | IMPLEMENTERET ARTILLERY-AMMO CORE / HISTORICAL DATA PENDING | Compatibility | Erobrede våben/ammunition kan kun bruges, hvis ammunition, træning og condition tillader det. |
 
 ## Command, officers og organisation
 
