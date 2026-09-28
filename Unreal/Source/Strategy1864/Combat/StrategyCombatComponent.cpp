@@ -8,6 +8,8 @@
 #include "../Formations/StrategyFormationComponent.h"
 #include "StrategyConditionComponent.h"
 #include "StrategyFireDisciplineComponent.h"
+#include "StrategyStanceComponent.h"
+#include "StrategyDirectionalCoverComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -131,7 +133,10 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
     AmmunitionRounds -= ShotCount;
     bOutOfAmmo = AmmunitionRounds <= 0;
 
-    const int32 Hits = ResolveHits(ShotCount, DistanceCm);
+    const int32 Hits = ResolveHits(
+        ShotCount,
+        DistanceCm,
+        Target);
 
     if (Hits > 0)
     {
@@ -148,7 +153,15 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         ? OwnerUnit->FireDisciplineComponent->GetReloadMultiplier()
         : 1.0f;
 
-    ReloadRemainingSeconds = ReloadSeconds * ReloadMultiplier;
+    const float StanceReloadMultiplier =
+        OwnerUnit->StanceComponent
+        ? OwnerUnit->StanceComponent->GetReloadMultiplier()
+        : 1.0f;
+
+    ReloadRemainingSeconds =
+        ReloadSeconds *
+        ReloadMultiplier *
+        StanceReloadMultiplier;
     OnVolleyResolved.Broadcast(Target, ShotCount, Hits);
 
     FVector FireDirection =
@@ -240,7 +253,10 @@ AStrategyUnit* UStrategyCombatComponent::FindBestTarget() const
     return BestTarget;
 }
 
-int32 UStrategyCombatComponent::ResolveHits(int32 ShotCount, float DistanceCm)
+int32 UStrategyCombatComponent::ResolveHits(
+    int32 ShotCount,
+    float DistanceCm,
+    const AStrategyUnit* Target)
 {
     if (!OwnerUnit || !OwnerUnit->FireControlComponent || ShotCount <= 0)
     {
@@ -258,9 +274,24 @@ int32 UStrategyCombatComponent::ResolveHits(int32 ShotCount, float DistanceCm)
         ? OwnerUnit->ConditionComponent->GetAccuracyMultiplier()
         : 1.0f;
 
+    const float StanceTargetMultiplier =
+        IsValid(Target) && Target->StanceComponent
+        ? Target->StanceComponent->GetIncomingHitMultiplier()
+        : 1.0f;
+
+    const float CoverMultiplier =
+        IsValid(Target) && Target->DirectionalCoverComponent
+        ? Target->DirectionalCoverComponent->CalculateIncomingHitMultiplier(
+            OwnerUnit->GetActorLocation())
+        : 1.0f;
+
     const float HitChance =
         FMath::Clamp(
-            BaseHitChance * RangeFactor * ConditionMultiplier,
+            BaseHitChance *
+            RangeFactor *
+            ConditionMultiplier *
+            StanceTargetMultiplier *
+            CoverMultiplier,
             0.0f,
             1.0f);
 
