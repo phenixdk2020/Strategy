@@ -48,6 +48,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
     int32 HorsesRequiredForFullMobility = 36;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    int32 DriversRequiredForFullMobility = 12;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
     EStrategyArtilleryOwnershipState OwnershipState =
         EStrategyArtilleryOwnershipState::Operational;
@@ -81,6 +84,9 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
     float GetHorseMobilityFactor() const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
+    float GetTowedMobilityFactor() const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
     bool CanNormalMove() const;
