@@ -10,14 +10,22 @@ UStrategyCommandComponent::UStrategyCommandComponent()
 void UStrategyCommandComponent::SetOrganicParent(AStrategyUnit* NewParent)
 {
     AStrategyUnit* OwnerUnit = Cast<AStrategyUnit>(GetOwner());
-    if (!OwnerUnit || NewParent == OwnerUnit || OrganicParent == NewParent)
+    if (!OwnerUnit ||
+        NewParent == OwnerUnit ||
+        OrganicParent == NewParent ||
+        WouldCreateCommandCycle(NewParent))
     {
         return;
     }
 
-    if (OrganicParent && OrganicParent->CommandComponent)
+    AStrategyUnit* OldOrganicParent = OrganicParent;
+    const bool bFollowingOrganic =
+        !CurrentCommandParent ||
+        CurrentCommandParent == OldOrganicParent;
+
+    if (OldOrganicParent && OldOrganicParent->CommandComponent)
     {
-        OrganicParent->CommandComponent->RemoveOrganicSubordinate(OwnerUnit);
+        OldOrganicParent->CommandComponent->RemoveOrganicSubordinate(OwnerUnit);
     }
 
     OrganicParent = NewParent;
@@ -27,7 +35,7 @@ void UStrategyCommandComponent::SetOrganicParent(AStrategyUnit* NewParent)
         OrganicParent->CommandComponent->AddOrganicSubordinate(OwnerUnit);
     }
 
-    if (!CurrentCommandParent)
+    if (bFollowingOrganic)
     {
         SetCurrentCommandParent(OrganicParent);
     }
@@ -36,7 +44,10 @@ void UStrategyCommandComponent::SetOrganicParent(AStrategyUnit* NewParent)
 void UStrategyCommandComponent::SetCurrentCommandParent(AStrategyUnit* NewParent)
 {
     AStrategyUnit* OwnerUnit = Cast<AStrategyUnit>(GetOwner());
-    if (!OwnerUnit || NewParent == OwnerUnit || CurrentCommandParent == NewParent)
+    if (!OwnerUnit ||
+        NewParent == OwnerUnit ||
+        CurrentCommandParent == NewParent ||
+        WouldCreateCommandCycle(NewParent))
     {
         return;
     }
@@ -95,4 +106,41 @@ void UStrategyCommandComponent::AddToParentCurrentList(AStrategyUnit* Parent, AS
     {
         Parent->CommandComponent->AddCurrentSubordinate(Child);
     }
+}
+
+
+bool UStrategyCommandComponent::WouldCreateCommandCycle(AStrategyUnit* NewParent) const
+{
+    const AStrategyUnit* OwnerUnit = Cast<AStrategyUnit>(GetOwner());
+    if (!OwnerUnit || !IsValid(NewParent))
+    {
+        return false;
+    }
+
+    TSet<const AStrategyUnit*> Visited;
+    const AStrategyUnit* Cursor = NewParent;
+
+    while (IsValid(Cursor))
+    {
+        if (Cursor == OwnerUnit)
+        {
+            return true;
+        }
+
+        if (Visited.Contains(Cursor))
+        {
+            return true;
+        }
+
+        Visited.Add(Cursor);
+
+        if (!Cursor->CommandComponent)
+        {
+            break;
+        }
+
+        Cursor = Cursor->CommandComponent->CurrentCommandParent;
+    }
+
+    return false;
 }
