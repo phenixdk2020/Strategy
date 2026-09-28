@@ -7,6 +7,7 @@
 #include "../Units/CavalryUnit.h"
 #include "../Units/StrategyDragoonComponent.h"
 #include "../Navigation/StrategyRiverBarrier.h"
+#include "../Combat/StrategyCombatComponent.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -143,6 +144,33 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             Origin + FVector(22000.0f, 3500.0f, 0.0f),
             nullptr,
             static_cast<uint8>(EStrategySide::Prussia));
+    }
+
+    for (AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        if (IsValid(Unit) && Unit->CombatComponent)
+        {
+            const int32 UnitSeed =
+                QARandomSeed ^
+                static_cast<int32>(GetTypeHash(Unit->StableUnitId));
+
+            Unit->CombatComponent->SetDeterministicRandomSeed(UnitSeed);
+        }
+    }
+
+    TArray<FString> ValidationErrors;
+    const bool bHierarchyValid = ValidateStableIdsAndHierarchy(ValidationErrors);
+
+    UE_LOG(
+        LogTemp,
+        bHierarchyValid ? Display : Error,
+        TEXT("PROJECT1864-QA: StableId/Hierarchy validation %s (%d errors)"),
+        bHierarchyValid ? TEXT("PASS") : TEXT("FAIL"),
+        ValidationErrors.Num());
+
+    for (const FString& Error : ValidationErrors)
+    {
+        UE_LOG(LogTemp, Error, TEXT("PROJECT1864-QA: %s"), *Error);
     }
 
     UE_LOG(LogTemp, Display, TEXT("PROJECT1864-OOB: spawned %d units"), SpawnedUnitObjects.Num());
@@ -327,4 +355,102 @@ TArray<AStrategyUnit*> AStrategyOOBTestScenario::GetSpawnedUnits() const
     }
 
     return Result;
+}
+
+
+void AStrategyOOBTestScenario::ResetScenario()
+{
+    BuildTestOOB();
+}
+
+bool AStrategyOOBTestScenario::ValidateStableIdsAndHierarchy(
+    TArray<FString>& OutErrors) const
+{
+    OutErrors.Reset();
+
+    TSet<FName> SeenIds;
+
+    for (AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        if (!IsValid(Unit))
+        {
+            OutErrors.Add(TEXT("Spawned unit reference is invalid."));
+            continue;
+        }
+
+        if (Unit->StableUnitId.IsNone())
+        {
+            OutErrors.Add(
+                FString::Printf(
+                    TEXT("Unit '%s' has no StableUnitId."),
+                    *Unit->DisplayName.ToString()));
+        }
+        else if (SeenIds.Contains(Unit->StableUnitId))
+        {
+            OutErrors.Add(
+                FString::Printf(
+                    TEXT("Duplicate StableUnitId: %s"),
+                    *Unit->StableUnitId.ToString()));
+        }
+        else
+        {
+            SeenIds.Add(Unit->StableUnitId);
+        }
+
+        if (!Unit->CommandComponent)
+        {
+            continue;
+        }
+
+        AStrategyUnit* CurrentParent =
+            Unit->CommandComponent->CurrentCommandParent;
+
+        if (IsValid(CurrentParent) &&
+            (!CurrentParent->CommandComponent ||
+             !CurrentParent->CommandComponent->CurrentSubordinates.Contains(Unit)))
+        {
+            OutErrors.Add(
+                FString::Printf(
+                    TEXT("%s current parent does not contain child backlink."),
+                    *Unit->StableUnitId.ToString()));
+        }
+
+        AStrategyUnit* OrganicParent =
+            Unit->CommandComponent->OrganicParent;
+
+        if (IsValid(OrganicParent) &&
+            (!OrganicParent->CommandComponent ||
+             !OrganicParent->CommandComponent->OrganicSubordinates.Contains(Unit)))
+        {
+            OutErrors.Add(
+                FString::Printf(
+                    TEXT("%s organic parent does not contain child backlink."),
+                    *Unit->StableUnitId.ToString()));
+        }
+
+        TSet<const AStrategyUnit*> ParentChain;
+        const AStrategyUnit* Cursor = Unit;
+
+        while (IsValid(Cursor) && Cursor->CommandComponent)
+        {
+            Cursor = Cursor->CommandComponent->CurrentCommandParent;
+            if (!IsValid(Cursor))
+            {
+                break;
+            }
+
+            if (ParentChain.Contains(Cursor))
+            {
+                OutErrors.Add(
+                    FString::Printf(
+                        TEXT("Command cycle detected from %s."),
+                        *Unit->StableUnitId.ToString()));
+                break;
+            }
+
+            ParentChain.Add(Cursor);
+        }
+    }
+
+    return OutErrors.Num() == 0;
 }
