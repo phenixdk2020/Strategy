@@ -10,6 +10,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 
 **Unreal gameplay checkpoint v00.02.58:** Fire discipline/conservation, stance, directional cover, hasty fieldworks, black-powder smoke simulation, skirmishers, ammunition supply, doctrine/OrderAgg, autonomy, no-cheat AI difficulty, AI-DIAG telemetry, expanded officer model og mission constraints er implementeret som code core. Grafik er fortsat bevidst udskudt. Næste funktionelle hovedmål er artilleribatteriet ovenfor.
 
+**Unreal gameplay checkpoint v00.02.59:** Første funktionelle artilleribatteri er nu implementeret som rigtig tactical unit: Artillery-echelon, configurable gun/crew/driver/horse state, timed limber/unlimber, horse/driver-limited towing, short manhandling, fire mission/manual target som standard, Hold Fire, optional Auto Target, traverse, LOS/contact/range, reload, fire resolution, Round/Shell/Shrapnel/Canister inventory/effects, shared tactical resupply, artillery-specific incoming damage, disabled/abandoned/capture/reuse samt OOB/outcome/regression integration. QA-fixturen har ét dansk 6-kanoners testbatteri under Division; seks kanoner er kun QA-data, ikke låst historisk organisation. UE 5.8.3 build/runtime QA og historisk ballistik/drill tuning udestår.
+
 ## Statusdefinitioner
 
 - **AKTIV** — implementeres/testes i den aktuelle build.
@@ -80,16 +82,16 @@ v00.00.09 skal mindst bevise:
 
 | ID | Status | Emne | Beslutning / note |
 | --- | --- | --- | --- |
-| B-030 | BESLUTTET | Limber/unlimber | Kanoner skifter mellem transport- og skydestilling; klargøring tager tid. |
-| B-031 | BESLUTTET | Hestetrukket artilleri | Feltkanoner, limbers og caissons transporteres normalt med hestespand; antal/tilstand af heste påvirker mobility. |
-| B-032 | BESLUTTET | Manhandling | Crew kan skubbe/trække et unlimbered stykke korte afstande uden heste. Det er langsomt, terrænafhængigt og giver fatigue; tunge stykker begrænses mere end lette. |
-| B-033 | BESLUTTET | Artilleriets crew/heste | Crew, gunners, drivers og horses er rigtige state-værdier og kan lide tab. Manglende heste kan gøre et ellers intakt batteri taktisk immobilt. |
-| B-034 | BESLUTTET | Erobring af kanoner | Guns kan være operational, abandoned, disabled/destroyed eller captured; capture kræver fysisk kontrol. |
-| B-035 | BESLUTTET | Genbrug af erobret artilleri | In-battle reuse kræver egnet crew, ammunition, træning og klargøringstid; ellers bjærges stykket efter slaget. |
-| B-036 | PLANLAGT | Ammunitionstyper | Round shot/shell/shrapnel/canister m.m. får forskellige effekter mod open, prone, cover og fieldworks. |
-| B-037 | BESLUTTET | Artilleri fire control | **Manuel måludpegning er standard for spillerstyret artilleri.** Spilleren vælger mål/område, hvorefter batteriet fortsætter efter ordren, indtil mål/ordre ændres eller ikke længere kan udføres. Automatisk målvalg er en separat mode, som spilleren aktivt slår til. AI-kontrollerede batterier kan bruge automatisk målvalg gennem commander AI. |
-| B-038 | PLANLAGT | Auto-target prioritering | Automatisk artilleriild skal vælge mål efter synlighed/LOS, range, trussel, formation density, target type, ammunitionstype, commander/fire-control doctrine og evt. ammunition conservation — ikke blot nærmeste fjende. |
-| B-039 | BESLUTTET | Hold Fire for artilleri | Et batteri skal kunne være deployed og klar uden at skyde. Hold Fire overstyrer både manuelt og automatisk målvalg. |
+| B-030 | IMPLEMENTERET CORE / UE QA PENDING | Limber/unlimber | Kanoner skifter mellem transport- og skydestilling; klargøring tager tid. |
+| B-031 | IMPLEMENTERET CORE / UE QA PENDING | Hestetrukket artilleri | Feltkanoner, limbers og caissons transporteres normalt med hestespand; antal/tilstand af heste påvirker mobility. |
+| B-032 | IMPLEMENTERET CORE / UE QA PENDING | Manhandling | Crew kan skubbe/trække et unlimbered stykke korte afstande uden heste. Det er langsomt, terrænafhængigt og giver fatigue; tunge stykker begrænses mere end lette. |
+| B-033 | IMPLEMENTERET CORE / UE QA PENDING | Artilleriets crew/heste | Crew, gunners, drivers og horses er rigtige state-værdier og kan lide tab. Manglende heste kan gøre et ellers intakt batteri taktisk immobilt. |
+| B-034 | IMPLEMENTERET CORE / UE QA PENDING | Erobring af kanoner | Guns kan være operational, abandoned, disabled/destroyed eller captured; capture kræver fysisk kontrol. |
+| B-035 | IMPLEMENTERET CORE / UE QA PENDING | Genbrug af erobret artilleri | In-battle reuse kræver egnet crew, ammunition, træning og klargøringstid; ellers bjærges stykket efter slaget. |
+| B-036 | IMPLEMENTERET PROTOTYPE / HISTORISK TUNING PENDING | Ammunitionstyper | Round shot/shell/shrapnel/canister m.m. får forskellige effekter mod open, prone, cover og fieldworks. |
+| B-037 | IMPLEMENTERET CORE / UE QA PENDING | Artilleri fire control | **Manuel måludpegning er standard for spillerstyret artilleri.** Spilleren vælger mål/område, hvorefter batteriet fortsætter efter ordren, indtil mål/ordre ændres eller ikke længere kan udføres. Automatisk målvalg er en separat mode, som spilleren aktivt slår til. AI-kontrollerede batterier kan bruge automatisk målvalg gennem commander AI. |
+| B-038 | IMPLEMENTERET PROTOTYPE / DOCTRINE-TUNING PENDING | Auto-target prioritering | Automatisk artilleriild skal vælge mål efter synlighed/LOS, range, trussel, formation density, target type, ammunitionstype, commander/fire-control doctrine og evt. ammunition conservation — ikke blot nærmeste fjende. |
+| B-039 | IMPLEMENTERET CORE / UE QA PENDING | Hold Fire for artilleri | Et batteri skal kunne være deployed og klar uden at skyde. Hold Fire overstyrer både manuelt og automatisk målvalg. |
 
 ## Kavaleri og dragoner
 
