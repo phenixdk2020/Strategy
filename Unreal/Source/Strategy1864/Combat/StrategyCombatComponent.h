@@ -102,7 +102,10 @@ public:
 
 private:
     AStrategyUnit* FindBestTarget() const;
-    int32 ResolveHits(int32 ShotCount, float DistanceCm);
+    int32 ResolveHits(
+        int32 ShotCount,
+        float DistanceCm,
+        const AStrategyUnit* Target);
     void EvaluateRoutState();
 
     UPROPERTY()
