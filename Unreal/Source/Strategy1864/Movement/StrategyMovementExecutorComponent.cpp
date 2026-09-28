@@ -390,14 +390,17 @@ bool UStrategyMovementExecutorComponent::TryRetargetDuringBridge(
         return false;
     }
 
+    const int32 OriginalRoutePointIndex = RoutePointIndex;
+    const int32 OriginalBridgeExitIndex = ActiveRoutePlan.BridgeExitPointIndex;
+
     const FVector PreservedBridgeExit =
-        RoutePoints[ActiveRoutePlan.BridgeExitPointIndex];
+        RoutePoints[OriginalBridgeExitIndex];
 
     TArray<FVector> PreservedPoints;
     const int32 KeepThroughIndex =
         FMath::Clamp(
-            ActiveRoutePlan.BridgeExitPointIndex,
-            RoutePointIndex,
+            OriginalBridgeExitIndex,
+            OriginalRoutePointIndex,
             RoutePoints.Num() - 1);
 
     for (int32 Index = RoutePointIndex; Index <= KeepThroughIndex; ++Index)
@@ -425,9 +428,9 @@ bool UStrategyMovementExecutorComponent::TryRetargetDuringBridge(
 
     ActiveRoutePlan.BridgeEnterPointIndex = 0;
     ActiveRoutePlan.BridgeExitPointIndex =
-        FMath::Min(
-            KeepThroughIndex,
-            RoutePoints.Num() - 1);
+        FMath::Max(
+            0,
+            OriginalBridgeExitIndex - OriginalRoutePointIndex);
     ActiveRoutePlan.bUsesBridge = true;
     ActiveRoutePlan.bValid = true;
 
