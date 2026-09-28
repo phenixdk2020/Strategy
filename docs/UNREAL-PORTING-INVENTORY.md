@@ -110,3 +110,23 @@ Planned functional artillery core:
 - Physical capture and controlled captured-gun reuse.
 - OOB/snapshot/outcome/regression integration.
 - QA fixture: one Danish six-gun battery under Division.
+
+
+## v00.02.60 artillery/logistics additions
+
+- Visible ground/area artillery fire missions.
+- Manual mission salvo/time limits.
+- Artillery target-priority doctrine and automatic ammo selection.
+- Ammunition reserve/conservation policy.
+- Terrain-slope deployment legality.
+- Firing/manhandling fatigue.
+- Disabled-gun field repair.
+- Emergency battery abandonment.
+- Supply tactical echelon and horse-drawn supply wagon.
+- Split small-arms/artillery cargo inventory.
+- Driver/horse/wagon-condition mobility.
+- Proximity and state-gated resupply.
+- Supply wagon damage, abandonment and capture.
+- Artillery ammunition-family compatibility.
+- Shared OOB snapshot fields for supply cargo/mobility.
+- QA chain: low-ammo Danish battery + physical Danish ammo wagon.
