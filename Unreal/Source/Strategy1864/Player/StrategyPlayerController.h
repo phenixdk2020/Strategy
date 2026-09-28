@@ -28,6 +28,12 @@ public:
     UFUNCTION(BlueprintCallable, Category="Strategy|OOB")
     void SelectUnitFromOOB(AStrategyUnit* Unit, bool bFocusCamera);
 
+    UFUNCTION(BlueprintCallable, Category="Strategy|OOB")
+    bool RequestTacticalAttachment(AStrategyUnit* Unit, AStrategyUnit* NewParent);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|OOB")
+    bool RestoreOrganicAttachment(AStrategyUnit* Unit);
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Orders")
     void BeginOrderPlacement(EStrategyOrderType OrderType);
 
