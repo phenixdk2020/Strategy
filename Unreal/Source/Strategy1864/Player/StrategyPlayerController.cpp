@@ -532,7 +532,7 @@ bool AStrategyPlayerController::RequestTacticalAttachment(
 
     if (!IsValid(Cavalry) ||
         !IsValid(ParentHQ) ||
-        Cavalry == ParentHQ ||
+        Unit == NewParent ||
         Cavalry->Side != ParentHQ->Side ||
         !Cavalry->CommandComponent ||
         !Cavalry->OrderComponent)
