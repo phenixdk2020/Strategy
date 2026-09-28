@@ -278,3 +278,27 @@ The project is intentionally postponing visual/asset work while simulation funct
 - QA now includes a navigation-obstacle fixture and checks the new gameplay component set.
 
 Remaining emphasis before parity verification is local UE 5.8.3 compilation/runtime QA, followed by defect correction. Visual assets, Niagara/animation and final UMG remain later passes by design.
+
+
+## v00.02.58 combat, fieldcraft and decision-layer checkpoint
+
+The functionality-first phase now includes:
+- separate fire range policy and fire discipline, including ammunition conservation;
+- Standing/Prone gameplay with movement/reload/target-profile effects;
+- directional cover from buildings, fences and fieldworks;
+- hasty fieldworks construction;
+- black-powder smoke as LOS/accuracy simulation rather than a visual-only effect;
+- abstract skirmisher detachment with five roles, density effects and recall/reform;
+- finite tactical ammunition supply and automatic resupply requests;
+- Defensive/Balanced/Offensive doctrine plus commander aggression intent;
+- Strict/Normal/Independent autonomy;
+- Easy/Normal/Hard enemy AI difficulty that changes reaction/noise only and never combat values or knowledge;
+- AI-DIAG reason/task telemetry;
+- expanded officer profile feeding command, stress and rally behaviour;
+- mission constraints for no-pursuit, ammunition conservation and bounded operating area.
+
+Runtime keys now include I for selected-unit Officer AI and F6/F7/F8 for enemy AI difficulty. Graphics remain explicitly outside the current gate.
+
+### Next functional priority — artillery battery
+
+Artillery should enter before the visual pass as a real tactical formation, not a decorative mesh. The next artillery slice should provide an artillery battery actor with individual gun count/crew/ammunition state, deployed vs limbered state, facing/traverse limits, range/fire arc, fire mission execution, movement restrictions while deployed, and later horse-team/limber representation. Artillery must use the same command hierarchy, order authority, LOS/contact and ammunition/supply rules as infantry/cavalry where applicable.
