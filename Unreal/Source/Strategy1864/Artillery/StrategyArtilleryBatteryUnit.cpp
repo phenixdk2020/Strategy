@@ -9,6 +9,8 @@
 #include "StrategyArtilleryRepairComponent.h"
 #include "StrategyArtilleryPositioningComponent.h"
 #include "StrategyArtilleryProjectilePresentationComponent.h"
+#include "StrategyArtilleryCrewAnimationComponent.h"
+#include "../Visual/StrategyUniformAppearanceComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Combat/StrategyFireControlComponent.h"
@@ -54,6 +56,10 @@ AStrategyArtilleryBatteryUnit::AStrategyArtilleryBatteryUnit()
     ProjectilePresentationComponent =
         CreateDefaultSubobject<UStrategyArtilleryProjectilePresentationComponent>(
             TEXT("ProjectilePresentationComponent"));
+
+    CrewAnimationComponent =
+        CreateDefaultSubobject<UStrategyArtilleryCrewAnimationComponent>(
+            TEXT("CrewAnimationComponent"));
 }
 
 void AStrategyArtilleryBatteryUnit::BeginPlay()
@@ -96,6 +102,12 @@ void AStrategyArtilleryBatteryUnit::BeginPlay()
         // Infantry combat loop is not authoritative for artillery ammunition/fire.
         CombatComponent->AmmunitionRounds = 0;
         CombatComponent->MaxAmmunitionRounds = 0;
+    }
+
+    if (UniformAppearanceComponent)
+    {
+        UniformAppearanceComponent->VisualProfile.UniformPresetId =
+            TEXT("QA_DK_ARTILLERY");
     }
 
     RefreshDebugLabel();
