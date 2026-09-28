@@ -4,6 +4,7 @@
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "Engine/World.h"
+#include "../Terrain/StrategyTerrainQueryLibrary.h"
 
 UStrategyArtilleryDeploymentComponent::UStrategyArtilleryDeploymentComponent()
 {
@@ -189,67 +190,15 @@ void UStrategyArtilleryDeploymentComponent::CompleteTransition()
 
 float UStrategyArtilleryDeploymentComponent::GetCurrentGroundSlopeDegrees() const
 {
-    if (!OwnerBattery || !GetWorld())
+    if (!OwnerBattery)
     {
         return 90.0f;
     }
 
-    const FVector Center = OwnerBattery->GetActorLocation();
-    const float R = FMath::Max(100.0f, DeployTerrainSampleRadiusCm);
-
-    const FVector Samples[4] =
-    {
-        Center + FVector(R, 0.0f, 1500.0f),
-        Center + FVector(-R, 0.0f, 1500.0f),
-        Center + FVector(0.0f, R, 1500.0f),
-        Center + FVector(0.0f, -R, 1500.0f)
-    };
-
-    FVector Ground[4];
-
-    FCollisionQueryParams Params(
-        SCENE_QUERY_STAT(StrategyArtilleryDeploySlope),
-        false);
-    Params.AddIgnoredActor(OwnerBattery);
-
-    for (int32 Index = 0; Index < 4; ++Index)
-    {
-        FHitResult Hit;
-
-        const bool bHit =
-            GetWorld()->LineTraceSingleByChannel(
-                Hit,
-                Samples[Index],
-                Samples[Index] - FVector(0.0f, 0.0f, 4000.0f),
-                ECC_Visibility,
-                Params);
-
-        if (!bHit)
-        {
-            return 90.0f;
-        }
-
-        Ground[Index] = Hit.ImpactPoint;
-    }
-
-    const FVector XSpan = Ground[0] - Ground[1];
-    const FVector YSpan = Ground[2] - Ground[3];
-
-    FVector Normal =
-        FVector::CrossProduct(XSpan, YSpan).GetSafeNormal();
-
-    if (Normal.Z < 0.0f)
-    {
-        Normal *= -1.0f;
-    }
-
-    const float UpDot =
-        FMath::Clamp(
-            FVector::DotProduct(Normal, FVector::UpVector),
-            -1.0f,
-            1.0f);
-
-    return FMath::RadiansToDegrees(FMath::Acos(UpDot));
+    return UStrategyTerrainQueryLibrary::GetLocalSlopeDegrees(
+        OwnerBattery,
+        OwnerBattery->GetActorLocation(),
+        DeployTerrainSampleRadiusCm);
 }
 
 bool UStrategyArtilleryDeploymentComponent::CanDeployAtCurrentLocation() const
