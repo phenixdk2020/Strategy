@@ -26,6 +26,7 @@ class UStrategySemanticZoomComponent;
 class UStrategyWorldDebugComponent;
 class UStrategyPresentationSnapshotComponent;
 class UStrategyLocalDeconflictionComponent;
+class UStrategyMissionAnchorComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FStrategyCasualtyVisualEvent,
@@ -139,6 +140,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyLocalDeconflictionComponent> LocalDeconflictionComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyMissionAnchorComponent> MissionAnchorComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
