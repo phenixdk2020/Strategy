@@ -105,7 +105,9 @@ AStrategyRiverBarrier* UStrategyRoutePlannerComponent::FindRelevantRiverBarrier(
             continue;
         }
 
-        if (!Barrier->RequiresBankChange(StartLocation, EndLocation) &&
+        if (!Barrier->IsInsideRiver(StartLocation) &&
+            !Barrier->IsInsideRiver(EndLocation) &&
+            !Barrier->RequiresBankChange(StartLocation, EndLocation) &&
             !Barrier->SameBankChordIntersectsRiver(StartLocation, EndLocation))
         {
             continue;
