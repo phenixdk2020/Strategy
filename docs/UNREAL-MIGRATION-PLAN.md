@@ -355,3 +355,14 @@ Implemented:
 - regression checks for expected dead ground, clear lane, crest and valid artillery position.
 
 This is gameplay terrain authority, not the final landscape-art pass. UE 5.8.3 compile/runtime validation remains required before parity verification.
+
+
+## v00.02.62 projectile/follow-camera checkpoint
+
+Artillery now has a non-authoritative projectile presentation layer driven by the exact per-gun hit/miss impact points resolved by the fire mission. Round Shot, Shell, Shrapnel and Canister receive different presentation paths; Round Shot can visibly ricochet, Shell/Shrapnel have temporary impact/burst debug feedback, and Canister renders a short cone rather than one followable ball.
+
+Each battery owns a projectile presentation component with virtual per-gun muzzle origins, active-projectile tracking, bounded impact history and trajectory QA. P follows the latest live projectile. The camera holds briefly at impact and restores the previous battle view; manual movement/rotation/zoom cancels follow. F9 toggles full trajectory lines.
+
+A future campaign→battlefield generation contract is also established in `Campaign/StrategyBattlefieldGenerationTypes.h`. It intentionally contains data only: battle id/center/size/seed, attacker and defender approach directions, plus source features for topography, waterways, transport, settlements and land cover. No battlefield generator is implemented yet.
+
+Remaining gate: local UE 5.8.3 compile/runtime QA and later replacement of debug projectile visuals with final cannonball/shell meshes, particles, smoke and audio.
