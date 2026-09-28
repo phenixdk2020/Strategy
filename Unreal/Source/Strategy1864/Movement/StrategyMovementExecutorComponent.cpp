@@ -54,7 +54,10 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
         OwnerUnit->CommandComponent &&
         OwnerUnit->CommandComponent->CurrentSubordinates.Num() > 0 &&
         (NewOrder.Type == EStrategyOrderType::AttackHere ||
-         NewOrder.Type == EStrategyOrderType::DefendHere);
+         NewOrder.Type == EStrategyOrderType::DefendHere ||
+         NewOrder.Type == EStrategyOrderType::Advance ||
+         NewOrder.Type == EStrategyOrderType::Withdraw ||
+         NewOrder.Type == EStrategyOrderType::Assemble);
 
     if (bCommandParentMission)
     {
