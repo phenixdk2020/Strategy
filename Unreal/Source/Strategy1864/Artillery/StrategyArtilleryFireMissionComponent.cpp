@@ -378,7 +378,8 @@ bool UStrategyArtilleryFireMissionComponent::CanEngageTarget(
         : MinimumReserveFraction;
 
     if (FireMode == EStrategyArtilleryFireMode::AutoTarget &&
-        bConserveAmmunition &&
+        (bConserveAmmunition ||
+         TargetPriority == EStrategyArtilleryTargetPriority::ConserveAmmo) &&
         static_cast<float>(TotalRounds) / static_cast<float>(MaxRounds) <=
             ReserveFraction)
     {
@@ -999,8 +1000,18 @@ bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
           static_cast<float>(OwnerBattery->GunCount)
         : 0.0f;
 
+    const float ExperienceFactor =
+        FMath::Lerp(
+            1.12f,
+            0.88f,
+            FMath::Clamp(
+                OwnerBattery->Experience / 100.0f,
+                0.0f,
+                1.0f));
+
     ReloadRemainingSeconds =
         OwnerBattery->GunProfile.ReloadSeconds *
+        ExperienceFactor *
         FMath::Lerp(1.35f, 1.0f, FMath::Clamp(CrewRatio, 0.0f, 1.0f)) *
         FMath::Lerp(
             1.0f,
@@ -1020,6 +1031,33 @@ bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
         AmmoType,
         Consumed,
         TotalCasualties);
+
+    if (GetWorld())
+    {
+        FVector Direction =
+            TargetLocation - OwnerBattery->GetActorLocation();
+        Direction.Z = 0.0f;
+        Direction = Direction.GetSafeNormal();
+
+        if (AStrategySmokeField* Smoke =
+            GetWorld()->SpawnActor<AStrategySmokeField>(
+                AStrategySmokeField::StaticClass(),
+                OwnerBattery->GetActorLocation() + Direction * 350.0f,
+                Direction.Rotation()))
+        {
+            Smoke->InitialDensity =
+                FMath::Clamp(
+                    0.32f + Consumed * 0.05f,
+                    0.32f,
+                    0.70f);
+
+            Smoke->RadiusCm =
+                FMath::Clamp(
+                    1100.0f + Consumed * 140.0f,
+                    1100.0f,
+                    2400.0f);
+        }
+    }
 
     return true;
 }
