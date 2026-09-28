@@ -38,6 +38,19 @@ void ACavalryUnit::BeginPlay()
 {
     Super::BeginPlay();
 
+    if (InitialStrength <= 0)
+    {
+        InitialStrength = 80;
+    }
+
+    if (CurrentStrength <= 0)
+    {
+        CurrentStrength = InitialStrength;
+    }
+
+    MaximumFireRangeCm = FMath::Min(MaximumFireRangeCm, 8000.0f);
+    RefreshDebugLabel();
+
     if (HorseMesh && RiderMesh && HorseMesh->DoesSocketExist(RiderSocketName))
     {
         RiderMesh->AttachToComponent(
