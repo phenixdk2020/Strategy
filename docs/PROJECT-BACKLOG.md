@@ -348,3 +348,23 @@ Et slag, som opstår ved samme position på campaign map, skal deterministisk ku
 
 ### Exit-kriterium
 Ved normal tactical zoom skal en enkelt figur tydeligt læses som en bevæbnet infanterist og ikke som en abstrakt søjle/blok, mens 190-mands 1:1 formationer fortsat kører acceptabelt.
+
+
+## B-292 — Uniform colour customization
+
+**Status:** BESLUTTET / VISUAL IMPLEMENTATION PENDING  
+**Prioritet:** Høj når soldier visual pipeline bygges
+
+### Krav
+- Soldater deler fælles human skeleton og animationer.
+- Farveændringer må ske via material instances / runtime material parameters, ikke via separate animation assets.
+- Minimum parametre hvor mesh/material tillader det:
+  - coat/tunic;
+  - trousers;
+  - collar/facings/cuffs;
+  - headgear detail;
+  - leather equipment;
+  - regiment/unit accent.
+- Historical presets kan begrænse eller låse farvevalg pr. nation/regiment.
+- Samme soldier mesh kan genbruges med flere farvevarianter uden at duplikere animation blueprint eller animation clips.
+- Future regiment/unit data skal kunne pege på et uniform preset og overrides.
