@@ -140,6 +140,39 @@ struct FStrategyUnitPresentationSnapshot
 
     UPROPERTY(BlueprintReadOnly)
     float TerrainFeatureElevationOffset = 0.0f;
+
+    UPROPERTY(BlueprintReadOnly)
+    FString HumanAnimationAction;
+
+    UPROPERTY(BlueprintReadOnly)
+    FName SharedSkeletonId = NAME_None;
+
+    UPROPERTY(BlueprintReadOnly)
+    FName SharedAnimationSetId = NAME_None;
+
+    UPROPERTY(BlueprintReadOnly)
+    FName UniformPresetId = NAME_None;
+
+    UPROPERTY(BlueprintReadOnly)
+    FLinearColor UniformCoatColor = FLinearColor::White;
+
+    UPROPERTY(BlueprintReadOnly)
+    FLinearColor UniformTrouserColor = FLinearColor::White;
+
+    UPROPERTY(BlueprintReadOnly)
+    FLinearColor UniformFacingColor = FLinearColor::White;
+
+    UPROPERTY(BlueprintReadOnly)
+    FName PrimaryWeaponId = NAME_None;
+
+    UPROPERTY(BlueprintReadOnly)
+    FString HorseGait;
+
+    UPROPERTY(BlueprintReadOnly)
+    FString ArtilleryCrewActivity;
+
+    UPROPERTY(BlueprintReadOnly)
+    int32 ArtilleryVisualCrewStations = 0;
 };
 
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
