@@ -39,7 +39,7 @@ public:
     bool bDrawTrajectory = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Projectile")
-    float ProjectilePointSize = 8.0f;
+    float ProjectilePointSize = 18.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Projectile")
     float PostImpactLifetimeSeconds = 1.75f;
