@@ -311,8 +311,23 @@ void UStrategyMovementExecutorComponent::TickComponent(
         ConditionMultiplier *
         SlopeMultiplier *
         DeltaTime;
-    const FVector NewLocation =
-        CurrentLocation + Direction * FMath::Min(Step, FlatDelta.Size());
+    const float AppliedStep =
+        FMath::Min(Step, FlatDelta.Size());
+
+    FVector NewLocation =
+        CurrentLocation + Direction * AppliedStep;
+
+    const float VerticalAlpha =
+        FMath::Clamp(
+            AppliedStep / HorizontalDistance,
+            0.0f,
+            1.0f);
+
+    NewLocation.Z =
+        FMath::Lerp(
+            CurrentLocation.Z,
+            ActiveWaypoint.Z,
+            VerticalAlpha);
 
     OwnerUnit->SetActorLocation(NewLocation);
 
