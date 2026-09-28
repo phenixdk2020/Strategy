@@ -169,27 +169,54 @@ void UStrategyRoutePlannerComponent::AppendNavSegment(
     const FVector& SegmentEnd,
     TArray<FVector>& InOutPoints) const
 {
+    const float Step = FMath::Max(250.0f, TerrainSampleStepCm);
+
+    auto AppendSampledStraight =
+        [&InOutPoints, Step](const FVector& From, const FVector& To)
+        {
+            const float Distance = FVector::Dist2D(From, To);
+            const int32 Steps =
+                FMath::Max(
+                    1,
+                    FMath::CeilToInt(Distance / Step));
+
+            for (int32 Index = 1; Index <= Steps; ++Index)
+            {
+                const float Alpha =
+                    static_cast<float>(Index) /
+                    static_cast<float>(Steps);
+
+                InOutPoints.Add(
+                    FMath::Lerp(From, To, Alpha));
+            }
+        };
+
     if (!bUseNavigationSystem || !GetWorld())
     {
-        InOutPoints.Add(SegmentEnd);
+        AppendSampledStraight(SegmentStart, SegmentEnd);
         return;
     }
 
-    UNavigationPath* Path = UNavigationSystemV1::FindPathToLocationSynchronously(
-        GetWorld(),
-        SegmentStart,
-        SegmentEnd,
-        GetOwner());
+    UNavigationPath* Path =
+        UNavigationSystemV1::FindPathToLocationSynchronously(
+            GetWorld(),
+            SegmentStart,
+            SegmentEnd,
+            GetOwner());
 
     if (!Path || !Path->IsValid() || Path->PathPoints.Num() < 2)
     {
-        InOutPoints.Add(SegmentEnd);
+        AppendSampledStraight(SegmentStart, SegmentEnd);
         return;
     }
 
+    FVector Previous = SegmentStart;
+
     for (int32 Index = 1; Index < Path->PathPoints.Num(); ++Index)
     {
-        InOutPoints.Add(Path->PathPoints[Index]);
+        const FVector& Point = Path->PathPoints[Index];
+        AppendSampledStraight(Previous, Point);
+        Previous = Point;
     }
 }
 
