@@ -39,6 +39,7 @@
 #include "../AI/StrategyAIDifficultyComponent.h"
 #include "../AI/StrategyAITelemetryComponent.h"
 #include "../AI/StrategyMissionConstraintsComponent.h"
+#include "../Terrain/StrategyTerrainAwarenessComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -121,6 +122,8 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyAITelemetryComponent>(TEXT("AITelemetryComponent"));
     MissionConstraintsComponent =
         CreateDefaultSubobject<UStrategyMissionConstraintsComponent>(TEXT("MissionConstraintsComponent"));
+    TerrainAwarenessComponent =
+        CreateDefaultSubobject<UStrategyTerrainAwarenessComponent>(TEXT("TerrainAwarenessComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
