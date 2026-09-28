@@ -13,6 +13,9 @@
 #include "../Orders/StrategyOrderComponent.h"
 #include "../AI/StrategyOfficerAIComponent.h"
 #include "../AI/StrategyAIDifficultyComponent.h"
+#include "../Artillery/StrategyArtilleryBatteryUnit.h"
+#include "../Artillery/StrategyArtilleryProjectilePresentation.h"
+#include "../Artillery/StrategyArtilleryProjectilePresentationComponent.h"
 
 AStrategyPlayerController::AStrategyPlayerController()
 {
@@ -78,6 +81,18 @@ void AStrategyPlayerController::SetupInputComponent()
         IE_Pressed,
         this,
         &AStrategyPlayerController::SetEnemyDifficultyHard);
+
+    InputComponent->BindAction(
+        TEXT("FollowLatestProjectile"),
+        IE_Pressed,
+        this,
+        &AStrategyPlayerController::ToggleFollowLatestProjectile);
+
+    InputComponent->BindAction(
+        TEXT("ToggleProjectileTrajectoryDebug"),
+        IE_Pressed,
+        this,
+        &AStrategyPlayerController::ToggleProjectileTrajectoryDebug);
 }
 
 void AStrategyPlayerController::PlayerTick(float DeltaTime)
@@ -622,4 +637,91 @@ void AStrategyPlayerController::SetEnemyDifficultyByValue(
         TEXT("PROJECT1864-AI: enemy difficulty=%s"),
         *StaticEnum<EStrategyAIDifficulty>()->GetNameStringByValue(
             static_cast<int64>(Difficulty)));
+}
+
+
+void AStrategyPlayerController::ToggleFollowLatestProjectile()
+{
+    AStrategyCameraPawn* CameraPawn =
+        Cast<AStrategyCameraPawn>(GetPawn());
+
+    if (!CameraPawn || !GetWorld())
+    {
+        return;
+    }
+
+    if (CameraPawn->bFollowingProjectile)
+    {
+        CameraPawn->StopProjectileFollow(true);
+        return;
+    }
+
+    AStrategyArtilleryProjectilePresentation* Best = nullptr;
+    int32 BestSerial = TNumericLimits<int32>::Lowest();
+
+    for (TActorIterator<AStrategyArtilleryProjectilePresentation> It(GetWorld()); It; ++It)
+    {
+        AStrategyArtilleryProjectilePresentation* Projectile = *It;
+
+        if (!IsValid(Projectile) ||
+            !Projectile->IsFollowable() ||
+            Projectile->bImpacted)
+        {
+            continue;
+        }
+
+        if (Projectile->Spec.ShotSerial > BestSerial)
+        {
+            BestSerial = Projectile->Spec.ShotSerial;
+            Best = Projectile;
+        }
+    }
+
+    if (Best)
+    {
+        CameraPawn->BeginProjectileFollow(Best);
+    }
+}
+
+void AStrategyPlayerController::ToggleProjectileTrajectoryDebug()
+{
+    if (!GetWorld())
+    {
+        return;
+    }
+
+    bool bAnyEnabled = false;
+
+    for (TActorIterator<AStrategyArtilleryBatteryUnit> It(GetWorld()); It; ++It)
+    {
+        AStrategyArtilleryBatteryUnit* Battery = *It;
+
+        if (IsValid(Battery) &&
+            Battery->ProjectilePresentationComponent &&
+            Battery->ProjectilePresentationComponent->IsDebugTrajectoryEnabled())
+        {
+            bAnyEnabled = true;
+            break;
+        }
+    }
+
+    const bool bNewEnabled = !bAnyEnabled;
+
+    for (TActorIterator<AStrategyArtilleryBatteryUnit> It(GetWorld()); It; ++It)
+    {
+        AStrategyArtilleryBatteryUnit* Battery = *It;
+
+        if (IsValid(Battery) &&
+            Battery->ProjectilePresentationComponent)
+        {
+            Battery->ProjectilePresentationComponent
+                ->SetDebugTrajectoryEnabled(bNewEnabled);
+        }
+    }
+
+    UE_LOG(
+        LogTemp,
+        Display,
+        TEXT("PROJECT1864-PROJECTILE: trajectory debug=%s"),
+        bNewEnabled ? TEXT("ON") : TEXT("OFF"));
 }
