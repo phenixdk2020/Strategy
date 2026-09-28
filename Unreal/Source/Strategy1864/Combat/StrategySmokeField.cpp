@@ -1,7 +1,11 @@
 #include "StrategySmokeField.h"
+#include "Components/SceneComponent.h"
 
 AStrategySmokeField::AStrategySmokeField()
 {
+    USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    SetRootComponent(Root);
+
     PrimaryActorTick.bCanEverTick = true;
 }
 
