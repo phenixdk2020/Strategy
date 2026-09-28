@@ -4,6 +4,7 @@
 #include "StrategyHUD.h"
 #include "StrategyPlayerController.h"
 #include "../Tests/StrategyOOBTestScenario.h"
+#include "../Tests/StrategyScenarioStateComponent.h"
 #include "Engine/World.h"
 
 AStrategyGameMode::AStrategyGameMode()
@@ -12,6 +13,8 @@ AStrategyGameMode::AStrategyGameMode()
     PlayerControllerClass = AStrategyPlayerController::StaticClass();
     HUDClass = AStrategyHUD::StaticClass();
     OOBTestScenarioClass = AStrategyOOBTestScenario::StaticClass();
+    ScenarioStateComponent =
+        CreateDefaultSubobject<UStrategyScenarioStateComponent>(TEXT("ScenarioStateComponent"));
 }
 
 void AStrategyGameMode::BeginPlay()
@@ -23,8 +26,22 @@ void AStrategyGameMode::BeginPlay()
         return;
     }
 
-    GetWorld()->SpawnActor<AStrategyOOBTestScenario>(
+    SpawnedQAScenario = GetWorld()->SpawnActor<AStrategyOOBTestScenario>(
         OOBTestScenarioClass,
         FVector::ZeroVector,
         FRotator::ZeroRotator);
+}
+
+
+void AStrategyGameMode::ResetQAScenario()
+{
+    if (ScenarioStateComponent)
+    {
+        ScenarioStateComponent->ResetOutcome();
+    }
+
+    if (IsValid(SpawnedQAScenario))
+    {
+        SpawnedQAScenario->ResetScenario();
+    }
 }
