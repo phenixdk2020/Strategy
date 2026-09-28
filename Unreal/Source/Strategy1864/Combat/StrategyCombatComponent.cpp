@@ -118,6 +118,17 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
     ReloadRemainingSeconds = ReloadSeconds;
     OnVolleyResolved.Broadcast(Target, ShotCount, Hits);
 
+    FVector FireDirection =
+        Target->GetActorLocation() - OwnerUnit->GetActorLocation();
+    FireDirection.Z = 0.0f;
+    FireDirection = FireDirection.GetSafeNormal();
+
+    OnVolleyVisualEvent.Broadcast(
+        OwnerUnit->GetActorLocation(),
+        FireDirection,
+        ShotCount,
+        Hits);
+
     return true;
 }
 
