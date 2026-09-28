@@ -684,3 +684,41 @@ Functionality-first work added fire discipline/ammunition conservation, Standing
 - Projectile history is bounded and available through the shared presentation snapshot.
 - The campaign→battlefield header is a **contract only**, not a generator. It already reserves campaign coordinates, deterministic seed, attacker/defender approaches and source features for height, hills, ridges, depressions, rivers, roads, bridges, settlements, forest, fields, marsh and water.
 - All UE-P360..379 remain **UE 5.8.3 build/runtime QA pending**.
+
+
+# 19. Shared human animation + uniform customization core — v00.02.63
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P380 | P0 | Shared human visual profile | Common skeleton/animation-set/profile IDs | IMPLEMENTED CORE |
+| UE-P381 | P0 | Canonical human animation actions | Idle/Walk/Run/Aim/Fire/Reload/Die/Mount/Dismount + stance/mounted states | IMPLEMENTED CORE |
+| UE-P382 | P0 | Reusable locomotion intent | Unit movement derives shared walk/run/mounted locomotion state | IMPLEMENTED CORE |
+| UE-P383 | P1 | Animation manifest | Canonical human/mounted/horse/artillery animation names | IMPLEMENTED CORE |
+| UE-P384 | P0 | Uniform colour zones | Coat/Trousers/Facings/Headgear/Leather/Accent/Metal | IMPLEMENTED CORE |
+| UE-P385 | P0 | Uniform preset data | Nation/unit/regiment preset identity + base palette | IMPLEMENTED CORE |
+| UE-P386 | P0 | Runtime uniform overrides | Independent colour-zone overrides without mesh/animation duplication | IMPLEMENTED CORE |
+| UE-P387 | P0 | Dynamic material application | Material parameters applied to selected skeletal mesh components | IMPLEMENTED CORE |
+| UE-P388 | P1 | Equipment socket mapping | Rifle/Bayonet/Sabre/Tool/Backpack/CartridgeBox sockets | IMPLEMENTED CORE |
+| UE-P389 | P0 | Rig compatibility validation | Enforces shared skeleton + animation-set contract | IMPLEMENTED CORE |
+| UE-P390 | P1 | Horse gait animation state | Idle/Walk/Trot/Canter/Gallop from actual movement | IMPLEMENTED CORE |
+| UE-P391 | P1 | Rider/horse animation sync | Mounted rider action follows horse gait | IMPLEMENTED CORE |
+| UE-P392 | P1 | Dragoon mount/dismount intents | Existing mounted-state transitions emit shared Mount/Dismount actions | IMPLEMENTED CORE |
+| UE-P393 | P0 | Artillery crew roles/stations | Gunner/Loader/Rammer/Sponger/Ammo/Wheels/Driver/HorseHandler | IMPLEMENTED CORE |
+| UE-P394 | P0 | Artillery reload drill animation state | Recoil→Sponge→Charge→Projectile→Ram→Prime→Clear→Return | IMPLEMENTED CORE |
+| UE-P395 | P0 | Artillery work-state animation intents | Push/Traverse/Limber/Unlimber/Repair map from authoritative battery state | IMPLEMENTED CORE |
+| UE-P396 | P0 | Battery crew controller integration | Crew animation controller attached to every artillery battery | IMPLEMENTED CORE |
+| UE-P397 | P1 | QA uniform presets | Editable neutral/Danish/Prussian/artillery QA palettes | IMPLEMENTED QA CORE |
+| UE-P398 | P1 | Visual snapshot diagnostics | Animation/rig/preset/colours/equipment/gait/crew state exposed | IMPLEMENTED QA CORE |
+| UE-P399 | P0 | Visual-core regression | Rig compatibility, manifests, runtime colour override, cavalry sync and crew stations | IMPLEMENTED QA CORE |
+
+### v00.02.63 authority notes
+
+- Animation assets belong to the shared human/horse animation systems, not to a particular uniform mesh.
+- A new compatible soldier mesh should reuse `SK_Human_1864` + `ABP_Human_1864` rather than duplicating Walk/Run/Fire/Reload/Mount/Dismount.
+- Uniform colour variation is material/preset data. It does not create a new skeleton or animation set.
+- Historical palette locking is supported, but QA presets remain deliberately editable placeholders until historical visual tuning.
+- Cavalry horse and rider remain separate skeletal meshes; rider locomotion is synchronized to horse gait.
+- Artillery crew roles are visual stations driven by the authoritative battery state. Animation never decides whether a gun is loaded, traversed or deployed.
+- Artillery reload visuals are phase-mapped onto the existing authoritative reload timer.
+- Final skeletal meshes, Animation Blueprints, montages and material assets are still pending the later graphics pass.
+- All UE-P380..399 remain **UE 5.8.3 build/runtime QA pending**.
