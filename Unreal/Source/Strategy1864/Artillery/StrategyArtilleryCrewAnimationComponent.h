@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "../Visual/StrategyHumanVisualTypes.h"
+#include "StrategyArtilleryTypes.h"
 #include "StrategyArtilleryCrewAnimationComponent.generated.h"
 
 class AStrategyArtilleryBatteryUnit;
