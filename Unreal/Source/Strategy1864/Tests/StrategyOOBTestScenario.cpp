@@ -30,6 +30,13 @@
 #include "../AI/StrategyAIDifficultyComponent.h"
 #include "../AI/StrategyAITelemetryComponent.h"
 #include "../AI/StrategyMissionConstraintsComponent.h"
+#include "../Artillery/StrategyArtilleryBatteryUnit.h"
+#include "../Artillery/StrategyArtilleryDeploymentComponent.h"
+#include "../Artillery/StrategyArtilleryAmmunitionComponent.h"
+#include "../Artillery/StrategyArtilleryFireMissionComponent.h"
+#include "../Artillery/StrategyArtilleryDamageComponent.h"
+#include "../Artillery/StrategyArtilleryCaptureComponent.h"
+#include "../Artillery/StrategyArtilleryTraverseComponent.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -114,6 +121,15 @@ void AStrategyOOBTestScenario::BuildTestOOB()
                     EStrategyCavalryRole::Dragoon;
             }
         }
+    }
+
+    if (bSpawnArtilleryQA)
+    {
+        SpawnArtilleryBattery(
+            TEXT("DK-ART-BAT-1"),
+            TEXT("Artilleribatteri QA"),
+            Origin + FVector(1500.0f, 7800.0f, 0.0f),
+            Division);
     }
 
     for (int32 Index = 0; Index < 4; ++Index)
@@ -203,6 +219,21 @@ void AStrategyOOBTestScenario::BuildTestOOB()
                 static_cast<int32>(GetTypeHash(Unit->StableUnitId));
 
             Unit->CombatComponent->SetDeterministicRandomSeed(UnitSeed);
+        }
+
+        if (AStrategyArtilleryBatteryUnit* Battery =
+            Cast<AStrategyArtilleryBatteryUnit>(Unit))
+        {
+            const int32 ArtillerySeed =
+                QARandomSeed ^
+                static_cast<int32>(GetTypeHash(Battery->StableUnitId)) ^
+                0x7719;
+
+            if (Battery->ArtilleryDamageComponent)
+            {
+                Battery->ArtilleryDamageComponent
+                    ->SetDeterministicRandomSeed(ArtillerySeed);
+            }
         }
     }
 
@@ -498,6 +529,66 @@ ACavalryUnit* AStrategyOOBTestScenario::SpawnCavalry(
     return Cavalry;
 }
 
+AStrategyArtilleryBatteryUnit* AStrategyOOBTestScenario::SpawnArtilleryBattery(
+    const FName StableId,
+    const FString& Name,
+    const FVector& Location,
+    AStrategyUnit* OrganicParent)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    AStrategyArtilleryBatteryUnit* Battery =
+        World->SpawnActor<AStrategyArtilleryBatteryUnit>(
+            AStrategyArtilleryBatteryUnit::StaticClass(),
+            Location,
+            FRotator(0.0f, 0.0f, 0.0f));
+
+    if (!Battery)
+    {
+        return nullptr;
+    }
+
+    Battery->StableUnitId = StableId;
+    Battery->DisplayName = FText::FromString(Name);
+    Battery->Side = EStrategySide::Denmark;
+    Battery->bPlayerControllable = true;
+
+    Battery->GunCount = 6;
+    Battery->CrewStrength = 72;
+    Battery->DriverStrength = 18;
+    Battery->HorseStrength = 48;
+    Battery->HorsesRequiredForFullMobility = 36;
+    Battery->DriversRequiredForFullMobility = 12;
+    Battery->InitialStrength = 90;
+    Battery->CurrentStrength = 90;
+    Battery->Experience = 45.0f;
+
+    if (Battery->DeploymentComponent)
+    {
+        Battery->DeploymentComponent->MobilityState =
+            EStrategyArtilleryMobilityState::Deployed;
+    }
+
+    if (Battery->ArtilleryFireMissionComponent)
+    {
+        Battery->ArtilleryFireMissionComponent->SetHoldFire(false);
+        Battery->ArtilleryFireMissionComponent->SetAutoTargetEnabled(false);
+    }
+
+    if (Battery->CommandComponent)
+    {
+        Battery->CommandComponent->SetOrganicParent(OrganicParent);
+    }
+
+    Battery->RefreshDebugLabel();
+    SpawnedUnitObjects.Add(Battery);
+    return Battery;
+}
+
 TArray<AStrategyUnit*> AStrategyOOBTestScenario::GetSpawnedUnits() const
 {
     TArray<AStrategyUnit*> Result;
@@ -627,11 +718,13 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
     const int32 ExpectedCount =
         13 +
         (bSpawnCavalryQA ? 2 : 0) +
-        (bSpawnEnemyQAUnits ? 2 : 0);
+        (bSpawnEnemyQAUnits ? 2 : 0) +
+        (bSpawnArtilleryQA ? 1 : 0);
 
     int32 ValidCount = 0;
     int32 EnemySelectableCount = 0;
     int32 DanishCavalryCount = 0;
+    int32 DanishArtilleryCount = 0;
     bool bFoundDragoon = false;
 
     for (AStrategyUnit* Unit : SpawnedUnitObjects)
@@ -756,6 +849,14 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
     if (bSpawnCavalryQA && !bFoundDragoon)
     {
         OutFailures.Add(TEXT("Dragoon QA unit was not configured."));
+    }
+
+    if (bSpawnArtilleryQA && DanishArtilleryCount != 1)
+    {
+        OutFailures.Add(
+            FString::Printf(
+                TEXT("Expected 1 Danish artillery battery, found %d."),
+                DanishArtilleryCount));
     }
 
     if (bSpawnRiverQA && !IsValid(SpawnedRiverBarrier))
