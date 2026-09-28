@@ -6,6 +6,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 
 **Unreal-migration:** Feature-for-feature parity mod den eksisterende Unity battle-prototype spores separat i [UNREAL-PARITY-BACKLOG.md](UNREAL-PARITY-BACKLOG.md). Denne hovedbacklog beholder langsigtet game-design scope; Unreal parity-backloggen bruges til selve engine-migreringen.
 
+**Unreal gameplay checkpoint v00.02.57:** Grafik/asset-passet er bevidst udskudt. Den aktive Unreal-port har nu funktionel mission-anchor for Attack/Defend, explicit obstacles + slope/elevation movement, officer stats + command delay, fatigue/experience gameplay, contact memory/FOG-fire authority, SPEJD HER recon state machine, cavalry screen/reform-gated charge, OOB tactical attachment API, bridge queue, autonom opposition company AI, routed fallback/rally og ammunition exhaustion/resupply. Næste gate er lokal UE 5.8.3 compile/runtime QA og fejlrettelser før flere visuelle systemer.
+
 ## Statusdefinitioner
 
 - **AKTIV** — implementeres/testes i den aktuelle build.
