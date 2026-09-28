@@ -24,6 +24,8 @@
 #include "../AI/StrategyOfficerProfileComponent.h"
 #include "../AI/StrategyCommandDelayComponent.h"
 #include "../Combat/StrategyConditionComponent.h"
+#include "../Combat/StrategyContactComponent.h"
+#include "../AI/StrategyReconComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -76,6 +78,10 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyCommandDelayComponent>(TEXT("CommandDelayComponent"));
     ConditionComponent =
         CreateDefaultSubobject<UStrategyConditionComponent>(TEXT("ConditionComponent"));
+    ContactComponent =
+        CreateDefaultSubobject<UStrategyContactComponent>(TEXT("ContactComponent"));
+    ReconComponent =
+        CreateDefaultSubobject<UStrategyReconComponent>(TEXT("ReconComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
