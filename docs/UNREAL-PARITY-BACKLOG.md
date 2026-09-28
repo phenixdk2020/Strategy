@@ -562,3 +562,46 @@ Functionality-first work added fire discipline/ammunition conservation, Standing
 - Artillery participates in battle-outcome evaluation and OOB/hover data.
 - Final historical gun profiles, ammunition ballistics, limber drill timings and national battery organisations remain research/data tuning.
 - All UE-P300..319 are **code implemented / UE 5.8.3 build+runtime QA pending**, not parity verified.
+
+
+# 16. Artillery refinement + physical logistics — v00.02.60
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P320 | P0 | Ground/area fire mission | Manual visible ground-point mission with dispersion radius | IMPLEMENTED CORE |
+| UE-P321 | P1 | Salvo-limited fire mission | Configurable maximum salvos per manual mission | IMPLEMENTED CORE |
+| UE-P322 | P1 | Duration-limited fire mission | Configurable mission-time ceiling | IMPLEMENTED CORE |
+| UE-P323 | P1 | Artillery target priority | Balanced / CounterBattery / Infantry / ClosestThreat / ConserveAmmo | IMPLEMENTED CORE |
+| UE-P324 | P1 | Auto ammunition selection | Target/range-aware Canister/Shrapnel/Shell/RoundShot choice | IMPLEMENTED CORE |
+| UE-P325 | P1 | Ammunition reserve doctrine | Auto fire respects configurable reserve floor; ConserveAmmo enforces reserve | IMPLEMENTED CORE |
+| UE-P326 | P0 | Artillery deployability slope | Four-point terrain sample rejects over-steep deploy position | IMPLEMENTED CORE |
+| UE-P327 | P1 | Artillery work fatigue | Firing and manhandling create additional fatigue | IMPLEMENTED CORE |
+| UE-P328 | P1 | Disabled-gun field repair | Timed crew repair restores disabled but never destroyed guns | IMPLEMENTED CORE |
+| UE-P329 | P0 | Emergency abandon battery | Crew/drivers evacuate while physical guns remain capturable | IMPLEMENTED CORE |
+| UE-P330 | P0 | Supply echelon + wagon actor | Horse-drawn physical logistics tactical unit | IMPLEMENTED CORE |
+| UE-P331 | P0 | Split supply cargo | Separate small-arms and artillery ammunition cargo | IMPLEMENTED CORE |
+| UE-P332 | P0 | Supply wagon mobility | Drivers, horses and wagon condition gate/scalar movement | IMPLEMENTED CORE |
+| UE-P333 | P0 | Physical proximity resupply | Tactical transfer requires receiver inside source radius | IMPLEMENTED CORE |
+| UE-P334 | P1 | Resupply interruption | Transfer pauses while source/receiver moves or is under fire | IMPLEMENTED CORE |
+| UE-P335 | P0 | Supply wagon damage/destruction | Drivers, horses, wagon condition and cargo loss are authoritative | IMPLEMENTED CORE |
+| UE-P336 | P0 | Supply wagon abandonment | Driver loss/explicit abandonment leaves physical cargo behind | IMPLEMENTED CORE |
+| UE-P337 | P1 | Supply wagon capture | Nearby enemy control captures abandoned cargo source | IMPLEMENTED CORE |
+| UE-P338 | P0 | Artillery ammunition compatibility | Ammunition-family tag gates captured/foreign artillery supply | IMPLEMENTED CORE |
+| UE-P339 | P0 | Logistics QA/OOB integration | Low-ammo artillery + nearby Danish ammo wagon + regression/snapshot | IMPLEMENTED QA CORE |
+
+### v00.02.60 authority notes
+
+- Player artillery can target a visible ground point/area without inventing a hidden enemy actor.
+- Manual fire missions can be bounded by salvos, elapsed mission time, or both.
+- AUTO TARGET is still opt-in; its target priority and ammunition selection use only current observable targets.
+- `ConserveAmmo` preserves a configurable reserve instead of simply picking a different target.
+- Deployment legality now samples local terrain and can reject a slope even when navigation itself can traverse it.
+- Firing, manhandling and repairs affect fatigue; repairs recover disabled guns only.
+- Emergency abandonment leaves guns as physical battlefield state for capture.
+- Supply wagons are independent units with cargo, drivers, horses and wagon condition.
+- QA no longer depends on Division as a large magic ammunition source when the wagon fixture is enabled.
+- Supply transfer is proximity-based, interrupted by movement/fire, and separates small-arms from artillery rounds.
+- Artillery resupply from a wagon requires matching ammunition-family tags.
+- Captured wagons may provide compatible cargo in place but remain immobile until a future re-crewing/re-horsing mechanic.
+- Battlefield salvage/aftermath recovery and final historical ammunition compatibility tables remain later work.
+- All UE-P320..339 remain **UE 5.8.3 build/runtime QA pending**.
