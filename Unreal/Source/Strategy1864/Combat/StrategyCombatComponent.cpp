@@ -5,6 +5,7 @@
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
+#include "../Formations/StrategyFormationComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -64,7 +65,8 @@ void UStrategyCombatComponent::TickComponent(
         return;
     }
 
-    if (AmmunitionRounds <= 0)
+    if (AmmunitionRounds <= 0 ||
+        OwnerUnit->UnitState == EStrategyUnitState::Reforming)
     {
         return;
     }
@@ -81,6 +83,7 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
     if (!OwnerUnit ||
         !OwnerUnit->FireControlComponent ||
         !OwnerUnit->FireControlComponent->CanEngageTarget(Target) ||
+        OwnerUnit->UnitState == EStrategyUnitState::Reforming ||
         ReloadRemainingSeconds > 0.0f ||
         AmmunitionRounds <= 0)
     {
@@ -123,8 +126,23 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
     FireDirection.Z = 0.0f;
     FireDirection = FireDirection.GetSafeNormal();
 
+    FVector VisualOrigin = OwnerUnit->GetActorLocation();
+
+    if (OwnerUnit->FormationComponent &&
+        OwnerUnit->FormationComponent->CurrentFormation ==
+            EStrategyFormationType::Square)
+    {
+        const float HalfExtent =
+            FMath::Max(
+                300.0f,
+                OwnerUnit->FormationComponent->EstimateFrontageCm(
+                    FMath::Max(1, OwnerUnit->CurrentStrength)) * 0.5f);
+
+        VisualOrigin += FireDirection * HalfExtent;
+    }
+
     OnVolleyVisualEvent.Broadcast(
-        OwnerUnit->GetActorLocation(),
+        VisualOrigin,
         FireDirection,
         ShotCount,
         Hits);
