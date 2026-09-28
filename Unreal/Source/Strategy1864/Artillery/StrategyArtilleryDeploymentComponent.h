@@ -41,6 +41,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
     float MaximumManhandleDistanceCm = 3000.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    float MaximumDeploySlopeDegrees = 12.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    float DeployTerrainSampleRadiusCm = 500.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Artillery")
+    float ManhandlingFatiguePerSecond = 0.35f;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
     float TransitionRemainingSeconds = 0.0f;
 
@@ -55,6 +64,12 @@ public:
         const FVector& TargetLocation,
         float FacingYaw,
         EStrategyOrderAuthority Authority);
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
+    float GetCurrentGroundSlopeDegrees() const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
+    bool CanDeployAtCurrentLocation() const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|Artillery")
     bool IsLimbered() const
