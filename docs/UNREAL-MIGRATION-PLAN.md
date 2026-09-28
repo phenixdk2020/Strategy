@@ -302,3 +302,24 @@ Runtime keys now include I for selected-unit Officer AI and F6/F7/F8 for enemy A
 ### Next functional priority — artillery battery
 
 Artillery should enter before the visual pass as a real tactical formation, not a decorative mesh. The next artillery slice should provide an artillery battery actor with individual gun count/crew/ammunition state, deployed vs limbered state, facing/traverse limits, range/fire arc, fire mission execution, movement restrictions while deployed, and later horse-team/limber representation. Artillery must use the same command hierarchy, order authority, LOS/contact and ammunition/supply rules as infantry/cavalry where applicable.
+
+
+### U11 — Artillery battery — FUNCTIONAL CORE IMPLEMENTED / UE QA PENDING
+
+- New Artillery echelon and `AStrategyArtilleryBatteryUnit`.
+- Battery state contains configurable gun profile/count, crew, drivers and horses.
+- Limber/unlimber are timed transitions; normal movement requires Limbered state and adequate horse/driver mobility.
+- Deployed batteries can manhandle only over a short configured distance at low speed.
+- Separate RoundShot/Shell/Shrapnel/Canister ammunition inventory.
+- Player artillery defaults to manual target; AUTO TARGET is explicit opt-in; HOLD FIRE overrides either mode.
+- Deployed battery traverse is time-based. Fire requires target in traverse, current contact, LOS and ammo-specific range.
+- Volley uses operational gun count; reload responds to experience/fatigue/crew availability.
+- Prototype ammunition types have distinct range/effect curves pending historical tuning.
+- Black-powder artillery fire creates the same simulation smoke layer used by LOS.
+- Tactical supply can replenish artillery ammunition.
+- Infantry fire and counter-battery hits can damage crew, horses and guns.
+- Guns can become disabled, destroyed or abandoned; abandoned batteries can be physically captured.
+- In-battle captured-gun reuse requires compatible ammunition, qualified crew input and preparation time.
+- Artillery is deliberately excluded from infantry formation slot planning.
+- QA OOB now contains one Danish six-gun test battery under Division; six guns are a fixture, not a locked historical battery organisation.
+- Final terrain/hill artillery runtime QA remains dependent on the expanded battlefield/hills gate.
