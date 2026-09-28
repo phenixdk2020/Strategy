@@ -45,6 +45,9 @@
 #include "../Terrain/StrategyTerrainQueryLibrary.h"
 #include "../Terrain/StrategyTerrainAwarenessComponent.h"
 #include "../Artillery/StrategyArtilleryPositioningComponent.h"
+#include "../Artillery/StrategyArtilleryProjectilePresentationComponent.h"
+#include "../Artillery/StrategyArtilleryTrajectoryLibrary.h"
+#include "../Artillery/StrategyArtilleryProjectileTypes.h"
 #include "Engine/World.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
@@ -1043,7 +1046,8 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                 !Battery->ArtilleryCaptureComponent ||
                 !Battery->ArtilleryTraverseComponent ||
                 !Battery->ArtilleryRepairComponent ||
-                !Battery->ArtilleryPositioningComponent)
+                !Battery->ArtilleryPositioningComponent ||
+                !Battery->ProjectilePresentationComponent)
             {
                 OutFailures.Add(
                     TEXT("Artillery QA battery is missing one or more artillery-core components."));
@@ -1297,6 +1301,96 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
                 {
                     OutFailures.Add(
                         TEXT("Artillery positioning QA returned an invalid best position."));
+                }
+            }
+
+            if (QABattery->ProjectilePresentationComponent)
+            {
+                FStrategyArtilleryProjectileSpec RoundSpec;
+                RoundSpec.AmmoType =
+                    EStrategyArtilleryAmmoType::RoundShot;
+                RoundSpec.Style =
+                    EStrategyProjectilePresentationStyle::RoundShot;
+                RoundSpec.LaunchLocation =
+                    QABattery->GetActorLocation() +
+                    FVector(0.0f, 0.0f, 145.0f);
+                RoundSpec.AimLocation =
+                    QAClearEnemy->GetActorLocation();
+                RoundSpec.PrimaryImpactLocation =
+                    QAClearEnemy->GetActorLocation();
+                RoundSpec.FlightSeconds =
+                    UStrategyArtilleryTrajectoryLibrary::EstimateFlightSeconds(
+                        RoundSpec.AmmoType,
+                        FVector::Dist2D(
+                            RoundSpec.LaunchLocation,
+                            RoundSpec.PrimaryImpactLocation));
+
+                FVector RoundFinal;
+                const TArray<FVector> RoundPath =
+                    UStrategyArtilleryTrajectoryLibrary::BuildTrajectory(
+                        this,
+                        RoundSpec,
+                        32,
+                        true,
+                        RoundFinal);
+
+                FStrategyArtilleryProjectileSpec ShellSpec = RoundSpec;
+                ShellSpec.AmmoType = EStrategyArtilleryAmmoType::Shell;
+                ShellSpec.Style =
+                    EStrategyProjectilePresentationStyle::Shell;
+
+                FVector ShellFinal;
+                const TArray<FVector> ShellPath =
+                    UStrategyArtilleryTrajectoryLibrary::BuildTrajectory(
+                        this,
+                        ShellSpec,
+                        32,
+                        false,
+                        ShellFinal);
+
+                if (RoundPath.Num() < 8 ||
+                    ShellPath.Num() < 8 ||
+                    RoundSpec.FlightSeconds <= 0.0f)
+                {
+                    OutFailures.Add(
+                        TEXT("Projectile trajectory QA produced an invalid path or flight time."));
+                }
+                else
+                {
+                    float RoundMaxZ = -TNumericLimits<float>::Max();
+                    float ShellMaxZ = -TNumericLimits<float>::Max();
+
+                    for (const FVector& Point : RoundPath)
+                    {
+                        RoundMaxZ = FMath::Max(RoundMaxZ, Point.Z);
+                    }
+
+                    for (const FVector& Point : ShellPath)
+                    {
+                        ShellMaxZ = FMath::Max(ShellMaxZ, Point.Z);
+                    }
+
+                    if (ShellMaxZ <= RoundMaxZ)
+                    {
+                        OutFailures.Add(
+                            TEXT("Shell projectile QA arc is not higher than Round Shot arc."));
+                    }
+
+                    if (FVector::Dist2D(
+                            RoundFinal,
+                            RoundSpec.PrimaryImpactLocation) <= 100.0f)
+                    {
+                        OutFailures.Add(
+                            TEXT("Round Shot projectile QA did not produce expected post-impact ricochet travel."));
+                    }
+                }
+
+                if (UStrategyArtilleryTrajectoryLibrary::GetPresentationStyle(
+                        EStrategyArtilleryAmmoType::Canister) !=
+                    EStrategyProjectilePresentationStyle::Canister)
+                {
+                    OutFailures.Add(
+                        TEXT("Canister projectile presentation style mapping is invalid."));
                 }
             }
         }
