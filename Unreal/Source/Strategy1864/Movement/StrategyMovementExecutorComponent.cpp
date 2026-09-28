@@ -7,6 +7,7 @@
 #include "../Units/CavalryUnit.h"
 #include "../Combat/StrategyConditionComponent.h"
 #include "../AI/StrategyReconComponent.h"
+#include "../Navigation/StrategyRiverBarrier.h"
 
 UStrategyMovementExecutorComponent::UStrategyMovementExecutorComponent()
 {
@@ -84,8 +85,10 @@ void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOr
     ActiveRoutePlan = FStrategyRoutePlan();
     RoutePoints.Reset();
     RoutePointIndex = 0;
+    ReleaseBridgeSlot();
     bCavalryDefileActive = false;
     bTurningToGoalFacing = false;
+    bWaitingForBridge = false;
 
     if (OwnerUnit && OwnerUnit->RoutePlanner)
     {
@@ -169,6 +172,13 @@ void UStrategyMovementExecutorComponent::TickComponent(
     }
 
     const FVector CurrentLocation = OwnerUnit->GetActorLocation();
+    UpdateBridgeQueueState(CurrentLocation);
+
+    if (bWaitingForBridge)
+    {
+        return;
+    }
+
     UpdateBridgeFormationState(CurrentLocation);
 
     if (bTurningToGoalFacing && bApplyGoalFacing)
@@ -310,8 +320,10 @@ void UStrategyMovementExecutorComponent::StopMovement()
         }
     }
 
+    ReleaseBridgeSlot();
     bCavalryDefileActive = false;
     bTurningToGoalFacing = false;
+    bWaitingForBridge = false;
     PauseRemainingSeconds = 0.0f;
     bHasMovementGoal = false;
     ExecutingOrderSerial = 0;
@@ -488,4 +500,64 @@ void UStrategyMovementExecutorComponent::RestartCurrentOrderExecution()
     {
         BeginMovementForOrder(CurrentOrder);
     }
+}
+
+
+void UStrategyMovementExecutorComponent::UpdateBridgeQueueState(
+    const FVector& CurrentLocation)
+{
+    bWaitingForBridge = false;
+
+    if (!ActiveRoutePlan.bUsesBridge ||
+        !IsValid(ActiveRoutePlan.BridgeBarrier) ||
+        ActiveRoutePlan.BridgeEnterPointIndex == INDEX_NONE ||
+        ActiveRoutePlan.BridgeExitPointIndex == INDEX_NONE)
+    {
+        return;
+    }
+
+    AStrategyRiverBarrier* Bridge = ActiveRoutePlan.BridgeBarrier;
+
+    if (RoutePointIndex > ActiveRoutePlan.BridgeExitPointIndex)
+    {
+        ReleaseBridgeSlot();
+        return;
+    }
+
+    if (!RoutePoints.IsValidIndex(ActiveRoutePlan.BridgeEnterPointIndex))
+    {
+        return;
+    }
+
+    const FVector Approach =
+        RoutePoints[ActiveRoutePlan.BridgeEnterPointIndex];
+
+    const bool bAtApproach =
+        RoutePointIndex >= ActiveRoutePlan.BridgeEnterPointIndex ||
+        FVector::Dist2D(CurrentLocation, Approach) <= 500.0f;
+
+    if (!bAtApproach)
+    {
+        return;
+    }
+
+    if (!bBridgeSlotAcquired)
+    {
+        bBridgeSlotAcquired = Bridge->TryAcquireCrossing(OwnerUnit);
+    }
+
+    bWaitingForBridge = !bBridgeSlotAcquired;
+}
+
+void UStrategyMovementExecutorComponent::ReleaseBridgeSlot()
+{
+    if (bBridgeSlotAcquired &&
+        IsValid(ActiveRoutePlan.BridgeBarrier) &&
+        OwnerUnit)
+    {
+        ActiveRoutePlan.BridgeBarrier->ReleaseCrossing(OwnerUnit);
+    }
+
+    bBridgeSlotAcquired = false;
+    bWaitingForBridge = false;
 }
