@@ -19,6 +19,7 @@
 #include "../UI/StrategySemanticZoomComponent.h"
 #include "../UI/StrategyWorldDebugComponent.h"
 #include "../UI/StrategyPresentationSnapshotComponent.h"
+#include "../Movement/StrategyLocalDeconflictionComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -61,6 +62,8 @@ AStrategyUnit::AStrategyUnit()
     WorldDebugComponent = CreateDefaultSubobject<UStrategyWorldDebugComponent>(TEXT("WorldDebugComponent"));
     PresentationSnapshotComponent =
         CreateDefaultSubobject<UStrategyPresentationSnapshotComponent>(TEXT("PresentationSnapshotComponent"));
+    LocalDeconflictionComponent =
+        CreateDefaultSubobject<UStrategyLocalDeconflictionComponent>(TEXT("LocalDeconflictionComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
