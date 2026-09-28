@@ -9,6 +9,8 @@
 #include "../Combat/StrategyStanceComponent.h"
 #include "../AI/StrategyReconComponent.h"
 #include "../Navigation/StrategyRiverBarrier.h"
+#include "../Artillery/StrategyArtilleryBatteryUnit.h"
+#include "../Artillery/StrategyArtilleryDeploymentComponent.h"
 
 UStrategyMovementExecutorComponent::UStrategyMovementExecutorComponent()
 {
@@ -91,6 +93,30 @@ void UStrategyMovementExecutorComponent::HandleOrderChanged(const FStrategyOrder
 void UStrategyMovementExecutorComponent::BeginMovementForOrder(const FStrategyOrder& Order)
 {
     ReleaseBridgeSlot();
+
+    if (AStrategyArtilleryBatteryUnit* Battery =
+        Cast<AStrategyArtilleryBatteryUnit>(OwnerUnit))
+    {
+        const bool bManhandling =
+            Battery->DeploymentComponent &&
+            Battery->DeploymentComponent->IsManhandling();
+
+        if (!bManhandling && !Battery->CanNormalMove())
+        {
+            UE_LOG(
+                LogTemp,
+                Warning,
+                TEXT("PROJECT1864-ART: movement rejected for %s because battery is not limbered/mobile."),
+                *Battery->StableUnitId.ToString());
+
+            if (Battery->OrderComponent)
+            {
+                Battery->OrderComponent->FailExecution();
+            }
+
+            return;
+        }
+    }
 
     bPreserveRoutedState =
         OwnerUnit && OwnerUnit->UnitState == EStrategyUnitState::Routed;
@@ -312,11 +338,31 @@ void UStrategyMovementExecutorComponent::TickComponent(
         ? OwnerUnit->StanceComponent->GetMovementMultiplier()
         : 1.0f;
 
+    float ArtilleryMobilityMultiplier = 1.0f;
+
+    if (const AStrategyArtilleryBatteryUnit* Battery =
+        Cast<AStrategyArtilleryBatteryUnit>(OwnerUnit))
+    {
+        const bool bManhandling =
+            Battery->DeploymentComponent &&
+            Battery->DeploymentComponent->IsManhandling();
+
+        if (!bManhandling)
+        {
+            ArtilleryMobilityMultiplier =
+                FMath::Clamp(
+                    Battery->GetTowedMobilityFactor(),
+                    0.05f,
+                    1.0f);
+        }
+    }
+
     const float Step =
         MoveSpeedCmPerSecond *
         ConditionMultiplier *
         SlopeMultiplier *
         StanceMultiplier *
+        ArtilleryMobilityMultiplier *
         DeltaTime;
     const float AppliedStep =
         FMath::Min(Step, FlatDelta.Size());
