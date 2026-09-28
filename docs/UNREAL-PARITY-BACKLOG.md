@@ -36,9 +36,9 @@
 |---|---:|---|---|---|---|---|
 | UE-P001 | P0 | UE project/bootstrap | Engine-port baseline | Module/targets/project | PARITY VERIFIED | UE 5.8.3 editor target builds successfully. |
 | UE-P002 | P0 | Unreal source layout | Migration plan | Source modules/directories | BUILD VERIFIED | Stable domain folders/classes compile without Unity revision suffixes. |
-| UE-P003 | P0 | Tactical QA level | Unity battle test | Unreal test level | BACKLOG | Reproducible Danish/Prussian battle test can be launched directly. |
+| UE-P003 | P0 | Tactical QA level | Unity battle test | Unreal test level | RUNTIME FIXTURE IMPLEMENTED / LEVEL ASSET PENDING | Reproducible Danish/Prussian battle test can be launched directly. |
 | UE-P004 | P0 | Visible build marker | Unity TEST overlay | Unreal HUD/debug overlay | IMPLEMENTED QA CORE | Running build clearly displays Unreal prototype/version marker. |
-| UE-P005 | P1 | Regression checklist | F29/F30 QA | Automated/manual QA suite | BACKLOG | U10 checks can be executed repeatably and results recorded. |
+| UE-P005 | P1 | Regression checklist | F29/F30 QA | Automated/manual QA suite | IMPLEMENTED CORE | U10 checks can be executed repeatably and results recorded. |
 | UE-P006 | P2 | Debug telemetry/logging | Unity prototype logs | UE_LOG + debug subsystem | IMPLEMENTED QA CORE | Orders, movement, AI, contact and completion expose useful reason/state logs. |
 
 # 2. Camera, mouse input and selection — U01
@@ -70,7 +70,7 @@
 | UE-P036 | P0 | OrganicParent | F30M | Command relationship state | IMPLEMENTED | Permanent OOB ownership survives temporary tasking. |
 | UE-P037 | P0 | CurrentCommandParent | F30M | Command relationship state | IMPLEMENTED | Tactical parent can differ from OrganicParent and be restored. |
 | UE-P038 | P1 | Command relationship lines | F27/F29D | Presentation component | IMPLEMENTED QA CORE | Selected formations show correct parent/subordinate connections. |
-| UE-P039 | P1 | Stable entity IDs | Design B-131 | Data model | BACKLOG | OOB entities persist through save/transfer without duplicate identity. |
+| UE-P039 | P1 | Stable entity IDs | Design B-131 | Data model | IMPLEMENTED VALIDATION CORE | OOB entities persist through save/transfer without duplicate identity. |
 | UE-P040 | P1 | OOB aggregate status | F29Q/F30D | UMG OOB model | IMPLEMENTED DATA CORE | Parent rows calculate correct subordinate strength/status. |
 
 # 4. Orders, authority and execution state — U03
@@ -88,9 +88,9 @@
 | UE-P058 | P0 | Active order colour lifecycle | F30Q/S/W | UMG command state | IMPLEMENTED CORE | Red=no active execution, blue=pending/executing, green=toggle/state. |
 | UE-P059 | P0 | Higher order propagation | F27/F30M | Command planner | IMPLEMENTED CORE | Division/Brigade/Regiment/Major correctly generate subordinate missions. |
 | UE-P060 | P0 | Re-issue/supersede | F30V/U | Order lifecycle | IMPLEMENTED CORE | New mission cleanly replaces previous destinations and stale executors. |
-| UE-P061 | P1 | RYK FREM | F30Q | Order executor | BACKLOG | Movement active only while executors remain. |
-| UE-P062 | P1 | TILBAGETRÆK | F30Q | Order executor | BACKLOG | Coordinated withdrawal maintains command ownership. |
-| UE-P063 | P1 | SAML | F30Q | Order executor | BACKLOG | Formation assembles at valid slots and completion is physical. |
+| UE-P061 | P1 | RYK FREM | F30Q | Order executor | IMPLEMENTED CORE | Movement active only while executors remain. |
+| UE-P062 | P1 | TILBAGETRÆK | F30Q | Order executor | IMPLEMENTED CORE | Coordinated withdrawal maintains command ownership. |
+| UE-P063 | P1 | SAML | F30Q | Order executor | IMPLEMENTED CORE | Formation assembles at valid slots and completion is physical. |
 | UE-P064 | P1 | Mission target visuals | F30M/O | Presentation subsystem | IMPLEMENTED QA CORE | Objective circle/label/ghosts show authoritative mission state only. |
 
 # 5. Infantry formations and movement — U04
@@ -171,8 +171,8 @@
 | UE-P153 | P0 | Brigade AI | F30B/M | Higher AI | IMPLEMENTED CORE | Brigade delegates through Regiment. |
 | UE-P154 | P0 | Division AI | F30B/M | Higher AI | IMPLEMENTED CORE | Division delegates through Brigade/Regiment/Majors. |
 | UE-P155 | P0 | AI cascade ON | F30M | Command AI state | IMPLEMENTED CORE | Higher AI ON cascades to intended subordinate command chain. |
-| UE-P156 | P0 | Direct order precedence | F18/F30M | Authority model | BACKLOG | Direct player mission beats inherited AI task. |
-| UE-P157 | P1 | AI ON/OFF uniform state | F30W | OOB/AI state | BACKLOG | Division→Company+CAV all display only ON/OFF consistently. |
+| UE-P156 | P0 | Direct order precedence | F18/F30M | Authority model | IMPLEMENTED CORE | Direct player mission beats inherited AI task. |
+| UE-P157 | P1 | AI ON/OFF uniform state | F30W | OOB/AI state | IMPLEMENTED DATA/QA CORE | Division→Company+CAV all display only ON/OFF consistently. |
 | UE-P158 | P1 | Mission completion | F30S/V/W | AI/order integration | IMPLEMENTED CORE | AI no longer chases/rearms after finite mission physically completes. |
 | UE-P159 | P1 | HQ follow | F30P | HQ movement | IMPLEMENTED CORE | Major/Regiment/Brigade/Division HQs follow documented rear geometry. |
 | UE-P160 | P1 | HQ depth conflict prevention | F30U | HQ goal authority | IMPLEMENTED ARCHITECTURE CORE | Defend mission owner prevents competing HQ-depth goal writers. |
@@ -217,9 +217,9 @@
 | UE-P224 | P1 | Brigade HUD | F30M/N/O | UMG | QA HUD SCAFFOLD | Brigade HUD has ENHEDSINFO/AI, ORDRER/MISSION, UNDERLAGTE/STATUS/ATTACHMENT. |
 | UE-P225 | P1 | Division HUD | F30M/N/O | UMG | QA HUD SCAFFOLD | Division HUD reaches same higher-command parity. |
 | UE-P226 | P1 | Cavalry HUD | F30H/I/N | UMG | QA HUD SCAFFOLD | CAV uses shared visual language with cavalry-specific controls/state. |
-| UE-P227 | P1 | OOB panel | F29Q/F30D | UMG tree/list | BACKLOG | Full Division→CAV hierarchy is scrollable/selectable. |
+| UE-P227 | P1 | OOB panel | F29Q/F30D | UMG tree/list | DATA/API CORE / UMG PENDING | Full Division→CAV hierarchy is scrollable/selectable. |
 | UE-P228 | P1 | OOB AI status | F30W | UMG | DATA/QA HUD CORE | All echelons show consistent ON/OFF. |
-| UE-P229 | P1 | OOB attachment state | F30D/M | UMG | BACKLOG | Organic/current/task attachment is readable. |
+| UE-P229 | P1 | OOB attachment state | F30D/M | UMG | IMPLEMENTED DATA CORE | Organic/current/task attachment is readable. |
 | UE-P230 | P1 | OOB cavalry drag/drop | F30D | UMG drag/drop | BACKLOG | Valid tactical attachment can be changed via OOB without corrupting OrganicParent. |
 | UE-P231 | P1 | Semantic zoom states | F29D | Presentation subsystem | IMPLEMENTED CORE | Close/Medium/Operational/Strategic presentation changes without simulation changes. |
 | UE-P232 | P1 | HQ semantic counters | F29D/Q | UMG/world overlay | IMPLEMENTED CORE | Major/Regiment/Brigade/Division counters appear at correct zoom importance. |
@@ -229,8 +229,8 @@
 | UE-P236 | P1 | Strategic mesh suppression | F29D | Presentation LOD | IMPLEMENTED CORE | Far zoom hides tactical meshes while simulation/colliders/command state continue. |
 | UE-P237 | P1 | Selected HQ command circles | F30P | World visualization | BACKLOG | Only selected HQ level exposes detailed command range rings. |
 | UE-P238 | P1 | Route/destination visuals | F30M/O | World visualization | IMPLEMENTED QA CORE | Higher selection exposes subordinate authoritative routes/slots without duplicate writers. |
-| UE-P239 | P1 | Hover info infantry | battle UI baseline | Hover subsystem | BACKLOG | Unit type/strength/loss/morale/order data appears. |
-| UE-P240 | P1 | Hover info cavalry | F30S | Hover subsystem | BACKLOG | CAV hover includes mounted state, formation, AI/order, parent and Dragon fire data. |
+| UE-P239 | P1 | Hover info infantry | battle UI baseline | Hover subsystem | IMPLEMENTED DATA CORE | Unit type/strength/loss/morale/order data appears. |
+| UE-P240 | P1 | Hover info cavalry | F30S | Hover subsystem | IMPLEMENTED DATA CORE | CAV hover includes mounted state, formation, AI/order, parent and Dragon fire data. |
 
 # 12. Visual assets and animation parity
 
@@ -255,9 +255,9 @@
 |---|---:|---|---|---|---|---|
 | UE-P270 | P1 | Pause | Unity tactical baseline | Game speed subsystem | IMPLEMENTED CORE | Player can pause tactical singleplayer without corrupting AI/orders. |
 | UE-P271 | P1 | 1x/2x/3x | Unity tactical baseline | Game speed subsystem | IMPLEMENTED CORE | Time controls behave consistently for movement, combat and AI timers. |
-| UE-P272 | P1 | Victory/defeat state | Unity tactical baseline | Scenario subsystem | BACKLOG | Battle can resolve and expose outcome state. |
-| UE-P273 | P1 | Restart/test reset | Unity tactical baseline | Scenario subsystem | BACKLOG | QA battle can restart to deterministic baseline. |
-| UE-P274 | P2 | Deterministic QA seed | B-133 | Scenario/debug subsystem | BACKLOG | Repeat tests can reproduce critical movement/combat situations. |
+| UE-P272 | P1 | Victory/defeat state | Unity tactical baseline | Scenario subsystem | IMPLEMENTED CORE | Battle can resolve and expose outcome state. |
+| UE-P273 | P1 | Restart/test reset | Unity tactical baseline | Scenario subsystem | IMPLEMENTED CORE | QA battle can restart to deterministic baseline. |
+| UE-P274 | P2 | Deterministic QA seed | B-133 | Scenario/debug subsystem | IMPLEMENTED CORE | Repeat tests can reproduce critical movement/combat situations. |
 
 # 14. U10 — tactical replacement parity gate
 
@@ -446,3 +446,19 @@ All items remain build/runtime QA pending until UE 5.8.3 validates this checkpoi
 10. **Dragoon state core:** Dragoon role supports 75/25 combat-group/horse-holder split, horse-park anchor, dismounted movement/fire limit, STIG OP return-to-anchor and automatic remount. The second Danish QA cavalry is configured as Dragoon.
 
 These ten blocks are **code implemented / UE 5.8.3 build+runtime QA pending**. None are PARITY VERIFIED yet.
+
+
+## v00.02.55 — next ten implementation blocks
+
+1. **Command hierarchy robustness:** organic re-parenting now updates CurrentCommandParent only when the unit was actually following its old organic parent; temporary tactical attachment is preserved. Parent assignments reject self/cyclic command chains.
+2. **Deterministic QA combat seed:** combat RNG can be explicitly seeded; the runtime fixture derives a per-unit deterministic seed from `QARandomSeed ^ StableUnitId hash`.
+3. **Stable-ID/hierarchy validation:** every QA build checks missing/duplicate IDs, organic/current backlink integrity and command-parent cycles.
+4. **Victory/defeat state:** scenario state tracks combat-effective Company/Cavalry forces and exposes InProgress / DenmarkVictory / OppositionVictory / Draw.
+5. **Deterministic reset:** F5 clears selection, resets outcome and rebuilds the same QA fixture from the same seed.
+6. **Regression checklist:** each QA spawn runs repeatable checks for expected entity count, hierarchy/ID validity, enemy ownership, cavalry/Dragoon configuration and river fixture.
+7. **RYK FREM:** higher-command Advance now cascades through Division/Brigade/Regiment/Major and generates physical subordinate slots.
+8. **TILBAGETRÆK:** coordinated Withdraw uses the same authority-preserving hierarchy/slot pipeline and parent completion rules.
+9. **SAML:** Assemble now cascades to subordinate formation slots and completes from physical subordinate execution rather than HQ bookkeeping.
+10. **Shared OOB/hover snapshot:** one presentation data source exposes identity, NATO echelon, strength/losses, morale/cohesion/fatigue, state, AI ON/OFF, order/execution, formation, organic/current parent, temporary attachment, ammunition, cavalry role and mounted state.
+
+Coordinated formation missions (Attack/Defend/Advance/Withdraw/Assemble) are owned by the command parent while subordinate formations execute; the parent HQ does not run directly onto the objective. All items remain UE 5.8.3 build/runtime QA pending.
