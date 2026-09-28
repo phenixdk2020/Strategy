@@ -1,4 +1,5 @@
 #include "StrategyRiverBarrier.h"
+#include "../Units/StrategyUnit.h"
 
 AStrategyRiverBarrier::AStrategyRiverBarrier()
 {
@@ -71,4 +72,42 @@ bool AStrategyRiverBarrier::SameBankChordIntersectsRiver(const FVector& Start, c
 
     const FVector Midpoint = (Start + End) * 0.5f;
     return FMath::Abs(SignedBankDistance(Midpoint)) <= RiverHalfWidthCm;
+}
+
+
+bool AStrategyRiverBarrier::TryAcquireCrossing(AStrategyUnit* Unit)
+{
+    if (!IsValid(Unit))
+    {
+        return false;
+    }
+
+    ActiveCrossers.RemoveAll(
+        [](const TObjectPtr<AStrategyUnit>& Candidate)
+        {
+            return !IsValid(Candidate);
+        });
+
+    if (ActiveCrossers.Contains(Unit))
+    {
+        return true;
+    }
+
+    if (ActiveCrossers.Num() >= FMath::Max(1, MaxConcurrentCrossers))
+    {
+        return false;
+    }
+
+    ActiveCrossers.Add(Unit);
+    return true;
+}
+
+void AStrategyRiverBarrier::ReleaseCrossing(AStrategyUnit* Unit)
+{
+    ActiveCrossers.Remove(Unit);
+}
+
+bool AStrategyRiverBarrier::IsCrossingOwner(const AStrategyUnit* Unit) const
+{
+    return IsValid(Unit) && ActiveCrossers.Contains(Unit);
 }
