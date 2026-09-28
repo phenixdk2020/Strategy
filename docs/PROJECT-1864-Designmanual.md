@@ -1,6 +1,6 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.54**  
+**Aktuel designbaseline: v00.02.55**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST**
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
@@ -10,6 +10,8 @@ Projektets centrale intake-log for besluttede men endnu ikke implementerede funk
 ## Engine-port beslutning — Unreal Engine
 
 Projektet har fra 2026-09-27 et parallelt Unreal Engine-portspor på branchen `unreal-port`. Unity `channel-test` forbliver den operative reference for den eksisterende battle-prototype, indtil Unreal-versionen har opnået dokumenteret feature/QA-paritet. Porten er en implementeringsændring, ikke et redesign: eksisterende command hierarchy, order authority, formationsregler, LOS/range/cones, river/bridge-routing, cavalry behaviour, OOB/HUD-semantik og historiske data skal bevares. Permanent Unreal-kode skal bruge stabile domænenavne frem for Unity-prototypens revisionssuffixer. Se [UNREAL-MIGRATION-PLAN.md](UNREAL-MIGRATION-PLAN.md) og [UNREAL-PORTING-INVENTORY.md](UNREAL-PORTING-INVENTORY.md).
+
+**Unreal næste 10 blokke (v00.02.55):** Command hierarchy er gjort robust mod cycles og organisk re-parenting respekterer temporary tactical attachment. QA-fixturen bruger nu deterministisk combat seed, validerer StableUnitId/backlinks/cycles og kører automatisk regression checklist. Scenario-state kan afgøre DenmarkVictory/OppositionVictory/Draw, og F5 bygger testen deterministisk igen. RYK FREM, TILBAGETRÆK og SAML er nu recursive coordinated formation missions gennem Division → Brigade → Regiment → Major → Company; command-parent HQ bliver bag formationen og løber ikke selv mod objective. Et fælles OOB/hover snapshot eksponerer identity/NATO, strength/loss, morale/cohesion/fatigue, AI, ordre/execution, formation, OrganicParent/CurrentCommandParent, attachment, ammo og cavalry/Dragon mounted state. Hele batchen er code-implemented og afventer samlet UE 5.8.3 build/runtime QA.
 
 **Unreal 10-block implementation batch (v00.02.54):** Unreal-porten har nu en synlig build/QA HUD, recursive OOB aggregate state, OOB select+camera-focus API, semantic zoom (Close/Medium/Operational/Strategic/VeryFar), NATO echelon labels I/II/III/X/XX, strategic mesh suppression uden simulationstab, selected command-tree/mission/route QA visuals, execution-only command colour state, tactical pause + 1x/2x/3x, finite cavalry CHARGE med swept contact stop samt Dragon 75/25 dismount/horse-holder/horse-park/STIG OP remount core. Kameraets zoomrange er udvidet så operational/strategic semantic states faktisk kan nås. CHARGE bruger mounted speed og stopper ved valid enemy contact i stedet for at passere formationen. Dragon QA-enheden i runtime-scenariet er nu konfigureret som Dragoon. Hele batchen er code-implemented men afventer samlet UE 5.8.3 build/runtime QA.
 
