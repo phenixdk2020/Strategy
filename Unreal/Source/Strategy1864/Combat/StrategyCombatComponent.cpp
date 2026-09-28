@@ -14,6 +14,8 @@
 #include "StrategyVisibilityComponent.h"
 #include "StrategySkirmisherComponent.h"
 #include "../AI/StrategyOfficerProfileComponent.h"
+#include "../Artillery/StrategyArtilleryBatteryUnit.h"
+#include "../Artillery/StrategyArtilleryDamageComponent.h"
 #include "EngineUtils.h"
 
 UStrategyCombatComponent::UStrategyCombatComponent()
@@ -155,7 +157,20 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
 
     if (Hits > 0)
     {
-        Target->ApplyStrengthLoss(Hits);
+        if (AStrategyArtilleryBatteryUnit* BatteryTarget =
+            Cast<AStrategyArtilleryBatteryUnit>(Target))
+        {
+            if (BatteryTarget->ArtilleryDamageComponent)
+            {
+                BatteryTarget->ArtilleryDamageComponent->ApplyIncomingHits(
+                    Hits,
+                    false);
+            }
+        }
+        else
+        {
+            Target->ApplyStrengthLoss(Hits);
+        }
     }
 
     if (Target->CombatComponent)
