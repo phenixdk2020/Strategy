@@ -43,6 +43,8 @@ class UStrategySupplyComponent;
 class UStrategyDoctrineComponent;
 class UStrategyMissionConstraintsComponent;
 class UStrategyAITelemetryComponent;
+class UStrategyAutonomyComponent;
+class UStrategyAIDifficultyComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FStrategyCasualtyVisualEvent,
@@ -207,6 +209,12 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyAITelemetryComponent> AITelemetryComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyAutonomyComponent> AutonomyComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyAIDifficultyComponent> AIDifficultyComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
