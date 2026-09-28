@@ -13,6 +13,7 @@ class UStrategyCommandComponent;
 class UStrategyMovementExecutorComponent;
 class UStrategyFormationComponent;
 class UStrategyFormationPolicyComponent;
+class UStrategyFormationTransitionComponent;
 class UStrategyParentExecutionComponent;
 class UStrategyRoutePlannerComponent;
 class UStrategyVisibilityComponent;
@@ -91,6 +92,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyFormationPolicyComponent> FormationPolicy;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyFormationTransitionComponent> FormationTransition;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyParentExecutionComponent> ParentExecution;
