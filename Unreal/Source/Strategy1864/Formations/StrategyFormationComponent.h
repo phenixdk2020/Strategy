@@ -38,6 +38,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Formation")
     int32 ColumnWidth = 4;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
+    float FullCompanyTargetFrontageCm = 4800.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
+    float FullCompanyFrontageToleranceCm = 500.0f;
+
     UFUNCTION(BlueprintCallable, Category="Strategy|Formation")
     void SetFormation(EStrategyFormationType NewFormation);
 
@@ -49,4 +55,7 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Strategy|Formation")
     float EstimateFrontageCm(int32 Strength) const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|QA")
+    bool IsFullCompanyFrontageWithinBaseline(int32 Strength = 190) const;
 };
