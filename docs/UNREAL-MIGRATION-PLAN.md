@@ -34,6 +34,16 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Establish source-asset handoff rules.
 - Preserve the Unity files as reference.
 
+### QA fixture and deterministic regression — CORE IMPLEMENTED / BUILD+QA PENDING
+- Runtime QA fixture creates the Danish hierarchy, optional Danish cavalry/Dragoon, Prussian targets and river/bridge test barrier.
+- Stable IDs and organic/current command backlinks are validated on every build.
+- Command cycles are rejected at the command-component boundary.
+- Combat RNG uses deterministic per-unit seeds derived from a configurable QA seed.
+- Each spawn runs a regression checklist and logs PASS/FAIL with individual failures.
+- F5 deterministically rebuilds the QA fixture and resets battle outcome.
+- Scenario state exposes InProgress, DenmarkVictory, OppositionVictory and Draw.
+- A dedicated .umap QA level and recorded UE 5.8.3 runtime results are still pending.
+
 ### U01 — Camera and selection — IMPLEMENTED / BUILD+QA PENDING
 - RTS camera Pawn with WASD pan, Q/E yaw and mouse-wheel zoom.
 - Left-click unit selection through visibility trace.
@@ -81,7 +91,10 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - PlayerController can issue DirectPlayer orders to the current selection without clearing it.
 - Pending-order placement can commit a ground target under the cursor while preserving selection.
 - Arrival tolerance is currently 50 cm, aligned with the Unity F30V final-slot authority scale.
-- ANGRIB HER/FORSVAR HER still need U04 formation/subordinate slot planning; click-drag facing still needs its final interaction pass before U03 PASS.
+- ANGRIB HER/FORSVAR HER formation/subordinate planning and click-drag facing are implemented at core level.
+- RYK FREM, TILBAGETRÆK and SAML now use the same recursive hierarchy/slot pipeline through Division → Brigade → Regiment → Major → Company.
+- Coordinated parent HQs retain mission ownership while subordinate formations execute; HQ follow owns rear positioning rather than movement to the objective.
+- U03 remains build/runtime QA pending rather than parity verified.
 
 ### U04 — Infantry movement/formations — GEOMETRY/MAJOR PLANNER IMPLEMENTED, RUNTIME QA PENDING
 - `UStrategyFormationComponent` now owns unit formation state and reusable slot generation.
@@ -160,13 +173,15 @@ The Unreal project lives under `/Unreal` so the Unity reference remains availabl
 - Strategic/VeryFar zoom suppresses tactical meshes without suppressing simulation/colliders.
 - Selected command entities expose command-tree lines, mission targets/facing and subordinate routes for QA.
 - Existing selected-HQ command circles and range/cone language remain active.
-- Final UMG OOB tree, per-echelon production HUD layout, attachment drag/drop and hover presentation remain pending.
+- A shared presentation snapshot now exposes the complete OOB/hover data contract: identity/NATO echelon, strength/losses, morale/cohesion/fatigue, unit state, AI, order/execution, formation, organic/current parent, attachment flag, ammo and cavalry/Dragoon mounted state.
+- Final UMG OOB tree, per-echelon production HUD layout, attachment drag/drop and visual hover widgets remain pending.
 
 ### Tactical time controls — CORE IMPLEMENTED / QA PENDING
 - Space toggles tactical pause.
 - 1/2/3 select 1x/2x/3x global time dilation and leave pause.
 - Movement/combat/AI timers remain simulation-time driven and therefore scale together.
-- Victory/defeat and deterministic restart/reset remain pending.
+- Victory/defeat outcome, deterministic QA seed and F5 restart/reset are now implemented at core level.
+- A dedicated scenario UI/result screen remains pending.
 
 ### U10 — Tactical parity gate
 The Unreal battle test is not considered a replacement for the Unity prototype until the current tactical QA baseline is reproduced.
