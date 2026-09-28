@@ -119,6 +119,15 @@ struct FStrategyUnitPresentationSnapshot
 
     UPROPERTY(BlueprintReadOnly)
     FString SupplyOwnershipState;
+
+    UPROPERTY(BlueprintReadOnly)
+    float TerrainGroundZ = 0.0f;
+
+    UPROPERTY(BlueprintReadOnly)
+    float TerrainLocalSlopeDegrees = 0.0f;
+
+    UPROPERTY(BlueprintReadOnly)
+    bool bTerrainNearCrest = false;
 };
 
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
