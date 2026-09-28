@@ -53,6 +53,12 @@ public:
     int32 AmmunitionRounds = 1900;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
+    int32 MaxAmmunitionRounds = 1900;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Combat")
+    bool bOutOfAmmo = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
     float ReloadSeconds = 18.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Combat")
@@ -87,6 +93,12 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Strategy|QA")
     void SetDeterministicRandomSeed(int32 Seed);
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Combat")
+    void ResupplyAmmunition(int32 Rounds);
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Combat")
+    bool IsOutOfAmmo() const { return bOutOfAmmo; }
 
 private:
     AStrategyUnit* FindBestTarget() const;
