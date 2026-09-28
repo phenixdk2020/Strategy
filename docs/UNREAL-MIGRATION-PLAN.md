@@ -323,3 +323,14 @@ Artillery should enter before the visual pass as a real tactical formation, not 
 - Artillery is deliberately excluded from infantry formation slot planning.
 - QA OOB now contains one Danish six-gun test battery under Division; six guns are a fixture, not a locked historical battery organisation.
 - Final terrain/hill artillery runtime QA remains dependent on the expanded battlefield/hills gate.
+
+
+## v00.02.60 artillery/logistics refinement checkpoint
+
+Artillery now supports visible ground/area missions, salvo/time mission limits, target-priority doctrine, automatic ammunition selection and reserve conservation. Deployment samples terrain slope; firing/manhandling add workload fatigue; disabled guns may be field-repaired; emergency abandonment leaves guns for capture.
+
+A physical `AStrategySupplyWagonUnit` now provides the first tactical logistics entity. It carries separate small-arms/artillery ammunition, has drivers/horses/wagon condition, obeys mobility damage, may be abandoned/captured and supplies only nearby compatible receivers while both sides are stationary and not under fire. Artillery compatibility uses the gun/cargo ammunition-family tag.
+
+The QA OOB contains a deliberately low-ammo Danish artillery battery and a nearby Danish ammunition wagon. When this fixture is active, Division's former generic 50k ammunition source is disabled, forcing the tactical supply chain to be testable.
+
+Remaining gates: local UE 5.8.3 compile/runtime QA, expanded hills/dead-ground battlefield validation, historical artillery profile tuning, and later battlefield-salvage/aftermath logistics.
