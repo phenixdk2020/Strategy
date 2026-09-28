@@ -26,6 +26,8 @@
 #include "../Combat/StrategyConditionComponent.h"
 #include "../Combat/StrategyContactComponent.h"
 #include "../AI/StrategyReconComponent.h"
+#include "../AI/StrategyAutonomousBattleAIComponent.h"
+#include "../AI/StrategyRoutRecoveryComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -82,6 +84,10 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyContactComponent>(TEXT("ContactComponent"));
     ReconComponent =
         CreateDefaultSubobject<UStrategyReconComponent>(TEXT("ReconComponent"));
+    AutonomousBattleAIComponent =
+        CreateDefaultSubobject<UStrategyAutonomousBattleAIComponent>(TEXT("AutonomousBattleAIComponent"));
+    RoutRecoveryComponent =
+        CreateDefaultSubobject<UStrategyRoutRecoveryComponent>(TEXT("RoutRecoveryComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
