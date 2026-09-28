@@ -80,7 +80,11 @@ private:
     int32 ExecutingOrderSerial = 0;
     bool bCavalryDefileActive = false;
     bool bTurningToGoalFacing = false;
+    bool bWaitingForBridge = false;
+    bool bBridgeSlotAcquired = false;
     float PauseRemainingSeconds = 0.0f;
 
     void UpdateBridgeFormationState(const FVector& CurrentLocation);
+    void UpdateBridgeQueueState(const FVector& CurrentLocation);
+    void ReleaseBridgeSlot();
 };
