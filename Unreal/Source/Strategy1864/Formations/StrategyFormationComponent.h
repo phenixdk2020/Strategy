@@ -58,4 +58,16 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Strategy|QA")
     bool IsFullCompanyFrontageWithinBaseline(int32 Strength = 190) const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Presentation")
+    bool UsesSquareVisualOwnership() const
+    {
+        return CurrentFormation == EStrategyFormationType::Square;
+    }
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Presentation")
+    bool UsesLinearFormationVisuals() const
+    {
+        return CurrentFormation != EStrategyFormationType::Square;
+    }
 };
