@@ -66,8 +66,15 @@ void UStrategyCombatComponent::TickComponent(
         return;
     }
 
-    if (AmmunitionRounds <= 0 ||
-        OwnerUnit->UnitState == EStrategyUnitState::Reforming)
+    if (AmmunitionRounds <= 0)
+    {
+        bOutOfAmmo = true;
+        return;
+    }
+
+    bOutOfAmmo = false;
+
+    if (OwnerUnit->UnitState == EStrategyUnitState::Reforming)
     {
         return;
     }
@@ -102,6 +109,7 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
     }
 
     AmmunitionRounds -= ShotCount;
+    bOutOfAmmo = AmmunitionRounds <= 0;
 
     const float DistanceCm = FVector::Dist2D(
         OwnerUnit->GetActorLocation(),
@@ -343,4 +351,21 @@ void UStrategyCombatComponent::EvaluateRoutState()
 void UStrategyCombatComponent::SetDeterministicRandomSeed(int32 Seed)
 {
     RandomStream.Initialize(Seed);
+}
+
+
+void UStrategyCombatComponent::ResupplyAmmunition(int32 Rounds)
+{
+    if (Rounds <= 0)
+    {
+        return;
+    }
+
+    AmmunitionRounds =
+        FMath::Clamp(
+            AmmunitionRounds + Rounds,
+            0,
+            FMath::Max(1, MaxAmmunitionRounds));
+
+    bOutOfAmmo = AmmunitionRounds <= 0;
 }
