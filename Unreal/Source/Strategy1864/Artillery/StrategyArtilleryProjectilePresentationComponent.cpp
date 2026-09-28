@@ -135,6 +135,28 @@ PresentResolvedSalvo(
                 bEnableRoundShotRicochet,
                 FinalPoint);
 
+        float PathLengthCm = 0.0f;
+        for (int32 PathIndex = 1; PathIndex < Path.Num(); ++PathIndex)
+        {
+            PathLengthCm +=
+                FVector::Dist(
+                    Path[PathIndex - 1],
+                    Path[PathIndex]);
+        }
+
+        const float DirectDistanceCm =
+            FMath::Max(
+                1.0f,
+                FVector::Dist(
+                    Spec.LaunchLocation,
+                    Spec.PrimaryImpactLocation));
+
+        Spec.FlightSeconds *=
+            FMath::Clamp(
+                PathLengthCm / DirectDistanceCm,
+                1.0f,
+                2.5f);
+
         AStrategyArtilleryProjectilePresentation* Projectile =
             GetWorld()->SpawnActor<AStrategyArtilleryProjectilePresentation>(
                 AStrategyArtilleryProjectilePresentation::StaticClass(),
