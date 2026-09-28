@@ -14,6 +14,7 @@
 #include "../Logistics/StrategySupplyWagonUnit.h"
 #include "../Logistics/StrategySupplyCargoComponent.h"
 #include "../Terrain/StrategyTerrainAwarenessComponent.h"
+#include "../Terrain/StrategyTerrainQueryLibrary.h"
 
 UStrategyPresentationSnapshotComponent::UStrategyPresentationSnapshotComponent()
 {
@@ -120,9 +121,10 @@ UStrategyPresentationSnapshotComponent::BuildSnapshot() const
         Snapshot.TerrainLocalSlopeDegrees =
             Unit->TerrainAwarenessComponent->GetLocalSlopeDegrees();
 
-        Snapshot.bTerrainNearCrest =
-            Unit->TerrainAwarenessComponent->IsNearCrestRelativeTo(
-                FVector::ZeroVector);
+        Snapshot.TerrainFeatureElevationOffset =
+            UStrategyTerrainQueryLibrary::GetFeatureElevationOffset(
+                Unit,
+                Unit->GetActorLocation());
     }
 
     if (const AStrategyArtilleryBatteryUnit* Battery =
