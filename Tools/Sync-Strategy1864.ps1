@@ -3,17 +3,21 @@
     Henter/opdaterer PROJECT 1864 fra GitHub.
 
 .VERSION
-    1.0.2
+    1.0.3
 
 .CHANGELOG
+    1.0.3
+    - Git startes via System.Diagnostics.Process.
+    - StandardOutput og StandardError læses direkte fra processen.
+    - Windows PowerShell 5.1 kan derfor ikke oprette NativeCommandError.
+    - Kun process ExitCode <> 0 behandles som fejl.
+
     1.0.2
-    - Fjerner falske NativeCommandError-meddelelser i Windows PowerShell 5.1/ISE.
-    - Git STDERR håndteres separat i midlertidig fil.
-    - Kun Git exit code <> 0 behandles som fejl.
+    - Forsøg med STDERR til midlertidig fil.
     - Kontrollerer lokal commit mod origin.
 #>
 
-$Version = "1.0.2"
+$Version = "1.0.3"
 $RepositoryUrl = "https://github.com/phenixdk2020/Strategy.git"
 $Branch = "unreal-port"
 $ProjectRoot = "R:\Onedrive\Dokumenter\Unreal Projects\Strategy1864"
@@ -35,63 +39,150 @@ function Write-Status {
     }
 }
 
+function ConvertTo-NativeArgument {
+    param(
+        [Parameter(Mandatory=$true)]
+        [AllowEmptyString()]
+        [string]$Value
+    )
+
+    if ($Value -notmatch '[\s"]') {
+        return $Value
+    }
+
+    # Windows CreateProcess quoting:
+    # - quotes around argument
+    # - backslashes before embedded quote must be doubled
+    # - trailing backslashes before closing quote must also be doubled
+    $Builder = New-Object System.Text.StringBuilder
+    [void]$Builder.Append('"')
+
+    $BackslashCount = 0
+
+    foreach ($Char in $Value.ToCharArray()) {
+        if ($Char -eq '\\') {
+            $BackslashCount++
+            continue
+        }
+
+        if ($Char -eq '"') {
+            [void]$Builder.Append(('\\' * (($BackslashCount * 2) + 1)))
+            [void]$Builder.Append('"')
+            $BackslashCount = 0
+            continue
+        }
+
+        if ($BackslashCount -gt 0) {
+            [void]$Builder.Append(('\\' * $BackslashCount))
+            $BackslashCount = 0
+        }
+
+        [void]$Builder.Append($Char)
+    }
+
+    if ($BackslashCount -gt 0) {
+        [void]$Builder.Append(('\\' * ($BackslashCount * 2)))
+    }
+
+    [void]$Builder.Append('"')
+    return $Builder.ToString()
+}
+
 function Invoke-Git {
     param(
-        [Parameter(Mandatory=$true)][string[]]$Arguments,
-        [Parameter(Mandatory=$true)][string]$WorkingDirectory,
+        [Parameter(Mandatory=$true)]
+        [string[]]$Arguments,
+
+        [Parameter(Mandatory=$true)]
+        [string]$WorkingDirectory,
+
         [switch]$Quiet
     )
 
     $GitExe = (Get-Command git.exe -ErrorAction Stop).Source
-    if (-not (Test-Path $WorkingDirectory)) { throw "Working directory findes ikke: $WorkingDirectory" }
 
-    $ErrorFile = [System.IO.Path]::GetTempFileName()
+    if (-not (Test-Path $WorkingDirectory)) {
+        throw "Working directory findes ikke: $WorkingDirectory"
+    }
+
+    $ArgumentString = (
+        $Arguments |
+        ForEach-Object {
+            ConvertTo-NativeArgument -Value ([string]$_)
+        }
+    ) -join " "
+
+    if (-not $Quiet) {
+        Write-Status -Message ("git " + ($Arguments -join " ")) -Level INFO
+    }
+
+    $StartInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $StartInfo.FileName = $GitExe
+    $StartInfo.Arguments = $ArgumentString
+    $StartInfo.WorkingDirectory = $WorkingDirectory
+    $StartInfo.UseShellExecute = $false
+    $StartInfo.CreateNoWindow = $true
+    $StartInfo.RedirectStandardOutput = $true
+    $StartInfo.RedirectStandardError = $true
+
+    $Process = New-Object System.Diagnostics.Process
+    $Process.StartInfo = $StartInfo
 
     try {
-        if (-not $Quiet) { Write-Status -Message ("git " + ($Arguments -join " ")) -Level INFO }
-
-        Push-Location $WorkingDirectory
-        try {
-            $StdOutLines = @(& $GitExe @Arguments 2> $ErrorFile)
-            $ExitCode = $LASTEXITCODE
-        }
-        finally {
-            Pop-Location
+        if (-not $Process.Start()) {
+            throw "Kunne ikke starte Git-processen."
         }
 
-        $StdErrLines = @()
-        if (Test-Path $ErrorFile) {
-            $StdErrLines = @(Get-Content -Path $ErrorFile -ErrorAction SilentlyContinue)
-        }
+        # ReadToEnd på begge streams før WaitForExit undgår at buffers fyldes.
+        $StdOut = $Process.StandardOutput.ReadToEnd()
+        $StdErr = $Process.StandardError.ReadToEnd()
+
+        $Process.WaitForExit()
+        $ExitCode = $Process.ExitCode
 
         if (-not $Quiet) {
-            foreach ($Line in $StdOutLines) {
-                if (-not [string]::IsNullOrWhiteSpace([string]$Line)) { Write-Host $Line }
+            if (-not [string]::IsNullOrWhiteSpace($StdOut)) {
+                $StdOut.TrimEnd() -split "\r?\n" | ForEach-Object {
+                    if (-not [string]::IsNullOrWhiteSpace($_)) {
+                        Write-Host $_
+                    }
+                }
             }
-            foreach ($Line in $StdErrLines) {
-                if (-not [string]::IsNullOrWhiteSpace([string]$Line)) {
-                    if ($ExitCode -eq 0) { Write-Host $Line -ForegroundColor DarkGray }
-                    else { Write-Host $Line -ForegroundColor Red }
+
+            if (-not [string]::IsNullOrWhiteSpace($StdErr)) {
+                $StdErr.TrimEnd() -split "\r?\n" | ForEach-Object {
+                    if (-not [string]::IsNullOrWhiteSpace($_)) {
+                        if ($ExitCode -eq 0) {
+                            Write-Host $_ -ForegroundColor DarkGray
+                        }
+                        else {
+                            Write-Host $_ -ForegroundColor Red
+                        }
+                    }
                 }
             }
         }
 
         if ($ExitCode -ne 0) {
-            $ErrorText = ($StdErrLines -join [Environment]::NewLine).Trim()
+            $ErrorText = $StdErr.Trim()
+
             if ([string]::IsNullOrWhiteSpace($ErrorText)) {
-                $ErrorText = ($StdOutLines -join [Environment]::NewLine).Trim()
+                $ErrorText = $StdOut.Trim()
             }
+
             throw ("Git afsluttede med fejlkode {0}. {1}" -f $ExitCode, $ErrorText)
         }
 
         return [PSCustomObject]@{
             ExitCode = $ExitCode
-            StdOut = ($StdOutLines -join [Environment]::NewLine)
-            StdErr = ($StdErrLines -join [Environment]::NewLine)
+            StdOut   = $StdOut
+            StdErr   = $StdErr
         }
     }
     finally {
-        Remove-Item -Path $ErrorFile -Force -ErrorAction SilentlyContinue
+        if ($Process) {
+            $Process.Dispose()
+        }
     }
 }
 
