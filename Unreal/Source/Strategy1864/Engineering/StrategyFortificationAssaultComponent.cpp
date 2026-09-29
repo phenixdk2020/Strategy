@@ -184,6 +184,8 @@ void UStrategyFortificationAssaultComponent::CompleteCurrentPhase()
 
     if (AssaultPhase == EStrategyAssaultPhase::Breaching)
     {
+        const bool bUsedExplosive = ExplosiveCharges > 0;
+
         if (!IsValid(TargetPosition) || !ConsumeAssaultEquipment())
         {
             AssaultPhase = EStrategyAssaultPhase::Failed;
@@ -191,7 +193,6 @@ void UStrategyFortificationAssaultComponent::CompleteCurrentPhase()
             return;
         }
 
-        const bool bUsedExplosive = ExplosiveCharges > 0;
         const float Damage =
             (bUsedExplosive ? 35.0f : 20.0f) *
             GetEquipmentFactor();
