@@ -754,3 +754,174 @@ Functionality-first work added fire discipline/ammunition conservation, Standing
 | UE-P411 | P1 | Compact company labels | Operational QA company labels reduced to side/company identity | IMPLEMENTED QA CORE |
 
 UE-P407..411 are presentation-only and require UE 5.8.3 build/runtime verification.
+
+
+# 22. Specialist detachment architecture — v00.02.68
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P412 | P0 | Specialist detachment type model | Skirmisher / Marksman / PioneerWorkingParty / AmmunitionParty / StretcherParty / PicketScout | IMPLEMENTED CORE |
+| UE-P413 | P0 | Organic-parent identity | Every detachment stores the stable organic parent unit ID | IMPLEMENTED CORE |
+| UE-P414 | P0 | Detachment records | Strength, ammo, cohesion, anchor and active state are authoritative records | IMPLEMENTED CORE |
+| UE-P415 | P0 | Parent strength reservation | Detached men are excluded from parent firing strength | IMPLEMENTED CORE |
+| UE-P416 | P0 | Ammunition reservation | Ammo transfers from parent inventory to detachment and surviving ammo returns on recall | IMPLEMENTED CORE |
+| UE-P417 | P1 | Tactical task anchor | Each active detachment owns a task/world anchor | IMPLEMENTED CORE |
+| UE-P418 | P0 | Detachment casualties | Losses reduce both detachment current strength and parent authoritative strength | IMPLEMENTED CORE |
+| UE-P419 | P0 | Recall/reform reconciliation | Recall closes detachment without duplicating strength/ammo | IMPLEMENTED CORE |
+| UE-P420 | P1 | Detachment limits | Concurrent count + maximum detached fraction prevent runaway micro-unit creation | IMPLEMENTED CORE |
+| UE-P421 | P0 | Combat integration | Infantry volley budget uses available parent strength after detachments | IMPLEMENTED CORE |
+
+All UE-P412..421 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
+# 23. NCO command continuity — v00.02.69
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P422 | P0 | NCO strength | `NCOStrength` is explicit local cadre state | IMPLEMENTED CORE |
+| UE-P423 | P0 | NCO quality | `NCOQuality` is independent from officer stats | IMPLEMENTED CORE |
+| UE-P424 | P0 | Officer availability fallback | Local NCO cadre can preserve command when officer becomes unavailable | IMPLEMENTED CORE |
+| UE-P425 | P0 | Command continuity score | Strength + quality + officer availability resolve bounded local continuity | IMPLEMENTED CORE |
+| UE-P426 | P0 | Formation speed effect | NCO continuity modifies movement/reform execution speed | IMPLEMENTED CORE |
+| UE-P427 | P0 | Reload discipline effect | NCO continuity modifies infantry reload discipline | IMPLEMENTED CORE |
+| UE-P428 | P1 | Rally effect | Routed recovery consumes NCO rally multiplier | IMPLEMENTED CORE |
+| UE-P429 | P1 | Local response delay | Command delay includes receiving-unit NCO response factor | IMPLEMENTED CORE |
+| UE-P430 | P1 | Detachment control | Working/specialist-party work rate uses NCO control multiplier | IMPLEMENTED CORE |
+| UE-P431 | P0 | Unit/QA integration | Every StrategyUnit owns NCO component; specialist regression validates state | IMPLEMENTED QA CORE |
+
+All UE-P422..431 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
+# 24. Firing drill and explicit kneeling stance — v00.02.70
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P432 | P0 | Kneeling stance | `Standing / Kneeling / Prone` tactical stance enum | IMPLEMENTED CORE |
+| UE-P433 | P0 | Kneeling movement | Kneeling has explicit movement multiplier | IMPLEMENTED CORE |
+| UE-P434 | P0 | Kneeling target profile | Kneeling has intermediate incoming-hit profile | IMPLEMENTED CORE |
+| UE-P435 | P0 | Loading-method model | MuzzleLoader vs BreechLoader is explicit fire-drill state | IMPLEMENTED CORE |
+| UE-P436 | P0 | Drill modes | FrontRank / Volley / Independent / AlternatingSections / KneelingFrontRank | IMPLEMENTED CORE |
+| UE-P437 | P0 | Eligible firing fraction | Drill mode + stance determine participating fraction | IMPLEMENTED CORE |
+| UE-P438 | P0 | Muzzle-loader low-stance penalty | Prone muzzle-loading lowers participation and increases reload time | IMPLEMENTED CORE |
+| UE-P439 | P0 | Breech-loader low-stance advantage | Breech-loading remains substantially more usable from low stance | IMPLEMENTED CORE |
+| UE-P440 | P1 | Volley coordination | Fire discipline/drill quality modifies volley coordination accuracy | IMPLEMENTED CORE |
+| UE-P441 | P0 | Combat/reload integration | Combat shot budget and reload consume drill + stance + NCO modifiers | IMPLEMENTED CORE |
+
+All UE-P432..441 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
+# 25. Physical defensive positions — v00.02.71
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P442 | P0 | Typed fieldworks | RiflePit / Breastwork / Trench / GunEmplacement / Barricade / AbatisObstacle / Redoubt | IMPLEMENTED CORE |
+| UE-P443 | P0 | Physical defensive actor | `AStrategyDefensivePosition` is persistent battlefield state | IMPLEMENTED CORE |
+| UE-P444 | P0 | Orientation + footprint | Length, depth and facing define physical protection geometry | IMPLEMENTED CORE |
+| UE-P445 | P0 | Condition | Position condition degrades under structural damage | IMPLEMENTED CORE |
+| UE-P446 | P1 | Capacity | Defensive positions limit supported occupying manpower | IMPLEMENTED CORE |
+| UE-P447 | P0 | Ownership/occupier | Owning side and current occupying unit are separate states | IMPLEMENTED CORE |
+| UE-P448 | P0 | Directional protection | Frontal/rear multipliers depend on shooter direction and position facing | IMPLEMENTED CORE |
+| UE-P449 | P0 | Structural damage/repair | Positions can be damaged, breached and repaired | IMPLEMENTED CORE |
+| UE-P450 | P0 | Capture/vacate | Empty usable positions can change side; occupants can leave | IMPLEMENTED CORE |
+| UE-P451 | P0 | Navigation obstacle lifecycle | Position owns, refreshes and cleans its navigation obstacle | IMPLEMENTED CORE |
+
+All UE-P442..451 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
+# 26. Fortification assault and breach equipment — v00.02.72
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P452 | P0 | Assault phase machine | Idle → Preparing → Approaching → Breaching → AssaultReady / Failed | IMPLEMENTED CORE |
+| UE-P453 | P1 | Ladders | Explicit ladder inventory/capability | IMPLEMENTED CORE |
+| UE-P454 | P1 | Planks/storm boards | Gap-crossing equipment state | IMPLEMENTED CORE |
+| UE-P455 | P1 | Axes | Breach-tool inventory | IMPLEMENTED CORE |
+| UE-P456 | P1 | Crowbars | Breach-tool inventory | IMPLEMENTED CORE |
+| UE-P457 | P1 | Explosive charges | Consumable high-effect breach equipment | IMPLEMENTED CORE |
+| UE-P458 | P0 | Working-party strength | Assault preparation/breach rate depends on assigned workers | IMPLEMENTED CORE |
+| UE-P459 | P0 | Equipment-driven timing | Better equipment reduces preparation and breach time | IMPLEMENTED CORE |
+| UE-P460 | P1 | Exposure/crossing modifiers | Equipment quality changes assault exposure/crossing difficulty | IMPLEMENTED CORE |
+| UE-P461 | P0 | Breach result | Successful breach applies structural damage and breached state | IMPLEMENTED CORE |
+
+All UE-P452..461 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
+# 27. Mortar deployment and battery core — v00.02.73
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P462 | P0 | Mortar class | `LightHand` and `HeavySiege` classes | IMPLEMENTED CORE |
+| UE-P463 | P0 | Mortar battery actor | `AStrategyMortarBatteryUnit` extends artillery tactical unit | IMPLEMENTED CORE |
+| UE-P464 | P0 | Transport state | Mortar begins/returns to transport state | IMPLEMENTED CORE |
+| UE-P465 | P0 | Emplacing state | Timed emplacing blocks normal movement/fire | IMPLEMENTED CORE |
+| UE-P466 | P0 | Deployed state | Deployed state gates mortar fire | IMPLEMENTED CORE |
+| UE-P467 | P0 | Packing state | Timed packing returns battery to transport | IMPLEMENTED CORE |
+| UE-P468 | P1 | Working-party deployment rate | Assigned work strength modifies emplace/pack speed | IMPLEMENTED CORE |
+| UE-P469 | P0 | Horse/wagon transport | Horse + wagon availability scale transport mobility | IMPLEMENTED CORE |
+| UE-P470 | P1 | Piece weight/manhandling | Heavy weight strongly limits short-distance manhandling factor | IMPLEMENTED CORE |
+| UE-P471 | P0 | Movement + QA fixture integration | Movement executor respects mortar state; heavy Danish QA mortar spawns | IMPLEMENTED QA CORE |
+
+All UE-P462..471 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
+# 28. Mortar fire mission core — v00.02.74
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P472 | P0 | Mortar bomb inventory | Separate bomb ammunition + maximum inventory | IMPLEMENTED CORE |
+| UE-P473 | P0 | Unit target mission | Enemy unit can be assigned when inside mortar range | IMPLEMENTED CORE |
+| UE-P474 | P0 | Area target mission state | Visible world point can be stored as area fire target | IMPLEMENTED CORE |
+| UE-P475 | P0 | Fortification target mission | Defensive position can be assigned directly | IMPLEMENTED CORE |
+| UE-P476 | P0 | Mortar min/max range | High-angle weapon uses explicit minimum and maximum range | IMPLEMENTED CORE |
+| UE-P477 | P1 | High-arc solution | Deterministic high-arc apex calculation for later presentation | IMPLEMENTED CORE |
+| UE-P478 | P1 | Time-of-flight estimate | Distance-based bounded flight-time estimate | IMPLEMENTED CORE |
+| UE-P479 | P0 | Reload cadence | Mortar reload timer owns fire cadence | IMPLEMENTED CORE |
+| UE-P480 | P0 | Unit/fortification resolution | Bombs can cause infantry casualties or structural fortification damage | IMPLEMENTED CORE |
+| UE-P481 | P0 | Hold/resupply/automatic cadence | Hold Fire, bomb resupply and deployed auto-fire loop | IMPLEMENTED CORE |
+
+Area-target **state** is implemented; wider area-effect search/fragment resolution remains a later tuning/expansion item. All UE-P472..481 require UE 5.8.3 build/runtime QA.
+
+# 29. Defensive-position occupancy and combat integration — v00.02.75
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P482 | P0 | Occupy position | Unit explicitly occupies a valid defensive position | IMPLEMENTED CORE |
+| UE-P483 | P0 | Leave position | Occupancy is released cleanly before reassignment | IMPLEMENTED CORE |
+| UE-P484 | P1 | Nearest usable search | Unit can query nearest compatible free position | IMPLEMENTED CORE |
+| UE-P485 | P1 | Auto-occupy | Convenience path occupies nearest usable position inside radius | IMPLEMENTED CORE |
+| UE-P486 | P0 | Infantry cover integration | Small-arms hit resolution consumes occupied-position protection | IMPLEMENTED CORE |
+| UE-P487 | P0 | Artillery cover integration | Direct artillery casualty resolution consumes occupied-position protection | IMPLEMENTED CORE |
+| UE-P488 | P1 | Gun-emplacement capability | GunEmplacement/Redoubt identify artillery-compatible defensive works | IMPLEMENTED CORE |
+| UE-P489 | P1 | Threat-facing query | Position can report whether facing is useful against threat direction | IMPLEMENTED CORE |
+| UE-P490 | P1 | Condition/status query | Unit/UI/QA can read position condition/breached state | IMPLEMENTED CORE |
+| UE-P491 | P0 | Fieldworks auto-occupancy | Newly completed hasty position is physically created and occupied | IMPLEMENTED CORE |
+
+All UE-P482..491 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
+# 30. Working parties, ammunition and casualty support — v00.02.76
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P492 | P0 | Working-party task state | CarryAmmo / Stretcher / Dig / Breach / Repair tasks | IMPLEMENTED CORE |
+| UE-P493 | P0 | Worker allocation | Assigned worker count is bounded by available workers | IMPLEMENTED CORE |
+| UE-P494 | P0 | Work-rate model | Worker strength + NCO control determine work rate | IMPLEMENTED CORE |
+| UE-P495 | P0 | Ammunition load | Party can carry explicit small-arms ammunition quantity | IMPLEMENTED CORE |
+| UE-P496 | P0 | Ammunition delivery | Carried rounds transfer into target unit combat inventory | IMPLEMENTED CORE |
+| UE-P497 | P1 | Wounded queue | Wounded awaiting collection are persistent party state | IMPLEMENTED CORE |
+| UE-P498 | P1 | Stretcher collection | Collection capacity scales with assigned workers | IMPLEMENTED CORE |
+| UE-P499 | P1 | Position repair | Working party can repair damaged defensive position | IMPLEMENTED CORE |
+| UE-P500 | P1 | Dig fieldworks hook | Completed Dig task starts engineer-rate hasty-fieldworks construction | IMPLEMENTED CORE |
+| UE-P501 | P1 | Breach-obstacle hook | Completed Breach task damages target position and marks severe damage breached | IMPLEMENTED CORE |
+
+All UE-P492..501 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
+# 31. Specialist persistence, validation and QA — v00.02.77
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P502 | P0 | Specialist snapshot struct | Unit/detachment/NCO/stance/drill/working-party state captured together | IMPLEMENTED QA CORE |
+| UE-P503 | P0 | Snapshot capture | Current specialist state can be captured deterministically | IMPLEMENTED QA CORE |
+| UE-P504 | P0 | Snapshot restore | Specialist state can be restored to same stable unit ID | IMPLEMENTED QA CORE |
+| UE-P505 | P1 | Active task restore | Restored working-party task re-enables component tick | IMPLEMENTED QA CORE |
+| UE-P506 | P0 | State validation | Strength, NCO and working-party invariants expose failure reason | IMPLEMENTED QA CORE |
+| UE-P507 | P1 | Deterministic digest | Stable specialist state produces repeatable QA digest | IMPLEMENTED QA CORE |
+| UE-P508 | P1 | Specialist reset | Detachments/NCO/stance/drill/working-party state can reset to baseline | IMPLEMENTED QA CORE |
+| UE-P509 | P0 | Detached-strength leak check | Validator detects detached strength exceeding parent strength | IMPLEMENTED QA CORE |
+| UE-P510 | P0 | NCO/working-party sanity checks | Negative/out-of-range state is explicitly rejected | IMPLEMENTED QA CORE |
+| UE-P511 | P0 | QA scenario integration | First Danish company carries marksman/NCO/drill fixture; all units validate specialist components | IMPLEMENTED QA CORE |
+
+All UE-P502..511 are **code implemented / UE 5.8.3 build+runtime QA pending**. None is parity verified until local UE 5.8.3 compile and scenario QA have passed.
