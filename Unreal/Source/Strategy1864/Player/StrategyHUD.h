@@ -29,7 +29,7 @@ public:
     bool bDrawSelectedUnitQA = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|QA")
-    FString BuildMarker = TEXT("PROJECT 1864 | UNREAL PORT | v00.02.54-dev");
+    FString BuildMarker = TEXT("PROJECT 1864 | UNREAL PORT | v00.02.64-dev");
 
 private:
     bool bSelectionBoxActive = false;
