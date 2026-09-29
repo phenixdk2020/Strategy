@@ -1067,6 +1067,24 @@ void AStrategyOOBTestScenario::DrawRuntimeQAVisuals() const
             0.0f,
             0,
             QAVisualThickness);
+
+        const FString UnitLabel =
+            FString::Printf(
+                TEXT("%s  [%s]  %d/%d"),
+                *Unit->DisplayName.ToString(),
+                *Unit->GetNATOEchelonSymbol(),
+                Unit->CurrentStrength,
+                Unit->InitialStrength);
+
+        DrawDebugString(
+            World,
+            Center + FVector(0.0f, 0.0f, Extent.Z + 130.0f),
+            UnitLabel,
+            nullptr,
+            Color,
+            0.0f,
+            true,
+            1.15f);
     }
 
     if (IsValid(SpawnedRiverBarrier))
