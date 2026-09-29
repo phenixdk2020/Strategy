@@ -19,6 +19,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
     virtual void TickComponent(
@@ -55,7 +56,6 @@ public:
     EStrategyArtilleryCrewActivity GetActivityForStation(
         int32 StationIndex) const;
 
-    UFUNCTION()
     void HandleArtilleryShotResolved(
         AStrategyUnit* Target,
         EStrategyArtilleryAmmoType AmmoType,
