@@ -425,3 +425,14 @@ Efter clean sync + BUILD PASS skal et tryk på **Play** vise den samlede QA batt
 - Runtime bootstrap owns fallback scenario/camera creation independent of manual map wiring.
 - Placeholder boxes/arrows/labels are temporary presentation until final 3D assets exist.
 - River, bridge, obstacle and analytic terrain fixtures must remain visibly inspectable during QA.
+
+
+## B-295 — Flat Unreal QA battlefield
+
+**Status:** IMPLEMENTERET CORE / UE 5.8.3 RUNTIME QA PENDING  
+**Prioritet:** P0 testability
+
+- Default tactical QA map is a flat physical 600 × 600 m WorldStatic surface.
+- Hill/Ridge/Depression fixtures are disabled by default and remain opt-in terrain QA.
+- River/bridge, OOB, formations, movement, cavalry, artillery, supply and enemy AI remain testable.
+- Final soldier/horse/artillery models are deliberately postponed to the later asset pass.
