@@ -1,6 +1,7 @@
 #include "StrategyCommandDelayComponent.h"
 
 #include "StrategyOfficerProfileComponent.h"
+#include "StrategyNCOComponent.h"
 #include "../Command/StrategyCommandComponent.h"
 #include "../Units/StrategyHQUnit.h"
 #include "../Units/StrategyUnit.h"
@@ -53,5 +54,12 @@ float UStrategyCommandDelayComponent::CalculateDelayFromCurrentParent() const
     const float EfficiencyFactor =
         FMath::Lerp(1.35f, 0.65f, Efficiency);
 
-    return FMath::Max(0.0f, Delay * EfficiencyFactor);
+    const float LocalResponseFactor =
+        Unit->NCOComponent
+        ? Unit->NCOComponent->GetResponseTimeMultiplier()
+        : 1.0f;
+
+    return FMath::Max(
+        0.0f,
+        Delay * EfficiencyFactor * LocalResponseFactor);
 }
