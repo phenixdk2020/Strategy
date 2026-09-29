@@ -13,6 +13,8 @@ class AStrategyNavigationObstacle;
 class AStrategyArtilleryBatteryUnit;
 class AStrategySupplyWagonUnit;
 class AStrategyTerrainFeature;
+class USceneComponent;
+class UStaticMeshComponent;
 enum class EStrategyTerrainFeatureType : uint8;
 
 UCLASS(Blueprintable)
@@ -56,7 +58,19 @@ public:
     bool bSpawnSupplyWagonQA = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
-    bool bSpawnTerrainQA = true;
+    bool bSpawnTerrainQA = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test|FlatMap")
+    bool bUseFlatQAMap = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test|FlatMap", meta=(ClampMin="10000.0"))
+    float FlatMapSizeCm = 60000.0f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Test|FlatMap")
+    TObjectPtr<USceneComponent> QAMapRoot;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Test|FlatMap")
+    TObjectPtr<UStaticMeshComponent> QAFlatGround;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     int32 QARandomSeed = 1864;
