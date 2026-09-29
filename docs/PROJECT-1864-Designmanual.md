@@ -1,7 +1,9 @@
 # PROJECT 1864 — Designmanual
 
-**Aktuel designbaseline: v00.02.63**  
+**Aktuel designbaseline: v00.02.64**  
 **Aktuel prototype-workbranch: P0A v00.00.09f30x EARLY INFANTRY DEPLOY + COMPANY SPACING + CAV BRIDGE APPROACH + STARTUP ENEMY CONES TEST**
+
+**Unreal runtime QA visibility bootstrap (v00.02.64):** Unreal-porten har endnu ingen committed `.umap`/`.uasset` battlefield assets, så editoren kan fortsat åbne på en `Untitled` world. Ved **Play/PIE** auto-spawner `AStrategyGameMode` det eksisterende OOB QA-scenarie og fokuserer nu strategy-kameraet på battlefield-centret. `AStrategyOOBTestScenario` tegner et kontinuerligt runtime QA-overlay med tydelige sidefarvede unit-boxes og facing arrows, labels, river banks + bridge crossing, navigation obstacle samt hill/ridge/depression footprints og højde-markører. Dette lag er presentation/debug-only og ændrer ingen gameplay authority. Det er bevidst asset-uafhængigt, så battle-kernen kan testes før de endelige soldier/horse/artillery meshes og animation assets er produceret.
 
 Grand Strategy i realtid + taktiske 3D-slag. Denne GitHub-udgave er opdelt i dele for overskuelig versionsstyring. Den layoutede Word-master opdateres parallelt som projektartefakt, mens GitHub-Markdown er den løbende designmæssige source of truth.
 
