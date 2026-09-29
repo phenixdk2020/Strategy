@@ -4,6 +4,8 @@
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Formations/StrategyFormationComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "../Engineering/StrategyPositionOccupancyComponent.h"
+#include "../Navigation/StrategyNavigationObstacle.h"
 #include "Engine/World.h"
 
 UStrategyFieldworksComponent::UStrategyFieldworksComponent()
@@ -119,6 +121,25 @@ void UStrategyFieldworksComponent::CompleteFieldworks()
         CompletedPosition->CapacityMen = FMath::Max(40, OwnerUnit->CurrentStrength);
         CompletedPosition->ConstructionProgress = 1.0f;
         CompletedPosition->Condition = bEngineerUnit ? 100.0f : 80.0f;
+
+        if (CompletedPosition->NavigationObstacle)
+        {
+            CompletedPosition->NavigationObstacle->HalfExtentCm =
+                FVector(
+                    FMath::Max(100.0f, CompletedPosition->DepthCm * 0.5f),
+                    FMath::Max(200.0f, CompletedPosition->LengthCm * 0.5f),
+                    120.0f);
+            CompletedPosition->NavigationObstacle->ClearanceCm =
+                RequestedPositionType == EStrategyDefensivePositionType::AbatisObstacle
+                ? 500.0f
+                : 150.0f;
+        }
+
+        if (OwnerUnit->PositionOccupancyComponent)
+        {
+            OwnerUnit->PositionOccupancyComponent->OccupyPosition(
+                CompletedPosition);
+        }
     }
 
     bBuilding = false;
