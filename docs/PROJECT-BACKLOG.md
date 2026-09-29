@@ -1,6 +1,6 @@
 # PROJECT 1864 — Backlog, beslutninger og idéer
 
-**Baseline: v00.02.08 work branch**
+**Baseline: v00.02.34 — central intake-log; aktiv buildstatus følger `VERSION.txt`**
 
 Dette dokument er projektets centrale intake-log for beslutninger og idéer, der ikke nødvendigvis implementeres i den aktive prototype med det samme. Formålet er at sikre, at gameplay-idéer og designbeslutninger fra projektarbejdet ikke kun findes i chatten.
 
@@ -80,7 +80,7 @@ v00.00.09 skal mindst bevise:
 | B-021 | BESLUTTET | Skirmisher-roller | Screen, reconnaissance, harassment, contest cover, beskytte advance/retreat og skabe contact før hovedformationen. |
 | B-022 | BESLUTTET | Skirmisher combat model | Lavere formation density gør dem sværere at ramme; de har lavere samlet volley density, mere autonomi og højere afhængighed af cover/terrain. |
 | B-023 | BESLUTTET | Reform | Skirmishers skal kunne kaldes tilbage og reformere i moderformationen med tids-/cohesion-konsekvens. |
-| B-024 | RESEARCH | Skarpskytter/marksmen | Udvalgte gode skytter kan være en mindre specialty/ability eller subunit; de skal ikke modelleres som moderne sniper teams uden historisk dokumentation. |
+| B-024 | BESLUTTET | Skarpskytter/marksmen | Udvalgte gode skytter modelleres som en lille specialty/detachment frem for moderne sniper teams. Designramme ca. 8–30 mand afhængigt af nation/scenario; observation, længere afstande, cover, harassment og counter-skirmishing er kerneroller. Præcis historisk bemanding, terminologi og udbredelse forbliver RESEARCH-data. |
 | B-025 | RESEARCH | Dansk organisation/terminologi | Fastlæg konkrete danske 1864-termer, andele og hvilke regimenter/jægertraditioner der havde særlige skirmisher-egenskaber. |
 
 ## Artilleri
@@ -219,6 +219,18 @@ v00.00.09 skal mindst bevise:
 | B-150 | BESLUTTET | War goals/peace | Kampagnen skal kunne slutte gennem krigsmål/forhandling og internationalt pres, ikke kun total conquest. |
 | B-151 | BESLUTTET | Historical event engine | Events trigges af faktisk simulation state og dato/conditions og skal understøtte alternative outcomes. |
 | B-152 | BESLUTTET | Sverige-Norge/intervention framework | International intervention skal være systemisk mulig og ikke kun en scripted cutscene. |
+
+## Tactical specialisation, fieldworks og siege systems
+
+| ID | Status | Emne | Beslutning / note |
+| --- | --- | --- | --- |
+| B-153 | BESLUTTET | Unit / detachment / capability model | Permanente OOB-enheder holdes få. Capabilities kan skabe midlertidige skirmisher-, marksman/sharpshooter-, pioneer/working-, ammunition-, stretcher- og picket/scout-detachments. OrganicParent bevares; parent strength/equipment reduceres ved detachering, og reform må ikke duplikere casualties, ammo eller cohesion state. |
+| B-154 | BESLUTTET | NCO command continuity | Underformationer får mindst `NCOStrength` og `NCOQuality`. Ved officer unavailable/disrupted kan NCO-kadren føre lokalt med lavere command quality. NCO-tab påvirker formation/reformation speed, reload/volley discipline, rally/cohesion, response og detachment organisation. |
+| B-155 | BESLUTTET | Defensive position object model | Rifle pits, breastworks, trenches, gun emplacements, barricades, abatis/obstacles og redoubts/skanser er fysiske objekter med orientation, footprint, progress, condition, capacity, cover og ownership/occupier. De kan beskadiges, forbedres, forlades og erobres. |
+| B-156 | BESLUTTET | Fortification assault equipment | Pioneers/working parties kan bruge stiger, planker/stormbrædder, økser, brækstænger og sprængmidler som scenario-tilgængeligt materiel. Forberedte assault tasks reducerer tid/exposure ved voldgrav, palisade, brystværn og andre hindringer. |
+| B-157 | BESLUTTET | Firing drill, geledder og stance | Standing/Kneeling/Prone er eksplicitte states. Front-rank fire, volley, independent fire, alternerende grupper og front-rank kneeling/rear-rank standing styres af loading method + training/drill + doctrine + formation; ingen simpel level-unlock-model. |
+| B-158 | BESLUTTET | Mortar classes | Mindst to klasser: light/hand mortar og heavy siege mortar. Krum ild, ammunition, mobility og tactical role afhænger af weapon/equipment data. |
+| B-159 | BESLUTTET | Heavy mortar transport/deployment | Tunge morterer bruger `TRANSPORT → EMPLACING → DEPLOYED → PACKING → TRANSPORT` med wagon/horses, crew/drivers, ammunition train og work-party capacity. Road/terrain og preparation påvirker movement/deploy; manhandling er kun kortvarig og vægtafhængig. |
 
 ## Åbne designspørgsmål fra tidligere baseline
 
