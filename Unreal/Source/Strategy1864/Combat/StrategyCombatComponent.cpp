@@ -13,6 +13,10 @@
 #include "StrategySmokeField.h"
 #include "StrategyVisibilityComponent.h"
 #include "StrategySkirmisherComponent.h"
+#include "StrategyDetachmentComponent.h"
+#include "StrategyFireDrillComponent.h"
+#include "../AI/StrategyNCOComponent.h"
+#include "../Engineering/StrategyPositionOccupancyComponent.h"
 #include "../AI/StrategyOfficerProfileComponent.h"
 #include "../Artillery/StrategyArtilleryBatteryUnit.h"
 #include "../Artillery/StrategyArtilleryDamageComponent.h"
@@ -120,18 +124,40 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         ? OwnerUnit->FireControlComponent->GetActiveRangeCm()
         : 1.0f;
 
+    const int32 ParentFiringStrength =
+        OwnerUnit->DetachmentComponent
+        ? OwnerUnit->DetachmentComponent->GetAvailableParentStrength()
+        : FMath::Max(0, OwnerUnit->CurrentStrength);
+
     int32 ShotCount =
         OwnerUnit->FireDisciplineComponent
         ? OwnerUnit->FireDisciplineComponent->CalculateShotBudget(
-            FMath::Max(0, OwnerUnit->CurrentStrength),
+            ParentFiringStrength,
             MaxShotsPerVolley,
             AmmunitionRounds,
             DistanceCm,
             ActiveRangeCm)
         : FMath::Min3(
-            FMath::Max(0, OwnerUnit->CurrentStrength),
+            ParentFiringStrength,
             MaxShotsPerVolley,
             AmmunitionRounds);
+
+    if (OwnerUnit->FireDrillComponent)
+    {
+        const EStrategyStance CurrentStance =
+            OwnerUnit->StanceComponent
+            ? OwnerUnit->StanceComponent->Stance
+            : EStrategyStance::Standing;
+
+        ShotCount =
+            FMath::Clamp(
+                FMath::RoundToInt(
+                    static_cast<float>(ShotCount) *
+                    OwnerUnit->FireDrillComponent
+                        ->GetEligibleFiringFraction(CurrentStance)),
+                0,
+                AmmunitionRounds);
+    }
 
     if (OwnerUnit->SkirmisherComponent)
     {
@@ -208,10 +234,27 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         ? OwnerUnit->StanceComponent->GetReloadMultiplier()
         : 1.0f;
 
+    const EStrategyStance CurrentStance =
+        OwnerUnit->StanceComponent
+        ? OwnerUnit->StanceComponent->Stance
+        : EStrategyStance::Standing;
+
+    const float FireDrillReloadMultiplier =
+        OwnerUnit->FireDrillComponent
+        ? OwnerUnit->FireDrillComponent->GetReloadMultiplier(CurrentStance)
+        : 1.0f;
+
+    const float NCOReloadMultiplier =
+        OwnerUnit->NCOComponent
+        ? OwnerUnit->NCOComponent->GetReloadDisciplineMultiplier()
+        : 1.0f;
+
     ReloadRemainingSeconds =
         ReloadSeconds *
         ReloadMultiplier *
-        StanceReloadMultiplier;
+        StanceReloadMultiplier *
+        FireDrillReloadMultiplier *
+        NCOReloadMultiplier;
     OnVolleyResolved.Broadcast(Target, ShotCount, Hits);
 
     FVector FireDirection =
@@ -346,6 +389,11 @@ int32 UStrategyCombatComponent::ResolveHits(
         ? OwnerUnit->ConditionComponent->GetAccuracyMultiplier()
         : 1.0f;
 
+    const float FireDrillAccuracyMultiplier =
+        OwnerUnit->FireDrillComponent
+        ? OwnerUnit->FireDrillComponent->GetVolleyCoordinationMultiplier()
+        : 1.0f;
+
     const float StanceTargetMultiplier =
         IsValid(Target) && Target->StanceComponent
         ? Target->StanceComponent->GetIncomingHitMultiplier()
@@ -360,6 +408,12 @@ int32 UStrategyCombatComponent::ResolveHits(
     const float SkirmisherTargetMultiplier =
         IsValid(Target) && Target->SkirmisherComponent
         ? Target->SkirmisherComponent->GetIncomingHitMultiplier()
+        : 1.0f;
+
+    const float OccupiedPositionMultiplier =
+        IsValid(Target) && Target->PositionOccupancyComponent
+        ? Target->PositionOccupancyComponent->GetIncomingHitMultiplier(
+            OwnerUnit->GetActorLocation())
         : 1.0f;
 
     const float TerrainExposureMultiplier =
@@ -378,9 +432,11 @@ int32 UStrategyCombatComponent::ResolveHits(
             BaseHitChance *
             RangeFactor *
             ConditionMultiplier *
+            FireDrillAccuracyMultiplier *
             StanceTargetMultiplier *
             CoverMultiplier *
             SkirmisherTargetMultiplier *
+            OccupiedPositionMultiplier *
             TerrainExposureMultiplier *
             SmokeTransmission,
             0.0f,
