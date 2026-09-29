@@ -3,9 +3,14 @@
     Henter/opdaterer PROJECT 1864 fra GitHub.
 
 .VERSION
-    1.0.3
+    1.0.4
 
 .CHANGELOG
+    1.0.4
+    - Tekst gjort Windows PowerShell 5.1/ANSI-sikker.
+    - BuildLogs er nu ignoreret via .gitignore.
+
+
     1.0.3
     - Git startes via System.Diagnostics.Process.
     - StandardOutput og StandardError læses direkte fra processen.
@@ -17,7 +22,7 @@
     - Kontrollerer lokal commit mod origin.
 #>
 
-$Version = "1.0.3"
+$Version = "1.0.4"
 $RepositoryUrl = "https://github.com/phenixdk2020/Strategy.git"
 $Branch = "unreal-port"
 $ProjectRoot = "R:\Onedrive\Dokumenter\Unreal Projects\Strategy1864"
@@ -195,19 +200,19 @@ function Test-GitInstalled {
 
 function Test-LocalChanges {
     param([Parameter(Mandatory=$true)][string]$RepositoryPath)
-    Write-Status -Message "Kontrollerer lokale ændringer..." -Level CHECKPOINT
+    Write-Status -Message "Kontrollerer lokale aendringer..." -Level CHECKPOINT
     $Result = Invoke-Git -WorkingDirectory $RepositoryPath -Arguments @("status","--porcelain") -Quiet
     if (-not [string]::IsNullOrWhiteSpace($Result.StdOut)) {
-        Write-Status -Message "Der findes lokale ændringer." -Level WARNING
+        Write-Status -Message "Der findes lokale aendringer." -Level WARNING
         Write-Host ""
-        Write-Host "Lokale ændringer:" -ForegroundColor Yellow
+        Write-Host "Lokale aendringer:" -ForegroundColor Yellow
         $Result.StdOut -split "\r?\n" | ForEach-Object {
             if (-not [string]::IsNullOrWhiteSpace($_)) { Write-Host "  $_" -ForegroundColor Yellow }
         }
         Write-Host ""
-        throw "Git sync stoppet for at beskytte lokale filer. Commit, stash eller fjern ændringerne først."
+        throw "Git sync stoppet for at beskytte lokale filer. Commit, stash eller fjern aendringerne foerst."
     }
-    Write-Status -Message "Ingen lokale ændringer fundet." -Level OK
+    Write-Status -Message "Ingen lokale aendringer fundet." -Level OK
 }
 
 Clear-Host
