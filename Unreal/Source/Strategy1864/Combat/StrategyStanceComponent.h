@@ -8,6 +8,7 @@ UENUM(BlueprintType)
 enum class EStrategyStance : uint8
 {
     Standing,
+    Kneeling,
     Prone
 };
 
@@ -21,6 +22,15 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Stance")
     EStrategyStance Stance = EStrategyStance::Standing;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Stance")
+    float KneelingMovementMultiplier = 0.75f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Stance")
+    float KneelingReloadMultiplier = 1.03f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Stance")
+    float KneelingIncomingHitMultiplier = 0.82f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Stance")
     float ProneMovementMultiplier = 0.35f;
