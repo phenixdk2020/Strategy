@@ -392,3 +392,25 @@ Ved normal tactical zoom skal en enkelt figur tydeligt læses som en bevæbnet i
 
 ### Exit-kriterium for asset-pass
 Mindst én dansk og én preussisk human mesh samt artillery crew og cavalry rider skal kunne skifte mesh/uniformpreset uden at duplikere locomotion/fire/reload animationer.
+
+
+## B-294 — Unreal QA startup visibility
+
+**Status:** IMPLEMENTERET QA CORE / UE 5.8.3 RUNTIME VERIFICATION PENDING  
+**Prioritet:** Høj compile/runtime gate
+
+### Problem
+Unreal-projektet kan åbne på en `Untitled` editor-world, fordi repoet endnu ikke indeholder et committed tactical map asset. Det gjorde den kodegenererede battle-slice vanskelig at opdage visuelt.
+
+### Implementeret v00.02.64
+- OOB QA-scenariet oprettes fortsat autoritativt ved Play/PIE.
+- Strategy-kameraet fokuseres automatisk omkring battlefield-centret.
+- Danmark/Prussia/andre sider får tydelige runtime QA-farver.
+- Alle units får synlige debug-boxes, facing arrows og labels.
+- River banks + bridge crossing visualiseres.
+- Navigation obstacle visualiseres.
+- Hill/Ridge/Depression fixtures får footprint og højde-markør.
+- QA-overlay er presentation-only og må ikke påvirke gameplay authority.
+
+### Exit-kriterium
+Efter clean sync + BUILD PASS skal et tryk på **Play** vise den samlede QA battlefield-slice uden krav om eksterne meshes/materials/Blender-assets.
