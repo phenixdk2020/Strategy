@@ -20,6 +20,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(
     int32,
     Casualties);
 
+DECLARE_MULTICAST_DELEGATE_FourParams(
+    FStrategyArtilleryShotResolvedNative,
+    AStrategyUnit*,
+    EStrategyArtilleryAmmoType,
+    int32,
+    int32);
+
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
 class STRATEGY1864_API UStrategyArtilleryFireMissionComponent : public UActorComponent
 {
@@ -39,6 +46,10 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category="Strategy|Artillery")
     FStrategyArtilleryShotResolved OnArtilleryShotResolved;
+
+    // Native C++ event used by internal systems that do not require
+    // Blueprint/reflection dispatch.
+    FStrategyArtilleryShotResolvedNative OnArtilleryShotResolvedNative;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Artillery")
     EStrategyArtilleryFireMode FireMode =
