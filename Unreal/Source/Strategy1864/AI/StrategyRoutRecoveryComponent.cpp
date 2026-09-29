@@ -3,6 +3,7 @@
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
 #include "StrategyOfficerProfileComponent.h"
+#include "StrategyNCOComponent.h"
 #include "EngineUtils.h"
 
 UStrategyRoutRecoveryComponent::UStrategyRoutRecoveryComponent()
@@ -137,10 +138,16 @@ void UStrategyRoutRecoveryComponent::TryRally(
                 1.0f))
         : 1.0f;
 
+    const float NCOMultiplier =
+        OwnerUnit->NCOComponent
+        ? OwnerUnit->NCOComponent->GetRallyMultiplier()
+        : 1.0f;
+
     OwnerUnit->Morale = FMath::Clamp(
         OwnerUnit->Morale +
         MoraleRecoveryPerSecond *
         InspirationMultiplier *
+        NCOMultiplier *
         DeltaTime,
         0.0f,
         100.0f);
@@ -149,6 +156,7 @@ void UStrategyRoutRecoveryComponent::TryRally(
         OwnerUnit->Cohesion +
         CohesionRecoveryPerSecond *
         InspirationMultiplier *
+        NCOMultiplier *
         DeltaTime,
         0.0f,
         100.0f);
