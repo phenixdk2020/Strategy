@@ -116,6 +116,9 @@ bool UStrategySpecialistStateComponent::RestoreSnapshot(
             FMath::Max(0, Snapshot.WoundedWaiting);
         OwnerUnit->WorkingPartyComponent->WoundedCollected =
             FMath::Max(0, Snapshot.WoundedCollected);
+
+        OwnerUnit->WorkingPartyComponent->SetComponentTickEnabled(
+            Snapshot.WorkingPartyTask != EStrategyWorkingPartyTask::None);
     }
 
     OwnerUnit->RefreshDebugLabel();
