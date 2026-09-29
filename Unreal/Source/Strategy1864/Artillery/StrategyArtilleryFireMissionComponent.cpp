@@ -740,6 +740,12 @@ bool UStrategyArtilleryFireMissionComponent::FireAt(
         Consumed,
         Casualties);
 
+    OnArtilleryShotResolvedNative.Broadcast(
+        Target,
+        AmmoType,
+        Consumed,
+        Casualties);
+
     if (OwnerBattery->ProjectilePresentationComponent)
     {
         OwnerBattery->ProjectilePresentationComponent->PresentResolvedSalvo(
@@ -1101,6 +1107,12 @@ bool UStrategyArtilleryFireMissionComponent::FireAtLocation(
             100.0f);
 
     OnArtilleryShotResolved.Broadcast(
+        nullptr,
+        AmmoType,
+        Consumed,
+        TotalCasualties);
+
+    OnArtilleryShotResolvedNative.Broadcast(
         nullptr,
         AmmoType,
         Consumed,
