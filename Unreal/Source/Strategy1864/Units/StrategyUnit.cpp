@@ -48,6 +48,13 @@
 #include "../Visual/StrategyHumanAnimationStateComponent.h"
 #include "../Visual/StrategyEquipmentVisualComponent.h"
 #include "../Visual/StrategyVisualCompatibilityComponent.h"
+#include "../Combat/StrategyDetachmentComponent.h"
+#include "../AI/StrategyNCOComponent.h"
+#include "../Combat/StrategyFireDrillComponent.h"
+#include "../Engineering/StrategyPositionOccupancyComponent.h"
+#include "../Engineering/StrategyFortificationAssaultComponent.h"
+#include "../Engineering/StrategyWorkingPartyComponent.h"
+#include "../Tests/StrategySpecialistStateComponent.h"
 #include "Components/MeshComponent.h"
 
 AStrategyUnit::AStrategyUnit()
@@ -158,6 +165,20 @@ AStrategyUnit::AStrategyUnit()
         CreateDefaultSubobject<UStrategyEquipmentVisualComponent>(TEXT("EquipmentVisualComponent"));
     VisualCompatibilityComponent =
         CreateDefaultSubobject<UStrategyVisualCompatibilityComponent>(TEXT("VisualCompatibilityComponent"));
+    DetachmentComponent =
+        CreateDefaultSubobject<UStrategyDetachmentComponent>(TEXT("DetachmentComponent"));
+    NCOComponent =
+        CreateDefaultSubobject<UStrategyNCOComponent>(TEXT("NCOComponent"));
+    FireDrillComponent =
+        CreateDefaultSubobject<UStrategyFireDrillComponent>(TEXT("FireDrillComponent"));
+    PositionOccupancyComponent =
+        CreateDefaultSubobject<UStrategyPositionOccupancyComponent>(TEXT("PositionOccupancyComponent"));
+    FortificationAssaultComponent =
+        CreateDefaultSubobject<UStrategyFortificationAssaultComponent>(TEXT("FortificationAssaultComponent"));
+    WorkingPartyComponent =
+        CreateDefaultSubobject<UStrategyWorkingPartyComponent>(TEXT("WorkingPartyComponent"));
+    SpecialistStateComponent =
+        CreateDefaultSubobject<UStrategySpecialistStateComponent>(TEXT("SpecialistStateComponent"));
 }
 
 void AStrategyUnit::SetSelected(bool bNewSelected)
