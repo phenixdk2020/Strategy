@@ -21,3 +21,6 @@ Recordings/
 *.opendb
 *.VC.db
 sysinfo.txt
+
+# PROJECT 1864 local diagnostic build logs
+Tools/BuildLogs/
