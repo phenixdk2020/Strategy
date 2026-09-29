@@ -58,10 +58,13 @@
 #include "../Visual/StrategyHorseAnimationStateComponent.h"
 #include "../Visual/StrategyMountedAnimationSyncComponent.h"
 #include "Engine/World.h"
+#include "Components/TextRenderComponent.h"
+#include "DrawDebugHelpers.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
 }
 
 void AStrategyOOBTestScenario::BeginPlay()
@@ -71,6 +74,16 @@ void AStrategyOOBTestScenario::BeginPlay()
     if (bBuildOnBeginPlay)
     {
         BuildTestOOB();
+    }
+}
+
+void AStrategyOOBTestScenario::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+
+    if (bDrawRuntimeQAVisuals)
+    {
+        DrawRuntimeQAVisuals();
     }
 }
 
@@ -333,6 +346,11 @@ void AStrategyOOBTestScenario::BuildTestOOB()
                 Overrides,
                 true);
         }
+    }
+
+    for (AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        ConfigureRuntimeQALabel(Unit);
     }
 
     for (AStrategyUnit* Unit : SpawnedUnitObjects)
@@ -896,6 +914,298 @@ TArray<AStrategyUnit*> AStrategyOOBTestScenario::GetSpawnedUnits() const
     return Result;
 }
 
+
+
+void AStrategyOOBTestScenario::ConfigureRuntimeQALabel(
+    AStrategyUnit* Unit) const
+{
+    if (!IsValid(Unit) || !Unit->DebugLabel)
+    {
+        return;
+    }
+
+    FColor LabelColor(210, 210, 210);
+
+    switch (Unit->Side)
+    {
+        case EStrategySide::Denmark:
+            LabelColor = FColor(80, 165, 255);
+            break;
+
+        case EStrategySide::Prussia:
+            LabelColor = FColor(255, 95, 85);
+            break;
+
+        case EStrategySide::Austria:
+            LabelColor = FColor(255, 230, 150);
+            break;
+
+        case EStrategySide::Enemy:
+            LabelColor = FColor(255, 80, 80);
+            break;
+
+        default:
+            break;
+    }
+
+    Unit->DebugLabel->SetVisibility(true);
+    Unit->DebugLabel->SetWorldSize(105.0f);
+    Unit->DebugLabel->SetTextRenderColor(LabelColor);
+    Unit->DebugLabel->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
+}
+
+void AStrategyOOBTestScenario::DrawRuntimeQAVisuals() const
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return;
+    }
+
+    for (const AStrategyUnit* Unit : SpawnedUnitObjects)
+    {
+        if (!IsValid(Unit))
+        {
+            continue;
+        }
+
+        FColor Color(190, 190, 190);
+
+        switch (Unit->Side)
+        {
+            case EStrategySide::Denmark:
+                Color = FColor(35, 115, 255);
+                break;
+
+            case EStrategySide::Prussia:
+                Color = FColor(205, 45, 40);
+                break;
+
+            case EStrategySide::Austria:
+                Color = FColor(230, 210, 150);
+                break;
+
+            case EStrategySide::Enemy:
+                Color = FColor(255, 55, 55);
+                break;
+
+            default:
+                break;
+        }
+
+        if (Unit->bSelected)
+        {
+            Color = FColor(255, 225, 45);
+        }
+
+        FVector Extent(220.0f, 90.0f, 55.0f);
+
+        switch (Unit->Echelon)
+        {
+            case EStrategyEchelon::Battalion:
+                Extent = FVector(190.0f, 150.0f, 80.0f);
+                break;
+
+            case EStrategyEchelon::Regiment:
+                Extent = FVector(230.0f, 180.0f, 95.0f);
+                break;
+
+            case EStrategyEchelon::Brigade:
+                Extent = FVector(270.0f, 210.0f, 110.0f);
+                break;
+
+            case EStrategyEchelon::Division:
+                Extent = FVector(310.0f, 240.0f, 125.0f);
+                break;
+
+            case EStrategyEchelon::Cavalry:
+                Extent = FVector(300.0f, 120.0f, 75.0f);
+                break;
+
+            case EStrategyEchelon::Artillery:
+                Extent = FVector(330.0f, 170.0f, 65.0f);
+                break;
+
+            case EStrategyEchelon::Supply:
+                Extent = FVector(280.0f, 150.0f, 85.0f);
+                break;
+
+            case EStrategyEchelon::Headquarters:
+                Extent = FVector(180.0f, 180.0f, 90.0f);
+                break;
+
+            case EStrategyEchelon::Company:
+            default:
+                break;
+        }
+
+        const FVector Center =
+            Unit->GetActorLocation() +
+            FVector(0.0f, 0.0f, Extent.Z + 18.0f);
+
+        DrawDebugBox(
+            World,
+            Center,
+            Extent,
+            Unit->GetActorQuat(),
+            Color,
+            false,
+            0.0f,
+            0,
+            QAVisualThickness);
+
+        const FVector Forward =
+            Unit->GetActorForwardVector().GetSafeNormal2D();
+
+        DrawDebugDirectionalArrow(
+            World,
+            Center,
+            Center + Forward * (Extent.X + 260.0f),
+            90.0f,
+            Color,
+            false,
+            0.0f,
+            0,
+            QAVisualThickness);
+    }
+
+    if (IsValid(SpawnedRiverBarrier))
+    {
+        FVector Axis =
+            SpawnedRiverBarrier->RiverAxisDirection.GetSafeNormal2D();
+
+        if (Axis.IsNearlyZero())
+        {
+            Axis = FVector::RightVector;
+        }
+
+        const FVector Normal(-Axis.Y, Axis.X, 0.0f);
+        const FVector Center =
+            SpawnedRiverBarrier->GetActorLocation() +
+            FVector(0.0f, 0.0f, 25.0f);
+
+        const FVector A0 =
+            Center - Axis * QARiverVisualHalfLengthCm +
+            Normal * SpawnedRiverBarrier->RiverHalfWidthCm;
+        const FVector A1 =
+            Center + Axis * QARiverVisualHalfLengthCm +
+            Normal * SpawnedRiverBarrier->RiverHalfWidthCm;
+        const FVector B0 =
+            Center - Axis * QARiverVisualHalfLengthCm -
+            Normal * SpawnedRiverBarrier->RiverHalfWidthCm;
+        const FVector B1 =
+            Center + Axis * QARiverVisualHalfLengthCm -
+            Normal * SpawnedRiverBarrier->RiverHalfWidthCm;
+
+        DrawDebugLine(World, A0, A1, FColor(40, 155, 255), false, 0.0f, 0, 8.0f);
+        DrawDebugLine(World, B0, B1, FColor(40, 155, 255), false, 0.0f, 0, 8.0f);
+
+        const FVector BridgeA =
+            SpawnedRiverBarrier->GetBridgeApproachForSide(-1) +
+            FVector(0.0f, 0.0f, 40.0f);
+        const FVector BridgeB =
+            SpawnedRiverBarrier->GetBridgeApproachForSide(1) +
+            FVector(0.0f, 0.0f, 40.0f);
+
+        DrawDebugLine(
+            World,
+            BridgeA,
+            BridgeB,
+            FColor(255, 220, 70),
+            false,
+            0.0f,
+            0,
+            12.0f);
+    }
+
+    if (IsValid(SpawnedNavigationObstacle))
+    {
+        DrawDebugBox(
+            World,
+            SpawnedNavigationObstacle->GetActorLocation() +
+                FVector(0.0f, 0.0f, SpawnedNavigationObstacle->HalfExtentCm.Z),
+            SpawnedNavigationObstacle->HalfExtentCm,
+            SpawnedNavigationObstacle->GetActorQuat(),
+            FColor(255, 145, 40),
+            false,
+            0.0f,
+            0,
+            6.0f);
+    }
+
+    for (const AStrategyTerrainFeature* Feature : SpawnedTerrainFeatures)
+    {
+        if (!IsValid(Feature))
+        {
+            continue;
+        }
+
+        FColor Color(80, 220, 100);
+
+        if (Feature->FeatureType == EStrategyTerrainFeatureType::Ridge)
+        {
+            Color = FColor(255, 175, 60);
+        }
+        else if (Feature->FeatureType == EStrategyTerrainFeatureType::Depression)
+        {
+            Color = FColor(175, 90, 255);
+        }
+
+        const int32 Segments = 48;
+        FVector Previous = FVector::ZeroVector;
+
+        for (int32 Index = 0; Index <= Segments; ++Index)
+        {
+            const float Angle =
+                2.0f * PI *
+                static_cast<float>(Index) /
+                static_cast<float>(Segments);
+
+            FVector LocalPoint(
+                FMath::Cos(Angle) * Feature->RadiusXcm,
+                FMath::Sin(Angle) * Feature->RadiusYcm,
+                30.0f);
+
+            const FVector Point =
+                Feature->GetActorTransform().TransformPosition(LocalPoint);
+
+            if (Index > 0)
+            {
+                DrawDebugLine(
+                    World,
+                    Previous,
+                    Point,
+                    Color,
+                    false,
+                    0.0f,
+                    0,
+                    4.0f);
+            }
+
+            Previous = Point;
+        }
+
+        const FVector Center =
+            Feature->GetActorLocation() +
+            FVector(0.0f, 0.0f, 40.0f);
+
+        const float MarkerHeight =
+            FMath::Clamp(
+                FMath::Abs(Feature->PeakHeightCm),
+                250.0f,
+                1800.0f);
+
+        DrawDebugLine(
+            World,
+            Center,
+            Center + FVector(0.0f, 0.0f, MarkerHeight),
+            Color,
+            false,
+            0.0f,
+            0,
+            5.0f);
+    }
+}
 
 void AStrategyOOBTestScenario::ResetScenario()
 {
