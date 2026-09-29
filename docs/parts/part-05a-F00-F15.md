@@ -1,4 +1,4 @@
-# PROJECT 1864 — Designmanual v00.02.08 — Feature Architecture
+# PROJECT 1864 — Designmanual v00.02.77 — Feature Architecture
 
 ## 28. Feature-arkitektur – udviklingsklumper
 
@@ -66,7 +66,8 @@ Formål. Implementere den historiske kommandostruktur som generisk tree/graph.
 Indhold.
 
 - CommandNode med valgfrie niveauer.
-- Parent, attached-to, subunits og commander assignments.
+- Stable organic parent, current command/attached-to relation, subunits og commander assignments.
+- Capability-state på parent units og temporary detachments med assigned strength/equipment, task anchor og sikker reform/reattach.
 - Strength, current effective men, killed, wounded, missing/captured, morale, cohesion og fatigue.
 - Weapon profiles, compatible ammunition, ammunition carried og supply fields.
 - Equipment ownership/state for guns, wagons, horses og øvrigt materiel.
@@ -78,6 +79,7 @@ Exit-kriterier.
 
 - Dansk og preussisk eksempel-OOB kan eksistere med forskellige hierarkier.
 - En unit kan detach/reattach uden at miste identitet eller historik.
+- Detached specialist strength/ammunition reducerer parent formationens tilgængelige state og må ikke duplikeres ved recall.
 - En unit kan rapportere fx aktuelt mandskab, dræbte/sårede og ammunition uden at disse værdier udledes af visuelle modeller.
 
 ### F04 – Officer-system og autonomi
@@ -90,6 +92,7 @@ Indhold.
 - Commander intent evaluation.
 - Autonomy levels og local reaction scoring.
 - Officer succession ved casualty/removal.
+- Local NCO continuity med `NCOStrength`/`NCOQuality`; officer-loss/disruption kan fortsætte under reduceret local command.
 
 Afhængigheder. F03
 
@@ -201,7 +204,7 @@ Indhold.
 - GPU/animation instancing baseline.
 - Line/column/skirmish formations.
 - Formation-level pathfinding + local avoidance.
-- Stance-state mindst standing og prone; senere kneeling/skirmish variationer.
+- Stance-state mindst Standing, Kneeling og Prone med drill-/loading-method-specifikke firing postures.
 - Occupy-cover behavior, hvor formationen kobles til fysisk cover geometry og retning i stedet for en abstrakt buff.
 
 Afhængigheder. F09
@@ -223,6 +226,7 @@ Indhold.
 - Experience/training som bounded modifier på reload og fire discipline.
 - Stance-afhængig reload; muzzle-loaders får større penalty i prone end breech-loaders.
 - Volley/independent fire og konkret ammunition consumption.
+- Firing-drill state: FrontRank, Volley, Independent, AlternatingSections og KneelingFrontRank styret af loading method + training/drill + doctrine.
 - Casualty resolution med killed/wounded/missing hooks.
 - Directional cover og concealment fra hegn, mure, grøfter, bygninger, vegetation og terrain folds.
 - Prone reducerer target profile; effekt beregnes separat for small arms og forskellige artillery/ammunitionstyper.
@@ -258,13 +262,15 @@ Exit-kriterier.
 - En formation kan rout’e før udslettelse og senere rally.
 - Flank/rear threat og officer quality kan ændre udfald mærkbart.
 
-### F13 – Artilleri
+### F13 – Artilleri og morterer
 
 Formål. Tilføje feltartilleri som fuldt taktisk system.
 
 Indhold.
 
 - Gun/battery data, limber/unlimber, ammunition.
+- Mortar classes LightHand/HeavySiege med særskilt bomb inventory og high-angle fire.
+- Heavy mortar state `TRANSPORT → EMPLACING → DEPLOYED → PACKING → TRANSPORT`; work party, horses/wagons, piece weight og terrain preparation påvirker mobility/setup.
 - Targeting, LOS, trajectory visuals, counter-battery.
 - Ammunitionstyper får forskellige effektmodeller mod standing/prone, open ground og cover/fieldworks.
 - Crew/horses og explicit equipment state: operational, abandoned, disabled/destroyed, captured.
@@ -277,6 +283,7 @@ Exit-kriterier.
 - Et batteri kan deploye, skyde, bruge ammunition, flytte, blive forladt og blive erobret.
 - Piece count, condition og ownership returneres korrekt til kampagnen.
 - Prone/cover påvirker artilleriets casualty probability efter ammunitionstype uden at gøre beskyttelsen absolut.
+- Mortarbatteri kan transporteres, emplaces, affyre krum ild mod unit/area/fortification target og pakkes ned igen uden at bruge field-gun limber state som eneste model.
 
 ### F14 – Kavaleri, dragoner og reconnaissance
 
@@ -307,7 +314,9 @@ Indhold.
 - Field works, bridge tasks, demolition, repair.
 - Almindeligt infanteri kan bygge hasty cover: skyttehuller, lave jordvolde/brystværn og improviserede barrikader, når tid, terræn og værktøj tillader det.
 - Ingeniører giver højere build-rate og kan konstruere/forbedre mere avancerede stillinger.
-- Field works har position, orientation, construction progress, condition og cover class/value.
+- Field works har position, orientation, footprint, construction progress, condition, capacity, ownership/occupier og cover class/value.
+- Mindsteklasser: rifle pit, breastwork, trench, gun emplacement, barricade, abatis/obstacle og redoubt/skanse.
+- Assault equipment/tasks: stiger, planker/stormbrædder, økser, brækstænger og sprængmidler; working parties kan digge, breach og reparere.
 - Artilleri kan beskadige fieldworks; eksisterende stillinger kan forbedres eller repareres.
 - Task progress og material/tool requirements.
 - Transfer mellem strategic improvements og tactical objects.
@@ -320,3 +329,5 @@ Exit-kriterier.
 - Infanteri kan etablere en simpel hasty position over tid og få directional cover, når den fysisk besætter stillingen.
 - Ingeniører bygger samme type stilling hurtigere eller stærkere end almindeligt infanteri.
 - Entrenchment kan forbedres over tid og følge unit/position data.
+- Position kan forlades/erobres, og protection følger det fysiske objekt.
+- Forberedt assault party reducerer tid/exposure ved relevante obstacles.
