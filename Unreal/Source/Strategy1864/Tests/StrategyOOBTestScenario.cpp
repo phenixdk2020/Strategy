@@ -924,34 +924,9 @@ void AStrategyOOBTestScenario::ConfigureRuntimeQALabel(
         return;
     }
 
-    FColor LabelColor(210, 210, 210);
-
-    switch (Unit->Side)
-    {
-        case EStrategySide::Denmark:
-            LabelColor = FColor(80, 165, 255);
-            break;
-
-        case EStrategySide::Prussia:
-            LabelColor = FColor(255, 95, 85);
-            break;
-
-        case EStrategySide::Austria:
-            LabelColor = FColor(255, 230, 150);
-            break;
-
-        case EStrategySide::Enemy:
-            LabelColor = FColor(255, 80, 80);
-            break;
-
-        default:
-            break;
-    }
-
-    Unit->DebugLabel->SetVisibility(true);
-    Unit->DebugLabel->SetWorldSize(105.0f);
-    Unit->DebugLabel->SetTextRenderColor(LabelColor);
-    Unit->DebugLabel->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
+    // Runtime QA uses DrawDebugString below. Hide the legacy TextRender label
+    // to prevent duplicate world-space text at operational zoom.
+    Unit->DebugLabel->SetVisibility(false);
 }
 
 void AStrategyOOBTestScenario::DrawRuntimeQAVisuals() const
@@ -1068,23 +1043,65 @@ void AStrategyOOBTestScenario::DrawRuntimeQAVisuals() const
             0,
             QAVisualThickness);
 
-        const FString UnitLabel =
-            FString::Printf(
-                TEXT("%s  [%s]  %d/%d"),
-                *Unit->DisplayName.ToString(),
-                *Unit->GetNATOEchelonSymbol(),
-                Unit->CurrentStrength,
-                Unit->InitialStrength);
+        FString UnitLabel;
+
+        if (Unit->Echelon == EStrategyEchelon::Company)
+        {
+            FString Prefix;
+
+            if (Unit->Side == EStrategySide::Prussia)
+            {
+                Prefix = TEXT("PR ");
+            }
+            else if (Unit->Side == EStrategySide::Austria)
+            {
+                Prefix = TEXT("AT ");
+            }
+
+            const AStrategyCompanyUnit* Company =
+                Cast<AStrategyCompanyUnit>(Unit);
+
+            const int32 CompanyNumber =
+                Company ? Company->CompanyNumber : 0;
+
+            UnitLabel =
+                FString::Printf(
+                    TEXT("%s%d.K  [%s]  %d"),
+                    *Prefix,
+                    CompanyNumber,
+                    *Unit->GetNATOEchelonSymbol(),
+                    Unit->CurrentStrength);
+        }
+        else
+        {
+            UnitLabel =
+                FString::Printf(
+                    TEXT("%s  [%s]  %d/%d"),
+                    *Unit->DisplayName.ToString(),
+                    *Unit->GetNATOEchelonSymbol(),
+                    Unit->CurrentStrength,
+                    Unit->InitialStrength);
+        }
+
+        const float LabelScale =
+            Unit->Echelon == EStrategyEchelon::Company
+            ? 0.58f
+            : 0.72f;
+
+        const float LabelHeight =
+            Unit->Echelon == EStrategyEchelon::Company
+            ? 95.0f
+            : 140.0f;
 
         DrawDebugString(
             World,
-            Center + FVector(0.0f, 0.0f, Extent.Z + 130.0f),
+            Center + FVector(0.0f, 0.0f, Extent.Z + LabelHeight),
             UnitLabel,
             nullptr,
             Color,
             0.0f,
             true,
-            1.15f);
+            LabelScale);
     }
 
     if (IsValid(SpawnedRiverBarrier))
