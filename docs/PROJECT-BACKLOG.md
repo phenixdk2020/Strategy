@@ -414,3 +414,14 @@ Unreal-projektet kan åbne på en `Untitled` editor-world, fordi repoet endnu ik
 
 ### Exit-kriterium
 Efter clean sync + BUILD PASS skal et tryk på **Play** vise den samlede QA battlefield-slice uden krav om eksterne meshes/materials/Blender-assets.
+
+
+## B-294 — Unreal QA runtime visibility
+
+**Status:** IMPLEMENTERET CORE / UE 5.8.3 RUNTIME QA PENDING  
+**Prioritet:** P0 testability
+
+- QA battle must be visible and startable from an Untitled/empty editor level.
+- Runtime bootstrap owns fallback scenario/camera creation independent of manual map wiring.
+- Placeholder boxes/arrows/labels are temporary presentation until final 3D assets exist.
+- River, bridge, obstacle and analytic terrain fixtures must remain visibly inspectable during QA.
