@@ -52,6 +52,13 @@ class UStrategyUniformAppearanceComponent;
 class UStrategyHumanAnimationStateComponent;
 class UStrategyEquipmentVisualComponent;
 class UStrategyVisualCompatibilityComponent;
+class UStrategyDetachmentComponent;
+class UStrategyNCOComponent;
+class UStrategyFireDrillComponent;
+class UStrategyPositionOccupancyComponent;
+class UStrategyFortificationAssaultComponent;
+class UStrategyWorkingPartyComponent;
+class UStrategySpecialistStateComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
     FStrategyCasualtyVisualEvent,
@@ -247,6 +254,27 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyVisualCompatibilityComponent> VisualCompatibilityComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyDetachmentComponent> DetachmentComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyNCOComponent> NCOComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyFireDrillComponent> FireDrillComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyPositionOccupancyComponent> PositionOccupancyComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyFortificationAssaultComponent> FortificationAssaultComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategyWorkingPartyComponent> WorkingPartyComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
+    TObjectPtr<UStrategySpecialistStateComponent> SpecialistStateComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Identity")
     FName StableUnitId = NAME_None;
