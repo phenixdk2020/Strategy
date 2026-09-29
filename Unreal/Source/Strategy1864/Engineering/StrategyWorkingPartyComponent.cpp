@@ -2,6 +2,7 @@
 #include "StrategyDefensivePosition.h"
 #include "../Units/StrategyUnit.h"
 #include "../Combat/StrategyCombatComponent.h"
+#include "../Combat/StrategyFieldworksComponent.h"
 #include "../AI/StrategyNCOComponent.h"
 
 UStrategyWorkingPartyComponent::UStrategyWorkingPartyComponent()
@@ -153,6 +154,29 @@ void UStrategyWorkingPartyComponent::TickComponent(
              TaskProgress >= 1.0f)
     {
         CollectWounded(WoundedWaitingCollection);
+        CancelTask();
+    }
+    else if (ActiveTask == EStrategyWorkingPartyTask::DigFieldworks &&
+             TaskProgress >= 1.0f)
+    {
+        if (OwnerUnit && OwnerUnit->FieldworksComponent)
+        {
+            OwnerUnit->FieldworksComponent->bEngineerUnit = true;
+            OwnerUnit->FieldworksComponent->BeginHastyFieldworks();
+        }
+        CancelTask();
+    }
+    else if (ActiveTask == EStrategyWorkingPartyTask::BreachObstacle &&
+             TaskProgress >= 1.0f)
+    {
+        if (IsValid(TargetPosition))
+        {
+            TargetPosition->ApplyStructuralDamage(15.0f * GetWorkRate());
+            if (TargetPosition->Condition <= 35.0f)
+            {
+                TargetPosition->MarkBreached(true);
+            }
+        }
         CancelTask();
     }
     else if (ActiveTask == EStrategyWorkingPartyTask::RepairPosition &&
