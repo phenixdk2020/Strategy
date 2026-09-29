@@ -24,19 +24,40 @@ void AStrategyDefensivePosition::BeginPlay()
             GetActorLocation(),
             GetActorRotation());
 
-    if (NavigationObstacle)
+    RefreshNavigationObstacle();
+}
+
+void AStrategyDefensivePosition::EndPlay(
+    const EEndPlayReason::Type EndPlayReason)
+{
+    if (IsValid(NavigationObstacle))
     {
-        NavigationObstacle->ObstacleType = EStrategyObstacleType::Fieldworks;
-        NavigationObstacle->HalfExtentCm =
-            FVector(
-                FMath::Max(100.0f, DepthCm * 0.5f),
-                FMath::Max(200.0f, LengthCm * 0.5f),
-                120.0f);
-        NavigationObstacle->ClearanceCm =
-            PositionType == EStrategyDefensivePositionType::AbatisObstacle
-            ? 500.0f
-            : 150.0f;
+        NavigationObstacle->Destroy();
     }
+
+    NavigationObstacle = nullptr;
+    Super::EndPlay(EndPlayReason);
+}
+
+void AStrategyDefensivePosition::RefreshNavigationObstacle()
+{
+    if (!IsValid(NavigationObstacle))
+    {
+        return;
+    }
+
+    NavigationObstacle->SetActorLocation(GetActorLocation());
+    NavigationObstacle->SetActorRotation(GetActorRotation());
+    NavigationObstacle->ObstacleType = EStrategyObstacleType::Fieldworks;
+    NavigationObstacle->HalfExtentCm =
+        FVector(
+            FMath::Max(100.0f, DepthCm * 0.5f),
+            FMath::Max(200.0f, LengthCm * 0.5f),
+            120.0f);
+    NavigationObstacle->ClearanceCm =
+        PositionType == EStrategyDefensivePositionType::AbatisObstacle
+        ? 500.0f
+        : 150.0f;
 }
 
 bool AStrategyDefensivePosition::CanOccupy(const AStrategyUnit* Unit) const
