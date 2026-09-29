@@ -2,6 +2,10 @@
 #include "Components/SceneComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "UObject/ConstructorHelpers.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Command/StrategyCommandComponent.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
@@ -66,6 +70,24 @@ AStrategyUnit::AStrategyUnit()
     DebugLabel->SetHorizontalAlignment(EHorizTextAligment::EHTA_Center);
     DebugLabel->SetWorldSize(80.0f);
     DebugLabel->SetText(FText::FromString(TEXT("StrategyUnit")));
+
+    QAPlaceholderMesh =
+        CreateDefaultSubobject<UStaticMeshComponent>(TEXT("QAPlaceholderMesh"));
+    QAPlaceholderMesh->SetupAttachment(SceneRoot);
+    QAPlaceholderMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    QAPlaceholderMesh->SetGenerateOverlapEvents(false);
+    QAPlaceholderMesh->SetCastShadow(true);
+
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> QACubeMesh(
+        TEXT("/Engine/BasicShapes/Cube.Cube"));
+
+    if (QACubeMesh.Succeeded())
+    {
+        QAPlaceholderMesh->SetStaticMesh(QACubeMesh.Object);
+    }
+
+    QAPlaceholderMesh->SetRelativeScale3D(FVector(4.0f, 2.0f, 0.5f));
+    QAPlaceholderMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 25.0f));
 
     OrderComponent = CreateDefaultSubobject<UStrategyOrderComponent>(TEXT("OrderComponent"));
     CommandComponent = CreateDefaultSubobject<UStrategyCommandComponent>(TEXT("CommandComponent"));
@@ -171,6 +193,116 @@ void AStrategyUnit::RefreshDebugLabel()
                 *GetNATOEchelonSymbol(),
                 *NameText,
                 *StrengthText)));
+}
+
+void AStrategyUnit::RefreshQAPlaceholderVisual()
+{
+    if (!QAPlaceholderMesh)
+    {
+        return;
+    }
+
+    FVector Scale(4.8f, 2.0f, 0.55f);
+
+    switch (Echelon)
+    {
+        case EStrategyEchelon::Battalion:
+            Scale = FVector(4.5f, 4.5f, 0.85f);
+            break;
+
+        case EStrategyEchelon::Regiment:
+            Scale = FVector(5.2f, 5.2f, 1.0f);
+            break;
+
+        case EStrategyEchelon::Brigade:
+            Scale = FVector(6.0f, 6.0f, 1.15f);
+            break;
+
+        case EStrategyEchelon::Division:
+            Scale = FVector(6.8f, 6.8f, 1.30f);
+            break;
+
+        case EStrategyEchelon::Cavalry:
+            Scale = FVector(6.5f, 2.2f, 0.75f);
+            break;
+
+        case EStrategyEchelon::Artillery:
+            Scale = FVector(6.0f, 3.2f, 0.60f);
+            break;
+
+        case EStrategyEchelon::Supply:
+            Scale = FVector(5.2f, 2.8f, 0.90f);
+            break;
+
+        case EStrategyEchelon::Headquarters:
+            Scale = FVector(4.2f, 4.2f, 0.90f);
+            break;
+
+        case EStrategyEchelon::Company:
+        default:
+            break;
+    }
+
+    QAPlaceholderMesh->SetRelativeScale3D(Scale);
+    QAPlaceholderMesh->SetRelativeLocation(
+        FVector(0.0f, 0.0f, Scale.Z * 50.0f));
+    QAPlaceholderMesh->SetVisibility(true, true);
+
+    if (!QAPlaceholderMaterial &&
+        QAPlaceholderMesh->GetMaterial(0))
+    {
+        QAPlaceholderMaterial =
+            UMaterialInstanceDynamic::Create(
+                QAPlaceholderMesh->GetMaterial(0),
+                this);
+
+        if (QAPlaceholderMaterial)
+        {
+            QAPlaceholderMesh->SetMaterial(
+                0,
+                QAPlaceholderMaterial);
+        }
+    }
+
+    if (QAPlaceholderMaterial)
+    {
+        FLinearColor SideColor(0.55f, 0.55f, 0.55f, 1.0f);
+
+        switch (Side)
+        {
+            case EStrategySide::Denmark:
+                SideColor = FLinearColor(0.08f, 0.28f, 0.90f, 1.0f);
+                break;
+
+            case EStrategySide::Prussia:
+                SideColor = FLinearColor(0.75f, 0.05f, 0.04f, 1.0f);
+                break;
+
+            case EStrategySide::Austria:
+                SideColor = FLinearColor(0.85f, 0.72f, 0.38f, 1.0f);
+                break;
+
+            case EStrategySide::Allied:
+                SideColor = FLinearColor(0.15f, 0.70f, 0.35f, 1.0f);
+                break;
+
+            case EStrategySide::Enemy:
+                SideColor = FLinearColor(0.90f, 0.08f, 0.08f, 1.0f);
+                break;
+
+            default:
+                break;
+        }
+
+        // BasicShapeMaterial variants differ between engine versions.
+        // Setting both common parameter names is harmless when one is absent.
+        QAPlaceholderMaterial->SetVectorParameterValue(
+            TEXT("Color"),
+            SideColor);
+        QAPlaceholderMaterial->SetVectorParameterValue(
+            TEXT("BaseColor"),
+            SideColor);
+    }
 }
 
 int32 AStrategyUnit::ApplyStrengthLoss(int32 RequestedLoss)
