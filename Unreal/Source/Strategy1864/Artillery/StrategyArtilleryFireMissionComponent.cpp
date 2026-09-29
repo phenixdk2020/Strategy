@@ -13,6 +13,7 @@
 #include "../Combat/StrategyDirectionalCoverComponent.h"
 #include "../Combat/StrategyStanceComponent.h"
 #include "../Combat/StrategySkirmisherComponent.h"
+#include "../Engineering/StrategyPositionOccupancyComponent.h"
 #include "../Combat/StrategySmokeField.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
@@ -827,6 +828,13 @@ int32 UStrategyArtilleryFireMissionComponent::ResolveCasualties(
     {
         HitChance *=
             Target->SkirmisherComponent->GetIncomingHitMultiplier();
+    }
+
+    if (Target->PositionOccupancyComponent)
+    {
+        HitChance *=
+            Target->PositionOccupancyComponent->GetIncomingHitMultiplier(
+                OwnerBattery->GetActorLocation());
     }
 
     if (Target->TerrainAwarenessComponent)
