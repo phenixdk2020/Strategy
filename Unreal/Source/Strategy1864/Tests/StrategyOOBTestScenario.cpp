@@ -59,17 +59,71 @@
 #include "../Visual/StrategyMountedAnimationSyncComponent.h"
 #include "Engine/World.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/SceneComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
+#include "Materials/MaterialInterface.h"
+#include "UObject/ConstructorHelpers.h"
 #include "DrawDebugHelpers.h"
 
 AStrategyOOBTestScenario::AStrategyOOBTestScenario()
 {
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bStartWithTickEnabled = true;
+
+    QAMapRoot =
+        CreateDefaultSubobject<USceneComponent>(TEXT("QAMapRoot"));
+    SetRootComponent(QAMapRoot);
+
+    QAFlatGround =
+        CreateDefaultSubobject<UStaticMeshComponent>(TEXT("QAFlatGround"));
+    QAFlatGround->SetupAttachment(QAMapRoot);
+    QAFlatGround->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    QAFlatGround->SetCollisionObjectType(ECC_WorldStatic);
+    QAFlatGround->SetCollisionResponseToAllChannels(ECR_Block);
+    QAFlatGround->SetGenerateOverlapEvents(false);
+    QAFlatGround->SetCastShadow(false);
+
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(
+        TEXT("/Engine/BasicShapes/Cube.Cube"));
+
+    if (CubeMesh.Succeeded())
+    {
+        QAFlatGround->SetStaticMesh(CubeMesh.Object);
+    }
+
+    static ConstructorHelpers::FObjectFinder<UMaterialInterface> GridMaterial(
+        TEXT("/Engine/EngineMaterials/WorldGridMaterial.WorldGridMaterial"));
+
+    if (GridMaterial.Succeeded())
+    {
+        QAFlatGround->SetMaterial(0, GridMaterial.Object);
+    }
 }
 
 void AStrategyOOBTestScenario::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (QAFlatGround)
+    {
+        const float XYScale =
+            FMath::Max(10000.0f, FlatMapSizeCm) / 100.0f;
+
+        QAFlatGround->SetRelativeScale3D(
+            FVector(XYScale, XYScale, 0.10f));
+
+        // Engine BasicShapes Cube is 100 cm tall. With Z scale 0.10,
+        // placing the center at -5 cm makes the upper surface exactly Z=0.
+        QAFlatGround->SetRelativeLocation(
+            FVector(0.0f, 0.0f, -5.0f));
+
+        QAFlatGround->SetVisibility(bUseFlatQAMap, true);
+        QAFlatGround->SetCollisionEnabled(
+            bUseFlatQAMap
+            ? ECollisionEnabled::QueryAndPhysics
+            : ECollisionEnabled::NoCollision);
+    }
 
     if (bBuildOnBeginPlay)
     {
