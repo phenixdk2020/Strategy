@@ -2,9 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "../Engineering/StrategyDefensivePosition.h"
 #include "StrategyFieldworksComponent.generated.h"
 
-class AStrategyNavigationObstacle;
 class AStrategyUnit;
 
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
@@ -23,6 +23,10 @@ public:
         float DeltaTime,
         ELevelTick TickType,
         FActorComponentTickFunction* ThisTickFunction) override;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Fieldworks")
+    EStrategyDefensivePositionType RequestedPositionType =
+        EStrategyDefensivePositionType::Breastwork;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Fieldworks")
     float BuildSeconds = 30.0f;
@@ -48,6 +52,12 @@ public:
     UFUNCTION(BlueprintPure, Category="Strategy|Fieldworks")
     bool HasCompletedFieldworks() const;
 
+    UFUNCTION(BlueprintPure, Category="Strategy|Fieldworks")
+    AStrategyDefensivePosition* GetCompletedPosition() const
+    {
+        return CompletedPosition;
+    }
+
 private:
     void CompleteFieldworks();
 
@@ -55,5 +65,5 @@ private:
     TObjectPtr<AStrategyUnit> OwnerUnit;
 
     UPROPERTY()
-    TObjectPtr<AStrategyNavigationObstacle> FieldworksObstacle;
+    TObjectPtr<AStrategyDefensivePosition> CompletedPosition;
 };
