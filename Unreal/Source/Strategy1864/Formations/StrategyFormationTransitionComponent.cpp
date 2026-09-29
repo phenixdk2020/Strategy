@@ -4,6 +4,7 @@
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Orders/StrategyOrderComponent.h"
 #include "../Units/StrategyUnit.h"
+#include "../AI/StrategyNCOComponent.h"
 
 UStrategyFormationTransitionComponent::UStrategyFormationTransitionComponent()
 {
@@ -39,10 +40,16 @@ void UStrategyFormationTransitionComponent::HandleFormationChanged(
     const float StrengthFactor =
         FMath::Max(0.0f, static_cast<float>(OwnerUnit->CurrentStrength) / 100.0f);
 
+    const float NCOFormationFactor =
+        OwnerUnit->NCOComponent
+        ? OwnerUnit->NCOComponent->GetFormationSpeedMultiplier()
+        : 1.0f;
+
     ReformRemainingSeconds =
         FMath::Max(
             0.1f,
-            BaseReformSeconds + StrengthFactor * SecondsPer100Men);
+            (BaseReformSeconds + StrengthFactor * SecondsPer100Men) /
+            FMath::Max(0.20f, NCOFormationFactor));
 
     if (OwnerUnit->MovementExecutor &&
         OwnerUnit->MovementExecutor->HasMovementGoal())
