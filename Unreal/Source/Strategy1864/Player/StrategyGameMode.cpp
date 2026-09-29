@@ -6,6 +6,8 @@
 #include "../Tests/StrategyOOBTestScenario.h"
 #include "../Tests/StrategyScenarioStateComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/SpringArmComponent.h"
 
 AStrategyGameMode::AStrategyGameMode()
 {
@@ -30,6 +32,24 @@ void AStrategyGameMode::BeginPlay()
         OOBTestScenarioClass,
         FVector::ZeroVector,
         FRotator::ZeroRotator);
+
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        if (AStrategyCameraPawn* StrategyCamera =
+            Cast<AStrategyCameraPawn>(PC->GetPawn()))
+        {
+            StrategyCamera->SetActorLocation(
+                FVector(11000.0f, 0.0f, 1200.0f));
+
+            StrategyCamera->FocusOnWorldLocation(
+                FVector(11000.0f, 0.0f, 0.0f));
+
+            if (StrategyCamera->SpringArm)
+            {
+                StrategyCamera->SpringArm->TargetArmLength = 18000.0f;
+            }
+        }
+    }
 }
 
 
