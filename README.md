@@ -15,7 +15,7 @@ Unity projektstruktur:
 
 Aktuel work-branch prototype: **P0A v00.00.09 TACTICAL COMMAND TEST**.  
 Seneste main-baseline: **P0A v00.00.08 TEST**.  
-Aktuel designbaseline: **v00.02.08**.  
+Aktuel designbaseline: **v00.02.34**.  
 Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
 
 ## v00.00.09 Tactical Command Test
