@@ -28,6 +28,7 @@ public:
     AStrategyDefensivePosition();
 
     virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Fieldworks")
     EStrategyDefensivePositionType PositionType =
@@ -98,4 +99,7 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Strategy|Fieldworks")
     bool IsUsable() const;
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|Fieldworks")
+    void RefreshNavigationObstacle();
 };
