@@ -1,6 +1,6 @@
 # PROJECT 1864 — Backlog, beslutninger og idéer
 
-**Baseline: v00.02.08 work branch**
+**Baseline: v00.02.77 — Unreal specialist/fortification/mortar 10×10 implementation sequence**
 
 Dette dokument er projektets centrale intake-log for beslutninger og idéer, der ikke nødvendigvis implementeres i den aktive prototype med det samme. Formålet er at sikre, at gameplay-idéer og designbeslutninger fra projektarbejdet ikke kun findes i chatten.
 
@@ -19,6 +19,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 **Unreal gameplay checkpoint v00.02.62:** Artillery projectile presentation er nu bundet til fire-missionens resolvede per-gun impactpunkter: ammo-specifik trajectory, Round Shot ricochet, Shell/Shrapnel/Canister presentation, virtual muzzle origins, bounded shot history, Follow Shot camera, impact hold/restore, P follow-toggle og F9 trajectory-debug. Projectile actors er presentation-only og kan aldrig skabe skade selv. QA validerer Round Shot/Shell arcs, ricochet og projectile component. Derudover er campaign→battlefield data-kontrakten etableret som foundation til senere generering fra campaign map.
 
 **Unreal gameplay checkpoint v00.02.63:** Shared human visual architecture er implementeret som code core: fælles skeleton/animation-set contract, human animation intents, canonical animation manifests, uniform colour zones/presets/runtime overrides, dynamic material parameters, equipment sockets, rig compatibility, horse gait + rider sync, Dragoon Mount/Dismount intents samt artillery crew roles/stations og reload/push/traverse/limber/unlimber/repair animation states. QA validerer rig, manifests, farveoverride, cavalry sync og artillery crew stations. Final meshes/AnimBP/montages/material assets er fortsat senere grafikarbejde. Git sync-værktøjet er samtidig opdateret til v1.0.2 uden falsk NativeCommandError.
+
+**Unreal gameplay checkpoint v00.02.68–v00.02.77 — 10 × 10 funktionelle blokke:** 100 nye gameplay-/simulationblokke er lagt oven på den eksisterende Unreal-core uden final grafik. Sekvensen dækker temporary specialist detachments med strength/ammo reconciliation, NCO command continuity, weapon/drill/doctrine-baseret firing drill og Kneeling stance, fysiske defensive positions med ownership/condition/capture, fortification assault equipment og breach-state, light/heavy mortar deployment med `TRANSPORT → EMPLACING → DEPLOYED → PACKING`, mortar unit/area/fortification fire, position occupancy og directional protection, working parties til ammunition/sårede/dig/breach/repair samt specialist-state capture/restore/validation. Disse blokke er **code implemented / UE 5.8.3 build+runtime QA pending**; de er ikke parity-verified endnu. Final meshes, animationer, Niagara og UMG-polish er fortsat separat senere grafikarbejde.
 
 ## Statusdefinitioner
 
@@ -227,6 +229,18 @@ v00.00.09 skal mindst bevise:
 | B-150 | BESLUTTET | War goals/peace | Kampagnen skal kunne slutte gennem krigsmål/forhandling og internationalt pres, ikke kun total conquest. |
 | B-151 | BESLUTTET | Historical event engine | Events trigges af faktisk simulation state og dato/conditions og skal understøtte alternative outcomes. |
 | B-152 | BESLUTTET | Sverige-Norge/intervention framework | International intervention skal være systemisk mulig og ikke kun en scripted cutscene. |
+
+## Tactical specialisation, fieldworks og siege systems
+
+| ID | Status | Emne | Beslutning / note |
+| --- | --- | --- | --- |
+| B-153 | BESLUTTET | Unit / detachment / capability model | Permanente OOB-enheder holdes relativt få. Capabilities kan oprette midlertidige skirmisher-, marksman/sharpshooter-, pioneer/working-, ammunition-, stretcher- og picket/scout-detachments. `OrganicParent` bevares; detached strength/ammo må ikke duplikeres ved reform/reattach. |
+| B-154 | BESLUTTET | NCO command continuity | Underformationer har mindst `NCOStrength` og `NCOQuality`. Ved officer unavailable/disrupted kan NCO-kadren fortsætte lokal kommando med reduceret kvalitet; NCO-state påvirker reform, reload discipline, rally, response delay og detachment control. |
+| B-155 | BESLUTTET | Defensive position object model | Rifle pits, breastworks, trenches, gun emplacements, barricades, abatis/obstacles og redoubts/skanser er fysiske objekter med orientation, footprint, construction progress, condition, capacity, cover og ownership/occupier. De kan beskadiges, repareres, forlades, besættes og erobres. |
+| B-156 | BESLUTTET | Fortification assault equipment | Pioneer-/working parties kan bruge stiger, planker/stormbrædder, økser, brækstænger og sprængmidler. Udstyr og working-party strength påvirker preparation, breach time, exposure og passage gennem hindringer. |
+| B-157 | BESLUTTET | Firing drill, geledder og stance | `Standing`, `Kneeling` og `Prone` er eksplicitte states. Front-rank fire, volley, independent fire, alternating sections og front-rank kneeling/rear-rank standing styres af loading method + training/drill + doctrine + formation — ikke af en lineær tech-unlock. |
+| B-158 | BESLUTTET | Mortar classes | Morterer opdeles mindst i `LightHand` og `HeavySiege`. Krum ild, dispersion, ammunition, mobility og tactical role kommer fra weapon/equipment data. |
+| B-159 | BESLUTTET | Heavy mortar transport/deployment | Tunge morterer bruger `TRANSPORT → EMPLACING → DEPLOYED → PACKING → TRANSPORT` med working party, wagons/horses, piece weight og terrain preparation som konkrete state-faktorer. |
 
 ## Åbne designspørgsmål fra tidligere baseline
 
