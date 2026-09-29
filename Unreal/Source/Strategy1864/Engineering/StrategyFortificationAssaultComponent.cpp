@@ -191,10 +191,10 @@ void UStrategyFortificationAssaultComponent::CompleteCurrentPhase()
             return;
         }
 
+        const bool bUsedExplosive = ExplosiveCharges > 0;
         const float Damage =
-            ExplosiveCharges >= 0
-            ? 35.0f * GetEquipmentFactor()
-            : 20.0f;
+            (bUsedExplosive ? 35.0f : 20.0f) *
+            GetEquipmentFactor();
 
         TargetPosition->ApplyStructuralDamage(Damage);
         TargetPosition->MarkBreached(true);
