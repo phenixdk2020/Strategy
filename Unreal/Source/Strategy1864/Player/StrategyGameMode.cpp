@@ -6,6 +6,7 @@
 #include "../Tests/StrategyOOBTestScenario.h"
 #include "../Tests/StrategyScenarioStateComponent.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 
@@ -28,10 +29,22 @@ void AStrategyGameMode::BeginPlay()
         return;
     }
 
-    SpawnedQAScenario = GetWorld()->SpawnActor<AStrategyOOBTestScenario>(
-        OOBTestScenarioClass,
-        FVector::ZeroVector,
-        FRotator::ZeroRotator);
+    for (TActorIterator<AStrategyOOBTestScenario> It(GetWorld()); It; ++It)
+    {
+        if (IsValid(*It))
+        {
+            SpawnedQAScenario = *It;
+            break;
+        }
+    }
+
+    if (!IsValid(SpawnedQAScenario))
+    {
+        SpawnedQAScenario = GetWorld()->SpawnActor<AStrategyOOBTestScenario>(
+            OOBTestScenarioClass,
+            FVector::ZeroVector,
+            FRotator::ZeroRotator);
+    }
 
     if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
     {
@@ -46,7 +59,7 @@ void AStrategyGameMode::BeginPlay()
 
             if (StrategyCamera->SpringArm)
             {
-                StrategyCamera->SpringArm->TargetArmLength = 18000.0f;
+                StrategyCamera->SpringArm->TargetArmLength = 26000.0f;
             }
         }
     }
