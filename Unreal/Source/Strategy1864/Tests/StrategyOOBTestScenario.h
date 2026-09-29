@@ -13,6 +13,8 @@ class AStrategyNavigationObstacle;
 class AStrategyArtilleryBatteryUnit;
 class AStrategySupplyWagonUnit;
 class AStrategyTerrainFeature;
+class AStrategyMortarBatteryUnit;
+class AStrategyDefensivePosition;
 class USceneComponent;
 class UStaticMeshComponent;
 enum class EStrategyTerrainFeatureType : uint8;
@@ -59,6 +61,15 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     bool bSpawnTerrainQA = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnMortarQA = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnFortificationQA = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
+    bool bSpawnSpecialistQA = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test|FlatMap")
     bool bUseFlatQAMap = true;
@@ -136,6 +147,12 @@ private:
         const FVector& Location,
         AStrategyUnit* OrganicParent);
 
+    AStrategyMortarBatteryUnit* SpawnMortarBattery(
+        const FName StableId,
+        const FString& Name,
+        const FVector& Location,
+        AStrategyUnit* OrganicParent);
+
     AStrategyTerrainFeature* SpawnTerrainFeature(
         EStrategyTerrainFeatureType FeatureType,
         const FVector& Location,
@@ -154,6 +171,9 @@ private:
 
     UPROPERTY()
     TArray<TObjectPtr<AStrategyTerrainFeature>> SpawnedTerrainFeatures;
+
+    UPROPERTY()
+    TArray<TObjectPtr<AStrategyDefensivePosition>> SpawnedDefensivePositions;
 
     void DrawRuntimeQAVisuals() const;
     void ConfigureRuntimeQALabel(AStrategyUnit* Unit) const;
