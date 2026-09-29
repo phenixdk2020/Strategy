@@ -927,6 +927,7 @@ void AStrategyOOBTestScenario::ConfigureRuntimeQALabel(
     // Runtime QA uses DrawDebugString below. Hide the legacy TextRender label
     // to prevent duplicate world-space text at operational zoom.
     Unit->DebugLabel->SetVisibility(false);
+    Unit->RefreshQAPlaceholderVisual();
 }
 
 void AStrategyOOBTestScenario::DrawRuntimeQAVisuals() const
@@ -973,40 +974,40 @@ void AStrategyOOBTestScenario::DrawRuntimeQAVisuals() const
             Color = FColor(255, 225, 45);
         }
 
-        FVector Extent(220.0f, 90.0f, 55.0f);
+        FVector Extent(300.0f, 130.0f, 70.0f);
 
         switch (Unit->Echelon)
         {
             case EStrategyEchelon::Battalion:
-                Extent = FVector(190.0f, 150.0f, 80.0f);
+                Extent = FVector(260.0f, 240.0f, 95.0f);
                 break;
 
             case EStrategyEchelon::Regiment:
-                Extent = FVector(230.0f, 180.0f, 95.0f);
+                Extent = FVector(300.0f, 280.0f, 110.0f);
                 break;
 
             case EStrategyEchelon::Brigade:
-                Extent = FVector(270.0f, 210.0f, 110.0f);
+                Extent = FVector(340.0f, 320.0f, 125.0f);
                 break;
 
             case EStrategyEchelon::Division:
-                Extent = FVector(310.0f, 240.0f, 125.0f);
+                Extent = FVector(390.0f, 360.0f, 145.0f);
                 break;
 
             case EStrategyEchelon::Cavalry:
-                Extent = FVector(300.0f, 120.0f, 75.0f);
+                Extent = FVector(360.0f, 145.0f, 85.0f);
                 break;
 
             case EStrategyEchelon::Artillery:
-                Extent = FVector(330.0f, 170.0f, 65.0f);
+                Extent = FVector(360.0f, 190.0f, 75.0f);
                 break;
 
             case EStrategyEchelon::Supply:
-                Extent = FVector(280.0f, 150.0f, 85.0f);
+                Extent = FVector(320.0f, 175.0f, 95.0f);
                 break;
 
             case EStrategyEchelon::Headquarters:
-                Extent = FVector(180.0f, 180.0f, 90.0f);
+                Extent = FVector(250.0f, 250.0f, 100.0f);
                 break;
 
             case EStrategyEchelon::Company:
@@ -1066,11 +1067,9 @@ void AStrategyOOBTestScenario::DrawRuntimeQAVisuals() const
 
             UnitLabel =
                 FString::Printf(
-                    TEXT("%s%d.K  [%s]  %d"),
+                    TEXT("%s%d.K"),
                     *Prefix,
-                    CompanyNumber,
-                    *Unit->GetNATOEchelonSymbol(),
-                    Unit->CurrentStrength);
+                    CompanyNumber);
         }
         else
         {
@@ -1085,12 +1084,12 @@ void AStrategyOOBTestScenario::DrawRuntimeQAVisuals() const
 
         const float LabelScale =
             Unit->Echelon == EStrategyEchelon::Company
-            ? 0.58f
+            ? 0.50f
             : 0.72f;
 
         const float LabelHeight =
             Unit->Echelon == EStrategyEchelon::Company
-            ? 95.0f
+            ? 70.0f
             : 140.0f;
 
         DrawDebugString(
