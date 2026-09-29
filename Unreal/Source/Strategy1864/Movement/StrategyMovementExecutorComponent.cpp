@@ -7,6 +7,9 @@
 #include "../Units/CavalryUnit.h"
 #include "../Combat/StrategyConditionComponent.h"
 #include "../Combat/StrategyStanceComponent.h"
+#include "../AI/StrategyNCOComponent.h"
+#include "../Artillery/StrategyMortarBatteryUnit.h"
+#include "../Artillery/StrategyMortarDeploymentComponent.h"
 #include "../AI/StrategyReconComponent.h"
 #include "../Navigation/StrategyRiverBarrier.h"
 #include "../Artillery/StrategyArtilleryBatteryUnit.h"
@@ -359,9 +362,26 @@ void UStrategyMovementExecutorComponent::TickComponent(
         ? OwnerUnit->StanceComponent->GetMovementMultiplier()
         : 1.0f;
 
+    const float NCOMovementMultiplier =
+        OwnerUnit->NCOComponent
+        ? OwnerUnit->NCOComponent->GetFormationSpeedMultiplier()
+        : 1.0f;
+
     float ArtilleryMobilityMultiplier = 1.0f;
 
-    if (const AStrategyArtilleryBatteryUnit* Battery =
+    if (const AStrategyMortarBatteryUnit* Mortar =
+        Cast<AStrategyMortarBatteryUnit>(OwnerUnit))
+    {
+        ArtilleryMobilityMultiplier =
+            Mortar->MortarDeploymentComponent &&
+            Mortar->MortarDeploymentComponent->CanMoveNormally()
+            ? FMath::Clamp(
+                Mortar->MortarDeploymentComponent->GetTransportMobilityFactor(),
+                0.05f,
+                1.0f)
+            : 0.0f;
+    }
+    else if (const AStrategyArtilleryBatteryUnit* Battery =
         Cast<AStrategyArtilleryBatteryUnit>(OwnerUnit))
     {
         const bool bManhandling =
@@ -395,6 +415,7 @@ void UStrategyMovementExecutorComponent::TickComponent(
         ConditionMultiplier *
         SlopeMultiplier *
         StanceMultiplier *
+        NCOMovementMultiplier *
         ArtilleryMobilityMultiplier *
         SupplyMobilityMultiplier *
         DeltaTime;
