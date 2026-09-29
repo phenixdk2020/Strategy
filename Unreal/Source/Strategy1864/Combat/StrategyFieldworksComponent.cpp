@@ -1,6 +1,6 @@
 #include "StrategyFieldworksComponent.h"
 
-#include "../Navigation/StrategyNavigationObstacle.h"
+#include "../Engineering/StrategyDefensivePosition.h"
 #include "../Movement/StrategyMovementExecutorComponent.h"
 #include "../Formations/StrategyFormationComponent.h"
 #include "../Units/StrategyUnit.h"
@@ -57,7 +57,7 @@ void UStrategyFieldworksComponent::CancelFieldworks()
 
 bool UStrategyFieldworksComponent::HasCompletedFieldworks() const
 {
-    return IsValid(FieldworksObstacle);
+    return IsValid(CompletedPosition);
 }
 
 void UStrategyFieldworksComponent::TickComponent(
@@ -99,25 +99,26 @@ void UStrategyFieldworksComponent::CompleteFieldworks()
         return;
     }
 
-    FieldworksObstacle =
-        GetWorld()->SpawnActor<AStrategyNavigationObstacle>(
-            AStrategyNavigationObstacle::StaticClass(),
+    CompletedPosition =
+        GetWorld()->SpawnActor<AStrategyDefensivePosition>(
+            AStrategyDefensivePosition::StaticClass(),
             OwnerUnit->GetActorLocation(),
             OwnerUnit->GetActorRotation());
 
-    if (FieldworksObstacle)
+    if (CompletedPosition)
     {
-        FieldworksObstacle->ObstacleType = EStrategyObstacleType::Fieldworks;
-
         const float Frontage =
             OwnerUnit->FormationComponent
             ? OwnerUnit->FormationComponent->EstimateFrontageCm(
                 FMath::Max(1, OwnerUnit->CurrentStrength))
             : 4800.0f;
 
-        FieldworksObstacle->HalfExtentCm =
-            FVector(250.0f, FMath::Max(800.0f, Frontage * 0.5f), 100.0f);
-        FieldworksObstacle->ClearanceCm = 150.0f;
+        CompletedPosition->PositionType = RequestedPositionType;
+        CompletedPosition->OwningSide = OwnerUnit->Side;
+        CompletedPosition->LengthCm = FMath::Max(1600.0f, Frontage);
+        CompletedPosition->CapacityMen = FMath::Max(40, OwnerUnit->CurrentStrength);
+        CompletedPosition->ConstructionProgress = 1.0f;
+        CompletedPosition->Condition = bEngineerUnit ? 100.0f : 80.0f;
     }
 
     bBuilding = false;
