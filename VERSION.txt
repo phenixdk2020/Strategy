@@ -6,7 +6,7 @@ Branch target: channel-campaign3
 Work branch: work/channel-campaign3-v10n7g-coastal-offset-pass2
 Unity baseline: 6000.6.0f1 (Unity 6.6)
 Grand Campaign canonical start: 1 January 1851 08:00
-Design baseline: v00.02.33
+Design baseline: v00.02.34
 Coordinate contract: WGS84 longitude/latitude remains authoritative for campaign data
 
 LINEAGE:
