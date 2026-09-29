@@ -100,6 +100,10 @@ v00.00.09 skal mindst bevise:
 | B-037 | IMPLEMENTERET CORE / UE QA PENDING | Artilleri fire control | **Manuel måludpegning er standard for spillerstyret artilleri.** Spilleren vælger mål/område, hvorefter batteriet fortsætter efter ordren, indtil mål/ordre ændres eller ikke længere kan udføres. Automatisk målvalg er en separat mode, som spilleren aktivt slår til. AI-kontrollerede batterier kan bruge automatisk målvalg gennem commander AI. |
 | B-038 | IMPLEMENTERET PROTOTYPE / DOCTRINE-TUNING PENDING | Auto-target prioritering | Automatisk artilleriild skal vælge mål efter synlighed/LOS, range, trussel, formation density, target type, ammunitionstype, commander/fire-control doctrine og evt. ammunition conservation — ikke blot nærmeste fjende. |
 | B-039 | IMPLEMENTERET CORE / UE QA PENDING | Hold Fire for artilleri | Et batteri skal kunne være deployed og klar uden at skyde. Hold Fire overstyrer både manuelt og automatisk målvalg. |
+| B-039A | BESLUTTET / RESEARCH TUNING | Mortarer | Mortarer er artillery support/siege capability med høj krum bane, særskilt ammo/crew/reload og area-fire. De kan bekæmpe skanser, løbegrave, reverse-slope/dead-ground og mål bag brystværn, hvor direct-fire guns ikke har normal skudlinje. |
+| B-039B | BESLUTTET | Mortar fire mission | Mortarer skyder primært mod observeret område/fortification via indirect fire. Spotter/observation, dispersion, ammunition conservation og correction between salvos skal indgå; fri omniscient targeting er ikke tilladt. |
+| B-039C | BESLUTTET | Siege artillery grouping | Mortarer og tunge belejringsstykker organiseres som støtte under højere HQ/siege artillery group. Vi undgår én permanent OOB-enhedstype pr. kaliber og bruger data-driven weapon profiles. |
+| B-039D | RESEARCH | Historiske mortar-profiler 1864 | Fastlæg preussiske/danske typer, kalibre, ammunition, antal, deploy/reload, range, accuracy/dispersion og organisation. Dybbøl-dokumentation bekræfter preussiske morterer og nævner bl.a. 16 stk. 25-pundige morterer. |
 
 ## Kavaleri og dragoner
 
