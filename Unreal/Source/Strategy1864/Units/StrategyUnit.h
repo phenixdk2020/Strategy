@@ -8,6 +8,8 @@
 class USceneComponent;
 class USphereComponent;
 class UTextRenderComponent;
+class UStaticMeshComponent;
+class UMaterialInstanceDynamic;
 class UStrategyOrderComponent;
 class UStrategyCommandComponent;
 class UStrategyMovementExecutorComponent;
@@ -113,6 +115,12 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UTextRenderComponent> DebugLabel;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|QA")
+    TObjectPtr<UStaticMeshComponent> QAPlaceholderMesh;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> QAPlaceholderMaterial;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strategy|Components")
     TObjectPtr<UStrategyOrderComponent> OrderComponent;
@@ -302,6 +310,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Identity")
     void RefreshDebugLabel();
+
+    UFUNCTION(BlueprintCallable, Category="Strategy|QA")
+    void RefreshQAPlaceholderVisual();
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Semantic Zoom")
     void SetSemanticZoomState(EStrategySemanticZoomState NewState);
