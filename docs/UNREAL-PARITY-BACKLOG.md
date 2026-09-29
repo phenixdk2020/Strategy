@@ -741,3 +741,16 @@ Functionality-first work added fire discipline/ammunition conservation, Standing
 - Runtime QA geometry is debug/presentation-only and never becomes movement, combat, LOS, terrain or command authority.
 - Final soldier, cavalry, artillery, wagon, terrain and VFX assets remain separate later graphics work.
 - UE-P400..404 require UE 5.8.3 local build/runtime verification after sync.
+
+
+# 21. Physical QA placeholder presentation — v00.02.65
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P407 | P0 | Physical unit placeholder | Every StrategyUnit owns an Engine BasicShapes cube mesh for asset-independent runtime visibility | IMPLEMENTED QA CORE |
+| UE-P408 | P0 | Echelon-specific placeholder footprint | Company/HQ/Cavalry/Artillery/Supply placeholders use distinct scales | IMPLEMENTED QA CORE |
+| UE-P409 | P1 | Side-tint attempt | Dynamic material tries common Color/BaseColor parameters; coloured debug overlay remains fallback | IMPLEMENTED QA CORE |
+| UE-P410 | P1 | Tactical camera readability | QA bootstrap starts closer at approx. 180 m spring-arm | IMPLEMENTED QA CORE |
+| UE-P411 | P1 | Compact company labels | Operational QA company labels reduced to side/company identity | IMPLEMENTED QA CORE |
+
+UE-P407..411 are presentation-only and require UE 5.8.3 build/runtime verification.
