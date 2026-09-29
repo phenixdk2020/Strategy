@@ -59,7 +59,7 @@ void AStrategyGameMode::BeginPlay()
 
             if (StrategyCamera->SpringArm)
             {
-                StrategyCamera->SpringArm->TargetArmLength = 26000.0f;
+                StrategyCamera->SpringArm->TargetArmLength = 18000.0f;
             }
         }
     }
