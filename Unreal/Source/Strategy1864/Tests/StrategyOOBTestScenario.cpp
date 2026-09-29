@@ -293,6 +293,7 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             Position->DepthCm = 900.0f;
             Position->CapacityMen = 240;
             Position->Condition = 100.0f;
+            Position->RefreshNavigationObstacle();
             SpawnedDefensivePositions.Add(Position);
         }
     }
