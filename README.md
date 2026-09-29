@@ -14,7 +14,7 @@ Unity projektstruktur:
 - `docs/` — designmanual, backlog, release notes og teknisk dokumentation.
 
 Aktuel prototype: **P0A v00.00.08 TEST**.  
-Aktuel designbaseline: **v00.02.08**.  
+Aktuel designbaseline: **v00.02.09**.  
 Unity baseline: **6000.6.0f1 (Unity 6.6)**, changeset `f7f8ed4d1e24`.
 
 ## v00.00.08 release-dokumentation
@@ -26,7 +26,7 @@ Den fulde ændrings- og testbeskrivelse ligger i:
 - `docs/parts/part-08-38-P0A-v08.md` — designmanualens implementeringsafsnit for v00.00.08.
 - `docs/PROJECT-BACKLOG.md` — aktive, besluttede, planlagte, idé- og researchpunkter.
 
-Det er bevidst dokumenteret separat, hvad der **er implementeret i v00.00.08**, og hvad der kun er **besluttet i designbaseline v00.02.08**.
+Det er bevidst dokumenteret separat, hvad der **er implementeret i v00.00.08**, og hvad der kun er **besluttet i designbaseline v00.02.09**.
 
 ### Aktiverede built-in Unity-moduler
 
