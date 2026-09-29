@@ -25,11 +25,24 @@ void UStrategyArtilleryCrewAnimationComponent::BeginPlay()
         OwnerBattery->ArtilleryFireMissionComponent)
     {
         OwnerBattery->ArtilleryFireMissionComponent
-            ->OnArtilleryShotResolved.AddDynamic(
+            ->OnArtilleryShotResolvedNative.AddUObject(
                 this,
                 &UStrategyArtilleryCrewAnimationComponent::
                     HandleArtilleryShotResolved);
     }
+}
+
+void UStrategyArtilleryCrewAnimationComponent::EndPlay(
+    const EEndPlayReason::Type EndPlayReason)
+{
+    if (OwnerBattery &&
+        OwnerBattery->ArtilleryFireMissionComponent)
+    {
+        OwnerBattery->ArtilleryFireMissionComponent
+            ->OnArtilleryShotResolvedNative.RemoveAll(this);
+    }
+
+    Super::EndPlay(EndPlayReason);
 }
 
 void UStrategyArtilleryCrewAnimationComponent::TickComponent(
