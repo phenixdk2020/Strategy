@@ -131,6 +131,6 @@ void UStrategyQARuntimeSubsystem::FocusCameraOnBattlefield(
 
     if (CameraPawn->SpringArm)
     {
-        CameraPawn->SpringArm->TargetArmLength = 26000.0f;
+        CameraPawn->SpringArm->TargetArmLength = 18000.0f;
     }
 }
