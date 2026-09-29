@@ -28,12 +28,18 @@ bool UStrategyPositionOccupancyComponent::OccupyPosition(
         return false;
     }
 
+    if (OccupiedPosition == Position)
+    {
+        return Position->CanOccupy(OwnerUnit);
+    }
+
+    LeavePosition();
+
     if (!Position->Occupy(OwnerUnit))
     {
         return false;
     }
 
-    LeavePosition();
     OccupiedPosition = Position;
     return true;
 }
