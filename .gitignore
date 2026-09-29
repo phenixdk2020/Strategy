@@ -24,3 +24,6 @@ sysinfo.txt
 
 # PROJECT 1864 local diagnostic build logs
 Tools/BuildLogs/
+[Bb]inaries/
+[Ii]ntermediate/
+[Ss]aved/
