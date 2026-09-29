@@ -7,9 +7,9 @@
 UENUM(BlueprintType)
 enum class EStrategyStance : uint8
 {
-    Standing,
-    Kneeling,
-    Prone
+    Standing = 0,
+    Prone = 1,
+    Kneeling = 2
 };
 
 UCLASS(ClassGroup=(Strategy1864), meta=(BlueprintSpawnableComponent))
