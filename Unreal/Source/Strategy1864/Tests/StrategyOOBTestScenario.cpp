@@ -49,6 +49,15 @@
 #include "../Artillery/StrategyArtilleryTrajectoryLibrary.h"
 #include "../Artillery/StrategyArtilleryProjectileTypes.h"
 #include "../Artillery/StrategyArtilleryCrewAnimationComponent.h"
+#include "../Artillery/StrategyMortarBatteryUnit.h"
+#include "../Artillery/StrategyMortarDeploymentComponent.h"
+#include "../Artillery/StrategyMortarFireComponent.h"
+#include "../Engineering/StrategyDefensivePosition.h"
+#include "../Combat/StrategyDetachmentComponent.h"
+#include "../AI/StrategyNCOComponent.h"
+#include "../Combat/StrategyFireDrillComponent.h"
+#include "../Engineering/StrategyWorkingPartyComponent.h"
+#include "StrategySpecialistStateComponent.h"
 #include "../Visual/StrategyUniformAppearanceComponent.h"
 #include "../Visual/StrategyUniformPresetLibrary.h"
 #include "../Visual/StrategyHumanAnimationStateComponent.h"
@@ -258,16 +267,83 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             Division);
     }
 
+    if (bSpawnMortarQA)
+    {
+        SpawnMortarBattery(
+            TEXT("DK-MORTAR-1"),
+            TEXT("Tungt morterbatteri QA"),
+            Origin + FVector(1800.0f, 10000.0f, 0.0f),
+            Division);
+    }
+
+    if (bSpawnFortificationQA && GetWorld())
+    {
+        AStrategyDefensivePosition* Position =
+            GetWorld()->SpawnActor<AStrategyDefensivePosition>(
+                AStrategyDefensivePosition::StaticClass(),
+                Origin + FVector(10800.0f, -7200.0f, 0.0f),
+                FRotator::ZeroRotator);
+
+        if (Position)
+        {
+            Position->PositionType =
+                EStrategyDefensivePositionType::GunEmplacement;
+            Position->OwningSide = EStrategySide::Denmark;
+            Position->LengthCm = 6200.0f;
+            Position->DepthCm = 900.0f;
+            Position->CapacityMen = 240;
+            Position->Condition = 100.0f;
+            SpawnedDefensivePositions.Add(Position);
+        }
+    }
+
     for (int32 Index = 0; Index < 4; ++Index)
     {
         const int32 CompanyNumber = Index + 1;
-        SpawnCompany(
+        AStrategyCompanyUnit* Company = SpawnCompany(
             FName(*FString::Printf(TEXT("DK-REG-1-A-C%d"), CompanyNumber)),
             FString::Printf(TEXT("%d. Kompagni"), CompanyNumber),
             CompanyNumber,
             Origin + FVector(7600.0f, -4300.0f + Index * CompanySpacing, 0.0f),
             MajorA,
             static_cast<uint8>(EStrategySide::Denmark));
+
+        if (bSpawnSpecialistQA && Company && CompanyNumber == 1)
+        {
+            if (Company->DetachmentComponent)
+            {
+                Company->DetachmentComponent->CreateDetachment(
+                    EStrategyDetachmentType::Marksman,
+                    12,
+                    72,
+                    Company->GetActorLocation() + FVector(1800.0f, -400.0f, 0.0f));
+            }
+
+            if (Company->NCOComponent)
+            {
+                Company->NCOComponent->NCOStrength = 10;
+                Company->NCOComponent->NCOQuality = 65.0f;
+            }
+
+            if (Company->FireDrillComponent)
+            {
+                Company->FireDrillComponent->LoadingMethod =
+                    EStrategyLoadingMethod::MuzzleLoader;
+                Company->FireDrillComponent->DrillMode =
+                    EStrategyFireDrillMode::KneelingFrontRank;
+                Company->FireDrillComponent->DrillTraining = 62.0f;
+            }
+
+            if (Company->WorkingPartyComponent)
+            {
+                Company->WorkingPartyComponent->AvailableWorkers = 18;
+            }
+
+            if (Company->SpecialistStateComponent)
+            {
+                Company->SpecialistStateComponent->CaptureSnapshot();
+            }
+        }
     }
 
     for (int32 Index = 0; Index < 4; ++Index)
@@ -545,6 +621,16 @@ void AStrategyOOBTestScenario::ClearSpawnedUnits()
     }
 
     SpawnedTerrainFeatures.Reset();
+
+    for (AStrategyDefensivePosition* Position : SpawnedDefensivePositions)
+    {
+        if (IsValid(Position))
+        {
+            Position->Destroy();
+        }
+    }
+
+    SpawnedDefensivePositions.Reset();
 }
 
 AStrategyHQUnit* AStrategyOOBTestScenario::SpawnHQ(
@@ -851,6 +937,67 @@ AStrategyArtilleryBatteryUnit* AStrategyOOBTestScenario::SpawnArtilleryBattery(
     Battery->RefreshDebugLabel();
     SpawnedUnitObjects.Add(Battery);
     return Battery;
+}
+
+AStrategyMortarBatteryUnit* AStrategyOOBTestScenario::SpawnMortarBattery(
+    const FName StableId,
+    const FString& Name,
+    const FVector& Location,
+    AStrategyUnit* OrganicParent)
+{
+    UWorld* World = GetWorld();
+    if (!World)
+    {
+        return nullptr;
+    }
+
+    const FVector SpawnLocation =
+        UStrategyTerrainQueryLibrary::ProjectPointToTerrain(this, Location);
+
+    AStrategyMortarBatteryUnit* Mortar =
+        World->SpawnActor<AStrategyMortarBatteryUnit>(
+            AStrategyMortarBatteryUnit::StaticClass(),
+            SpawnLocation,
+            FRotator::ZeroRotator);
+
+    if (!Mortar)
+    {
+        return nullptr;
+    }
+
+    Mortar->StableUnitId = StableId;
+    Mortar->DisplayName = FText::FromString(Name);
+    Mortar->Side = EStrategySide::Denmark;
+    Mortar->bPlayerControllable = true;
+    Mortar->MortarPieceCount = 4;
+    Mortar->MortarCrewStrength = 32;
+    Mortar->InitialStrength = 40;
+    Mortar->CurrentStrength = 40;
+
+    if (Mortar->MortarDeploymentComponent)
+    {
+        Mortar->MortarDeploymentComponent->MortarClass =
+            EStrategyMortarClass::HeavySiege;
+        Mortar->MortarDeploymentComponent->MobilityState =
+            EStrategyMortarMobilityState::Deployed;
+        Mortar->MortarDeploymentComponent->WorkingPartyStrength = 24;
+    }
+
+    if (Mortar->MortarFireComponent)
+    {
+        Mortar->MortarFireComponent->AmmunitionBombs = 36;
+        Mortar->MortarFireComponent->MaxAmmunitionBombs = 36;
+        Mortar->MortarFireComponent->HoldFire();
+    }
+
+    if (Mortar->CommandComponent)
+    {
+        Mortar->CommandComponent->SetOrganicParent(OrganicParent);
+    }
+
+    Mortar->RefreshDebugLabel();
+    SpawnedUnitObjects.Add(Mortar);
+    return Mortar;
 }
 
 AStrategySupplyWagonUnit* AStrategyOOBTestScenario::SpawnSupplyWagon(
@@ -1409,7 +1556,8 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
         (bSpawnCavalryQA ? 2 : 0) +
         (bSpawnEnemyQAUnits ? 2 : 0) +
         (bSpawnArtilleryQA ? 1 : 0) +
-        (bSpawnSupplyWagonQA ? 1 : 0);
+        (bSpawnSupplyWagonQA ? 1 : 0) +
+        (bSpawnMortarQA ? 1 : 0);
 
     int32 ValidCount = 0;
     int32 EnemySelectableCount = 0;
@@ -1484,12 +1632,33 @@ bool AStrategyOOBTestScenario::RunRegressionChecklist(
             !Unit->UniformAppearanceComponent ||
             !Unit->HumanAnimationStateComponent ||
             !Unit->EquipmentVisualComponent ||
-            !Unit->VisualCompatibilityComponent)
+            !Unit->VisualCompatibilityComponent ||
+            !Unit->DetachmentComponent ||
+            !Unit->NCOComponent ||
+            !Unit->FireDrillComponent ||
+            !Unit->PositionOccupancyComponent ||
+            !Unit->FortificationAssaultComponent ||
+            !Unit->WorkingPartyComponent ||
+            !Unit->SpecialistStateComponent)
         {
             OutFailures.Add(
                 FString::Printf(
                     TEXT("%s is missing one or more gameplay-core components."),
                     *Unit->StableUnitId.ToString()));
+        }
+
+        if (Unit->SpecialistStateComponent)
+        {
+            FString SpecialistFailure;
+            if (!Unit->SpecialistStateComponent->ValidateCurrentState(
+                    SpecialistFailure))
+            {
+                OutFailures.Add(
+                    FString::Printf(
+                        TEXT("%s specialist state invalid: %s"),
+                        *Unit->StableUnitId.ToString(),
+                        *SpecialistFailure));
+            }
         }
 
         if (Unit->UniformAppearanceComponent &&
