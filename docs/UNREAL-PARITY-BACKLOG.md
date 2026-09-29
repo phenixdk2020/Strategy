@@ -722,3 +722,22 @@ Functionality-first work added fire discipline/ammunition conservation, Standing
 - Artillery reload visuals are phase-mapped onto the existing authoritative reload timer.
 - Final skeletal meshes, Animation Blueprints, montages and material assets are still pending the later graphics pass.
 - All UE-P380..399 remain **UE 5.8.3 build/runtime QA pending**.
+
+
+# 20. Runtime QA visibility bootstrap — v00.02.64
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P400 | P0 | QA battlefield runtime visibility | OOB scenario draws side-coloured unit boxes + facing arrows independent of final assets | IMPLEMENTED QA CORE |
+| UE-P401 | P0 | QA labels | Runtime labels forced visible/readable and coloured by side at operational test zoom | IMPLEMENTED QA CORE |
+| UE-P402 | P0 | River/bridge/obstacle visibility | River banks, bridge crossing and navigation obstacle receive runtime debug geometry | IMPLEMENTED QA CORE |
+| UE-P403 | P0 | Terrain fixture visibility | Hill/ridge/depression footprints + vertical height markers drawn from authoritative terrain fixtures | IMPLEMENTED QA CORE |
+| UE-P404 | P0 | QA camera bootstrap | GameMode focuses strategy camera on battlefield centre and starts at operational overview zoom | IMPLEMENTED QA CORE |
+
+### v00.02.64 notes
+
+- The repository still contains no committed tactical `.umap`/`.uasset` battlefield scene; editor startup may therefore show an `Untitled` world.
+- QA actors are created during **Play/PIE** by the existing C++ GameMode/OOB scenario.
+- Runtime QA geometry is debug/presentation-only and never becomes movement, combat, LOS, terrain or command authority.
+- Final soldier, cavalry, artillery, wagon, terrain and VFX assets remain separate later graphics work.
+- UE-P400..404 require UE 5.8.3 local build/runtime verification after sync.
