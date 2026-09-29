@@ -25,6 +25,7 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual void Tick(float DeltaSeconds) override;
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
@@ -59,6 +60,15 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     int32 QARandomSeed = 1864;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test|Visual")
+    bool bDrawRuntimeQAVisuals = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test|Visual")
+    float QARiverVisualHalfLengthCm = 15000.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test|Visual")
+    float QAVisualThickness = 5.0f;
 
     UFUNCTION(BlueprintCallable, Category="Strategy|Test")
     void BuildTestOOB();
@@ -131,4 +141,6 @@ private:
     UPROPERTY()
     TArray<TObjectPtr<AStrategyTerrainFeature>> SpawnedTerrainFeatures;
 
+    void DrawRuntimeQAVisuals() const;
+    void ConfigureRuntimeQALabel(AStrategyUnit* Unit) const;
 };
