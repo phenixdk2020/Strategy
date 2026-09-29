@@ -3,10 +3,15 @@
     Bygger Strategy1864Editor manuelt og udskriver relevante compiler/UHT-fejl.
 
 .VERSION
-    1.1.1
+    1.2.0
 
 .CHANGELOG
-    1.1.1
+    1.2.0
+    - Tilfoejer -Clean til sikker sletning af Unreal/Binaries og Unreal/Intermediate.
+    - Stopper med tydelig fejl hvis UnrealEditor stadig koerer.
+    - Clean build bruges til at fjerne stale DLL/Live Coding rester.
+
+1.1.1
     - Tillader tom List[string] ved engine discovery.
     - Retter PowerShell parameter-binding fejlen:
       "Cannot bind argument to parameter 'List' because it is an empty collection."
@@ -20,6 +25,7 @@
       manifestfiler, registry, registrerede builds og almindelige install-paths.
     - Validerer at fundet engine faktisk er UE 5.8 via Engine\Build\Build.version.
     - Kører Engine\Build\BatchFiles\Build.bat.
+    - Understoetter -Clean for at fjerne stale Binaries/Intermediate foer build.
     - Gemmer komplet build-log under Tools\BuildLogs.
     - Viser relevante compiler/UHT/UBT-fejl til sidst.
 
@@ -31,7 +37,8 @@
 #>
 
 param(
-    [string]$EngineRoot
+    [string]$EngineRoot,
+    [switch]$Clean
 )
 
 $ErrorActionPreference = "Stop"
@@ -345,13 +352,40 @@ Clear-Host
 Write-Host ""
 Write-Host "===================================================" -ForegroundColor DarkCyan
 Write-Host " PROJECT 1864 - Unreal Build Diagnostic" -ForegroundColor Cyan
-Write-Host " Version 1.1.1" -ForegroundColor DarkGray
+Write-Host " Version 1.2.0" -ForegroundColor DarkGray
 Write-Host "===================================================" -ForegroundColor DarkCyan
 Write-Host ""
 
 try {
     if (-not (Test-Path $UProject)) {
         throw "Uproject blev ikke fundet: $UProject"
+    }
+
+    $RunningEditor = Get-Process -Name "UnrealEditor" -ErrorAction SilentlyContinue
+
+    if ($RunningEditor) {
+        throw "UnrealEditor koerer stadig. Luk Unreal Editor helt foer build/clean build."
+    }
+
+    if ($Clean) {
+        Write-Status -Message "CLEAN BUILD - rydder gamle Unreal build outputs..." -Level CHECKPOINT
+
+        $PathsToRemove = @(
+            (Join-Path $ProjectRoot "Unreal\Binaries"),
+            (Join-Path $ProjectRoot "Unreal\Intermediate")
+        )
+
+        foreach ($PathToRemove in $PathsToRemove) {
+            if (Test-Path $PathToRemove) {
+                Write-Status -Message "Sletter: $PathToRemove" -Level WARNING
+                Remove-Item -LiteralPath $PathToRemove -Recurse -Force
+            }
+            else {
+                Write-Status -Message "Findes ikke: $PathToRemove" -Level INFO
+            }
+        }
+
+        Write-Status -Message "Gamle binaries/intermediate er fjernet." -Level OK
     }
 
     Write-Status -Message "Finder Unreal Engine 5.8..." -Level CHECKPOINT
