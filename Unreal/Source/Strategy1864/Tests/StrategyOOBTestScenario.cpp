@@ -337,11 +337,14 @@ void AStrategyOOBTestScenario::BuildTestOOB()
 
             if (Company->FireDrillComponent)
             {
-                Company->FireDrillComponent->LoadingMethod =
-                    EStrategyLoadingMethod::MuzzleLoader;
-                Company->FireDrillComponent->DrillMode =
-                    EStrategyFireDrillMode::KneelingFrontRank;
+                Company->FireDrillComponent->SetLoadingMethod(
+                    EStrategyLoadingMethod::MuzzleLoader);
+                Company->FireDrillComponent->SetResearchLevel(
+                    EStrategyFireDrillResearchLevel::FireByRank);
+                Company->FireDrillComponent->SetDrillMode(
+                    EStrategyFireDrillMode::FireByRank);
                 Company->FireDrillComponent->DrillTraining = 62.0f;
+                Company->FireDrillComponent->FireDiscipline = 60.0f;
             }
 
             if (Company->WorkingPartyComponent)
