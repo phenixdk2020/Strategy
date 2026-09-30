@@ -308,6 +308,14 @@ bool UStrategyCombatComponent::TryFireAt(AStrategyUnit* Target)
         ShotCount,
         Hits);
 
+    // Advance only after presentation has received the just-fired rank.
+    // This keeps FireByRank deterministic and lets future 1:1 visuals query
+    // which rank actually produced the current volley.
+    if (OwnerUnit->FireDrillComponent)
+    {
+        OwnerUnit->FireDrillComponent->AdvanceFireByRankCycle();
+    }
+
     if (GetWorld())
     {
         if (AStrategySmokeField* Smoke =
