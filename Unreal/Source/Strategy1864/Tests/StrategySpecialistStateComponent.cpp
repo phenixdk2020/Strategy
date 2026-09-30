@@ -50,6 +50,8 @@ UStrategySpecialistStateComponent::CaptureSnapshot()
     if (OwnerUnit->FireDrillComponent)
     {
         Snapshot.LoadingMethod = OwnerUnit->FireDrillComponent->LoadingMethod;
+        Snapshot.FireDrillResearchLevel =
+            OwnerUnit->FireDrillComponent->ResearchLevel;
         Snapshot.DrillMode = OwnerUnit->FireDrillComponent->DrillMode;
     }
 
@@ -100,8 +102,12 @@ bool UStrategySpecialistStateComponent::RestoreSnapshot(
 
     if (OwnerUnit->FireDrillComponent)
     {
-        OwnerUnit->FireDrillComponent->LoadingMethod = Snapshot.LoadingMethod;
-        OwnerUnit->FireDrillComponent->DrillMode = Snapshot.DrillMode;
+        OwnerUnit->FireDrillComponent->SetLoadingMethod(
+            Snapshot.LoadingMethod);
+        OwnerUnit->FireDrillComponent->SetResearchLevel(
+            Snapshot.FireDrillResearchLevel);
+        OwnerUnit->FireDrillComponent->SetDrillMode(
+            Snapshot.DrillMode);
     }
 
     if (OwnerUnit->WorkingPartyComponent)
@@ -226,10 +232,12 @@ void UStrategySpecialistStateComponent::ResetSpecialistState()
 
     if (OwnerUnit->FireDrillComponent)
     {
-        OwnerUnit->FireDrillComponent->LoadingMethod =
-            EStrategyLoadingMethod::MuzzleLoader;
-        OwnerUnit->FireDrillComponent->DrillMode =
-            EStrategyFireDrillMode::Volley;
+        OwnerUnit->FireDrillComponent->SetLoadingMethod(
+            EStrategyLoadingMethod::MuzzleLoader);
+        OwnerUnit->FireDrillComponent->SetResearchLevel(
+            EStrategyFireDrillResearchLevel::FrontRankFire);
+        OwnerUnit->FireDrillComponent->SetDrillMode(
+            EStrategyFireDrillMode::FrontRank);
     }
 
     if (OwnerUnit->WorkingPartyComponent)
