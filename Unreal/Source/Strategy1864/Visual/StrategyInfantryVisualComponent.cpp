@@ -587,7 +587,7 @@ UAnimSequence* UStrategyInfantryVisualComponent::ResolveAnimation(
 
     const EStrategyStance CurrentStance =
         OwnerCompany->StanceComponent
-        ? OwnerCompany->StanceComponent->CurrentStance
+        ? OwnerCompany->StanceComponent->Stance
         : EStrategyStance::Standing;
 
     const EStrategyHumanAnimationAction Action =
