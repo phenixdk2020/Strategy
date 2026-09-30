@@ -181,6 +181,20 @@ int32 UStrategySpecialistStateComponent::BuildDeterministicDigest() const
     Hash = HashCombine(Hash, GetTypeHash(OwnerUnit->CurrentStrength));
     Hash = HashCombine(Hash, GetTypeHash(FMath::RoundToInt(OwnerUnit->Cohesion * 10.0f)));
 
+    if (OwnerUnit->FireDrillComponent)
+    {
+        Hash = HashCombine(
+            Hash,
+            GetTypeHash(
+                static_cast<uint8>(
+                    OwnerUnit->FireDrillComponent->ResearchLevel)));
+        Hash = HashCombine(
+            Hash,
+            GetTypeHash(
+                static_cast<uint8>(
+                    OwnerUnit->FireDrillComponent->DrillMode)));
+    }
+
     if (OwnerUnit->DetachmentComponent)
     {
         for (const FStrategyDetachmentRecord& Record :
