@@ -171,6 +171,35 @@ bool UStrategyFireDrillComponent::SelectAutomaticDrillMode(
     return SetDrillMode(EStrategyFireDrillMode::FireByRank);
 }
 
+bool UStrategyFireDrillComponent::IsFormationSlotEligibleToFire(
+    int32 SlotIndex) const
+{
+    if (SlotIndex < 0)
+    {
+        return false;
+    }
+
+    const int32 RankCount = GetConfiguredRankCount();
+    const int32 RankIndex = SlotIndex % RankCount;
+
+    switch (NormalizeLegacyMode(DrillMode))
+    {
+        case EStrategyFireDrillMode::FrontRank:
+            return RankIndex == 0;
+
+        case EStrategyFireDrillMode::TwoRankFire:
+            return RankIndex < FMath::Min(2, RankCount);
+
+        case EStrategyFireDrillMode::FireByRank:
+            return RankIndex == ActiveFireByRankIndex;
+
+        case EStrategyFireDrillMode::Volley:
+        case EStrategyFireDrillMode::Independent:
+        default:
+            return true;
+    }
+}
+
 float UStrategyFireDrillComponent::GetEligibleFiringFraction(
     EStrategyStance Stance) const
 {
