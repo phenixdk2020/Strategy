@@ -40,7 +40,11 @@ struct FStrategySpecialistStateSnapshot
     EStrategyLoadingMethod LoadingMethod = EStrategyLoadingMethod::MuzzleLoader;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-    EStrategyFireDrillMode DrillMode = EStrategyFireDrillMode::Volley;
+    EStrategyFireDrillResearchLevel FireDrillResearchLevel =
+        EStrategyFireDrillResearchLevel::FrontRankFire;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    EStrategyFireDrillMode DrillMode = EStrategyFireDrillMode::FrontRank;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     int32 WorkingPartyWorkers = 0;
