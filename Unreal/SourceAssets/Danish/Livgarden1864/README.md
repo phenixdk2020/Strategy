@@ -41,6 +41,7 @@ from Unreal Editor's Python execution environment.
 The importer creates:
 
 - `/Game/Units/Danish/Livgarden1864/Mesh/SK_DK_Livgarden_1864`
+- `/Game/Units/Human/Skeletons/SK_Human_1864` (shared human Skeleton)
 - `/Game/Units/Danish/Livgarden1864/Weapons/SM_Rifle_1`
 - `/Game/Units/Danish/Livgarden1864/Weapons/SM_Rifle_Bayonet_1`
 - one `A_*` animation asset for every FBX animation, bound to the imported Livgarden skeleton.
