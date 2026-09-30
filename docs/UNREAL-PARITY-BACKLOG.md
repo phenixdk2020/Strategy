@@ -942,3 +942,21 @@ All UE-P502..511 are **code implemented / UE 5.8.3 build+runtime QA pending**. N
 | UE-P521 | P0 | QA company activation + editor verification | First Danish QA company can enable real infantry visuals; UE 5.8.3 import/build/runtime/weapon-offset QA must pass | QA PENDING |
 
 Standing reload has no clearly named dedicated clip in the supplied package, so the first-pass visual falls back to standing aim while gameplay reload timing remains authoritative. UE-P512..521 are **source/runtime implemented; UE 5.8.3 asset import + build/runtime QA pending**.
+
+# 33. Infantry fire-drill research progression — v00.02.79
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P522 | P0 | Fire-drill research levels | FrontRankFire / TwoRankFire / FireByRank / ControlledVolley / IndependentFire / AdvancedFireDrill | IMPLEMENTED CORE |
+| UE-P523 | P0 | Front-rank campaign baseline | New fire-drill components default to FrontRank rather than Volley | IMPLEMENTED CORE |
+| UE-P524 | P0 | Rank-aware participation | Firing fraction derives from formation RankCount instead of fixed 50% assumptions | IMPLEMENTED CORE |
+| UE-P525 | P0 | Two-Rank Fire unlock | Up to the first two ranks can contribute once research/adoption reaches tier 1 | IMPLEMENTED CORE |
+| UE-P526 | P0 | Fire by Rank unlock | One rank fires per pulse; active firing-rank index advances deterministically after resolved volley | IMPLEMENTED CORE |
+| UE-P527 | P0 | Fire-by-rank cadence | Inter-rank pulse interval scales with actual rank count so a rank receives roughly one full reload cycle before firing again | IMPLEMENTED CORE |
+| UE-P528 | P0 | Controlled Volley unlock | Existing Volley mode is research-gated and retains full-rank coordinated fire | IMPLEMENTED CORE |
+| UE-P529 | P0 | Independent Fire unlock | Existing Independent mode is research-gated and remains available alongside older drills | IMPLEMENTED CORE |
+| UE-P530 | P1 | Advanced Fire Drill capability | Final tier exposes automatic drill selection between shock volley, continuous fire and rank fire; campaign research/adoption owner still to bind | IMPLEMENTED CORE / CAMPAIGN BINDING PENDING |
+| UE-P531 | P0 | Legacy/persistence/QA integration | Old AlternatingSections/KneelingFrontRank serialize safely as hidden aliases; research level persists in specialist snapshot and Danish QA fixture exercises FireByRank | IMPLEMENTED QA CORE |
+
+Design rule: this progression is an intentional gameplay abstraction. Unlocking a drill does not grant mastery; DrillTraining, FireDiscipline, NCO quality, loading method, stance, fatigue/morale/cohesion and later campaign adoption/training remain separate quality layers. The current generic QA Line remains three ranks, so FrontRank currently represents 1/3 and TwoRankFire 2/3 of that formation. Rank-specific 1:1 soldier fire/reload animation masking is not claimed here and remains pending after the real infantry asset/import pass. All UE-P522..531 are **code implemented / UE 5.8.3 build+runtime QA pending**.
+
