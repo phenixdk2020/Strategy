@@ -37,8 +37,10 @@ RIFLE_BAYONET_SOURCE = os.path.join(
 MESH_DEST = "/Game/Units/Danish/Livgarden1864/Mesh"
 ANIMATION_DEST = "/Game/Units/Danish/Livgarden1864/Animations"
 WEAPON_DEST = "/Game/Units/Danish/Livgarden1864/Weapons"
+SHARED_SKELETON_DEST = "/Game/Units/Human/Skeletons"
 
 MESH_ASSET = "SK_DK_Livgarden_1864"
+SHARED_SKELETON_ASSET = "SK_Human_1864"
 RIFLE_ASSET = "SM_Rifle_1"
 RIFLE_BAYONET_ASSET = "SM_Rifle_Bayonet_1"
 
@@ -180,6 +182,34 @@ def import_skeletal_mesh():
     if skeleton is None:
         fail("Imported skeletal mesh has no Skeleton asset")
 
+    shared_skeleton_path = "{}/{}".format(
+        SHARED_SKELETON_DEST,
+        SHARED_SKELETON_ASSET,
+    )
+
+    current_skeleton_path = skeleton.get_path_name()
+
+    if current_skeleton_path != shared_skeleton_path:
+        delete_asset_if_present(shared_skeleton_path)
+
+        if not unreal.EditorAssetLibrary.rename_asset(
+            current_skeleton_path,
+            shared_skeleton_path,
+        ):
+            fail(
+                "Could not rename shared Skeleton {} to {}".format(
+                    current_skeleton_path,
+                    shared_skeleton_path,
+                )
+            )
+
+        skeleton = unreal.EditorAssetLibrary.load_asset(
+            shared_skeleton_path
+        )
+
+    if skeleton is None:
+        fail("Shared skeleton could not be loaded after rename")
+
     log("Skeletal mesh imported: {}".format(target_path))
     log("Shared skeleton: {}".format(skeleton.get_path_name()))
     return mesh, skeleton
@@ -280,6 +310,7 @@ def main():
     unreal.EditorAssetLibrary.make_directory(MESH_DEST)
     unreal.EditorAssetLibrary.make_directory(ANIMATION_DEST)
     unreal.EditorAssetLibrary.make_directory(WEAPON_DEST)
+    unreal.EditorAssetLibrary.make_directory(SHARED_SKELETON_DEST)
 
     mesh, skeleton = import_skeletal_mesh()
 
