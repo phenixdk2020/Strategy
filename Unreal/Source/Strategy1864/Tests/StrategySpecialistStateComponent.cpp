@@ -166,6 +166,14 @@ bool UStrategySpecialistStateComponent::ValidateCurrentState(
         return false;
     }
 
+    if (OwnerUnit->FireDrillComponent &&
+        !OwnerUnit->FireDrillComponent->IsDrillModeUnlocked(
+            OwnerUnit->FireDrillComponent->DrillMode))
+    {
+        FailureReason = TEXT("LOCKED_FIRE_DRILL_MODE");
+        return false;
+    }
+
     FailureReason = TEXT("OK");
     return true;
 }
