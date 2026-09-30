@@ -1,6 +1,6 @@
 # PROJECT 1864 — Backlog, beslutninger og idéer
 
-**Baseline: v00.02.77 — Unreal specialist/fortification/mortar 10×10 implementation sequence**
+**Baseline: v00.02.78 — Livgarden 1864 animated 3D infantry import/runtime baseline**
 
 Dette dokument er projektets centrale intake-log for beslutninger og idéer, der ikke nødvendigvis implementeres i den aktive prototype med det samme. Formålet er at sikre, at gameplay-idéer og designbeslutninger fra projektarbejdet ikke kun findes i chatten.
 
@@ -21,6 +21,8 @@ Dette dokument er projektets centrale intake-log for beslutninger og idéer, der
 **Unreal gameplay checkpoint v00.02.63:** Shared human visual architecture er implementeret som code core: fælles skeleton/animation-set contract, human animation intents, canonical animation manifests, uniform colour zones/presets/runtime overrides, dynamic material parameters, equipment sockets, rig compatibility, horse gait + rider sync, Dragoon Mount/Dismount intents samt artillery crew roles/stations og reload/push/traverse/limber/unlimber/repair animation states. QA validerer rig, manifests, farveoverride, cavalry sync og artillery crew stations. Final meshes/AnimBP/montages/material assets er fortsat senere grafikarbejde. Git sync-værktøjet er samtidig opdateret til v1.0.2 uden falsk NativeCommandError.
 
 **Unreal gameplay checkpoint v00.02.68–v00.02.77 — 10 × 10 funktionelle blokke:** 100 nye gameplay-/simulationblokke er lagt oven på den eksisterende Unreal-core uden final grafik. Sekvensen dækker temporary specialist detachments med strength/ammo reconciliation, NCO command continuity, weapon/drill/doctrine-baseret firing drill og Kneeling stance, fysiske defensive positions med ownership/condition/capture, fortification assault equipment og breach-state, light/heavy mortar deployment med `TRANSPORT → EMPLACING → DEPLOYED → PACKING`, mortar unit/area/fortification fire, position occupancy og directional protection, working parties til ammunition/sårede/dig/breach/repair samt specialist-state capture/restore/validation. Disse blokke er **code implemented / UE 5.8.3 build+runtime QA pending**; de er ikke parity-verified endnu. Final meshes, animationer, Niagara og UMG-polish er fortsat separat senere grafikarbejde.
+
+**Unreal visual checkpoint v00.02.78 — Livgarden 1864 animated infantry:** Første brugerleverede skeletal infantry mesh, 65 FBX-animationer samt rifle/rifle+bajonet er koblet til en automatiseret Unreal import pipeline og et company-level runtime visual layer. 1:1 er default og 1:2/1:5/1:10 reducerer kun rendering ved at sample over hele formationens authoritative footprint. Gameplay strength, formation, fire/reload og casualties forbliver simulation authority. Kilde-preflight viser 41 fælles centrale Mixamo motion bones på tværs af body og alle clips; Unreal-import er den endelige kompatibilitetskontrol. **Source/runtime code implemented; UE 5.8.3 asset import + compile/runtime QA og weapon-hand offset tuning pending.**
 
 ## Statusdefinitioner
 
@@ -241,6 +243,7 @@ v00.00.09 skal mindst bevise:
 | B-157 | AKTIV | Firing drill, geledder og stance | `Standing`, `Kneeling` og `Prone` er eksplicitte states. Front-rank fire, volley, independent fire, alternating sections og front-rank kneeling/rear-rank standing styres af loading method + training/drill + doctrine + formation — ikke af en lineær tech-unlock. |
 | B-158 | AKTIV | Mortar classes | Morterer opdeles mindst i `LightHand` og `HeavySiege`. Krum ild, dispersion, ammunition, mobility og tactical role kommer fra weapon/equipment data. |
 | B-159 | AKTIV | Heavy mortar transport/deployment | Tunge morterer bruger `TRANSPORT → EMPLACING → DEPLOYED → PACKING → TRANSPORT` med working party, wagons/horses, piece weight og terrain preparation som konkrete state-faktorer. B-153–B-159 har Unreal code core i v00.02.68–v00.02.77 og afventer UE 5.8.3 compile/runtime QA. |
+| B-160 | AKTIV | Livgarden 1864 real 3D infantry visual | Brugerleveret skeletal mesh + shared skeleton animations + rifle/rifle+bajonet importeres til canonical Unreal paths. Company visual renderer følger authoritative strength og formation slots, bruger 1:1 som standard og må kun skalere rendering ved 1:2/1:5/1:10. Første QA-company aktiverer laget; import/build/runtime/weapon-offset QA udestår. |
 
 ## Åbne designspørgsmål fra tidligere baseline
 
