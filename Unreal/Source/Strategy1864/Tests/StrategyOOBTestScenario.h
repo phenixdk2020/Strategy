@@ -71,6 +71,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test")
     bool bSpawnSpecialistQA = true;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test|Visual")
+    bool bSpawnRealInfantryVisualQA = true;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Strategy|Test|FlatMap")
     bool bUseFlatQAMap = true;
 
