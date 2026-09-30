@@ -66,6 +66,7 @@
 #include "../Visual/StrategyAnimationManifestLibrary.h"
 #include "../Visual/StrategyHorseAnimationStateComponent.h"
 #include "../Visual/StrategyMountedAnimationSyncComponent.h"
+#include "../Visual/StrategyInfantryVisualComponent.h"
 #include "Engine/World.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/SceneComponent.h"
@@ -308,6 +309,14 @@ void AStrategyOOBTestScenario::BuildTestOOB()
             Origin + FVector(7600.0f, -4300.0f + Index * CompanySpacing, 0.0f),
             MajorA,
             static_cast<uint8>(EStrategySide::Denmark));
+
+        if (bSpawnRealInfantryVisualQA &&
+            Company &&
+            CompanyNumber == 1 &&
+            Company->InfantryVisualComponent)
+        {
+            Company->InfantryVisualComponent->SetEnabled(true);
+        }
 
         if (bSpawnSpecialistQA && Company && CompanyNumber == 1)
         {
