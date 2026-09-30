@@ -925,3 +925,20 @@ All UE-P492..501 are **code implemented / UE 5.8.3 build+runtime QA pending**.
 | UE-P511 | P0 | QA scenario integration | First Danish company carries marksman/NCO/drill fixture; all units validate specialist components | IMPLEMENTED QA CORE |
 
 All UE-P502..511 are **code implemented / UE 5.8.3 build+runtime QA pending**. None is parity verified until local UE 5.8.3 compile and scenario QA have passed.
+
+# 32. Livgarden 1864 animated infantry import and runtime visual — v00.02.78
+
+| ID | Pri | Feature | Unreal implementation | Status |
+| --- | --- | --- | --- | --- |
+| UE-P512 | P0 | Livgarden source staging | Canonical SourceAssets layout for body mesh, rifle, bayonet rifle and animation FBXs | IMPLEMENTED CORE |
+| UE-P513 | P0 | Shared-skeleton preflight | 41 common Mixamo motion-bone names verified across body and all 65 animation FBXs; Unreal remains final authority | IMPLEMENTED QA CORE |
+| UE-P514 | P0 | Automated skeletal import | Editor Python imports the Livgarden FBX as canonical Skeletal Mesh + Skeleton | IMPLEMENTED CORE |
+| UE-P515 | P0 | Shared animation import | All 65 FBX clips import against the same Livgarden Skeleton with deterministic A_* asset names | IMPLEMENTED CORE |
+| UE-P516 | P0 | Rifle asset import | Rifle and rifle+bajonet GLB sources import to canonical weapon Static Mesh paths | IMPLEMENTED CORE |
+| UE-P517 | P0 | 1:1 company renderer | Company visual component can render one skeletal soldier per authoritative living man | IMPLEMENTED CORE |
+| UE-P518 | P1 | Reduced visual scale sampling | 1:2 / 1:5 / 1:10 render scales sample across the complete authoritative formation footprint | IMPLEMENTED CORE |
+| UE-P519 | P0 | Formation + weapon binding | Rendered soldiers consume existing formation slots and attach current rifle variant to the right-hand bone | IMPLEMENTED CORE |
+| UE-P520 | P0 | Combat/stance animation mapping | Walk/run/aim/fire/reload, Standing/Kneeling/Prone, bayonet charge and death have first-pass runtime mappings | IMPLEMENTED CORE |
+| UE-P521 | P0 | QA company activation + editor verification | First Danish QA company can enable real infantry visuals; UE 5.8.3 import/build/runtime/weapon-offset QA must pass | QA PENDING |
+
+Standing reload has no clearly named dedicated clip in the supplied package, so the first-pass visual falls back to standing aim while gameplay reload timing remains authoritative. UE-P512..521 are **source/runtime implemented; UE 5.8.3 asset import + build/runtime QA pending**.
