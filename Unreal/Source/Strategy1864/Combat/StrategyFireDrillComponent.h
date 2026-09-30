@@ -93,6 +93,9 @@ public:
         bool bPreferContinuousFire);
 
     UFUNCTION(BlueprintPure, Category="Strategy|Fire Drill")
+    bool IsFormationSlotEligibleToFire(int32 SlotIndex) const;
+
+    UFUNCTION(BlueprintPure, Category="Strategy|Fire Drill")
     float GetEligibleFiringFraction(EStrategyStance Stance) const;
 
     UFUNCTION(BlueprintPure, Category="Strategy|Fire Drill")
