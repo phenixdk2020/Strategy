@@ -96,6 +96,7 @@ Den aktuelle **gameplay-/buildbaseline** ligger på **v00.00.09f30x**. Cavalry v
 - [Del 6: 29–36 — Milepæle, immediate prototype sequence, vertical slice, risici, datarelationer, historisk grounding og designbeslutninger](parts/part-06-29-36.md)
 - [Del 7: 37 — Implementeringsstatus P0A Unity 3D Battle Prototype](parts/part-07-37-P0A.md)
 - [Del 8: 38 — P0A v00.00.08 reload, experience, salve-feedback og enkel casualty-visual](parts/part-08-38-P0A-v08.md)
+- [Designsupplement — Lande og uniformer 1851–1866 (14 fraktioner, 107 uniformsmodeller)](design-supplements/lande-og-uniformer-1851-1866.md)
 - [Implementation & Fix History — samlet historik over implementeringer og fejlrettelser](IMPLEMENTATION-AND-FIX-HISTORY.md)
 - [Designsupplement v00.00.09f30f — Implementation & Fix History Consolidation](design-supplements/v00.00.09f30f-history-consolidation.md)
 - [Designsupplement v00.00.09f30h — Cavalry 4-rank, bridge, HUD, NATO & selection](design-supplements/v00.00.09f30h-cavalry-4rank-bridge-hud-nato-selection.md)
