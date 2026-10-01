@@ -4,6 +4,7 @@
 #include "../Player/StrategyCameraPawn.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
+#include "Misc/PackageName.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 
@@ -15,10 +16,15 @@ bool UStrategyQARuntimeSubsystem::ShouldCreateSubsystem(UObject* Outer) const
         return false;
     }
 
-    return
+    const bool bGameWorld =
         World->WorldType == EWorldType::PIE ||
         World->WorldType == EWorldType::Game ||
         World->WorldType == EWorldType::GamePreview;
+
+    // Only on the battle's own maps (Strategy1864_*): the module is also built into the campaign
+    // project (PROJECT 1864 Game1864), whose campaign map must not get a QA scenario and camera.
+    const FString MapName = FPackageName::GetShortName(World->GetOutermost()->GetName());
+    return bGameWorld && MapName.Contains(TEXT("Strategy1864"));
 }
 
 void UStrategyQARuntimeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
