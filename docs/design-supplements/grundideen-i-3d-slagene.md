@@ -958,3 +958,12 @@ i stedet for at hele kompagniets skeletal meshes spiller Fire-animationen samtid
 Samlet set
 Vi har altså allerede designet og i høj grad afprøvet selve måden et PROJECT 1864-slag skal fungere på i Unity: hierarchy, orders, formationer, 1:1 styrke, Line/Column/Square, range/cones, facing, broer, river routing, HQ'er, cavalry, dragoner, AI authority, selection, OOB og meget af combined-arms-logikken.
 Unreal-porten handler nu primært om at gøre denne prototype til en ren, permanent og skalerbar simulation, og samtidig udvide den med de systemer Unity endnu ikke havde færdige: rigtig artillery/logistics, morterer, fortifications, specialister, mere avanceret terræn/LOS, shared skeleton/animation architecture og den nye fire-drill progression.
+
+## 46. Afklaringer (1. oktober 2026)
+- **Geledder:** infanteriet står i 3 geledder. Det giver et kompagni på 190 mand ca. 48 m front. I 2 geledder ville fronten være ca. 70 m og linjen meget lang.
+- **Modstander:** de første fjender er svenske, med den svenske 3D-model. Preussiske og østrigske tropper kommer senere.
+- **Fra forskning til slag:** en ny evne (fx en skydeøvelse eller karré) skal først forskes i kampagnen og dernæst trænes af den enkelte enhed, før den kan bruges i slaget. `battleRules` angiver, hvad der er forsket. Enhedens træning afgør, om den kan det.
+- **Vand:**
+  - Små vandløb og bække må krydses, men langsomt og i uorden.
+  - Større vandløb og floder kan kun krydses ad en rigtig bro eller en pontonbro, som pionererne skal bygge.
+  - En sprængt bro skal bygges op igen eller erstattes af en pontonbro.
