@@ -891,3 +891,5 @@ HQ får et visuelt command effectiveness envelope, men ikke en hård magisk radi
 ## Projektregel
 
 Designmanualen skal opdateres både som layoutet Word-master og her i GitHub, når designbeslutninger eller implementeringsbaselines ændres. Git-historikken bevarer tidligere udgaver af Markdown-delene. Nye beslutninger og idéer registreres desuden i backloggen. Hver testbuild skal have tydelig release-dokumentation, der adskiller **implementeret nu** fra **besluttet senere**.
+
+- [Grundidéen i 3D-slagene: 45 beslutninger om slaget](design-supplements/grundideen-i-3d-slagene.md)
